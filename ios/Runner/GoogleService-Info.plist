@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1008839970601-k717gn6krbfq1prehrjc3jscuadu300i</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBDUd6KP436TbEuadB9-OqL7_w502KA0pU</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1008839970601</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.scholarmind.scholarMind</string>
+	<key>PROJECT_ID</key>
+	<string>scholarmind-b384c</string>
+	<key>STORAGE_BUCKET</key>
+	<string>scholarmind-b384c.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1008839970601:ios:a1089382302968ab4f7138</string>
+</dict>
+</plist>

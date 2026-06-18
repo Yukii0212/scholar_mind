@@ -53,7 +53,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1008839970601',
     projectId: 'scholarmind-b384c',
     storageBucket: 'scholarmind-b384c.firebasestorage.app',
-    iosClientId: '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
+    iosClientId:
+        '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
     iosBundleId: 'com.scholarmind.scholarMind',
   );
   static const FirebaseOptions macos = FirebaseOptions(
@@ -62,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1008839970601',
     projectId: 'scholarmind-b384c',
     storageBucket: 'scholarmind-b384c.firebasestorage.app',
-    iosClientId: '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
+    iosClientId:
+        '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
     iosBundleId: 'com.scholarmind.scholarMind',
   );
 

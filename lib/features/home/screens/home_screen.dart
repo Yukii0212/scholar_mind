@@ -8,11 +8,26 @@ class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key, required this.child});
 
   static const _destinations = [
-    NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-    NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description), label: 'Notes'),
-    NavigationDestination(icon: Icon(Icons.style_outlined), selectedIcon: Icon(Icons.style), label: 'Flashcards'),
-    NavigationDestination(icon: Icon(Icons.quiz_outlined), selectedIcon: Icon(Icons.quiz), label: 'Quiz'),
-    NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'Grades'),
+    NavigationDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home),
+        label: 'Home'),
+    NavigationDestination(
+        icon: Icon(Icons.description_outlined),
+        selectedIcon: Icon(Icons.description),
+        label: 'Notes'),
+    NavigationDestination(
+        icon: Icon(Icons.style_outlined),
+        selectedIcon: Icon(Icons.style),
+        label: 'Flashcards'),
+    NavigationDestination(
+        icon: Icon(Icons.quiz_outlined),
+        selectedIcon: Icon(Icons.quiz),
+        label: 'Quiz'),
+    NavigationDestination(
+        icon: Icon(Icons.bar_chart_outlined),
+        selectedIcon: Icon(Icons.bar_chart),
+        label: 'Grades'),
   ];
 
   static const _routes = ['/home', '/notes', '/flashcards', '/quiz', '/grades'];
@@ -38,7 +53,8 @@ class HomeScreen extends ConsumerWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.logout),
-              onPressed: () => ref.read(authNotifierProvider.notifier).signOut(),
+              onPressed: () =>
+                  ref.read(authControllerProvider.notifier).signOut(),
             ),
             const SizedBox(width: 8),
           ],
@@ -51,10 +67,10 @@ class HomeScreen extends ConsumerWidget {
               onDestinationSelected: (i) => context.go(_routes[i]),
               destinations: _destinations
                   .map((d) => NavigationRailDestination(
-                icon: d.icon,
-                selectedIcon: d.selectedIcon ?? d.icon,
-                label: Text(d.label),
-              ))
+                        icon: d.icon,
+                        selectedIcon: d.selectedIcon ?? d.icon,
+                        label: Text(d.label),
+                      ))
                   .toList(),
             ),
             const VerticalDivider(thickness: 1, width: 1),
@@ -71,7 +87,8 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authNotifierProvider.notifier).signOut(),
+            onPressed: () =>
+                ref.read(authControllerProvider.notifier).signOut(),
           ),
         ],
       ),

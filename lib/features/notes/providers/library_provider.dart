@@ -49,6 +49,22 @@ Stream<List<LibraryFolder>> archivedFolders(ArchivedFoldersRef ref) {
 }
 
 @riverpod
+Stream<List<LibraryFolder>> deletedFolders(DeletedFoldersRef ref) {
+  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (userId == null) return const Stream.empty();
+
+  return ref.watch(libraryRepositoryProvider).watchDeletedFolders(userId);
+}
+
+@riverpod
+Stream<List<NoteItem>> deletedNotes(DeletedNotesRef ref) {
+  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (userId == null) return const Stream.empty();
+
+  return ref.watch(libraryRepositoryProvider).watchDeletedNotes(userId);
+}
+
+@riverpod
 Stream<List<NoteItem>> notesInFolder(
   NotesInFolderRef ref,
   String folderId,
@@ -97,6 +113,24 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
+  Future<bool> softDeleteFolder(LibraryFolder folder) {
+    return _run((userId, repository) {
+      return repository.softDeleteFolder(
+        userId: userId,
+        folderId: folder.id,
+      );
+    });
+  }
+
+  Future<bool> restoreFolder(LibraryFolder folder) {
+    return _run((userId, repository) {
+      return repository.restoreFolder(
+        userId: userId,
+        folderId: folder.id,
+      );
+    });
+  }
+
   Future<bool> uploadNote({
     required String folderId,
     required String fileName,
@@ -112,6 +146,24 @@ class LibraryActionController extends _$LibraryActionController {
         extension: extension,
         bytes: bytes,
         category: category,
+      );
+    });
+  }
+
+  Future<bool> softDeleteNote(NoteItem note) {
+    return _run((userId, repository) {
+      return repository.softDeleteNote(
+        userId: userId,
+        noteId: note.id,
+      );
+    });
+  }
+
+  Future<bool> restoreNote(NoteItem note) {
+    return _run((userId, repository) {
+      return repository.restoreNote(
+        userId: userId,
+        noteId: note.id,
       );
     });
   }

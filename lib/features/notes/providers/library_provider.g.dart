@@ -204,6 +204,36 @@ final archivedFoldersProvider =
 );
 
 typedef ArchivedFoldersRef = AutoDisposeStreamProviderRef<List<LibraryFolder>>;
+String _$deletedFoldersHash() => r'4916dae538d7dff5d1a679c90ece18316e875597';
+
+/// See also [deletedFolders].
+@ProviderFor(deletedFolders)
+final deletedFoldersProvider =
+    AutoDisposeStreamProvider<List<LibraryFolder>>.internal(
+  deletedFolders,
+  name: r'deletedFoldersProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$deletedFoldersHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef DeletedFoldersRef = AutoDisposeStreamProviderRef<List<LibraryFolder>>;
+String _$deletedNotesHash() => r'cbca8cd76efa3f524e7c388dfb22a6920226daad';
+
+/// See also [deletedNotes].
+@ProviderFor(deletedNotes)
+final deletedNotesProvider = AutoDisposeStreamProvider<List<NoteItem>>.internal(
+  deletedNotes,
+  name: r'deletedNotesProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$deletedNotesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef DeletedNotesRef = AutoDisposeStreamProviderRef<List<NoteItem>>;
 String _$notesInFolderHash() => r'916af0f15abdd308014a7883da559920ee8c7211';
 
 /// See also [notesInFolder].
@@ -334,7 +364,7 @@ class _NotesInFolderProviderElement
 }
 
 String _$libraryActionControllerHash() =>
-    r'd20d03fc4825e0666aeb7edf1071601e02827681';
+    r'f98754efc1a3bc7f9c0f004153f188f8e67b99ce';
 
 /// See also [LibraryActionController].
 @ProviderFor(LibraryActionController)

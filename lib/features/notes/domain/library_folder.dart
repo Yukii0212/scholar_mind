@@ -9,6 +9,8 @@ class LibraryFolder {
     required this.parentId,
     required this.isFavorite,
     required this.isArchived,
+    required this.isDeleted,
+    required this.deletedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -24,8 +26,12 @@ class LibraryFolder {
       parentId: data['parentId'] as String,
       isFavorite: data['isFavorite'] as bool? ?? false,
       isArchived: data['isArchived'] as bool? ?? false,
+      isDeleted: data['isDeleted'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      deletedAt: data['deletedAt'] != null
+          ? (data['deletedAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -34,6 +40,8 @@ class LibraryFolder {
   final String parentId;
   final bool isFavorite;
   final bool isArchived;
+  final bool isDeleted;
+  final DateTime? deletedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 }

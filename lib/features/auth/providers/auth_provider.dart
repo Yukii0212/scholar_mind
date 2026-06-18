@@ -1,35 +1,32 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
 
-// Streams the current Firebase user — rebuilds anything watching it
-@riverpod
-Stream<User?> authState(AuthStateRef ref) {
-  return FirebaseAuth.instance.authStateChanges();
-}
+@Riverpod(keepAlive: true)
+FirebaseAuth firebaseAuth(FirebaseAuthRef ref) => FirebaseAuth.instance;
+
+@Riverpod(keepAlive: true)
+GoogleSignIn googleSignIn(GoogleSignInRef ref) => GoogleSignIn();
 
 @riverpod
-class AuthNotifier extends _$AuthNotifier {
+Stream<User?> authState(AuthStateRef ref) {
+  return ref.watch(firebaseAuthProvider).authStateChanges();
+}
+
+@Riverpod(keepAlive: true)
+class AuthController extends _$AuthController {
   @override
-  AsyncValue<User?> build() {
-    return const AsyncValue.loading();
-  }
+  FutureOr<void> build() {}
 
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();
+
     try {
-      final googleUser = await GoogleSignIn(scopes: [
-        'email',
-        'profile',
-        // Classroom scopes — add these now so user approves once
-        'https://www.googleapis.com/auth/classroom.courses.readonly',
-        'https://www.googleapis.com/auth/classroom.coursework.me',
-        'https://www.googleapis.com/auth/classroom.coursework.students',
-        'https://www.googleapis.com/auth/drive.readonly',
-      ]).signIn();
+      final googleUser = await ref.read(googleSignInProvider).signIn();
 
       if (googleUser == null) {
         state = const AsyncValue.data(null);
@@ -42,17 +39,22 @@ class AuthNotifier extends _$AuthNotifier {
         idToken: googleAuth.idToken,
       );
 
-      final userCred =
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      state = AsyncValue.data(userCred.user);
+      await ref.read(firebaseAuthProvider).signInWithCredential(credential);
+      state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
 
   Future<void> signOut() async {
-    await GoogleSignIn().signOut();
-    await FirebaseAuth.instance.signOut();
-    state = const AsyncValue.data(null);
+    state = const AsyncValue.loading();
+
+    try {
+      await ref.read(firebaseAuthProvider).signOut();
+      await ref.read(googleSignInProvider).signOut();
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 }

@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/notes/screens/notes_screen.dart';
 
 part 'app_router.g.dart';
 
 @riverpod
 GoRouter appRouter(AppRouterRef ref) {
-  final authState = ref.watch(authStateProvider);
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/login',
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
+
+      // Wait for Firebase to restore the persisted session before redirecting.
+      if (authState.isLoading) return null;
+
       final isLoggedIn = authState.valueOrNull != null;
       final isOnLogin = state.matchedLocation == '/login';
 
@@ -36,7 +39,7 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/notes',
-            builder: (context, state) => const Placeholder(),
+            builder: (context, state) => const NotesScreen(),
           ),
           GoRoute(
             path: '/flashcards',
@@ -54,6 +57,11 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
     ],
   );
+
+  ref.listen(authStateProvider, (_, __) => router.refresh());
+  ref.onDispose(router.dispose);
+
+  return router;
 }
 
 // Temporary dashboard placeholder

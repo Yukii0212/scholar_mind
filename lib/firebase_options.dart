@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -50,28 +47,37 @@ class DefaultFirebaseOptions {
     projectId: 'scholarmind-b384c',
     storageBucket: 'scholarmind-b384c.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBDUd6KP436TbEuadB9-OqL7_w502KA0pU',
     appId: '1:1008839970601:ios:a1089382302968ab4f7138',
     messagingSenderId: '1008839970601',
     projectId: 'scholarmind-b384c',
     storageBucket: 'scholarmind-b384c.firebasestorage.app',
-    iosClientId: '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
+    iosClientId:
+        '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
     iosBundleId: 'com.scholarmind.scholarMind',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBDUd6KP436TbEuadB9-OqL7_w502KA0pU',
     appId: '1:1008839970601:ios:a1089382302968ab4f7138',
     messagingSenderId: '1008839970601',
     projectId: 'scholarmind-b384c',
     storageBucket: 'scholarmind-b384c.firebasestorage.app',
-    iosClientId: '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
+    iosClientId:
+        '1008839970601-k717gn6krbfq1prehrjc3jscuadu300i.apps.googleusercontent.com',
     iosBundleId: 'com.scholarmind.scholarMind',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyANP83RUTJw_4JcwTTx-rFsTU81hENqK10',
+    appId: '1:1008839970601:web:7ad0054e5508548e4f7138',
+    messagingSenderId: '1008839970601',
+    projectId: 'scholarmind-b384c',
+    authDomain: 'scholarmind-b384c.firebaseapp.com',
+    storageBucket: 'scholarmind-b384c.firebasestorage.app',
+    measurementId: 'G-Z78883HPZC',
+  );
+  static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyANP83RUTJw_4JcwTTx-rFsTU81hENqK10',
     appId: '1:1008839970601:web:6ac411b9f7c20a604f7138',
     messagingSenderId: '1008839970601',

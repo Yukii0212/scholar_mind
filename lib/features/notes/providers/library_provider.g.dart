@@ -204,7 +204,7 @@ final archivedFoldersProvider =
 );
 
 typedef ArchivedFoldersRef = AutoDisposeStreamProviderRef<List<LibraryFolder>>;
-String _$deletedFoldersHash() => r'4916dae538d7dff5d1a679c90ece18316e875597';
+String _$deletedFoldersHash() => r'c6d984780f3afbea177a869162e7cd9be33433f6';
 
 /// See also [deletedFolders].
 @ProviderFor(deletedFolders)

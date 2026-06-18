@@ -1,0 +1,1 @@
+ /Users/yukii0212/Documents/GitHub/scholar_mind/.dart_tool/flutter_build/07cdcb7a2cb1f21cfea94a75a08b3a6c/dart_build_result.json:  /Users/yukii0212/Documents/GitHub/scholar_mind/.dart_tool/package_config.json /Users/yukii0212/Documents/GitHub/scholar_mind/pubspec.yaml /Users/yukii0212/flutter/bin/cache/dart-sdk/version

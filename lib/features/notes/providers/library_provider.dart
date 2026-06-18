@@ -53,7 +53,24 @@ Stream<List<LibraryFolder>> deletedFolders(DeletedFoldersRef ref) {
   final userId = ref.watch(authStateProvider).valueOrNull?.uid;
   if (userId == null) return const Stream.empty();
 
-  return ref.watch(libraryRepositoryProvider).watchDeletedFolders(userId);
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchDeletedFolders(userId)
+      .map((folders) {
+    return folders.where((folder) {
+      if (folder.parentId == LibraryFolder.rootId) {
+        return true;
+      }
+
+      final parentDeleted = folders.any(
+            (candidate) =>
+        candidate.id == folder.parentId &&
+            candidate.isDeleted,
+      );
+
+      return !parentDeleted;
+    }).toList();
+  });
 }
 
 @riverpod

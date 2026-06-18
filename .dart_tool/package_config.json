@@ -164,6 +164,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "cross_file",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/cross_file-0.3.5+2",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
       "name": "crypto",
       "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/crypto-3.0.7",
       "packageUri": "lib/",
@@ -210,6 +216,54 @@
       "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file-7.0.1",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "file_selector",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "file_selector_android",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector_android-0.5.2+8",
+      "packageUri": "lib/",
+      "languageVersion": "3.12"
+    },
+    {
+      "name": "file_selector_ios",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector_ios-0.5.3+5",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "file_selector_linux",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector_linux-0.9.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
+      "name": "file_selector_macos",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector_macos-0.9.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "file_selector_platform_interface",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector_platform_interface-2.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "file_selector_web",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector_web-0.9.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "file_selector_windows",
+      "rootUri": "file:///Users/yukii0212/.pub-cache/hosted/pub.dev/file_selector_windows-0.9.3+5",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
     },
     {
       "name": "firebase_auth",

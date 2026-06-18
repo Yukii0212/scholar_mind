@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/notes/screens/notes_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -38,7 +39,7 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/notes',
-            builder: (context, state) => const Placeholder(),
+            builder: (context, state) => const NotesScreen(),
           ),
           GoRoute(
             path: '/flashcards',

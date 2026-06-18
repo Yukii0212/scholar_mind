@@ -21,11 +21,90 @@ service cloud.firestore {
           'updatedAt'
         ]);
 
-      // All ScholarMind records live below their owning user. Collection-level
-      // validation will be added alongside each feature's data model.
-      match /{document=**} {
-        allow read, write: if isOwner(userId);
+      match /folders/{folderId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && validFolder(request.resource.data);
+        allow update: if isOwner(userId)
+          && validFolder(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt;
       }
+
+      match /notes/{noteId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && validNote(request.resource.data);
+      }
+    }
+
+    function validFolder(data) {
+      return data.keys().hasAll([
+          'name',
+          'parentId',
+          'isFavorite',
+          'isArchived',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'parentId',
+          'isFavorite',
+          'isArchived',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 80
+        && data.parentId is string
+        && data.isFavorite is bool
+        && data.isArchived is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validNote(data) {
+      return data.keys().hasAll([
+          'name',
+          'folderId',
+          'storagePath',
+          'extension',
+          'sizeBytes',
+          'category',
+          'source',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'folderId',
+          'storagePath',
+          'extension',
+          'sizeBytes',
+          'category',
+          'source',
+          'classroomCourseId',
+          'classroomMaterialId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.folderId is string
+        && data.storagePath is string
+        && data.extension is string
+        && data.sizeBytes is int
+        && data.sizeBytes > 0
+        && data.sizeBytes < 10 * 1024 * 1024
+        && data.category in [
+          'lectureNotes',
+          'selfStudyNotes',
+          'pastYearQuestions'
+        ]
+        && data.source in ['manual', 'classroom']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
     }
   }
 }

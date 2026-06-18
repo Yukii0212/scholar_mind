@@ -69,7 +69,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
             ..._buildFolderSlivers(folders),
-            if (_section == _LibrarySection.browse) ..._buildNoteSlivers(notes),
+            if (_section == _LibrarySection.browse) ..._buildNoteSlivers(
+              notes,
+              folders.hasValue
+                  ? folders.valueOrNull?.isNotEmpty ?? false
+                  : false,
+            ),
             const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
           ],
         ),
@@ -85,8 +90,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   List<Widget> _buildFolderSlivers(
-    AsyncValue<List<LibraryFolder>> folders,
-  ) {
+      AsyncValue<List<LibraryFolder>> folders,
+      ){
     return folders.when(
       loading: () => const [
         SliverFillRemaining(
@@ -170,7 +175,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
-  List<Widget> _buildNoteSlivers(AsyncValue<List<NoteItem>> notes) {
+  List<Widget> _buildNoteSlivers(
+      AsyncValue<List<NoteItem>> notes,
+      bool hasFolders,
+      ){
     return notes.when(
       loading: () => const [
         SliverPadding(
@@ -207,7 +215,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             itemBuilder: (context, index) => _NoteCard(note: items[index]),
           ),
         ),
-        if (items.isEmpty)
+        if (items.isEmpty && !hasFolders)
           const SliverPadding(
             padding: EdgeInsets.fromLTRB(20, 48, 20, 24),
             sliver: SliverToBoxAdapter(
@@ -376,10 +384,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       _showMessage(
         '$uploaded file${uploaded == 1 ? '' : 's'} uploaded.',
       );
-    }
-
-    if (uploaded > 0 && mounted) {
-      _showMessage('$uploaded file${uploaded == 1 ? '' : 's'} uploaded.');
     }
   }
 
@@ -563,7 +567,7 @@ class _FolderCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: isArchivedSection ? null : onOpen,
+        onTap: isArchivedSection || isTrashSection ? null : onOpen,
         child: Padding(
           padding: const EdgeInsets.only(left: 14),
           child: Row(

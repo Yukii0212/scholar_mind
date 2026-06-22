@@ -44,6 +44,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       _LibrarySection.browse =>
           ref.watch(notesInFolderProvider(_folderId)),
 
+      _LibrarySection.favorites =>
+          ref.watch(favoriteNotesProvider),
+
       _LibrarySection.trash =>
           ref.watch(deletedNotesProvider),
 
@@ -71,7 +74,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
             ..._buildFolderSlivers(folders),
-            if (_section == _LibrarySection.browse) ..._buildNoteSlivers(
+            if (_section == _LibrarySection.browse ||
+                _section == _LibrarySection.favorites ||
+                _section == _LibrarySection.trash) ..._buildNoteSlivers(
               notes,
               folders.hasValue
                   ? folders.valueOrNull?.isNotEmpty ?? false
@@ -220,6 +225,16 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               note: items[index],
               onTap: () => _openNote(items[index]),
               onRename: () => _renameNote(items[index]),
+              onToggleFavorite: () =>
+                  _toggleNoteFavorite(items[index]),
+              onDelete: () =>
+                  _deleteNote(items[index]),
+              isTrashSection:
+              _section == _LibrarySection.trash,
+              onRestore: () =>
+                  _restoreNote(items[index]),
+              onPermanentDelete: () =>
+                  _permanentlyDeleteNote(items[index]),
             ),
           ),
         ),
@@ -409,6 +424,111 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
+  Future<void> _toggleNoteFavorite(
+      NoteItem note,
+      ) async {
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .toggleNoteFavorite(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: note.isFavorite
+          ? 'Removed from favourites.'
+          : 'Added to favourites.',
+    );
+  }
+
+  Future<void> _deleteNote(
+      NoteItem note,
+      ) async {
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .softDeleteNote(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Moved to Trash.',
+    );
+  }
+
+  Future<void> _restoreNote(
+      NoteItem note,
+      ) async {
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .restoreNote(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Note restored.',
+    );
+  }
+
+  Future<void> _permanentlyDeleteNote(
+      NoteItem note,
+      ) async {
+    final confirmed =
+    await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) =>
+          AlertDialog(
+            title:
+            const Text('Delete permanently?'),
+            content: const Text(
+              'This note will be permanently deleted.\n\n'
+                  'This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      false,
+                    ),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      true,
+                    ),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .permanentlyDeleteNote(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note permanently deleted.',
+    );
+  }
+
   Future<void> _createNote() async {
     final controller = TextEditingController();
 
@@ -463,6 +583,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   void _openNote(NoteItem note) {
+    if (_section == _LibrarySection.trash) {
+      return;
+    }
+
     if (!note.isInternal) {
       _showMessage(
         'Opening uploaded files will be implemented later.',
@@ -956,11 +1080,21 @@ class _NoteCard extends StatelessWidget {
     required this.note,
     required this.onTap,
     required this.onRename,
+    required this.onToggleFavorite,
+    required this.onDelete,
+    required this.isTrashSection,
+    required this.onRestore,
+    required this.onPermanentDelete,
   });
 
+  final bool isTrashSection;
   final NoteItem note;
   final VoidCallback onTap;
   final VoidCallback onRename;
+  final VoidCallback onToggleFavorite;
+  final VoidCallback onRestore;
+  final VoidCallback onPermanentDelete;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -988,27 +1122,61 @@ class _NoteCard extends StatelessWidget {
                 return;
 
               case _LibraryItemAction.favorite:
+                onToggleFavorite();
                 return;
 
               case _LibraryItemAction.archive:
                 return;
 
               case _LibraryItemAction.trash:
+                onDelete();
                 return;
 
               case _LibraryItemAction.restore:
+                onRestore();
                 return;
 
               case _LibraryItemAction.permanentDelete:
+                onPermanentDelete();
                 return;
             }
           },
-          itemBuilder: (context) => const [
-            PopupMenuItem(
-              value: _LibraryItemAction.rename,
-              child: Text('Rename'),
-            ),
-          ],
+          itemBuilder: (context) {
+            if (isTrashSection) {
+              return const [
+                PopupMenuItem(
+                  value: _LibraryItemAction.restore,
+                  child: Text('Restore'),
+                ),
+                PopupMenuItem(
+                  value:
+                  _LibraryItemAction.permanentDelete,
+                  child: Text('Delete Permanently'),
+                ),
+              ];
+            }
+
+            return [
+              const PopupMenuItem(
+                value: _LibraryItemAction.rename,
+                child: Text('Rename'),
+              ),
+
+              PopupMenuItem(
+                value: _LibraryItemAction.favorite,
+                child: Text(
+                  note.isFavorite
+                      ? 'Remove favourite'
+                      : 'Add to favourites',
+                ),
+              ),
+
+              const PopupMenuItem(
+                value: _LibraryItemAction.trash,
+                child: Text('Move to Trash'),
+              ),
+            ];
+          },
         ),
       ),
     );

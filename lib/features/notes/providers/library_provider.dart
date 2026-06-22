@@ -41,6 +41,22 @@ Stream<List<LibraryFolder>> favoriteFolders(FavoriteFoldersRef ref) {
 }
 
 @riverpod
+Stream<List<NoteItem>> favoriteNotes(
+    FavoriteNotesRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchFavoriteNotes(userId);
+}
+
+@riverpod
 Stream<List<LibraryFolder>> archivedFolders(ArchivedFoldersRef ref) {
   final userId = ref.watch(authStateProvider).valueOrNull?.uid;
   if (userId == null) return const Stream.empty();
@@ -155,6 +171,18 @@ class LibraryActionController extends _$LibraryActionController {
         userId: userId,
         folderId: folder.id,
         isFavorite: value,
+      );
+    });
+  }
+
+  Future<bool> toggleNoteFavorite(
+      NoteItem note,
+      ) {
+    return _run((userId, repository) {
+      return repository.setNoteFavorite(
+        userId: userId,
+        noteId: note.id,
+        isFavorite: !note.isFavorite,
       );
     });
   }

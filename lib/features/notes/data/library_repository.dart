@@ -50,6 +50,26 @@ class LibraryRepository {
     });
   }
 
+  Stream<List<NoteItem>> watchFavoriteNotes(
+      String userId,
+      ) {
+    return _notes(userId)
+        .where('isFavorite', isEqualTo: true)
+        .where('isDeleted', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      final notes =
+      snapshot.docs.map(NoteItem.fromDocument).toList();
+
+      notes.sort(
+            (a, b) =>
+            b.createdAt.compareTo(a.createdAt),
+      );
+
+      return notes;
+    });
+  }
+
   Stream<List<LibraryFolder>> watchArchivedFolders(String userId) {
     return _folders(userId)
         .where('isArchived', isEqualTo: true)
@@ -256,6 +276,17 @@ class LibraryRepository {
 
     await _notes(userId).doc(noteId).update({
       'name': normalizedName,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> setNoteFavorite({
+    required String userId,
+    required String noteId,
+    required bool isFavorite,
+  }) {
+    return _notes(userId).doc(noteId).update({
+      'isFavorite': isFavorite,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

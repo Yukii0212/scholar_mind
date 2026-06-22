@@ -135,6 +135,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 onOpen: () => _openFolder(folder),
                 onDelete: () => _moveFolderToTrash(folder),
                 onRestore: () => _restoreFolder(folder),
+                onPermanentDelete: () => _permanentlyDeleteFolder(folder),
                 onToggleFavorite: () => _toggleFavorite(folder),
                 onToggleArchived: () => _toggleArchived(folder),
               );
@@ -319,6 +320,45 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     _showResult(
       success,
       successMessage: 'Folder restored.',
+    );
+  }
+
+  Future<void> _permanentlyDeleteFolder(
+      LibraryFolder folder,
+      ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete permanently?'),
+        content: const Text(
+          'This folder, all child folders, and all notes inside it '
+              'will be permanently deleted.\n\n'
+              'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(libraryActionControllerProvider.notifier)
+        .permanentlyDeleteFolder(folder);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Folder permanently deleted.',
     );
   }
 
@@ -550,6 +590,7 @@ class _FolderCard extends StatelessWidget {
     required this.onToggleArchived,
     required this.onDelete,
     required this.onRestore,
+    required this.onPermanentDelete,
   });
 
   final LibraryFolder folder;
@@ -560,7 +601,7 @@ class _FolderCard extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onToggleFavorite;
   final VoidCallback onToggleArchived;
-
+  final VoidCallback onPermanentDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -606,6 +647,9 @@ class _FolderCard extends StatelessWidget {
 
                     case _FolderAction.restore:
                       onRestore();
+
+                    case _FolderAction.permanentDelete:
+                      onPermanentDelete();
                   }
                 },
                 itemBuilder: (context) {
@@ -614,6 +658,10 @@ class _FolderCard extends StatelessWidget {
                       const PopupMenuItem(
                         value: _FolderAction.restore,
                         child: Text('Restore'),
+                      ),
+                      const PopupMenuItem(
+                        value: _FolderAction.permanentDelete,
+                        child: Text('Delete Permanently'),
                       ),
                     ];
                   }
@@ -658,6 +706,7 @@ enum _FolderAction {
   archive,
   trash,
   restore,
+  permanentDelete,
 }
 
 class _NoteCard extends StatelessWidget {

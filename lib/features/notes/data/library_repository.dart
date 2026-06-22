@@ -215,6 +215,69 @@ class LibraryRepository {
     });
   }
 
+  Future<void> permanentlyDeleteNote({
+    required String userId,
+    required String noteId,
+  }) async {
+    final noteDoc = await _notes(userId).doc(noteId).get();
+
+    if (!noteDoc.exists) return;
+
+    final note = NoteItem.fromDocument(noteDoc);
+
+    try {
+      await _storage.ref(note.storagePath).delete();
+    } catch (_) {
+    }
+
+    await noteDoc.reference.delete();
+  }
+
+  Future<void> permanentlyDeleteFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    await _permanentlyDeleteChildren(
+      userId: userId,
+      parentFolderId: folderId,
+    );
+
+    await _folders(userId).doc(folderId).delete();
+  }
+
+  Future<void> _permanentlyDeleteChildren({
+    required String userId,
+    required String parentFolderId,
+  }) async {
+    final childFolders = await _folders(userId)
+        .where('parentId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final folder in childFolders.docs) {
+      await _permanentlyDeleteChildren(
+        userId: userId,
+        parentFolderId: folder.id,
+      );
+
+      await folder.reference.delete();
+    }
+
+    final notes = await _notes(userId)
+        .where('folderId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final noteDoc in notes.docs) {
+      final note = NoteItem.fromDocument(noteDoc);
+
+      try {
+        await _storage.ref(note.storagePath).delete();
+      } catch (_) {
+      }
+
+      await noteDoc.reference.delete();
+    }
+  }
+
   Stream<List<NoteItem>> watchNotes(String userId, String folderId) {
     return _notes(userId)
         .where('folderId', isEqualTo: folderId)

@@ -185,6 +185,24 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
+  Future<bool> permanentlyDeleteNote(NoteItem note) {
+    return _run((userId, repository) {
+      return repository.permanentlyDeleteNote(
+        userId: userId,
+        noteId: note.id,
+      );
+    });
+  }
+
+  Future<bool> permanentlyDeleteFolder(LibraryFolder folder) {
+    return _run((userId, repository) {
+      return repository.permanentlyDeleteFolder(
+        userId: userId,
+        folderId: folder.id,
+      );
+    });
+  }
+
   Future<bool> _run(
     Future<void> Function(String userId, LibraryRepository repository) action,
   ) async {

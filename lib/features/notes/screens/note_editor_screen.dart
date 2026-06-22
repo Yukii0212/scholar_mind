@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +31,10 @@ class _NoteEditorScreenState
 
   late final String _draftKey;
 
+  Timer? _autoSaveTimer;
+
+  String _saveStatus = 'Saved';
+
   @override
   void initState() {
     super.initState();
@@ -42,7 +48,6 @@ class _NoteEditorScreenState
     _loadDraft();
 
     _controller.addListener(() async {
-      final changed = _controller.text != widget.content;
       final prefs = await SharedPreferences.getInstance();
 
       await prefs.setString(
@@ -50,11 +55,19 @@ class _NoteEditorScreenState
         _controller.text,
       );
 
-      if (changed != _hasChanges) {
+      if (mounted) {
         setState(() {
-          _hasChanges = changed;
+          _hasChanges = true;
+          _saveStatus = 'Unsaved';
         });
       }
+
+      _autoSaveTimer?.cancel();
+
+      _autoSaveTimer = Timer(
+        const Duration(seconds: 1),
+        _autoSave,
+      );
     });
   }
 
@@ -78,6 +91,7 @@ class _NoteEditorScreenState
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -88,7 +102,15 @@ class _NoteEditorScreenState
     await prefs.remove(_draftKey);
   }
 
-  Future<void> _saveNote() async {
+  Future<void> _autoSave() async {
+    if (!_hasChanges) return;
+
+    if (mounted) {
+      setState(() {
+        _saveStatus = 'Saving...';
+      });
+    }
+
     final success = await ref
         .read(libraryActionControllerProvider.notifier)
         .updateInternalNote(
@@ -100,21 +122,15 @@ class _NoteEditorScreenState
 
     if (success) {
       await _clearDraft();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Note saved'),
-        ),
-      );
 
       setState(() {
         _hasChanges = false;
+        _saveStatus = 'Saved';
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to save note'),
-        ),
-      );
+      setState(() {
+        _saveStatus = 'Failed to Save';
+      });
     }
   }
 
@@ -122,14 +138,18 @@ class _NoteEditorScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.noteTitle),
-        actions: [
-          TextButton.icon(
-            onPressed: _hasChanges ? _saveNote : null,
-            icon: const Icon(Icons.save_outlined),
-            label: const Text('Save'),
-          ),
-        ],
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.noteTitle),
+            Text(
+              _saveStatus,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall,
+            ),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

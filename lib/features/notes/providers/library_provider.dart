@@ -110,6 +110,19 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
+  Future<bool> renameNote({
+    required String noteId,
+    required String name,
+  }) {
+    return _run((userId, repository) {
+      return repository.renameNote(
+        userId: userId,
+        noteId: noteId,
+        name: name,
+      );
+    });
+  }
+
   Future<bool> renameFolder({
     required String folderId,
     required String name,

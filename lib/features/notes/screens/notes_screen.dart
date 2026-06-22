@@ -219,6 +219,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             itemBuilder: (context, index) => _NoteCard(
               note: items[index],
               onTap: () => _openNote(items[index]),
+              onRename: () => _renameNote(items[index]),
             ),
           ),
         ),
@@ -341,6 +342,70 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       success,
       successMessage:
       'Folder renamed successfully.',
+    );
+  }
+
+  Future<void> _renameNote(
+      NoteItem note,
+      ) async {
+    final controller = TextEditingController(
+      text: note.name,
+    );
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Rename note'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Note name',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value =
+                controller.text.trim();
+
+                if (value.isNotEmpty) {
+                  Navigator.pop(
+                    dialogContext,
+                    value,
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || name == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .renameNote(
+      noteId: note.id,
+      name: name,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note renamed successfully.',
     );
   }
 
@@ -878,14 +943,20 @@ enum _FolderAction {
   permanentDelete,
 }
 
+enum _NoteAction {
+  rename,
+}
+
 class _NoteCard extends StatelessWidget {
   const _NoteCard({
     required this.note,
     required this.onTap,
+    required this.onRename,
   });
 
   final NoteItem note;
   final VoidCallback onTap;
+  final VoidCallback onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -899,12 +970,21 @@ class _NoteCard extends StatelessWidget {
         subtitle: Text(
           '${note.category.label} • ${_formatBytes(note.sizeBytes)}',
         ),
-        trailing: note.source == 'classroom'
-            ? const Tooltip(
-                message: 'Imported from Google Classroom',
-                child: Icon(Icons.school_outlined),
-              )
-            : null,
+        trailing: PopupMenuButton<_NoteAction>(
+          onSelected: (action) {
+            switch (action) {
+              case _NoteAction.rename:
+                onRename();
+                return;
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: _NoteAction.rename,
+              child: Text('Rename'),
+            ),
+          ],
+        ),
       ),
     );
   }

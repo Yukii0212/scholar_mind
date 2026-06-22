@@ -243,6 +243,23 @@ class LibraryRepository {
     });
   }
 
+  Future<void> renameNote({
+    required String userId,
+    required String noteId,
+    required String name,
+  }) async {
+    final normalizedName = name.trim();
+
+    if (normalizedName.isEmpty) {
+      throw ArgumentError('Note name cannot be empty.');
+    }
+
+    await _notes(userId).doc(noteId).update({
+      'name': normalizedName,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> permanentlyDeleteFolder({
     required String userId,
     required String folderId,

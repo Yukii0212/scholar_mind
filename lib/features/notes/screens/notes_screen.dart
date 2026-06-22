@@ -853,30 +853,36 @@ class _FolderCard extends StatelessWidget {
                   size: 18,
                   color: Theme.of(context).colorScheme.tertiary,
                 ),
-              PopupMenuButton<_FolderAction>(
+              PopupMenuButton<_LibraryItemAction>(
                 onSelected: (action) {
                   switch (action) {
-                    case _FolderAction.rename:
+                    case _LibraryItemAction.rename:
                       onRename();
                       return;
 
-                    case _FolderAction.favorite:
+                    case _LibraryItemAction.move:
+                      return;
+
+                    case _LibraryItemAction.copy:
+                      return;
+
+                    case _LibraryItemAction.favorite:
                       onToggleFavorite();
                       return;
 
-                    case _FolderAction.archive:
+                    case _LibraryItemAction.archive:
                       onToggleArchived();
                       return;
 
-                    case _FolderAction.trash:
+                    case _LibraryItemAction.trash:
                       onDelete();
                       return;
 
-                    case _FolderAction.restore:
+                    case _LibraryItemAction.restore:
                       onRestore();
                       return;
 
-                    case _FolderAction.permanentDelete:
+                    case _LibraryItemAction.permanentDelete:
                       onPermanentDelete();
                       return;
                   }
@@ -885,11 +891,11 @@ class _FolderCard extends StatelessWidget {
                   if (isTrashSection) {
                     return [
                       const PopupMenuItem(
-                        value: _FolderAction.restore,
+                        value: _LibraryItemAction.restore,
                         child: Text('Restore'),
                       ),
                       const PopupMenuItem(
-                        value: _FolderAction.permanentDelete,
+                        value: _LibraryItemAction.permanentDelete,
                         child: Text('Delete Permanently'),
                       ),
                     ];
@@ -897,12 +903,12 @@ class _FolderCard extends StatelessWidget {
 
                   return [
                     const PopupMenuItem(
-                      value: _FolderAction.rename,
+                      value: _LibraryItemAction.rename,
                       child: Text('Rename'),
                     ),
                     if (!isArchivedSection)
                       PopupMenuItem(
-                        value: _FolderAction.favorite,
+                        value: _LibraryItemAction.favorite,
                         child: Text(
                           folder.isFavorite
                               ? 'Remove favourite'
@@ -911,7 +917,7 @@ class _FolderCard extends StatelessWidget {
                       ),
 
                     PopupMenuItem(
-                      value: _FolderAction.archive,
+                      value: _LibraryItemAction.archive,
                       child: Text(
                         isArchivedSection
                             ? 'Restore'
@@ -920,7 +926,7 @@ class _FolderCard extends StatelessWidget {
                     ),
 
                     const PopupMenuItem(
-                      value: _FolderAction.trash,
+                      value: _LibraryItemAction.trash,
                       child: Text('Move to Trash'),
                     ),
                   ];
@@ -934,17 +940,15 @@ class _FolderCard extends StatelessWidget {
   }
 }
 
-enum _FolderAction {
+enum _LibraryItemAction {
   rename,
+  move,
+  copy,
   favorite,
   archive,
   trash,
   restore,
   permanentDelete,
-}
-
-enum _NoteAction {
-  rename,
 }
 
 class _NoteCard extends StatelessWidget {
@@ -970,17 +974,38 @@ class _NoteCard extends StatelessWidget {
         subtitle: Text(
           '${note.category.label} • ${_formatBytes(note.sizeBytes)}',
         ),
-        trailing: PopupMenuButton<_NoteAction>(
+        trailing: PopupMenuButton<_LibraryItemAction>(
           onSelected: (action) {
             switch (action) {
-              case _NoteAction.rename:
+              case _LibraryItemAction.rename:
                 onRename();
+                return;
+
+              case _LibraryItemAction.move:
+                return;
+
+              case _LibraryItemAction.copy:
+                return;
+
+              case _LibraryItemAction.favorite:
+                return;
+
+              case _LibraryItemAction.archive:
+                return;
+
+              case _LibraryItemAction.trash:
+                return;
+
+              case _LibraryItemAction.restore:
+                return;
+
+              case _LibraryItemAction.permanentDelete:
                 return;
             }
           },
           itemBuilder: (context) => const [
             PopupMenuItem(
-              value: _NoteAction.rename,
+              value: _LibraryItemAction.rename,
               child: Text('Rename'),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/library_provider.dart';
 
@@ -26,16 +27,28 @@ class _NoteEditorScreenState
 
   bool _hasChanges = false;
 
+  late final String _draftKey;
+
   @override
   void initState() {
     super.initState();
+
+    _draftKey = 'draft_${widget.noteId}';
 
     _controller = TextEditingController(
       text: widget.content,
     );
 
-    _controller.addListener(() {
+    _loadDraft();
+
+    _controller.addListener(() async {
       final changed = _controller.text != widget.content;
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString(
+        _draftKey,
+        _controller.text,
+      );
 
       if (changed != _hasChanges) {
         setState(() {
@@ -45,10 +58,34 @@ class _NoteEditorScreenState
     });
   }
 
+  Future<void> _loadDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final draft = prefs.getString(_draftKey);
+
+    if (draft == null || draft.isEmpty) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    _controller.text = draft;
+
+    setState(() {
+      _hasChanges = true;
+    });
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _clearDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove(_draftKey);
   }
 
   Future<void> _saveNote() async {
@@ -62,6 +99,7 @@ class _NoteEditorScreenState
     if (!mounted) return;
 
     if (success) {
+      await _clearDraft();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Note saved'),

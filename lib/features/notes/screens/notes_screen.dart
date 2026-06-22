@@ -8,6 +8,7 @@ import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
 import '../providers/library_provider.dart';
+import 'note_editor_screen.dart';
 
 enum _LibrarySection {
   browse,
@@ -214,7 +215,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           sliver: SliverList.separated(
             itemCount: items.length,
             separatorBuilder: (_, __) => const Gap(8),
-            itemBuilder: (context, index) => _NoteCard(note: items[index]),
+            itemBuilder: (context, index) => _NoteCard(
+              note: items[index],
+              onTap: () => _openNote(items[index]),
+            ),
           ),
         ),
         if (items.isEmpty && !hasFolders)
@@ -325,6 +329,26 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     _showResult(
       created,
       successMessage: 'Note created.',
+    );
+  }
+
+  void _openNote(NoteItem note) {
+    if (!note.isInternal) {
+      _showMessage(
+        'Opening uploaded files will be implemented later.',
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NoteEditorScreen(
+          noteId: note.id,
+          noteTitle: note.name,
+          content: note.content,
+        ),
+      ),
     );
   }
 
@@ -773,14 +797,19 @@ enum _FolderAction {
 }
 
 class _NoteCard extends StatelessWidget {
-  const _NoteCard({required this.note});
+  const _NoteCard({
+    required this.note,
+    required this.onTap,
+  });
 
   final NoteItem note;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           child: Icon(_fileIcon(note.extension)),
         ),

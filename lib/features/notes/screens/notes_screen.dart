@@ -137,6 +137,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 onOpen: () => _openFolder(folder),
                 onDelete: () => _moveFolderToTrash(folder),
                 onRestore: () => _restoreFolder(folder),
+                onRename: () => _renameFolder(folder),
                 onPermanentDelete: () => _permanentlyDeleteFolder(folder),
                 onToggleFavorite: () => _toggleFavorite(folder),
                 onToggleArchived: () => _toggleArchived(folder),
@@ -277,6 +278,70 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     if (!mounted) return;
 
     _showResult(created, successMessage: 'Folder created.');
+  }
+
+  Future<void> _renameFolder(
+      LibraryFolder folder,
+      ) async {
+    final controller = TextEditingController(
+      text: folder.name,
+    );
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Rename folder'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Folder name',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value =
+                controller.text.trim();
+
+                if (value.isNotEmpty) {
+                  Navigator.pop(
+                    dialogContext,
+                    value,
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || name == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .renameFolder(
+      folderId: folder.id,
+      name: name,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Folder renamed successfully.',
+    );
   }
 
   Future<void> _createNote() async {
@@ -458,6 +523,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             'ppt',
             'pptx',
             'txt',
+            'md',
           ],
         ),
       ],
@@ -672,11 +738,12 @@ class _FolderCard extends StatelessWidget {
     required this.folder,
     required this.isArchivedSection,
     required this.isTrashSection,
-    required this.onOpen,
-    required this.onToggleFavorite,
-    required this.onToggleArchived,
     required this.onDelete,
     required this.onRestore,
+    required this.onOpen,
+    required this.onRename,
+    required this.onToggleFavorite,
+    required this.onToggleArchived,
     required this.onPermanentDelete,
   });
 
@@ -686,6 +753,7 @@ class _FolderCard extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onDelete;
   final VoidCallback onRestore;
+  final VoidCallback onRename;
   final VoidCallback onToggleFavorite;
   final VoidCallback onToggleArchived;
   final VoidCallback onPermanentDelete;
@@ -723,20 +791,29 @@ class _FolderCard extends StatelessWidget {
               PopupMenuButton<_FolderAction>(
                 onSelected: (action) {
                   switch (action) {
+                    case _FolderAction.rename:
+                      onRename();
+                      return;
+
                     case _FolderAction.favorite:
                       onToggleFavorite();
+                      return;
 
                     case _FolderAction.archive:
                       onToggleArchived();
+                      return;
 
                     case _FolderAction.trash:
                       onDelete();
+                      return;
 
                     case _FolderAction.restore:
                       onRestore();
+                      return;
 
                     case _FolderAction.permanentDelete:
                       onPermanentDelete();
+                      return;
                   }
                 },
                 itemBuilder: (context) {
@@ -754,6 +831,10 @@ class _FolderCard extends StatelessWidget {
                   }
 
                   return [
+                    const PopupMenuItem(
+                      value: _FolderAction.rename,
+                      child: Text('Rename'),
+                    ),
                     if (!isArchivedSection)
                       PopupMenuItem(
                         value: _FolderAction.favorite,
@@ -789,6 +870,7 @@ class _FolderCard extends StatelessWidget {
 }
 
 enum _FolderAction {
+  rename,
   favorite,
   archive,
   trash,

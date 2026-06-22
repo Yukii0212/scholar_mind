@@ -31,7 +31,7 @@ dependencies:
   gap: ^3.0.1
 
   # Local storage
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.5.3
 
   # HTTP for Gemini API
   http: ^1.2.1

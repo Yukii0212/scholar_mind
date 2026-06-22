@@ -9,7 +9,12 @@ import '../domain/note_category.dart';
 import '../domain/note_item.dart';
 import '../providers/library_provider.dart';
 
-enum _LibrarySection { browse, favorites, archived }
+enum _LibrarySection {
+  browse,
+  favorites,
+  archived,
+  trash,
+}
 
 class NotesScreen extends ConsumerStatefulWidget {
   const NotesScreen({super.key});
@@ -32,10 +37,18 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       _LibrarySection.browse => ref.watch(childFoldersProvider(_folderId)),
       _LibrarySection.favorites => ref.watch(favoriteFoldersProvider),
       _LibrarySection.archived => ref.watch(archivedFoldersProvider),
+      _LibrarySection.trash => ref.watch(deletedFoldersProvider),
     };
-    final notes = _section == _LibrarySection.browse
-        ? ref.watch(notesInFolderProvider(_folderId))
-        : const AsyncValue<List<NoteItem>>.data([]);
+    final notes = switch (_section) {
+      _LibrarySection.browse =>
+          ref.watch(notesInFolderProvider(_folderId)),
+
+      _LibrarySection.trash =>
+          ref.watch(deletedNotesProvider),
+
+      _ =>
+      const AsyncValue<List<NoteItem>>.data([]),
+    };
 
     return Stack(
       children: [
@@ -56,7 +69,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
             ..._buildFolderSlivers(folders),
-            if (_section == _LibrarySection.browse) ..._buildNoteSlivers(notes),
+            if (_section == _LibrarySection.browse) ..._buildNoteSlivers(
+              notes,
+              folders.hasValue
+                  ? folders.valueOrNull?.isNotEmpty ?? false
+                  : false,
+            ),
             const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
           ],
         ),
@@ -72,8 +90,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   List<Widget> _buildFolderSlivers(
-    AsyncValue<List<LibraryFolder>> folders,
-  ) {
+      AsyncValue<List<LibraryFolder>> folders,
+      ){
     return folders.when(
       loading: () => const [
         SliverFillRemaining(
@@ -113,7 +131,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               return _FolderCard(
                 folder: folder,
                 isArchivedSection: _section == _LibrarySection.archived,
+                isTrashSection: _section == _LibrarySection.trash,
                 onOpen: () => _openFolder(folder),
+                onDelete: () => _moveFolderToTrash(folder),
+                onRestore: () => _restoreFolder(folder),
                 onToggleFavorite: () => _toggleFavorite(folder),
                 onToggleArchived: () => _toggleArchived(folder),
               );
@@ -124,22 +145,40 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           SliverFillRemaining(
             hasScrollBody: false,
             child: _EmptyState(
-              icon: _section == _LibrarySection.favorites
-                  ? Icons.star_outline
-                  : Icons.archive_outlined,
-              title: _section == _LibrarySection.favorites
-                  ? 'No favourite folders'
-                  : 'No archived folders',
-              message: _section == _LibrarySection.favorites
-                  ? 'Mark useful folders as favourites for quick access.'
-                  : 'Folders you archive will appear here.',
+              icon: switch (_section) {
+                _LibrarySection.favorites => Icons.star_outline,
+                _LibrarySection.archived => Icons.archive_outlined,
+                _LibrarySection.trash => Icons.delete_outline,
+                _ => Icons.folder_outlined,
+              },
+              title: switch (_section) {
+                _LibrarySection.favorites => 'No favourite folders',
+                _LibrarySection.archived => 'No archived folders',
+                _LibrarySection.trash => 'Trash is empty',
+                _ => '',
+              },
+              message: switch (_section) {
+                _LibrarySection.favorites =>
+                'Mark useful folders as favourites for quick access.',
+
+                _LibrarySection.archived =>
+                'Folders you archive will appear here.',
+
+                _LibrarySection.trash =>
+                'Deleted folders and notes will appear here.',
+
+                _ => '',
+              },
             ),
           ),
       ],
     );
   }
 
-  List<Widget> _buildNoteSlivers(AsyncValue<List<NoteItem>> notes) {
+  List<Widget> _buildNoteSlivers(
+      AsyncValue<List<NoteItem>> notes,
+      bool hasFolders,
+      ){
     return notes.when(
       loading: () => const [
         SliverPadding(
@@ -176,7 +215,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             itemBuilder: (context, index) => _NoteCard(note: items[index]),
           ),
         ),
-        if (items.isEmpty)
+        if (items.isEmpty && !hasFolders)
           const SliverPadding(
             padding: EdgeInsets.fromLTRB(20, 48, 20, 24),
             sliver: SliverToBoxAdapter(
@@ -232,6 +271,55 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     if (!mounted) return;
 
     _showResult(created, successMessage: 'Folder created.');
+  }
+
+  Future<void> _moveFolderToTrash(LibraryFolder folder) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Move folder to Trash?'),
+        content: const Text(
+          'This folder, all nested folders, and all notes inside them '
+              'will be moved to Trash.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Move'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(libraryActionControllerProvider.notifier)
+        .softDeleteFolder(folder);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Folder moved to Trash.',
+    );
+  }
+
+  Future<void> _restoreFolder(LibraryFolder folder) async {
+    final success = await ref
+        .read(libraryActionControllerProvider.notifier)
+        .restoreFolder(folder);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Folder restored.',
+    );
   }
 
   Future<void> _uploadNotes() async {
@@ -296,10 +384,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       _showMessage(
         '$uploaded file${uploaded == 1 ? '' : 's'} uploaded.',
       );
-    }
-
-    if (uploaded > 0 && mounted) {
-      _showMessage('$uploaded file${uploaded == 1 ? '' : 's'} uploaded.');
     }
   }
 
@@ -403,6 +487,11 @@ class _LibraryHeader extends StatelessWidget {
               icon: Icon(Icons.archive_outlined),
               label: Text('Archived'),
             ),
+            ButtonSegment(
+              value: _LibrarySection.trash,
+              icon: Icon(Icons.delete_outline),
+              label: Text('Trash'),
+            ),
           ],
           selected: {section},
           onSelectionChanged:
@@ -455,23 +544,30 @@ class _FolderCard extends StatelessWidget {
   const _FolderCard({
     required this.folder,
     required this.isArchivedSection,
+    required this.isTrashSection,
     required this.onOpen,
     required this.onToggleFavorite,
     required this.onToggleArchived,
+    required this.onDelete,
+    required this.onRestore,
   });
 
   final LibraryFolder folder;
+  final bool isTrashSection;
   final bool isArchivedSection;
   final VoidCallback onOpen;
+  final VoidCallback onDelete;
+  final VoidCallback onRestore;
   final VoidCallback onToggleFavorite;
   final VoidCallback onToggleArchived;
+
 
   @override
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: isArchivedSection ? null : onOpen,
+        onTap: isArchivedSection || isTrashSection ? null : onOpen,
         child: Padding(
           padding: const EdgeInsets.only(left: 14),
           child: Row(
@@ -501,25 +597,53 @@ class _FolderCard extends StatelessWidget {
                   switch (action) {
                     case _FolderAction.favorite:
                       onToggleFavorite();
+
                     case _FolderAction.archive:
                       onToggleArchived();
+
+                    case _FolderAction.trash:
+                      onDelete();
+
+                    case _FolderAction.restore:
+                      onRestore();
                   }
                 },
-                itemBuilder: (context) => [
-                  if (!isArchivedSection)
+                itemBuilder: (context) {
+                  if (isTrashSection) {
+                    return [
+                      const PopupMenuItem(
+                        value: _FolderAction.restore,
+                        child: Text('Restore'),
+                      ),
+                    ];
+                  }
+
+                  return [
+                    if (!isArchivedSection)
+                      PopupMenuItem(
+                        value: _FolderAction.favorite,
+                        child: Text(
+                          folder.isFavorite
+                              ? 'Remove favourite'
+                              : 'Add to favourites',
+                        ),
+                      ),
+
                     PopupMenuItem(
-                      value: _FolderAction.favorite,
+                      value: _FolderAction.archive,
                       child: Text(
-                        folder.isFavorite
-                            ? 'Remove favourite'
-                            : 'Add to favourites',
+                        isArchivedSection
+                            ? 'Restore'
+                            : 'Archive',
                       ),
                     ),
-                  PopupMenuItem(
-                    value: _FolderAction.archive,
-                    child: Text(isArchivedSection ? 'Restore' : 'Archive'),
-                  ),
-                ],
+
+                    const PopupMenuItem(
+                      value: _FolderAction.trash,
+                      child: Text('Move to Trash'),
+                    ),
+                  ];
+                },
               ),
             ],
           ),
@@ -529,7 +653,12 @@ class _FolderCard extends StatelessWidget {
   }
 }
 
-enum _FolderAction { favorite, archive }
+enum _FolderAction {
+  favorite,
+  archive,
+  trash,
+  restore,
+}
 
 class _NoteCard extends StatelessWidget {
   const _NoteCard({required this.note});

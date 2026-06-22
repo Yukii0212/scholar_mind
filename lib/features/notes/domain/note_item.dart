@@ -12,6 +12,9 @@ class NoteItem {
     required this.sizeBytes,
     required this.category,
     required this.source,
+    required this.isFavorite,
+    required this.isDeleted,
+    required this.deletedAt,
     required this.createdAt,
   });
 
@@ -29,7 +32,12 @@ class NoteItem {
       sizeBytes: data['sizeBytes'] as int,
       category: NoteCategory.fromKey(data['category'] as String),
       source: data['source'] as String,
+      isFavorite: data['isFavorite'] as bool? ?? false,
+      isDeleted: data['isDeleted'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      deletedAt: data['deletedAt'] != null
+          ? (data['deletedAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -41,5 +49,8 @@ class NoteItem {
   final int sizeBytes;
   final NoteCategory category;
   final String source;
+  final bool isFavorite;
+  final bool isDeleted;
   final DateTime createdAt;
+  final DateTime? deletedAt;
 }

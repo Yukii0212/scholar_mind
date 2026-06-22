@@ -28,6 +28,7 @@ class LibraryRepository {
     return _folders(userId)
         .where('parentId', isEqualTo: parentId)
         .where('isArchived', isEqualTo: false)
+        .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       final folders = snapshot.docs.map(LibraryFolder.fromDocument).toList();
@@ -40,6 +41,7 @@ class LibraryRepository {
     return _folders(userId)
         .where('isFavorite', isEqualTo: true)
         .where('isArchived', isEqualTo: false)
+        .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       final folders = snapshot.docs.map(LibraryFolder.fromDocument).toList();
@@ -51,6 +53,7 @@ class LibraryRepository {
   Stream<List<LibraryFolder>> watchArchivedFolders(String userId) {
     return _folders(userId)
         .where('isArchived', isEqualTo: true)
+        .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       final folders = snapshot.docs.map(LibraryFolder.fromDocument).toList();
@@ -59,9 +62,163 @@ class LibraryRepository {
     });
   }
 
+  Stream<List<LibraryFolder>> watchDeletedFolders(String userId) {
+    return _folders(userId)
+        .where('isDeleted', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) {
+      final folders = snapshot.docs.map(LibraryFolder.fromDocument).toList();
+      folders.sort(_sortFolders);
+      return folders;
+    });
+  }
+
+  Stream<List<NoteItem>> watchDeletedNotes(String userId) {
+    return _notes(userId)
+        .where('isDeleted', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) {
+      final notes = snapshot.docs.map(NoteItem.fromDocument).toList();
+
+      notes.sort(
+            (a, b) => (b.deletedAt ?? b.createdAt)
+            .compareTo(a.deletedAt ?? a.createdAt),
+      );
+
+      return notes;
+    });
+  }
+
+  Future<void> softDeleteFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    final now = FieldValue.serverTimestamp();
+
+    await _folders(userId).doc(folderId).update({
+      'isDeleted': true,
+      'deletedAt': now,
+      'updatedAt': now,
+    });
+
+    await _softDeleteChildren(
+      userId: userId,
+      parentFolderId: folderId,
+    );
+  }
+
+  Future<void> _softDeleteChildren({
+    required String userId,
+    required String parentFolderId,
+  }) async {
+    final now = FieldValue.serverTimestamp();
+
+    final childFolders = await _folders(userId)
+        .where('parentId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final folder in childFolders.docs) {
+      await folder.reference.update({
+        'isDeleted': true,
+        'deletedAt': now,
+        'updatedAt': now,
+      });
+
+      await _softDeleteChildren(
+        userId: userId,
+        parentFolderId: folder.id,
+      );
+    }
+
+    final notes = await _notes(userId)
+        .where('folderId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final note in notes.docs) {
+      await note.reference.update({
+        'isDeleted': true,
+        'deletedAt': now,
+        'updatedAt': now,
+      });
+    }
+  }
+
+  Future<void> restoreFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    await _folders(userId).doc(folderId).update({
+      'isDeleted': false,
+      'deletedAt': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await _restoreChildren(
+      userId: userId,
+      parentFolderId: folderId,
+    );
+  }
+
+  Future<void> _restoreChildren({
+    required String userId,
+    required String parentFolderId,
+  }) async {
+    final childFolders = await _folders(userId)
+        .where('parentId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final folder in childFolders.docs) {
+      await folder.reference.update({
+        'isDeleted': false,
+        'deletedAt': null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      await _restoreChildren(
+        userId: userId,
+        parentFolderId: folder.id,
+      );
+    }
+
+    final notes = await _notes(userId)
+        .where('folderId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final note in notes.docs) {
+      await note.reference.update({
+        'isDeleted': false,
+        'deletedAt': null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  Future<void> softDeleteNote({
+    required String userId,
+    required String noteId,
+  }) {
+    return _notes(userId).doc(noteId).update({
+      'isDeleted': true,
+      'deletedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> restoreNote({
+    required String userId,
+    required String noteId,
+  }) {
+    return _notes(userId).doc(noteId).update({
+      'isDeleted': false,
+      'deletedAt': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Stream<List<NoteItem>> watchNotes(String userId, String folderId) {
     return _notes(userId)
         .where('folderId', isEqualTo: folderId)
+        .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       final notes = snapshot.docs.map(NoteItem.fromDocument).toList();
@@ -88,6 +245,8 @@ class LibraryRepository {
       'parentId': parentId,
       'isFavorite': false,
       'isArchived': false,
+      'isDeleted': false,
+      'deletedAt': null,
       'createdAt': now,
       'updatedAt': now,
     });
@@ -148,8 +307,11 @@ class LibraryRepository {
         'sizeBytes': bytes.length,
         'category': category.key,
         'source': 'manual',
+        'isFavorite': false,
+        'isDeleted': false,
         'createdAt': now,
         'updatedAt': now,
+        'deletedAt': null,
       });
     } catch (_) {
       await storageReference.delete();

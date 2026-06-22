@@ -64,6 +64,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   onSectionChanged: _changeSection,
                   onBreadcrumbPressed: _openBreadcrumb,
                   onCreateFolder: _createFolder,
+                  onCreateNote: _createNote,
                   onUpload: _uploadNotes,
                 ),
               ),
@@ -272,6 +273,59 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     if (!mounted) return;
 
     _showResult(created, successMessage: 'Folder created.');
+  }
+
+  Future<void> _createNote() async {
+    final controller = TextEditingController();
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('New note'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Note name',
+              hintText: 'OSI Revision Notes',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = controller.text.trim();
+
+                if (value.isNotEmpty) {
+                  Navigator.pop(dialogContext, value);
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || name == null) return;
+
+    final created = await ref
+        .read(libraryActionControllerProvider.notifier)
+        .createInternalNote(
+      folderId: _folderId,
+      name: name,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      created,
+      successMessage: 'Note created.',
+    );
   }
 
   Future<void> _moveFolderToTrash(LibraryFolder folder) async {
@@ -485,6 +539,7 @@ class _LibraryHeader extends StatelessWidget {
     required this.onSectionChanged,
     required this.onBreadcrumbPressed,
     required this.onCreateFolder,
+    required this.onCreateNote,
     required this.onUpload,
   });
 
@@ -494,6 +549,7 @@ class _LibraryHeader extends StatelessWidget {
   final ValueChanged<_LibrarySection> onSectionChanged;
   final ValueChanged<int> onBreadcrumbPressed;
   final VoidCallback onCreateFolder;
+  final VoidCallback onCreateNote;
   final VoidCallback onUpload;
 
   @override
@@ -571,6 +627,13 @@ class _LibraryHeader extends StatelessWidget {
                 onPressed: isBusy ? null : onUpload,
                 icon: const Icon(Icons.upload_file_outlined),
                 label: const Text('Upload files'),
+              ),
+              const SizedBox(height: 12),
+
+              OutlinedButton.icon(
+                onPressed: isBusy ? null : onCreateNote,
+                icon: const Icon(Icons.note_add_outlined),
+                label: const Text('New note'),
               ),
             ],
           ),

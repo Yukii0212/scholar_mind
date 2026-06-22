@@ -10,6 +10,8 @@ class NoteItem {
     required this.storagePath,
     required this.extension,
     required this.sizeBytes,
+    required this.isInternal,
+    required this.content,
     required this.category,
     required this.source,
     required this.isFavorite,
@@ -27,13 +29,15 @@ class NoteItem {
       id: document.id,
       name: data['name'] as String,
       folderId: data['folderId'] as String,
-      storagePath: data['storagePath'] as String,
+      storagePath: data['storagePath'] as String? ?? '',
       extension: data['extension'] as String? ?? '',
-      sizeBytes: data['sizeBytes'] as int,
+      sizeBytes: data['sizeBytes'] as int? ?? 0,
+      content: data['content'] as String? ?? '',
       category: NoteCategory.fromKey(data['category'] as String),
       source: data['source'] as String,
       isFavorite: data['isFavorite'] as bool? ?? false,
       isDeleted: data['isDeleted'] as bool? ?? false,
+      isInternal: data['isInternal'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       deletedAt: data['deletedAt'] != null
           ? (data['deletedAt'] as Timestamp).toDate()
@@ -46,11 +50,13 @@ class NoteItem {
   final String folderId;
   final String storagePath;
   final String extension;
-  final int sizeBytes;
-  final NoteCategory category;
   final String source;
+  final String content;
+  final NoteCategory category;
+  final int sizeBytes;
   final bool isFavorite;
   final bool isDeleted;
+  final bool isInternal;
   final DateTime createdAt;
   final DateTime? deletedAt;
 }

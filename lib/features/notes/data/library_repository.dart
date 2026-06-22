@@ -233,6 +233,16 @@ class LibraryRepository {
     await noteDoc.reference.delete();
   }
 
+  Future<void> updateInternalNote({
+    required String userId,
+    required String noteId,
+    required String content,
+  }) async {
+    await _notes(userId).doc(noteId).update({
+      'content': content,
+    });
+  }
+
   Future<void> permanentlyDeleteFolder({
     required String userId,
     required String folderId,
@@ -312,6 +322,41 @@ class LibraryRepository {
       'deletedAt': null,
       'createdAt': now,
       'updatedAt': now,
+    });
+  }
+
+  Future<void> createInternalNote({
+    required String userId,
+    required String folderId,
+    required String name,
+  }) async {
+    final noteName = name.trim();
+
+    if (noteName.isEmpty) {
+      throw ArgumentError('Note name cannot be empty.');
+    }
+
+    final now = FieldValue.serverTimestamp();
+
+    await _notes(userId).add({
+      'name': noteName,
+      'folderId': folderId,
+
+      'storagePath': '',
+      'extension': 'md',
+      'sizeBytes': 0,
+
+      'isInternal': true,
+      'content': '# $noteName\n',
+
+      'category': NoteCategory.selfStudyNotes.key,
+      'source': 'internal',
+
+      'isFavorite': false,
+      'isDeleted': false,
+      'deletedAt': null,
+
+      'createdAt': now,
     });
   }
 

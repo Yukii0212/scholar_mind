@@ -110,6 +110,19 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
+  Future<bool> createInternalNote({
+    required String folderId,
+    required String name,
+  }) {
+    return _run((userId, repository) {
+      return repository.createInternalNote(
+        userId: userId,
+        folderId: folderId,
+        name: name,
+      );
+    });
+  }
+
   Future<bool> setFolderFavorite(LibraryFolder folder, bool value) {
     return _run((userId, repository) {
       return repository.setFolderFavorite(
@@ -181,6 +194,19 @@ class LibraryActionController extends _$LibraryActionController {
       return repository.restoreNote(
         userId: userId,
         noteId: note.id,
+      );
+    });
+  }
+
+  Future<bool> updateInternalNote({
+    required String noteId,
+    required String content,
+  }) {
+    return _run((userId, repository) {
+      return repository.updateInternalNote(
+        userId: userId,
+        noteId: noteId,
+        content: content,
       );
     });
   }

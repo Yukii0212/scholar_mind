@@ -215,6 +215,79 @@ class LibraryRepository {
     });
   }
 
+  Future<void> permanentlyDeleteNote({
+    required String userId,
+    required String noteId,
+  }) async {
+    final noteDoc = await _notes(userId).doc(noteId).get();
+
+    if (!noteDoc.exists) return;
+
+    final note = NoteItem.fromDocument(noteDoc);
+
+    try {
+      await _storage.ref(note.storagePath).delete();
+    } catch (_) {
+    }
+
+    await noteDoc.reference.delete();
+  }
+
+  Future<void> updateInternalNote({
+    required String userId,
+    required String noteId,
+    required String content,
+  }) async {
+    await _notes(userId).doc(noteId).update({
+      'content': content,
+    });
+  }
+
+  Future<void> permanentlyDeleteFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    await _permanentlyDeleteChildren(
+      userId: userId,
+      parentFolderId: folderId,
+    );
+
+    await _folders(userId).doc(folderId).delete();
+  }
+
+  Future<void> _permanentlyDeleteChildren({
+    required String userId,
+    required String parentFolderId,
+  }) async {
+    final childFolders = await _folders(userId)
+        .where('parentId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final folder in childFolders.docs) {
+      await _permanentlyDeleteChildren(
+        userId: userId,
+        parentFolderId: folder.id,
+      );
+
+      await folder.reference.delete();
+    }
+
+    final notes = await _notes(userId)
+        .where('folderId', isEqualTo: parentFolderId)
+        .get();
+
+    for (final noteDoc in notes.docs) {
+      final note = NoteItem.fromDocument(noteDoc);
+
+      try {
+        await _storage.ref(note.storagePath).delete();
+      } catch (_) {
+      }
+
+      await noteDoc.reference.delete();
+    }
+  }
+
   Stream<List<NoteItem>> watchNotes(String userId, String folderId) {
     return _notes(userId)
         .where('folderId', isEqualTo: folderId)
@@ -249,6 +322,41 @@ class LibraryRepository {
       'deletedAt': null,
       'createdAt': now,
       'updatedAt': now,
+    });
+  }
+
+  Future<void> createInternalNote({
+    required String userId,
+    required String folderId,
+    required String name,
+  }) async {
+    final noteName = name.trim();
+
+    if (noteName.isEmpty) {
+      throw ArgumentError('Note name cannot be empty.');
+    }
+
+    final now = FieldValue.serverTimestamp();
+
+    await _notes(userId).add({
+      'name': noteName,
+      'folderId': folderId,
+
+      'storagePath': '',
+      'extension': 'md',
+      'sizeBytes': 0,
+
+      'isInternal': true,
+      'content': '# $noteName\n',
+
+      'category': NoteCategory.selfStudyNotes.key,
+      'source': 'internal',
+
+      'isFavorite': false,
+      'isDeleted': false,
+      'deletedAt': null,
+
+      'createdAt': now,
     });
   }
 

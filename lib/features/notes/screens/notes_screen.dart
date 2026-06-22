@@ -8,6 +8,7 @@ import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
 import '../providers/library_provider.dart';
+import 'note_editor_screen.dart';
 
 enum _LibrarySection {
   browse,
@@ -64,6 +65,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   onSectionChanged: _changeSection,
                   onBreadcrumbPressed: _openBreadcrumb,
                   onCreateFolder: _createFolder,
+                  onCreateNote: _createNote,
                   onUpload: _uploadNotes,
                 ),
               ),
@@ -135,6 +137,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 onOpen: () => _openFolder(folder),
                 onDelete: () => _moveFolderToTrash(folder),
                 onRestore: () => _restoreFolder(folder),
+                onPermanentDelete: () => _permanentlyDeleteFolder(folder),
                 onToggleFavorite: () => _toggleFavorite(folder),
                 onToggleArchived: () => _toggleArchived(folder),
               );
@@ -212,7 +215,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           sliver: SliverList.separated(
             itemCount: items.length,
             separatorBuilder: (_, __) => const Gap(8),
-            itemBuilder: (context, index) => _NoteCard(note: items[index]),
+            itemBuilder: (context, index) => _NoteCard(
+              note: items[index],
+              onTap: () => _openNote(items[index]),
+            ),
           ),
         ),
         if (items.isEmpty && !hasFolders)
@@ -273,6 +279,79 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     _showResult(created, successMessage: 'Folder created.');
   }
 
+  Future<void> _createNote() async {
+    final controller = TextEditingController();
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('New note'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Note name',
+              hintText: 'OSI Revision Notes',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = controller.text.trim();
+
+                if (value.isNotEmpty) {
+                  Navigator.pop(dialogContext, value);
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || name == null) return;
+
+    final created = await ref
+        .read(libraryActionControllerProvider.notifier)
+        .createInternalNote(
+      folderId: _folderId,
+      name: name,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      created,
+      successMessage: 'Note created.',
+    );
+  }
+
+  void _openNote(NoteItem note) {
+    if (!note.isInternal) {
+      _showMessage(
+        'Opening uploaded files will be implemented later.',
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NoteEditorScreen(
+          noteId: note.id,
+          noteTitle: note.name,
+          content: note.content,
+        ),
+      ),
+    );
+  }
+
   Future<void> _moveFolderToTrash(LibraryFolder folder) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -319,6 +398,45 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     _showResult(
       success,
       successMessage: 'Folder restored.',
+    );
+  }
+
+  Future<void> _permanentlyDeleteFolder(
+      LibraryFolder folder,
+      ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete permanently?'),
+        content: const Text(
+          'This folder, all child folders, and all notes inside it '
+              'will be permanently deleted.\n\n'
+              'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(libraryActionControllerProvider.notifier)
+        .permanentlyDeleteFolder(folder);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Folder permanently deleted.',
     );
   }
 
@@ -445,6 +563,7 @@ class _LibraryHeader extends StatelessWidget {
     required this.onSectionChanged,
     required this.onBreadcrumbPressed,
     required this.onCreateFolder,
+    required this.onCreateNote,
     required this.onUpload,
   });
 
@@ -454,6 +573,7 @@ class _LibraryHeader extends StatelessWidget {
   final ValueChanged<_LibrarySection> onSectionChanged;
   final ValueChanged<int> onBreadcrumbPressed;
   final VoidCallback onCreateFolder;
+  final VoidCallback onCreateNote;
   final VoidCallback onUpload;
 
   @override
@@ -532,6 +652,13 @@ class _LibraryHeader extends StatelessWidget {
                 icon: const Icon(Icons.upload_file_outlined),
                 label: const Text('Upload files'),
               ),
+              const SizedBox(height: 12),
+
+              OutlinedButton.icon(
+                onPressed: isBusy ? null : onCreateNote,
+                icon: const Icon(Icons.note_add_outlined),
+                label: const Text('New note'),
+              ),
             ],
           ),
         ],
@@ -550,6 +677,7 @@ class _FolderCard extends StatelessWidget {
     required this.onToggleArchived,
     required this.onDelete,
     required this.onRestore,
+    required this.onPermanentDelete,
   });
 
   final LibraryFolder folder;
@@ -560,7 +688,7 @@ class _FolderCard extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onToggleFavorite;
   final VoidCallback onToggleArchived;
-
+  final VoidCallback onPermanentDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -606,6 +734,9 @@ class _FolderCard extends StatelessWidget {
 
                     case _FolderAction.restore:
                       onRestore();
+
+                    case _FolderAction.permanentDelete:
+                      onPermanentDelete();
                   }
                 },
                 itemBuilder: (context) {
@@ -614,6 +745,10 @@ class _FolderCard extends StatelessWidget {
                       const PopupMenuItem(
                         value: _FolderAction.restore,
                         child: Text('Restore'),
+                      ),
+                      const PopupMenuItem(
+                        value: _FolderAction.permanentDelete,
+                        child: Text('Delete Permanently'),
                       ),
                     ];
                   }
@@ -658,17 +793,23 @@ enum _FolderAction {
   archive,
   trash,
   restore,
+  permanentDelete,
 }
 
 class _NoteCard extends StatelessWidget {
-  const _NoteCard({required this.note});
+  const _NoteCard({
+    required this.note,
+    required this.onTap,
+  });
 
   final NoteItem note;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           child: Icon(_fileIcon(note.extension)),
         ),

@@ -239,13 +239,24 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ),
         ),
         if (items.isEmpty && !hasFolders)
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(20, 48, 20, 24),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              48,
+              20,
+              24,
+            ),
             sliver: SliverToBoxAdapter(
               child: _EmptyState(
-                icon: Icons.upload_file_outlined,
-                title: 'This folder is empty',
-                message: 'Create a subfolder or upload your first note.',
+                icon: _section == _LibrarySection.trash
+                    ? Icons.delete_outline
+                    : Icons.upload_file_outlined,
+                title: _section == _LibrarySection.trash
+                    ? 'Trash is empty'
+                    : 'This folder is empty',
+                message: _section == _LibrarySection.trash
+                    ? 'Deleted notes will appear here.'
+                    : 'Create a subfolder or upload your first note.',
               ),
             ),
           ),

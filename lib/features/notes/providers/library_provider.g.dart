@@ -172,6 +172,21 @@ class _ChildFoldersProviderElement
   String get parentId => (origin as ChildFoldersProvider).parentId;
 }
 
+String _$allFoldersHash() => r'314d1d84039fff6091004d18944e641e075d64e7';
+
+/// See also [allFolders].
+@ProviderFor(allFolders)
+final allFoldersProvider =
+    AutoDisposeStreamProvider<List<LibraryFolder>>.internal(
+  allFolders,
+  name: r'allFoldersProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$allFoldersHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef AllFoldersRef = AutoDisposeStreamProviderRef<List<LibraryFolder>>;
 String _$favoriteFoldersHash() => r'8dcf2af359bbc33bb5062d23ff579af0037e7cb6';
 
 /// See also [favoriteFolders].
@@ -188,6 +203,22 @@ final favoriteFoldersProvider =
 );
 
 typedef FavoriteFoldersRef = AutoDisposeStreamProviderRef<List<LibraryFolder>>;
+String _$favoriteNotesHash() => r'e3e9dab5c9179ed7a2334fcfad28d20e43181762';
+
+/// See also [favoriteNotes].
+@ProviderFor(favoriteNotes)
+final favoriteNotesProvider =
+    AutoDisposeStreamProvider<List<NoteItem>>.internal(
+  favoriteNotes,
+  name: r'favoriteNotesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$favoriteNotesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef FavoriteNotesRef = AutoDisposeStreamProviderRef<List<NoteItem>>;
 String _$archivedFoldersHash() => r'd8a49b64bc427098eb38199eba625707d5a97b18';
 
 /// See also [archivedFolders].
@@ -364,7 +395,7 @@ class _NotesInFolderProviderElement
 }
 
 String _$libraryActionControllerHash() =>
-    r'f98754efc1a3bc7f9c0f004153f188f8e67b99ce';
+    r'cfdae58904e40f7e449171fcf8cf328e78941d39';
 
 /// See also [LibraryActionController].
 @ProviderFor(LibraryActionController)

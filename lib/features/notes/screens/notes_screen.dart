@@ -1,13 +1,20 @@
+import 'dart:io';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../data/library_repository.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
 import '../providers/library_provider.dart';
+import '../widgets/folder_picker_dialog.dart';
 import 'note_editor_screen.dart';
 
 enum _LibrarySection {
@@ -44,6 +51,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       _LibrarySection.browse =>
           ref.watch(notesInFolderProvider(_folderId)),
 
+      _LibrarySection.favorites =>
+          ref.watch(favoriteNotesProvider),
+
       _LibrarySection.trash =>
           ref.watch(deletedNotesProvider),
 
@@ -71,7 +81,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
             ..._buildFolderSlivers(folders),
-            if (_section == _LibrarySection.browse) ..._buildNoteSlivers(
+            if (_section == _LibrarySection.browse ||
+                _section == _LibrarySection.favorites ||
+                _section == _LibrarySection.trash) ..._buildNoteSlivers(
               notes,
               folders.hasValue
                   ? folders.valueOrNull?.isNotEmpty ?? false
@@ -132,14 +144,26 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               final folder = items[index];
               return _FolderCard(
                 folder: folder,
-                isArchivedSection: _section == _LibrarySection.archived,
-                isTrashSection: _section == _LibrarySection.trash,
+                isArchivedSection:
+                _section == _LibrarySection.archived,
+                isTrashSection:
+                _section == _LibrarySection.trash,
                 onOpen: () => _openFolder(folder),
                 onDelete: () => _moveFolderToTrash(folder),
+
+                onMove: () => _moveFolder(folder),
+
                 onRestore: () => _restoreFolder(folder),
-                onPermanentDelete: () => _permanentlyDeleteFolder(folder),
-                onToggleFavorite: () => _toggleFavorite(folder),
-                onToggleArchived: () => _toggleArchived(folder),
+                onRename: () => _renameFolder(folder),
+
+                onPermanentDelete: () =>
+                    _permanentlyDeleteFolder(folder),
+
+                onToggleFavorite: () =>
+                    _toggleFavorite(folder),
+
+                onToggleArchived: () =>
+                    _toggleArchived(folder),
               );
             },
           ),
@@ -217,18 +241,54 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             separatorBuilder: (_, __) => const Gap(8),
             itemBuilder: (context, index) => _NoteCard(
               note: items[index],
+
               onTap: () => _openNote(items[index]),
+
+              onRename: () =>
+                  _renameNote(items[index]),
+
+              onMove: () =>
+                  _moveNote(items[index]),
+
+              onCopy: () =>
+                  _copyNote(items[index]),
+
+              onToggleFavorite: () =>
+                  _toggleNoteFavorite(items[index]),
+
+              onDelete: () =>
+                  _deleteNote(items[index]),
+
+              isTrashSection:
+              _section == _LibrarySection.trash,
+
+              onRestore: () =>
+                  _restoreNote(items[index]),
+
+              onPermanentDelete: () =>
+                  _permanentlyDeleteNote(items[index]),
             ),
           ),
         ),
         if (items.isEmpty && !hasFolders)
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(20, 48, 20, 24),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              48,
+              20,
+              24,
+            ),
             sliver: SliverToBoxAdapter(
               child: _EmptyState(
-                icon: Icons.upload_file_outlined,
-                title: 'This folder is empty',
-                message: 'Create a subfolder or upload your first note.',
+                icon: _section == _LibrarySection.trash
+                    ? Icons.delete_outline
+                    : Icons.upload_file_outlined,
+                title: _section == _LibrarySection.trash
+                    ? 'Trash is empty'
+                    : 'This folder is empty',
+                message: _section == _LibrarySection.trash
+                    ? 'Deleted notes will appear here.'
+                    : 'Create a subfolder or upload your first note.',
               ),
             ),
           ),
@@ -277,6 +337,347 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     if (!mounted) return;
 
     _showResult(created, successMessage: 'Folder created.');
+  }
+
+  Future<String?> _pickFolder({
+    String? excludeFolderId,
+  }) async {
+    final folders =
+    await ref.read(
+      allFoldersProvider.future,
+    );
+
+    if (!mounted) return null;
+
+    return showDialog<String>(
+      context: context,
+      builder: (_) => FolderPickerDialog(
+        folders: folders,
+        excludeFolderId:
+        excludeFolderId,
+      ),
+    );
+  }
+
+  Future<void> _moveNote(
+      NoteItem note,
+      ) async {
+    final destination =
+    await _pickFolder();
+
+    if (destination == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider
+          .notifier,
+    )
+        .moveNote(
+      noteId: note.id,
+      destinationFolderId:
+      destination,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note moved successfully.',
+    );
+  }
+
+  Future<void> _copyNote(
+      NoteItem note,
+      ) async {
+    final destination =
+    await _pickFolder();
+
+    if (destination == null) {
+      return;
+    }
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider
+          .notifier,
+    )
+        .copyNote(
+      noteId: note.id,
+      destinationFolderId:
+      destination,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note copied successfully.',
+    );
+  }
+
+  Future<void> _moveFolder(
+      LibraryFolder folder,
+      ) async {
+    final destination =
+    await _pickFolder(
+      excludeFolderId: folder.id,
+    );
+
+    if (destination == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider
+          .notifier,
+    )
+        .moveFolder(
+      folderId: folder.id,
+      destinationFolderId:
+      destination,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Folder moved successfully.',
+    );
+  }
+
+  Future<void> _renameFolder(
+      LibraryFolder folder,
+      ) async {
+    final controller = TextEditingController(
+      text: folder.name,
+    );
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Rename folder'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Folder name',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value =
+                controller.text.trim();
+
+                if (value.isNotEmpty) {
+                  Navigator.pop(
+                    dialogContext,
+                    value,
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || name == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .renameFolder(
+      folderId: folder.id,
+      name: name,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Folder renamed successfully.',
+    );
+  }
+
+  Future<void> _renameNote(
+      NoteItem note,
+      ) async {
+    final controller = TextEditingController(
+      text: note.name,
+    );
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Rename note'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Note name',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value =
+                controller.text.trim();
+
+                if (value.isNotEmpty) {
+                  Navigator.pop(
+                    dialogContext,
+                    value,
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || name == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .renameNote(
+      noteId: note.id,
+      name: name,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note renamed successfully.',
+    );
+  }
+
+  Future<void> _toggleNoteFavorite(
+      NoteItem note,
+      ) async {
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .toggleNoteFavorite(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: note.isFavorite
+          ? 'Removed from favourites.'
+          : 'Added to favourites.',
+    );
+  }
+
+  Future<void> _deleteNote(
+      NoteItem note,
+      ) async {
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .softDeleteNote(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Moved to Trash.',
+    );
+  }
+
+  Future<void> _restoreNote(
+      NoteItem note,
+      ) async {
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .restoreNote(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Note restored.',
+    );
+  }
+
+  Future<void> _permanentlyDeleteNote(
+      NoteItem note,
+      ) async {
+    final confirmed =
+    await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) =>
+          AlertDialog(
+            title:
+            const Text('Delete permanently?'),
+            content: const Text(
+              'This note will be permanently deleted.\n\n'
+                  'This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      false,
+                    ),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      true,
+                    ),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .permanentlyDeleteNote(note);
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note permanently deleted.',
+    );
   }
 
   Future<void> _createNote() async {
@@ -332,11 +733,54 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
-  void _openNote(NoteItem note) {
-    if (!note.isInternal) {
-      _showMessage(
-        'Opening uploaded files will be implemented later.',
+  Future<void> _openUploadedFile(
+      NoteItem note,
+      ) async {
+    try {
+      final storageRef =
+      FirebaseStorage.instance.ref(
+        note.storagePath,
       );
+
+      final downloadUrl =
+      await storageRef.getDownloadURL();
+
+      final response =
+      await http.get(
+        Uri.parse(downloadUrl),
+      );
+
+      final tempDir =
+      await getTemporaryDirectory();
+
+      final filePath =
+          '${tempDir.path}/${note.name}';
+
+      final file = File(filePath);
+
+      await file.writeAsBytes(
+        response.bodyBytes,
+      );
+
+      await OpenFilex.open(
+        file.path,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      _showMessage(
+        'Failed to open file.',
+      );
+    }
+  }
+
+  void _openNote(NoteItem note) {
+    if (_section == _LibrarySection.trash) {
+      return;
+    }
+
+    if (!note.isInternal) {
+      _openUploadedFile(note);
       return;
     }
 
@@ -458,6 +902,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             'ppt',
             'pptx',
             'txt',
+            'md',
           ],
         ),
       ],
@@ -672,11 +1117,13 @@ class _FolderCard extends StatelessWidget {
     required this.folder,
     required this.isArchivedSection,
     required this.isTrashSection,
-    required this.onOpen,
-    required this.onToggleFavorite,
-    required this.onToggleArchived,
     required this.onDelete,
     required this.onRestore,
+    required this.onOpen,
+    required this.onMove,
+    required this.onRename,
+    required this.onToggleFavorite,
+    required this.onToggleArchived,
     required this.onPermanentDelete,
   });
 
@@ -686,6 +1133,8 @@ class _FolderCard extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onDelete;
   final VoidCallback onRestore;
+  final VoidCallback onRename;
+  final VoidCallback onMove;
   final VoidCallback onToggleFavorite;
   final VoidCallback onToggleArchived;
   final VoidCallback onPermanentDelete;
@@ -720,43 +1169,67 @@ class _FolderCard extends StatelessWidget {
                   size: 18,
                   color: Theme.of(context).colorScheme.tertiary,
                 ),
-              PopupMenuButton<_FolderAction>(
+              PopupMenuButton<_LibraryItemAction>(
                 onSelected: (action) {
                   switch (action) {
-                    case _FolderAction.favorite:
+                    case _LibraryItemAction.rename:
+                      onRename();
+                      return;
+
+                    case _LibraryItemAction.move:
+                      onMove();
+                      return;
+
+                    case _LibraryItemAction.copy:
+                      return;
+
+                    case _LibraryItemAction.favorite:
                       onToggleFavorite();
+                      return;
 
-                    case _FolderAction.archive:
+                    case _LibraryItemAction.archive:
                       onToggleArchived();
+                      return;
 
-                    case _FolderAction.trash:
+                    case _LibraryItemAction.trash:
                       onDelete();
+                      return;
 
-                    case _FolderAction.restore:
+                    case _LibraryItemAction.restore:
                       onRestore();
+                      return;
 
-                    case _FolderAction.permanentDelete:
+                    case _LibraryItemAction.permanentDelete:
                       onPermanentDelete();
+                      return;
                   }
                 },
                 itemBuilder: (context) {
                   if (isTrashSection) {
                     return [
                       const PopupMenuItem(
-                        value: _FolderAction.restore,
+                        value: _LibraryItemAction.restore,
                         child: Text('Restore'),
                       ),
                       const PopupMenuItem(
-                        value: _FolderAction.permanentDelete,
+                        value: _LibraryItemAction.permanentDelete,
                         child: Text('Delete Permanently'),
                       ),
                     ];
                   }
 
                   return [
+                    const PopupMenuItem(
+                      value: _LibraryItemAction.rename,
+                      child: Text('Rename'),
+                    ),
                     if (!isArchivedSection)
+                      const PopupMenuItem(
+                        value: _LibraryItemAction.move,
+                        child: Text('Move'),
+                      ),
                       PopupMenuItem(
-                        value: _FolderAction.favorite,
+                        value: _LibraryItemAction.favorite,
                         child: Text(
                           folder.isFavorite
                               ? 'Remove favourite'
@@ -765,7 +1238,7 @@ class _FolderCard extends StatelessWidget {
                       ),
 
                     PopupMenuItem(
-                      value: _FolderAction.archive,
+                      value: _LibraryItemAction.archive,
                       child: Text(
                         isArchivedSection
                             ? 'Restore'
@@ -774,7 +1247,7 @@ class _FolderCard extends StatelessWidget {
                     ),
 
                     const PopupMenuItem(
-                      value: _FolderAction.trash,
+                      value: _LibraryItemAction.trash,
                       child: Text('Move to Trash'),
                     ),
                   ];
@@ -788,7 +1261,10 @@ class _FolderCard extends StatelessWidget {
   }
 }
 
-enum _FolderAction {
+enum _LibraryItemAction {
+  rename,
+  move,
+  copy,
   favorite,
   archive,
   trash,
@@ -800,10 +1276,26 @@ class _NoteCard extends StatelessWidget {
   const _NoteCard({
     required this.note,
     required this.onTap,
+    required this.onRename,
+    required this.onToggleFavorite,
+    required this.onDelete,
+    required this.onMove,
+    required this.onCopy,
+    required this.isTrashSection,
+    required this.onRestore,
+    required this.onPermanentDelete,
   });
 
+  final bool isTrashSection;
   final NoteItem note;
   final VoidCallback onTap;
+  final VoidCallback onMove;
+  final VoidCallback onRename;
+  final VoidCallback onCopy;
+  final VoidCallback onToggleFavorite;
+  final VoidCallback onRestore;
+  final VoidCallback onPermanentDelete;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -817,12 +1309,88 @@ class _NoteCard extends StatelessWidget {
         subtitle: Text(
           '${note.category.label} • ${_formatBytes(note.sizeBytes)}',
         ),
-        trailing: note.source == 'classroom'
-            ? const Tooltip(
-                message: 'Imported from Google Classroom',
-                child: Icon(Icons.school_outlined),
-              )
-            : null,
+        trailing: PopupMenuButton<_LibraryItemAction>(
+          onSelected: (action) {
+            switch (action) {
+              case _LibraryItemAction.rename:
+                onRename();
+                return;
+
+              case _LibraryItemAction.move:
+                onMove();
+                return;
+
+              case _LibraryItemAction.copy:
+                onCopy();
+                return;
+
+              case _LibraryItemAction.favorite:
+                onToggleFavorite();
+                return;
+
+              case _LibraryItemAction.archive:
+                return;
+
+              case _LibraryItemAction.trash:
+                onDelete();
+                return;
+
+              case _LibraryItemAction.restore:
+                onRestore();
+                return;
+
+              case _LibraryItemAction.permanentDelete:
+                onPermanentDelete();
+                return;
+            }
+          },
+          itemBuilder: (context) {
+            if (isTrashSection) {
+              return const [
+                PopupMenuItem(
+                  value: _LibraryItemAction.restore,
+                  child: Text('Restore'),
+                ),
+                PopupMenuItem(
+                  value:
+                  _LibraryItemAction.permanentDelete,
+                  child: Text('Delete Permanently'),
+                ),
+              ];
+            }
+
+            return [
+              const PopupMenuItem(
+                value: _LibraryItemAction.rename,
+                child: Text('Rename'),
+              ),
+
+              const PopupMenuItem(
+                value: _LibraryItemAction.move,
+                child: Text('Move'),
+              ),
+
+              const PopupMenuItem(
+                value: _LibraryItemAction.copy,
+                child: Text('Copy'),
+              ),
+
+              PopupMenuItem(
+                value: _LibraryItemAction.favorite,
+                child: Text(
+                  note.isFavorite
+                      ? 'Remove favourite'
+                      : 'Add to favourites',
+                ),
+              ),
+
+              const PopupMenuItem(
+                value: _LibraryItemAction.trash,
+                child: Text('Move to Trash'),
+              ),
+            ];
+          },
+        ),
       ),
     );
   }

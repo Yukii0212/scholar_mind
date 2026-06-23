@@ -33,11 +33,43 @@ Stream<List<LibraryFolder>> childFolders(
 }
 
 @riverpod
+Stream<List<LibraryFolder>> allFolders(
+    AllFoldersRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchAllFolders(userId);
+}
+
+@riverpod
 Stream<List<LibraryFolder>> favoriteFolders(FavoriteFoldersRef ref) {
   final userId = ref.watch(authStateProvider).valueOrNull?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref.watch(libraryRepositoryProvider).watchFavoriteFolders(userId);
+}
+
+@riverpod
+Stream<List<NoteItem>> favoriteNotes(
+    FavoriteNotesRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchFavoriteNotes(userId);
 }
 
 @riverpod
@@ -110,6 +142,74 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
+  Future<bool> renameNote({
+    required String noteId,
+    required String name,
+  }) {
+    return _run((userId, repository) {
+      return repository.renameNote(
+        userId: userId,
+        noteId: noteId,
+        name: name,
+      );
+    });
+  }
+
+  Future<bool> renameFolder({
+    required String folderId,
+    required String name,
+  }) {
+    return _run((userId, repository) {
+      return repository.renameFolder(
+        userId: userId,
+        folderId: folderId,
+        name: name,
+      );
+    });
+  }
+
+  Future<bool> moveFolder({
+    required String folderId,
+    required String destinationFolderId,
+  }) {
+    return _run((userId, repository) {
+      return repository.moveFolder(
+        userId: userId,
+        folderId: folderId,
+        destinationFolderId:
+        destinationFolderId,
+      );
+    });
+  }
+
+  Future<bool> moveNote({
+    required String noteId,
+    required String destinationFolderId,
+  }) {
+    return _run((userId, repository) {
+      return repository.moveNote(
+        userId: userId,
+        noteId: noteId,
+        destinationFolderId:
+        destinationFolderId,
+      );
+    });
+  }
+
+  Future<bool> copyNote({
+    required String noteId,
+    required String destinationFolderId,
+  }) {
+    return _run((userId, repository) {
+      return repository.copyNote(
+        userId: userId,
+        noteId: noteId,
+        destinationFolderId:
+        destinationFolderId,
+      );
+    });
+  }
+
   Future<bool> createInternalNote({
     required String folderId,
     required String name,
@@ -129,6 +229,18 @@ class LibraryActionController extends _$LibraryActionController {
         userId: userId,
         folderId: folder.id,
         isFavorite: value,
+      );
+    });
+  }
+
+  Future<bool> toggleNoteFavorite(
+      NoteItem note,
+      ) {
+    return _run((userId, repository) {
+      return repository.setNoteFavorite(
+        userId: userId,
+        noteId: note.id,
+        isFavorite: !note.isFavorite,
       );
     });
   }

@@ -14,6 +14,7 @@ import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
 import '../providers/library_provider.dart';
+import '../providers/google_classroom_provider.dart';
 import '../widgets/folder_picker_dialog.dart';
 import 'note_editor_screen.dart';
 
@@ -22,6 +23,12 @@ enum _LibrarySection {
   favorites,
   archived,
   trash,
+}
+
+enum _ImportSource {
+  device,
+  classroom,
+  drive,
 }
 
 class NotesScreen extends ConsumerStatefulWidget {
@@ -200,6 +207,55 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ),
       ],
     );
+  }
+
+  Future<void> _testGoogleClassroom() async {
+    try {
+      final courses = await ref.read(
+        classroomCoursesProvider.future,
+      );
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text(
+              'Google Classroom Courses',
+            ),
+            content: SizedBox(
+              width: 300,
+              child: ListView(
+                shrinkWrap: true,
+                children: courses
+                    .map(
+                      (course) => ListTile(
+                    title: Text(
+                      course.name,
+                    ),
+                  ),
+                )
+                    .toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      _showMessage(
+        'Failed: $e',
+      );
+    }
   }
 
   List<Widget> _buildNoteSlivers(
@@ -885,6 +941,84 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   Future<void> _uploadNotes() async {
+    final source =
+    await showModalBottomSheet<_ImportSource>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.phone_android,
+                ),
+                title: const Text(
+                  'Device',
+                ),
+                onTap: () {
+                  Navigator.pop(
+                    context,
+                    _ImportSource.device,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.school,
+                ),
+                title: const Text(
+                  'Google Classroom',
+                ),
+                onTap: () {
+                  Navigator.pop(
+                    context,
+                    _ImportSource.classroom,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.cloud,
+                ),
+                title: const Text(
+                  'Google Drive',
+                ),
+                onTap: () {
+                  Navigator.pop(
+                    context,
+                    _ImportSource.drive,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || source == null) {
+      return;
+    }
+
+    switch (source) {
+      case _ImportSource.device:
+        await _uploadFromDevice();
+        break;
+
+      case _ImportSource.classroom:
+        await _testGoogleClassroom();
+        break;
+
+      case _ImportSource.drive:
+        _showMessage(
+          'Google Drive integration coming next.',
+        );
+        break;
+    }
+  }
+
+  Future<void> _uploadFromDevice() async {
     final category = await showDialog<NoteCategory>(
       context: context,
       builder: (context) => const _CategoryDialog(),

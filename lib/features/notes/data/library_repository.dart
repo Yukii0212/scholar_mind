@@ -285,6 +285,25 @@ class LibraryRepository {
     required String noteId,
     required String destinationFolderId,
   }) async {
+    final noteDoc =
+    await _notes(userId)
+        .doc(noteId)
+        .get();
+
+    if (!noteDoc.exists) {
+      throw ArgumentError('Note not found.');
+    }
+
+    final currentFolderId =
+    noteDoc.data()?['folderId'];
+
+    if (currentFolderId ==
+        destinationFolderId) {
+      throw ArgumentError(
+        'Note is already in that folder.',
+      );
+    }
+
     await _notes(userId).doc(noteId).update({
       'folderId': destinationFolderId,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -297,7 +316,24 @@ class LibraryRepository {
     required String destinationFolderId,
   }) async {
     if (folderId == destinationFolderId) {
-      throw ArgumentError(
+      final folderDoc =
+      await _folders(userId)
+          .doc(folderId)
+          .get();
+
+      if (!folderDoc.exists) {
+        throw ArgumentError('Folder not found.');
+      }
+
+      final currentParent =
+      folderDoc.data()?['parentId'];
+
+      if (currentParent ==
+          destinationFolderId) {
+        throw ArgumentError(
+          'Folder is already in that location.',
+        );
+      }throw ArgumentError(
         'A folder cannot be moved into itself.',
       );
     }

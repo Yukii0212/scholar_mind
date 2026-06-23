@@ -8,6 +8,7 @@ import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
 import '../providers/library_provider.dart';
+import '../widgets/folder_picker_dialog.dart';
 import 'note_editor_screen.dart';
 
 enum _LibrarySection {
@@ -137,15 +138,26 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               final folder = items[index];
               return _FolderCard(
                 folder: folder,
-                isArchivedSection: _section == _LibrarySection.archived,
-                isTrashSection: _section == _LibrarySection.trash,
+                isArchivedSection:
+                _section == _LibrarySection.archived,
+                isTrashSection:
+                _section == _LibrarySection.trash,
                 onOpen: () => _openFolder(folder),
                 onDelete: () => _moveFolderToTrash(folder),
+
+                onMove: () => _moveFolder(folder),
+
                 onRestore: () => _restoreFolder(folder),
                 onRename: () => _renameFolder(folder),
-                onPermanentDelete: () => _permanentlyDeleteFolder(folder),
-                onToggleFavorite: () => _toggleFavorite(folder),
-                onToggleArchived: () => _toggleArchived(folder),
+
+                onPermanentDelete: () =>
+                    _permanentlyDeleteFolder(folder),
+
+                onToggleFavorite: () =>
+                    _toggleFavorite(folder),
+
+                onToggleArchived: () =>
+                    _toggleArchived(folder),
               );
             },
           ),
@@ -223,16 +235,27 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             separatorBuilder: (_, __) => const Gap(8),
             itemBuilder: (context, index) => _NoteCard(
               note: items[index],
+
               onTap: () => _openNote(items[index]),
-              onRename: () => _renameNote(items[index]),
+
+              onRename: () =>
+                  _renameNote(items[index]),
+
+              onMove: () =>
+                  _moveNote(items[index]),
+
               onToggleFavorite: () =>
                   _toggleNoteFavorite(items[index]),
+
               onDelete: () =>
                   _deleteNote(items[index]),
+
               isTrashSection:
               _section == _LibrarySection.trash,
+
               onRestore: () =>
                   _restoreNote(items[index]),
+
               onPermanentDelete: () =>
                   _permanentlyDeleteNote(items[index]),
             ),
@@ -305,6 +328,84 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     if (!mounted) return;
 
     _showResult(created, successMessage: 'Folder created.');
+  }
+
+  Future<String?> _pickFolder({
+    String? excludeFolderId,
+  }) async {
+    final folders =
+    await ref.read(
+      allFoldersProvider.future,
+    );
+
+    if (!mounted) return null;
+
+    return showDialog<String>(
+      context: context,
+      builder: (_) => FolderPickerDialog(
+        folders: folders,
+        excludeFolderId:
+        excludeFolderId,
+      ),
+    );
+  }
+
+  Future<void> _moveNote(
+      NoteItem note,
+      ) async {
+    final destination =
+    await _pickFolder();
+
+    if (destination == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider
+          .notifier,
+    )
+        .moveNote(
+      noteId: note.id,
+      destinationFolderId:
+      destination,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note moved successfully.',
+    );
+  }
+
+  Future<void> _moveFolder(
+      LibraryFolder folder,
+      ) async {
+    final destination =
+    await _pickFolder(
+      excludeFolderId: folder.id,
+    );
+
+    if (destination == null) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider
+          .notifier,
+    )
+        .moveFolder(
+      folderId: folder.id,
+      destinationFolderId:
+      destination,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Folder moved successfully.',
+    );
   }
 
   Future<void> _renameFolder(
@@ -941,6 +1042,7 @@ class _FolderCard extends StatelessWidget {
     required this.onDelete,
     required this.onRestore,
     required this.onOpen,
+    required this.onMove,
     required this.onRename,
     required this.onToggleFavorite,
     required this.onToggleArchived,
@@ -954,6 +1056,7 @@ class _FolderCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onRestore;
   final VoidCallback onRename;
+  final VoidCallback onMove;
   final VoidCallback onToggleFavorite;
   final VoidCallback onToggleArchived;
   final VoidCallback onPermanentDelete;
@@ -996,6 +1099,7 @@ class _FolderCard extends StatelessWidget {
                       return;
 
                     case _LibraryItemAction.move:
+                      onMove();
                       return;
 
                     case _LibraryItemAction.copy:
@@ -1042,6 +1146,10 @@ class _FolderCard extends StatelessWidget {
                       child: Text('Rename'),
                     ),
                     if (!isArchivedSection)
+                      const PopupMenuItem(
+                        value: _LibraryItemAction.move,
+                        child: Text('Move'),
+                      ),
                       PopupMenuItem(
                         value: _LibraryItemAction.favorite,
                         child: Text(
@@ -1093,6 +1201,7 @@ class _NoteCard extends StatelessWidget {
     required this.onRename,
     required this.onToggleFavorite,
     required this.onDelete,
+    required this.onMove,
     required this.isTrashSection,
     required this.onRestore,
     required this.onPermanentDelete,
@@ -1101,6 +1210,7 @@ class _NoteCard extends StatelessWidget {
   final bool isTrashSection;
   final NoteItem note;
   final VoidCallback onTap;
+  final VoidCallback onMove;
   final VoidCallback onRename;
   final VoidCallback onToggleFavorite;
   final VoidCallback onRestore;
@@ -1127,6 +1237,7 @@ class _NoteCard extends StatelessWidget {
                 return;
 
               case _LibraryItemAction.move:
+                onMove();
                 return;
 
               case _LibraryItemAction.copy:
@@ -1171,6 +1282,11 @@ class _NoteCard extends StatelessWidget {
               const PopupMenuItem(
                 value: _LibraryItemAction.rename,
                 child: Text('Rename'),
+              ),
+
+              const PopupMenuItem(
+                value: _LibraryItemAction.move,
+                child: Text('Move'),
               ),
 
               PopupMenuItem(

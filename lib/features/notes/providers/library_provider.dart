@@ -33,6 +33,22 @@ Stream<List<LibraryFolder>> childFolders(
 }
 
 @riverpod
+Stream<List<LibraryFolder>> allFolders(
+    AllFoldersRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchAllFolders(userId);
+}
+
+@riverpod
 Stream<List<LibraryFolder>> favoriteFolders(FavoriteFoldersRef ref) {
   final userId = ref.watch(authStateProvider).valueOrNull?.uid;
   if (userId == null) return const Stream.empty();
@@ -148,6 +164,34 @@ class LibraryActionController extends _$LibraryActionController {
         userId: userId,
         folderId: folderId,
         name: name,
+      );
+    });
+  }
+
+  Future<bool> moveFolder({
+    required String folderId,
+    required String destinationFolderId,
+  }) {
+    return _run((userId, repository) {
+      return repository.moveFolder(
+        userId: userId,
+        folderId: folderId,
+        destinationFolderId:
+        destinationFolderId,
+      );
+    });
+  }
+
+  Future<bool> moveNote({
+    required String noteId,
+    required String destinationFolderId,
+  }) {
+    return _run((userId, repository) {
+      return repository.moveNote(
+        userId: userId,
+        noteId: noteId,
+        destinationFolderId:
+        destinationFolderId,
       );
     });
   }

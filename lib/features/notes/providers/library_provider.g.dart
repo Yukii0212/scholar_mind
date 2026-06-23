@@ -172,6 +172,21 @@ class _ChildFoldersProviderElement
   String get parentId => (origin as ChildFoldersProvider).parentId;
 }
 
+String _$allFoldersHash() => r'314d1d84039fff6091004d18944e641e075d64e7';
+
+/// See also [allFolders].
+@ProviderFor(allFolders)
+final allFoldersProvider =
+    AutoDisposeStreamProvider<List<LibraryFolder>>.internal(
+  allFolders,
+  name: r'allFoldersProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$allFoldersHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef AllFoldersRef = AutoDisposeStreamProviderRef<List<LibraryFolder>>;
 String _$favoriteFoldersHash() => r'8dcf2af359bbc33bb5062d23ff579af0037e7cb6';
 
 /// See also [favoriteFolders].
@@ -380,7 +395,7 @@ class _NotesInFolderProviderElement
 }
 
 String _$libraryActionControllerHash() =>
-    r'981899dbf72b081bae9adfe10ac8d5f58058a3ea';
+    r'cfdae58904e40f7e449171fcf8cf328e78941d39';
 
 /// See also [LibraryActionController].
 @ProviderFor(LibraryActionController)

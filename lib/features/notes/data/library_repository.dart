@@ -280,6 +280,69 @@ class LibraryRepository {
     });
   }
 
+  Future<void> moveNote({
+    required String userId,
+    required String noteId,
+    required String destinationFolderId,
+  }) async {
+    await _notes(userId).doc(noteId).update({
+      'folderId': destinationFolderId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> moveFolder({
+    required String userId,
+    required String folderId,
+    required String destinationFolderId,
+  }) async {
+    if (folderId == destinationFolderId) {
+      throw ArgumentError(
+        'A folder cannot be moved into itself.',
+      );
+    }
+
+    final descendants = await _getDescendantFolderIds(
+      userId,
+      folderId,
+    );
+
+    if (descendants.contains(destinationFolderId)) {
+      throw ArgumentError(
+        'A folder cannot be moved into its own child folder.',
+      );
+    }
+
+    await _folders(userId).doc(folderId).update({
+      'parentId': destinationFolderId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<Set<String>> _getDescendantFolderIds(
+      String userId,
+      String folderId,
+      ) async {
+    final descendants = <String>{};
+
+    final children = await _folders(userId)
+        .where('parentId', isEqualTo: folderId)
+        .get();
+
+    for (final child in children.docs) {
+      descendants.add(child.id);
+
+      descendants.addAll(
+        await _getDescendantFolderIds(
+          userId,
+          child.id,
+        ),
+      );
+    }
+
+    return descendants;
+  }
+
   Future<void> setNoteFavorite({
     required String userId,
     required String noteId,
@@ -347,6 +410,23 @@ class LibraryRepository {
         (a, b) => b.createdAt.compareTo(a.createdAt),
       );
       return notes;
+    });
+  }
+
+  Stream<List<LibraryFolder>> watchAllFolders(
+      String userId,
+      ) {
+    return _folders(userId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isArchived', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      final folders =
+      snapshot.docs.map(LibraryFolder.fromDocument).toList();
+
+      folders.sort(_sortFolders);
+
+      return folders;
     });
   }
 

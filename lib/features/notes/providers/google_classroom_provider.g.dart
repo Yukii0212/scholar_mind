@@ -24,13 +24,13 @@ final googleClassroomServiceProvider =
 
 typedef GoogleClassroomServiceRef
     = AutoDisposeProviderRef<GoogleClassroomService>;
-String _$classroomCoursesHash() => r'34a6dd2d9d75046f679ecf34352517be53c46036';
+String _$classroomCoursesHash() => r'334c7e10be3e2108d7b3bfb201b5b421239771d8';
 
-/// See also [classroomCourses].
-@ProviderFor(classroomCourses)
+/// See also [ClassroomCourses].
+@ProviderFor(ClassroomCourses)
 final classroomCoursesProvider =
-    AutoDisposeFutureProvider<List<ClassroomCourse>>.internal(
-  classroomCourses,
+    AsyncNotifierProvider<ClassroomCourses, List<ClassroomCourse>>.internal(
+  ClassroomCourses.new,
   name: r'classroomCoursesProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
@@ -39,7 +39,6 @@ final classroomCoursesProvider =
   allTransitiveDependencies: null,
 );
 
-typedef ClassroomCoursesRef
-    = AutoDisposeFutureProviderRef<List<ClassroomCourse>>;
+typedef _$ClassroomCourses = AsyncNotifier<List<ClassroomCourse>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

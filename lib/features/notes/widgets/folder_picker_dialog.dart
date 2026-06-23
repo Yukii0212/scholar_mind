@@ -29,7 +29,14 @@ class _FolderPickerDialogState
       folder.parentId ==
           LibraryFolder.rootId,
     )
-        .toList();
+        .toList()
+      ..sort(
+            (a, b) => a.name
+            .toLowerCase()
+            .compareTo(
+          b.name.toLowerCase(),
+        ),
+      );
 
     return AlertDialog(
       title: const Text('Select destination'),
@@ -159,7 +166,14 @@ class _FolderTreeTileState
       folder.parentId ==
           widget.folder.id,
     )
-        .toList();
+        .toList()
+      ..sort(
+            (a, b) => a.name
+            .toLowerCase()
+            .compareTo(
+          b.name.toLowerCase(),
+        ),
+      );
 
     final hasChildren =
         children.isNotEmpty;

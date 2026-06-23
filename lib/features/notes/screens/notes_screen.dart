@@ -244,6 +244,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               onMove: () =>
                   _moveNote(items[index]),
 
+              onCopy: () =>
+                  _copyNote(items[index]),
+
               onToggleFavorite: () =>
                   _toggleNoteFavorite(items[index]),
 
@@ -375,6 +378,36 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       success,
       successMessage:
       'Note moved successfully.',
+    );
+  }
+
+  Future<void> _copyNote(
+      NoteItem note,
+      ) async {
+    final destination =
+    await _pickFolder();
+
+    if (destination == null) {
+      return;
+    }
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider
+          .notifier,
+    )
+        .copyNote(
+      noteId: note.id,
+      destinationFolderId:
+      destination,
+    );
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage:
+      'Note copied successfully.',
     );
   }
 
@@ -1202,6 +1235,7 @@ class _NoteCard extends StatelessWidget {
     required this.onToggleFavorite,
     required this.onDelete,
     required this.onMove,
+    required this.onCopy,
     required this.isTrashSection,
     required this.onRestore,
     required this.onPermanentDelete,
@@ -1212,6 +1246,7 @@ class _NoteCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onMove;
   final VoidCallback onRename;
+  final VoidCallback onCopy;
   final VoidCallback onToggleFavorite;
   final VoidCallback onRestore;
   final VoidCallback onPermanentDelete;
@@ -1241,6 +1276,7 @@ class _NoteCard extends StatelessWidget {
                 return;
 
               case _LibraryItemAction.copy:
+                onCopy();
                 return;
 
               case _LibraryItemAction.favorite:
@@ -1287,6 +1323,11 @@ class _NoteCard extends StatelessWidget {
               const PopupMenuItem(
                 value: _LibraryItemAction.move,
                 child: Text('Move'),
+              ),
+
+              const PopupMenuItem(
+                value: _LibraryItemAction.copy,
+                child: Text('Copy'),
               ),
 
               PopupMenuItem(

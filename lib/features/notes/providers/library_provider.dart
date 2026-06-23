@@ -196,6 +196,20 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
+  Future<bool> copyNote({
+    required String noteId,
+    required String destinationFolderId,
+  }) {
+    return _run((userId, repository) {
+      return repository.copyNote(
+        userId: userId,
+        noteId: noteId,
+        destinationFolderId:
+        destinationFolderId,
+      );
+    });
+  }
+
   Future<bool> createInternalNote({
     required String folderId,
     required String name,

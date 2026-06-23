@@ -355,6 +355,42 @@ class LibraryRepository {
     });
   }
 
+  Future<void> copyNote({
+    required String userId,
+    required String noteId,
+    required String destinationFolderId,
+  }) async {
+    final noteDoc =
+    await _notes(userId)
+        .doc(noteId)
+        .get();
+
+    if (!noteDoc.exists) {
+      throw ArgumentError(
+        'Note not found.',
+      );
+    }
+
+    final data = noteDoc.data()!;
+
+    final originalName =
+    data['name'] as String;
+
+    await _notes(userId).add({
+      ...data,
+
+      'name': '$originalName (Copy)',
+
+      'folderId': destinationFolderId,
+
+      'createdAt':
+      FieldValue.serverTimestamp(),
+
+      'updatedAt':
+      FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<Set<String>> _getDescendantFolderIds(
       String userId,
       String folderId,

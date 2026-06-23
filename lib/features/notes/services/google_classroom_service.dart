@@ -59,6 +59,102 @@ class GoogleClassroomService {
     )
         .toList();
   }
+
+  Future<List<ClassroomMaterial>>
+  fetchCourseFiles(
+      String courseId,
+      ) async {
+    final user =
+        await _googleSignIn
+            .signInSilently() ??
+            await _googleSignIn.signIn();
+
+    if (user == null) {
+      return [];
+    }
+
+    final auth =
+    await user.authentication;
+
+    final response =
+    await http.get(
+      Uri.parse(
+        'https://classroom.googleapis.com/v1/courses/$courseId/courseWorkMaterials',
+      ),
+      headers: {
+        'Authorization':
+        'Bearer ${auth.accessToken}',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load materials',
+      );
+    }
+
+    final data =
+    jsonDecode(response.body);
+
+    final materials =
+        (data['courseWorkMaterial']
+        as List?)
+            ?.cast<Map<String, dynamic>>() ??
+            [];
+
+    final result =
+    <ClassroomMaterial>[];
+
+    for (final material in materials) {
+      final files =
+      <ClassroomDriveFile>[];
+
+      final attachments =
+          material['materials']
+          as List? ??
+              [];
+
+      for (final attachment
+      in attachments) {
+        final driveFile =
+        attachment['driveFile'];
+
+        if (driveFile == null) {
+          continue;
+        }
+
+        final driveFileData =
+        driveFile['driveFile'];
+
+        files.add(
+          ClassroomDriveFile(
+            id:
+            driveFileData['id'],
+            title:
+            driveFileData['title'] ??
+                'Untitled',
+          ),
+        );
+      }
+
+      if (files.isEmpty) {
+        continue;
+      }
+
+      result.add(
+        ClassroomMaterial(
+          id:
+          material['id'],
+          title:
+          material['title'] ??
+              'Untitled',
+          files: files,
+        ),
+      );
+    }
+
+    return result;
+  }
 }
 
 class ClassroomCourse {
@@ -78,4 +174,26 @@ class ClassroomCourse {
       name: json['name'] ?? 'Untitled',
     );
   }
+}
+
+class ClassroomMaterial {
+  ClassroomMaterial({
+    required this.id,
+    required this.title,
+    required this.files,
+  });
+
+  final String id;
+  final String title;
+  final List<ClassroomDriveFile> files;
+}
+
+class ClassroomDriveFile {
+  ClassroomDriveFile({
+    required this.id,
+    required this.title,
+  });
+
+  final String id;
+  final String title;
 }

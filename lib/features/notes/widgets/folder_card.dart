@@ -1,0 +1,151 @@
+import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
+
+import '../domain/library_folder.dart';
+import '../domain/library_enums.dart';
+
+class FolderCard extends StatelessWidget {
+  const FolderCard({
+    super.key,
+    required this.folder,
+    required this.isArchivedSection,
+    required this.isTrashSection,
+    required this.onDelete,
+    required this.onRestore,
+    required this.onOpen,
+    required this.onMove,
+    required this.onRename,
+    required this.onToggleFavorite,
+    required this.onToggleArchived,
+    required this.onPermanentDelete,
+  });
+
+  final LibraryFolder folder;
+  final bool isTrashSection;
+  final bool isArchivedSection;
+  final VoidCallback onOpen;
+  final VoidCallback onDelete;
+  final VoidCallback onRestore;
+  final VoidCallback onRename;
+  final VoidCallback onMove;
+  final VoidCallback onToggleFavorite;
+  final VoidCallback onToggleArchived;
+  final VoidCallback onPermanentDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: isArchivedSection || isTrashSection ? null : onOpen,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Row(
+            children: [
+              Icon(
+                isArchivedSection ? Icons.folder_off_outlined : Icons.folder,
+                size: 34,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const Gap(12),
+              Expanded(
+                child: Text(
+                  folder.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              if (folder.isFavorite)
+                Icon(
+                  Icons.star,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.tertiary,
+                ),
+              PopupMenuButton<LibraryItemAction>(
+                onSelected: (action) {
+                  switch (action) {
+                    case LibraryItemAction.rename:
+                      onRename();
+                      return;
+
+                    case LibraryItemAction.move:
+                      onMove();
+                      return;
+
+                    case LibraryItemAction.copy:
+                      return;
+
+                    case LibraryItemAction.favorite:
+                      onToggleFavorite();
+                      return;
+
+                    case LibraryItemAction.archive:
+                      onToggleArchived();
+                      return;
+
+                    case LibraryItemAction.trash:
+                      onDelete();
+                      return;
+
+                    case LibraryItemAction.restore:
+                      onRestore();
+                      return;
+
+                    case LibraryItemAction.permanentDelete:
+                      onPermanentDelete();
+                      return;
+                  }
+                },
+                itemBuilder: (context) {
+                  if (isTrashSection) {
+                    return const [
+                      PopupMenuItem(
+                        value: LibraryItemAction.restore,
+                        child: Text('Restore'),
+                      ),
+                      PopupMenuItem(
+                        value: LibraryItemAction.permanentDelete,
+                        child: Text('Delete Permanently'),
+                      ),
+                    ];
+                  }
+
+                  return [
+                    const PopupMenuItem(
+                      value: LibraryItemAction.rename,
+                      child: Text('Rename'),
+                    ),
+                    if (!isArchivedSection)
+                      const PopupMenuItem(
+                        value: LibraryItemAction.move,
+                        child: Text('Move'),
+                      ),
+                    PopupMenuItem(
+                      value: LibraryItemAction.favorite,
+                      child: Text(
+                        folder.isFavorite
+                            ? 'Remove favourite'
+                            : 'Add to favourites',
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: LibraryItemAction.archive,
+                      child: Text(
+                        isArchivedSection ? 'Restore' : 'Archive',
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: LibraryItemAction.trash,
+                      child: Text('Move to Trash'),
+                    ),
+                  ];
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

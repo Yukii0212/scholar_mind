@@ -1,7 +1,13 @@
+import 'dart:io';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../data/library_repository.dart';
 import '../domain/library_folder.dart';
@@ -727,15 +733,54 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
+  Future<void> _openUploadedFile(
+      NoteItem note,
+      ) async {
+    try {
+      final storageRef =
+      FirebaseStorage.instance.ref(
+        note.storagePath,
+      );
+
+      final downloadUrl =
+      await storageRef.getDownloadURL();
+
+      final response =
+      await http.get(
+        Uri.parse(downloadUrl),
+      );
+
+      final tempDir =
+      await getTemporaryDirectory();
+
+      final filePath =
+          '${tempDir.path}/${note.name}';
+
+      final file = File(filePath);
+
+      await file.writeAsBytes(
+        response.bodyBytes,
+      );
+
+      await OpenFilex.open(
+        file.path,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      _showMessage(
+        'Failed to open file.',
+      );
+    }
+  }
+
   void _openNote(NoteItem note) {
     if (_section == _LibrarySection.trash) {
       return;
     }
 
     if (!note.isInternal) {
-      _showMessage(
-        'Opening uploaded files will be implemented later.',
-      );
+      _openUploadedFile(note);
       return;
     }
 

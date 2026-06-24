@@ -920,7 +920,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const GoogleClassroomImportScreen(),
+            builder: (_) =>
+                GoogleClassroomImportScreen(
+                  defaultFolderId: _folderId,
+                ),
           ),
         );
         break;

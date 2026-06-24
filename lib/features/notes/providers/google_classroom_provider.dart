@@ -16,3 +16,14 @@ class ClassroomCourses extends _$ClassroomCourses {
     return service.fetchCourses();
   }
 }
+
+@riverpod
+Future<List<ClassroomMaterial>> classroomMaterials(
+    ClassroomMaterialsRef ref,
+    String courseId,
+    ) async {
+  final service =
+  ref.read(googleClassroomServiceProvider);
+
+  return service.fetchCourseFiles(courseId);
+}

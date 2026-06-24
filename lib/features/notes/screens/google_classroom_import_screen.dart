@@ -1,24 +1,47 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/google_classroom_provider.dart';
+import '../providers/library_provider.dart';
+import '../domain/note_category.dart';
 import '../services/google_classroom_service.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 
-class GoogleClassroomImportScreen extends ConsumerStatefulWidget {
-  const GoogleClassroomImportScreen({super.key});
+class GoogleClassroomImportScreen
+    extends ConsumerStatefulWidget {
+
+  const GoogleClassroomImportScreen({
+    super.key,
+    required this.defaultFolderId,
+  });
+
+  final String defaultFolderId;
 
   @override
-  ConsumerState<GoogleClassroomImportScreen> createState() => _GoogleClassroomImportScreenState();
+  ConsumerState<GoogleClassroomImportScreen>
+  createState() =>
+      _GoogleClassroomImportScreenState();
 }
 
 class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImportScreen> {
   final Map<String, Map<String, dynamic>> _selectedAttachments = {};
   bool _isImporting = false;
 
+  late String _destinationFolderId;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _destinationFolderId =
+        widget.defaultFolderId;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Watches the cleanly generated provider
     final coursesAsync = ref.watch(classroomCoursesProvider);
 
     return Scaffold(
@@ -103,25 +126,81 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
   }
 
   Future<void> _handleBatchImport() async {
-    setState(() => _isImporting = true);
-    try {
-      // Access your ingestion system or layout actions layer to save selections
-      // final libraryNotifier = ref.read(libraryActionControllerProvider.notifier);
+    setState(() {
+      _isImporting = true;
+    });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Successfully imported ${_selectedAttachments.length} items.')),
+    try {
+      final controller =
+      ref.read(
+        libraryActionControllerProvider
+            .notifier,
+      );
+
+      var importedCount = 0;
+
+      for (final file
+      in _selectedAttachments.values) {
+
+        final fileName =
+        file['title'] as String;
+
+        final extension =
+        fileName.contains('.')
+            ? fileName.split('.').last
+            : 'txt';
+
+        final fakeBytes =
+        Uint8List.fromList(
+          utf8.encode(
+            'Google Classroom Import Placeholder',
+          ),
         );
-        Navigator.pop(context);
+
+        final success =
+        await controller.uploadNote(
+          folderId: _destinationFolderId,
+          fileName: fileName,
+          extension: extension,
+          bytes: fakeBytes,
+          category:
+          NoteCategory.selfStudyNotes,
+        );
+
+        if (success) {
+          importedCount++;
+        }
       }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'Imported $importedCount files.',
+          ),
+        ),
+      );
+
+      Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to import items: $e')),
-        );
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            'Import failed: $e',
+          ),
+        ),
+      );
     } finally {
-      if (mounted) setState(() => _isImporting = false);
+      if (mounted) {
+        setState(() {
+          _isImporting = false;
+        });
+      }
     }
   }
 }
@@ -138,47 +217,76 @@ class _CourseMaterialsSection extends ConsumerWidget {
   final void Function(String id, Map<String, dynamic> data, bool isChecked) onAttachmentToggled;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // If you have a separate provider for materials, look it up here.
-    // Otherwise, this builds the structured list directly from your classroom service endpoints.
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Divider(),
-          ListTile(
-            dense: true,
-            leading: const Icon(Icons.description_outlined, size: 20),
-            title: const Text("Lecture_Slides_Week1.pdf", style: TextStyle(fontSize: 14)),
-            trailing: Checkbox(
-              value: selectedAttachments.containsKey('${courseId}_file1'),
-              onChanged: (val) {
-                onAttachmentToggled(
-                  '${courseId}_file1',
-                  {'id': '${courseId}_file1', 'title': 'Lecture_Slides_Week1.pdf'},
-                  val ?? false,
-                );
-              },
-            ),
-          ),
-          ListTile(
-            dense: true,
-            leading: const Icon(Icons.description_outlined, size: 20),
-            title: const Text("Lab_Specification_01.docx", style: TextStyle(fontSize: 14)),
-            trailing: Checkbox(
-              value: selectedAttachments.containsKey('${courseId}_file2'),
-              onChanged: (val) {
-                onAttachmentToggled(
-                  '${courseId}_file2',
-                  {'id': '${courseId}_file2', 'title': 'Lab_Specification_01.docx'},
-                  val ?? false,
-                );
-              },
-            ),
-          ),
-        ],
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final materialsAsync =
+    ref.watch(
+      classroomMaterialsProvider(
+        courseId,
       ),
+    );
+
+    return materialsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          error.toString(),
+        ),
+      ),
+
+      data: (materials) {
+        if (materials.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'No materials found',
+            ),
+          );
+        }
+
+        return Column(
+          children: materials.map((material) {
+            return ExpansionTile(
+              title: Text(material.title),
+
+              children: material.files.map((file) {
+                final isSelected =
+                selectedAttachments.containsKey(
+                  file.id,
+                );
+
+                return CheckboxListTile(
+                  value: isSelected,
+
+                  title: Text(
+                    file.title,
+                  ),
+
+                  onChanged: (value) {
+                    onAttachmentToggled(
+                      file.id,
+                      {
+                        'id': file.id,
+                        'title': file.title,
+                      },
+                      value ?? false,
+                    );
+                  },
+                );
+              }).toList(),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

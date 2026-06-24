@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -14,6 +15,42 @@ class GoogleClassroomService {
   GoogleSignIn(
     scopes: _scopes,
   );
+
+  Future<Uint8List> downloadDriveFile(
+      String fileId,
+      ) async {
+    final user =
+        await _googleSignIn.signInSilently() ??
+            await _googleSignIn.signIn();
+
+    if (user == null) {
+      throw Exception(
+        'User not signed in',
+      );
+    }
+
+    final auth =
+    await user.authentication;
+
+    final response =
+    await http.get(
+      Uri.parse(
+        'https://www.googleapis.com/drive/v3/files/$fileId?alt=media',
+      ),
+      headers: {
+        'Authorization':
+        'Bearer ${auth.accessToken}',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to download file',
+      );
+    }
+
+    return response.bodyBytes;
+  }
 
   Future<List<ClassroomCourse>>
   fetchCourses() async {
@@ -128,11 +165,13 @@ class GoogleClassroomService {
 
         files.add(
           ClassroomDriveFile(
-            id:
-            driveFileData['id'],
+            id: driveFileData['id'],
             title:
             driveFileData['title'] ??
                 'Untitled',
+            alternateLink:
+            driveFileData['alternateLink'] ??
+                '',
           ),
         );
       }
@@ -192,8 +231,10 @@ class ClassroomDriveFile {
   ClassroomDriveFile({
     required this.id,
     required this.title,
+    required this.alternateLink,
   });
 
   final String id;
   final String title;
+  final String alternateLink;
 }

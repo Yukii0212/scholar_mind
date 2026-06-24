@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/google_classroom_provider.dart';
@@ -142,19 +139,26 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
       for (final file
       in _selectedAttachments.values) {
 
+        final classroomService =
+        ref.read(
+          googleClassroomServiceProvider,
+        );
+
         final fileName =
         file['title'] as String;
+
+        final fileId =
+        file['id'] as String;
 
         final extension =
         fileName.contains('.')
             ? fileName.split('.').last
             : 'txt';
 
-        final fakeBytes =
-        Uint8List.fromList(
-          utf8.encode(
-            'Google Classroom Import Placeholder',
-          ),
+        final bytes =
+        await classroomService
+            .downloadDriveFile(
+          fileId,
         );
 
         final success =
@@ -162,7 +166,7 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
           folderId: _destinationFolderId,
           fileName: fileName,
           extension: extension,
-          bytes: fakeBytes,
+          bytes: bytes,
           category:
           NoteCategory.selfStudyNotes,
         );

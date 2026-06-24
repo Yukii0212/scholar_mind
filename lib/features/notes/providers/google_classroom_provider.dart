@@ -1,11 +1,18 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../services/google_classroom_service.dart';
 
 part 'google_classroom_provider.g.dart';
 
 @riverpod
-GoogleClassroomService googleClassroomService(GoogleClassroomServiceRef ref) {
-  return GoogleClassroomService();
+GoogleClassroomService googleClassroomService(
+    GoogleClassroomServiceRef ref,
+    ) {
+  return GoogleClassroomService(
+    ref.read(
+      googleSignInProvider,
+    ),
+  );
 }
 
 @Riverpod(keepAlive: true)

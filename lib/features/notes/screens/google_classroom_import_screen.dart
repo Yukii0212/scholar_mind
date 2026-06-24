@@ -44,6 +44,14 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
+
+      ref.invalidate(
+        classroomCoursesProvider,
+      );
+    });
+
     _destinationFolderId =
         widget.defaultFolderId;
 

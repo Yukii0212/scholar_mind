@@ -5,16 +5,17 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
 class GoogleClassroomService {
+  GoogleClassroomService(
+      this._googleSignIn,
+      );
+
+  final GoogleSignIn _googleSignIn;
+
   static const _scopes = [
     'https://www.googleapis.com/auth/classroom.courses.readonly',
     'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
     'https://www.googleapis.com/auth/drive.readonly',
   ];
-
-  final GoogleSignIn _googleSignIn =
-  GoogleSignIn(
-    scopes: _scopes,
-  );
 
   Future<Uint8List> downloadDriveFile(
       String fileId,

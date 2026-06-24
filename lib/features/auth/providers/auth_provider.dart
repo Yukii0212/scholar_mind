@@ -52,14 +52,19 @@ class AuthController extends _$AuthController {
 
     try {
       await ref.read(firebaseAuthProvider).signOut();
+
+      try {
+        await ref.read(googleSignInProvider).disconnect();
+      } catch (_) {
+      }
+
       await ref.read(googleSignInProvider).signOut();
-      await ref.read(googleSignInProvider).disconnect();
-      await ref.read(googleSignInProvider).signOut();
+
       ref.invalidate(classroomCoursesProvider);
       ref.invalidate(googleClassroomServiceProvider);
       state = const AsyncValue.data(null);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = const AsyncValue.data(null);
     }
   }
 }

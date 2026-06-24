@@ -4,24 +4,31 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
-import 'package:http/http.dart' as http;
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 import '../data/library_repository.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
+import '../domain/library_enums.dart';
+
 import '../providers/library_provider.dart';
+
+import '../widgets/library_header.dart';
+import '../widgets/error_state.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/folder_card.dart';
+import '../widgets/note_card.dart';
 import '../widgets/folder_picker_dialog.dart';
+import '../widgets/category_dialog.dart';
+import '../widgets/folder_dialogs.dart';
+import '../services/file_open_service.dart';
+import 'google_classroom_import_screen.dart';
 import 'note_editor_screen.dart';
 
-enum _LibrarySection {
-  browse,
-  favorites,
-  archived,
-  trash,
+enum _ImportSource {
+  device,
+  classroom,
+  drive,
 }
 
 class NotesScreen extends ConsumerStatefulWidget {
@@ -33,7 +40,7 @@ class NotesScreen extends ConsumerStatefulWidget {
 
 class _NotesScreenState extends ConsumerState<NotesScreen> {
   final List<LibraryFolder> _folderStack = [];
-  _LibrarySection _section = _LibrarySection.browse;
+  LibrarySection _section = LibrarySection.browse;
 
   String get _folderId =>
       _folderStack.isEmpty ? LibraryFolder.rootId : _folderStack.last.id;
@@ -42,19 +49,19 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Widget build(BuildContext context) {
     final actionState = ref.watch(libraryActionControllerProvider);
     final folders = switch (_section) {
-      _LibrarySection.browse => ref.watch(childFoldersProvider(_folderId)),
-      _LibrarySection.favorites => ref.watch(favoriteFoldersProvider),
-      _LibrarySection.archived => ref.watch(archivedFoldersProvider),
-      _LibrarySection.trash => ref.watch(deletedFoldersProvider),
+      LibrarySection.browse => ref.watch(childFoldersProvider(_folderId)),
+      LibrarySection.favorites => ref.watch(favoriteFoldersProvider),
+      LibrarySection.archived => ref.watch(archivedFoldersProvider),
+      LibrarySection.trash => ref.watch(deletedFoldersProvider),
     };
     final notes = switch (_section) {
-      _LibrarySection.browse =>
+      LibrarySection.browse =>
           ref.watch(notesInFolderProvider(_folderId)),
 
-      _LibrarySection.favorites =>
+      LibrarySection.favorites =>
           ref.watch(favoriteNotesProvider),
 
-      _LibrarySection.trash =>
+      LibrarySection.trash =>
           ref.watch(deletedNotesProvider),
 
       _ =>
@@ -68,7 +75,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               sliver: SliverToBoxAdapter(
-                child: _LibraryHeader(
+                child: LibraryHeader(
                   section: _section,
                   folderStack: _folderStack,
                   isBusy: actionState.isLoading,
@@ -81,9 +88,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
             ..._buildFolderSlivers(folders),
-            if (_section == _LibrarySection.browse ||
-                _section == _LibrarySection.favorites ||
-                _section == _LibrarySection.trash) ..._buildNoteSlivers(
+            if (_section == LibrarySection.browse ||
+                _section == LibrarySection.favorites ||
+                _section == LibrarySection.trash) ..._buildNoteSlivers(
               notes,
               folders.hasValue
                   ? folders.valueOrNull?.isNotEmpty ?? false
@@ -116,7 +123,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       error: (error, _) => [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: _ErrorState(message: _friendlyError(error)),
+          child: ErrorState(message: _friendlyError(error)),
         ),
       ],
       data: (items) => [
@@ -142,12 +149,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             itemCount: items.length,
             itemBuilder: (context, index) {
               final folder = items[index];
-              return _FolderCard(
+              return FolderCard(
                 folder: folder,
                 isArchivedSection:
-                _section == _LibrarySection.archived,
+                _section == LibrarySection.archived,
                 isTrashSection:
-                _section == _LibrarySection.trash,
+                _section == LibrarySection.trash,
                 onOpen: () => _openFolder(folder),
                 onDelete: () => _moveFolderToTrash(folder),
 
@@ -168,30 +175,30 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             },
           ),
         ),
-        if (items.isEmpty && _section != _LibrarySection.browse)
+        if (items.isEmpty && _section != LibrarySection.browse)
           SliverFillRemaining(
             hasScrollBody: false,
-            child: _EmptyState(
+            child: EmptyState(
               icon: switch (_section) {
-                _LibrarySection.favorites => Icons.star_outline,
-                _LibrarySection.archived => Icons.archive_outlined,
-                _LibrarySection.trash => Icons.delete_outline,
+                LibrarySection.favorites => Icons.star_outline,
+                LibrarySection.archived => Icons.archive_outlined,
+                LibrarySection.trash => Icons.delete_outline,
                 _ => Icons.folder_outlined,
               },
               title: switch (_section) {
-                _LibrarySection.favorites => 'No favourite folders',
-                _LibrarySection.archived => 'No archived folders',
-                _LibrarySection.trash => 'Trash is empty',
+                LibrarySection.favorites => 'No favourite folders',
+                LibrarySection.archived => 'No archived folders',
+                LibrarySection.trash => 'Trash is empty',
                 _ => '',
               },
               message: switch (_section) {
-                _LibrarySection.favorites =>
+                LibrarySection.favorites =>
                 'Mark useful folders as favourites for quick access.',
 
-                _LibrarySection.archived =>
+                LibrarySection.archived =>
                 'Folders you archive will appear here.',
 
-                _LibrarySection.trash =>
+                LibrarySection.trash =>
                 'Deleted folders and notes will appear here.',
 
                 _ => '',
@@ -219,7 +226,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         SliverPadding(
           padding: const EdgeInsets.all(20),
           sliver: SliverToBoxAdapter(
-            child: _ErrorState(message: _friendlyError(error)),
+            child: ErrorState(message: _friendlyError(error)),
           ),
         ),
       ],
@@ -239,7 +246,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           sliver: SliverList.separated(
             itemCount: items.length,
             separatorBuilder: (_, __) => const Gap(8),
-            itemBuilder: (context, index) => _NoteCard(
+            itemBuilder: (context, index) => NoteCard(
               note: items[index],
 
               onTap: () => _openNote(items[index]),
@@ -260,7 +267,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   _deleteNote(items[index]),
 
               isTrashSection:
-              _section == _LibrarySection.trash,
+              _section == LibrarySection.trash,
 
               onRestore: () =>
                   _restoreNote(items[index]),
@@ -279,14 +286,14 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               24,
             ),
             sliver: SliverToBoxAdapter(
-              child: _EmptyState(
-                icon: _section == _LibrarySection.trash
+              child: EmptyState(
+                icon: _section == LibrarySection.trash
                     ? Icons.delete_outline
                     : Icons.upload_file_outlined,
-                title: _section == _LibrarySection.trash
+                title: _section == LibrarySection.trash
                     ? 'Trash is empty'
                     : 'This folder is empty',
-                message: _section == _LibrarySection.trash
+                message: _section == LibrarySection.trash
                     ? 'Deleted notes will appear here.'
                     : 'Create a subfolder or upload your first note.',
               ),
@@ -296,7 +303,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
-  void _changeSection(_LibrarySection section) {
+  void _changeSection(LibrarySection section) {
     setState(() {
       _section = section;
       _folderStack.clear();
@@ -304,10 +311,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   void _openFolder(LibraryFolder folder) {
-    if (_section == _LibrarySection.archived) return;
+    if (_section == LibrarySection.archived) return;
 
     setState(() {
-      _section = _LibrarySection.browse;
+      _section = LibrarySection.browse;
       if (_folderStack.isEmpty || _folderStack.last.id != folder.id) {
         _folderStack.add(folder);
       }
@@ -327,7 +334,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Future<void> _createFolder() async {
     final name = await showDialog<String>(
       context: context,
-      builder: (context) => const _CreateFolderDialog(),
+      builder: (context) => const CreateFolderDialog(),
     );
     if (!mounted || name == null) return;
 
@@ -733,54 +740,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
-  Future<void> _openUploadedFile(
-      NoteItem note,
-      ) async {
-    try {
-      final storageRef =
-      FirebaseStorage.instance.ref(
-        note.storagePath,
-      );
-
-      final downloadUrl =
-      await storageRef.getDownloadURL();
-
-      final response =
-      await http.get(
-        Uri.parse(downloadUrl),
-      );
-
-      final tempDir =
-      await getTemporaryDirectory();
-
-      final filePath =
-          '${tempDir.path}/${note.name}';
-
-      final file = File(filePath);
-
-      await file.writeAsBytes(
-        response.bodyBytes,
-      );
-
-      await OpenFilex.open(
-        file.path,
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      _showMessage(
-        'Failed to open file.',
-      );
-    }
-  }
-
-  void _openNote(NoteItem note) {
-    if (_section == _LibrarySection.trash) {
+  Future<void> _openNote(NoteItem note) async {
+    if (_section == LibrarySection.trash) {
       return;
     }
 
     if (!note.isInternal) {
-      _openUploadedFile(note);
+      await FileOpenService.openUploadedFile(note);
       return;
     }
 
@@ -885,9 +851,95 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   Future<void> _uploadNotes() async {
+    final source =
+    await showModalBottomSheet<_ImportSource>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.phone_android,
+                ),
+                title: const Text(
+                  'Device',
+                ),
+                onTap: () {
+                  Navigator.pop(
+                    context,
+                    _ImportSource.device,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.school,
+                ),
+                title: const Text(
+                  'Google Classroom',
+                ),
+                onTap: () {
+                  Navigator.pop(
+                    context,
+                    _ImportSource.classroom,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.cloud,
+                ),
+                title: const Text(
+                  'Google Drive',
+                ),
+                onTap: () {
+                  Navigator.pop(
+                    context,
+                    _ImportSource.drive,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || source == null) {
+      return;
+    }
+
+    switch (source) {
+      case _ImportSource.device:
+        await _uploadFromDevice();
+        break;
+
+      case _ImportSource.classroom:
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                GoogleClassroomImportScreen(
+                  defaultFolderId: _folderId,
+                ),
+          ),
+        );
+        break;
+
+      case _ImportSource.drive:
+        _showMessage(
+          'Google Drive integration coming next.',
+        );
+        break;
+    }
+  }
+
+  Future<void> _uploadFromDevice() async {
     final category = await showDialog<NoteCategory>(
       context: context,
-      builder: (context) => const _CategoryDialog(),
+      builder: (context) => const CategoryDialog(),
     );
     if (!mounted || category == null) return;
 
@@ -971,7 +1023,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     _showResult(
       success,
       successMessage:
-          folder.isArchived ? 'Folder restored.' : 'Folder archived.',
+      folder.isArchived ? 'Folder restored.' : 'Folder archived.',
     );
   }
 
@@ -997,541 +1049,5 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   static String _friendlyError(Object? error) {
     if (error is ArgumentError) return error.message.toString();
     return 'Something went wrong. Please try again.';
-  }
-}
-
-class _LibraryHeader extends StatelessWidget {
-  const _LibraryHeader({
-    required this.section,
-    required this.folderStack,
-    required this.isBusy,
-    required this.onSectionChanged,
-    required this.onBreadcrumbPressed,
-    required this.onCreateFolder,
-    required this.onCreateNote,
-    required this.onUpload,
-  });
-
-  final _LibrarySection section;
-  final List<LibraryFolder> folderStack;
-  final bool isBusy;
-  final ValueChanged<_LibrarySection> onSectionChanged;
-  final ValueChanged<int> onBreadcrumbPressed;
-  final VoidCallback onCreateFolder;
-  final VoidCallback onCreateNote;
-  final VoidCallback onUpload;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Notes', style: Theme.of(context).textTheme.headlineMedium),
-        const Gap(4),
-        Text(
-          'Organise study material into folders and categories.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
-        const Gap(20),
-        SegmentedButton<_LibrarySection>(
-          segments: const [
-            ButtonSegment(
-              value: _LibrarySection.browse,
-              icon: Icon(Icons.folder_outlined),
-              label: Text('Library'),
-            ),
-            ButtonSegment(
-              value: _LibrarySection.favorites,
-              icon: Icon(Icons.star_outline),
-              label: Text('Favourites'),
-            ),
-            ButtonSegment(
-              value: _LibrarySection.archived,
-              icon: Icon(Icons.archive_outlined),
-              label: Text('Archived'),
-            ),
-            ButtonSegment(
-              value: _LibrarySection.trash,
-              icon: Icon(Icons.delete_outline),
-              label: Text('Trash'),
-            ),
-          ],
-          selected: {section},
-          onSelectionChanged:
-              isBusy ? null : (selection) => onSectionChanged(selection.first),
-        ),
-        if (section == _LibrarySection.browse) ...[
-          const Gap(18),
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 2,
-            children: [
-              TextButton.icon(
-                onPressed: () => onBreadcrumbPressed(-1),
-                icon: const Icon(Icons.home_outlined, size: 18),
-                label: const Text('Notes'),
-              ),
-              for (var index = 0; index < folderStack.length; index++) ...[
-                const Icon(Icons.chevron_right, size: 18),
-                TextButton(
-                  onPressed: () => onBreadcrumbPressed(index),
-                  child: Text(folderStack[index].name),
-                ),
-              ],
-            ],
-          ),
-          const Gap(10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onCreateFolder,
-                icon: const Icon(Icons.create_new_folder_outlined),
-                label: const Text('New folder'),
-              ),
-              FilledButton.icon(
-                onPressed: isBusy ? null : onUpload,
-                icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Upload files'),
-              ),
-              const SizedBox(height: 12),
-
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onCreateNote,
-                icon: const Icon(Icons.note_add_outlined),
-                label: const Text('New note'),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _FolderCard extends StatelessWidget {
-  const _FolderCard({
-    required this.folder,
-    required this.isArchivedSection,
-    required this.isTrashSection,
-    required this.onDelete,
-    required this.onRestore,
-    required this.onOpen,
-    required this.onMove,
-    required this.onRename,
-    required this.onToggleFavorite,
-    required this.onToggleArchived,
-    required this.onPermanentDelete,
-  });
-
-  final LibraryFolder folder;
-  final bool isTrashSection;
-  final bool isArchivedSection;
-  final VoidCallback onOpen;
-  final VoidCallback onDelete;
-  final VoidCallback onRestore;
-  final VoidCallback onRename;
-  final VoidCallback onMove;
-  final VoidCallback onToggleFavorite;
-  final VoidCallback onToggleArchived;
-  final VoidCallback onPermanentDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isArchivedSection || isTrashSection ? null : onOpen,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 14),
-          child: Row(
-            children: [
-              Icon(
-                isArchivedSection ? Icons.folder_off_outlined : Icons.folder,
-                size: 34,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const Gap(12),
-              Expanded(
-                child: Text(
-                  folder.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-              if (folder.isFavorite)
-                Icon(
-                  Icons.star,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.tertiary,
-                ),
-              PopupMenuButton<_LibraryItemAction>(
-                onSelected: (action) {
-                  switch (action) {
-                    case _LibraryItemAction.rename:
-                      onRename();
-                      return;
-
-                    case _LibraryItemAction.move:
-                      onMove();
-                      return;
-
-                    case _LibraryItemAction.copy:
-                      return;
-
-                    case _LibraryItemAction.favorite:
-                      onToggleFavorite();
-                      return;
-
-                    case _LibraryItemAction.archive:
-                      onToggleArchived();
-                      return;
-
-                    case _LibraryItemAction.trash:
-                      onDelete();
-                      return;
-
-                    case _LibraryItemAction.restore:
-                      onRestore();
-                      return;
-
-                    case _LibraryItemAction.permanentDelete:
-                      onPermanentDelete();
-                      return;
-                  }
-                },
-                itemBuilder: (context) {
-                  if (isTrashSection) {
-                    return [
-                      const PopupMenuItem(
-                        value: _LibraryItemAction.restore,
-                        child: Text('Restore'),
-                      ),
-                      const PopupMenuItem(
-                        value: _LibraryItemAction.permanentDelete,
-                        child: Text('Delete Permanently'),
-                      ),
-                    ];
-                  }
-
-                  return [
-                    const PopupMenuItem(
-                      value: _LibraryItemAction.rename,
-                      child: Text('Rename'),
-                    ),
-                    if (!isArchivedSection)
-                      const PopupMenuItem(
-                        value: _LibraryItemAction.move,
-                        child: Text('Move'),
-                      ),
-                      PopupMenuItem(
-                        value: _LibraryItemAction.favorite,
-                        child: Text(
-                          folder.isFavorite
-                              ? 'Remove favourite'
-                              : 'Add to favourites',
-                        ),
-                      ),
-
-                    PopupMenuItem(
-                      value: _LibraryItemAction.archive,
-                      child: Text(
-                        isArchivedSection
-                            ? 'Restore'
-                            : 'Archive',
-                      ),
-                    ),
-
-                    const PopupMenuItem(
-                      value: _LibraryItemAction.trash,
-                      child: Text('Move to Trash'),
-                    ),
-                  ];
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-enum _LibraryItemAction {
-  rename,
-  move,
-  copy,
-  favorite,
-  archive,
-  trash,
-  restore,
-  permanentDelete,
-}
-
-class _NoteCard extends StatelessWidget {
-  const _NoteCard({
-    required this.note,
-    required this.onTap,
-    required this.onRename,
-    required this.onToggleFavorite,
-    required this.onDelete,
-    required this.onMove,
-    required this.onCopy,
-    required this.isTrashSection,
-    required this.onRestore,
-    required this.onPermanentDelete,
-  });
-
-  final bool isTrashSection;
-  final NoteItem note;
-  final VoidCallback onTap;
-  final VoidCallback onMove;
-  final VoidCallback onRename;
-  final VoidCallback onCopy;
-  final VoidCallback onToggleFavorite;
-  final VoidCallback onRestore;
-  final VoidCallback onPermanentDelete;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          child: Icon(_fileIcon(note.extension)),
-        ),
-        title: Text(note.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          '${note.category.label} • ${_formatBytes(note.sizeBytes)}',
-        ),
-        trailing: PopupMenuButton<_LibraryItemAction>(
-          onSelected: (action) {
-            switch (action) {
-              case _LibraryItemAction.rename:
-                onRename();
-                return;
-
-              case _LibraryItemAction.move:
-                onMove();
-                return;
-
-              case _LibraryItemAction.copy:
-                onCopy();
-                return;
-
-              case _LibraryItemAction.favorite:
-                onToggleFavorite();
-                return;
-
-              case _LibraryItemAction.archive:
-                return;
-
-              case _LibraryItemAction.trash:
-                onDelete();
-                return;
-
-              case _LibraryItemAction.restore:
-                onRestore();
-                return;
-
-              case _LibraryItemAction.permanentDelete:
-                onPermanentDelete();
-                return;
-            }
-          },
-          itemBuilder: (context) {
-            if (isTrashSection) {
-              return const [
-                PopupMenuItem(
-                  value: _LibraryItemAction.restore,
-                  child: Text('Restore'),
-                ),
-                PopupMenuItem(
-                  value:
-                  _LibraryItemAction.permanentDelete,
-                  child: Text('Delete Permanently'),
-                ),
-              ];
-            }
-
-            return [
-              const PopupMenuItem(
-                value: _LibraryItemAction.rename,
-                child: Text('Rename'),
-              ),
-
-              const PopupMenuItem(
-                value: _LibraryItemAction.move,
-                child: Text('Move'),
-              ),
-
-              const PopupMenuItem(
-                value: _LibraryItemAction.copy,
-                child: Text('Copy'),
-              ),
-
-              PopupMenuItem(
-                value: _LibraryItemAction.favorite,
-                child: Text(
-                  note.isFavorite
-                      ? 'Remove favourite'
-                      : 'Add to favourites',
-                ),
-              ),
-
-              const PopupMenuItem(
-                value: _LibraryItemAction.trash,
-                child: Text('Move to Trash'),
-              ),
-            ];
-          },
-        ),
-      ),
-    );
-  }
-
-  static IconData _fileIcon(String extension) {
-    return switch (extension.toLowerCase()) {
-      'pdf' => Icons.picture_as_pdf_outlined,
-      'png' || 'jpg' || 'jpeg' => Icons.image_outlined,
-      'ppt' || 'pptx' => Icons.slideshow_outlined,
-      'doc' || 'docx' => Icons.description_outlined,
-      _ => Icons.insert_drive_file_outlined,
-    };
-  }
-
-  static String _formatBytes(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
-}
-
-class _CreateFolderDialog extends StatefulWidget {
-  const _CreateFolderDialog();
-
-  @override
-  State<_CreateFolderDialog> createState() => _CreateFolderDialogState();
-}
-
-class _CreateFolderDialogState extends State<_CreateFolderDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('New folder'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        maxLength: 80,
-        textInputAction: TextInputAction.done,
-        decoration: const InputDecoration(
-          labelText: 'Folder name',
-          hintText: 'Semester 1',
-        ),
-        onSubmitted: (_) => _submit(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Create')),
-      ],
-    );
-  }
-
-  void _submit() {
-    final name = _controller.text.trim();
-    if (name.isNotEmpty) Navigator.pop(context, name);
-  }
-}
-
-class _CategoryDialog extends StatelessWidget {
-  const _CategoryDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    return SimpleDialog(
-      title: const Text('Choose note category'),
-      children: [
-        for (final category in NoteCategory.values)
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, category),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(category.label),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 48,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const Gap(12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const Gap(4),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return _EmptyState(
-      icon: Icons.error_outline,
-      title: 'Could not load notes',
-      message: message,
-    );
   }
 }

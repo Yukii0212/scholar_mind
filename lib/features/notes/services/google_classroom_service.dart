@@ -68,7 +68,7 @@ class GoogleClassroomService {
     final response =
     await http.get(
       Uri.parse(
-        'https://classroom.googleapis.com/v1/courses',
+        'https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&courseStates=ARCHIVED',
       ),
       headers: {
         'Authorization':
@@ -89,7 +89,6 @@ class GoogleClassroomService {
         (data['courses'] as List?)
             ?.cast<Map<String, dynamic>>() ??
             [];
-    print(response.body);
     return courses
         .map(
       ClassroomCourse.fromJson,
@@ -200,10 +199,12 @@ class ClassroomCourse {
   ClassroomCourse({
     required this.id,
     required this.name,
+    required this.courseState,
   });
 
   final String id;
   final String name;
+  final String courseState;
 
   factory ClassroomCourse.fromJson(
       Map<String, dynamic> json,
@@ -211,6 +212,8 @@ class ClassroomCourse {
     return ClassroomCourse(
       id: json['id'],
       name: json['name'] ?? 'Untitled',
+      courseState:
+      json['courseState'] ?? 'ACTIVE',
     );
   }
 }

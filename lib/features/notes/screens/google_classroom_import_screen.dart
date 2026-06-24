@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/google_classroom_provider.dart';
 import '../providers/library_provider.dart';
 import '../domain/note_category.dart';
@@ -24,8 +25,15 @@ class GoogleClassroomImportScreen
 }
 
 class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImportScreen> {
-  final Map<String, Map<String, dynamic>> _selectedAttachments = {};
+  final Map<String, Map<String, dynamic>>
+  _selectedAttachments = {};
+
   bool _isImporting = false;
+
+  int _selectedTab = 0;
+
+  Set<String> _hiddenCourseIds = {};
+
   int _currentImport = 0;
   int _totalImports = 0;
   String _currentFileName = '';
@@ -38,6 +46,55 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
 
     _destinationFolderId =
         widget.defaultFolderId;
+
+    _loadHiddenCourses();
+  }
+
+  Future<void> _loadHiddenCourses() async {
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    setState(() {
+      _hiddenCourseIds =
+          prefs
+              .getStringList(
+            'hidden_gc_courses',
+          )
+              ?.toSet() ??
+              {};
+    });
+  }
+
+  Future<void> _hideCourse(
+      String courseId,
+      ) async {
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    _hiddenCourseIds.add(courseId);
+
+    await prefs.setStringList(
+      'hidden_gc_courses',
+      _hiddenCourseIds.toList(),
+    );
+
+    setState(() {});
+  }
+
+  Future<void> _unhideCourse(
+      String courseId,
+      ) async {
+    final prefs =
+    await SharedPreferences.getInstance();
+
+    _hiddenCourseIds.remove(courseId);
+
+    await prefs.setStringList(
+      'hidden_gc_courses',
+      _hiddenCourseIds.toList(),
+    );
+
+    setState(() {});
   }
 
   @override
@@ -82,7 +139,39 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
             child: ErrorState(message: err.toString()),
           ),
           data: (courses) {
-            if (courses.isEmpty) {
+
+            final activeCourses =
+            courses.where((course) {
+
+              if (course.courseState !=
+                  'ACTIVE') {
+                return false;
+              }
+
+              return !_hiddenCourseIds.contains(
+                course.id,
+              );
+            }).toList();
+
+            final hiddenCourses =
+            courses.where((course) {
+
+              if (course.courseState ==
+                  'ARCHIVED') {
+                return true;
+              }
+
+              return _hiddenCourseIds.contains(
+                course.id,
+              );
+            }).toList();
+
+            final visibleCourses =
+            _selectedTab == 0
+                ? activeCourses
+                : hiddenCourses;
+
+            if (visibleCourses.isEmpty) {
               return const EmptyState(
                 icon: Icons.school_outlined,
                 title: 'No classes found',
@@ -90,20 +179,137 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
               );
             }
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: courses.length,
+            return Column(
+              children: [
+
+                Padding(
+                  padding:
+                  const EdgeInsets.all(12),
+                  child: SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 0,
+                        label:
+                        Text('Active Classes'),
+                        icon: Icon(
+                          Icons.school,
+                        ),
+                      ),
+                      ButtonSegment(
+                        value: 1,
+                        label:
+                        Text('Hidden Classes'),
+                        icon: Icon(
+                          Icons.visibility_off,
+                        ),
+                      ),
+                    ],
+                    selected: {
+                      _selectedTab,
+                    },
+                    onSelectionChanged:
+                        (selection) {
+                      setState(() {
+                        _selectedTab =
+                            selection.first;
+                      });
+                    },
+                  ),
+                ),
+
+            Expanded(
+            child: ListView.builder(
+            padding:
+            const EdgeInsets.all(12),
+            itemCount:
+            visibleCourses.length,
               itemBuilder: (context, index) {
-                final course = courses[index];
+              final course =
+              visibleCourses[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   clipBehavior: Clip.antiAlias,
                   child: ExpansionTile(
-                    leading: const Icon(Icons.class_outlined),
-                    title: Text(
-                      course.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    trailing: PopupMenuButton(
+                      itemBuilder: (context) {
+
+                        if (_selectedTab == 0) {
+                          return [
+                            const PopupMenuItem(
+                              value: 'hide',
+                              child: Text(
+                                'Hide Course',
+                              ),
+                            ),
+                          ];
+                        }
+
+                        return [
+                          const PopupMenuItem(
+                            value: 'unhide',
+                            child: Text(
+                              'Unhide Course',
+                            ),
+                          ),
+                        ];
+                      },
+
+                      onSelected: (value) {
+                        if (value == 'hide') {
+                          _hideCourse(
+                            course.id,
+                          );
+                        }
+
+                        if (value ==
+                            'unhide') {
+                          _unhideCourse(
+                            course.id,
+                          );
+                        }
+                      },
                     ),
+                    leading: const Icon(Icons.class_outlined),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    course.name,
+                    style:
+                    const TextStyle(
+                          fontWeight:
+                          FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    if (course.courseState !=
+                    'ACTIVE')
+                      Container(
+                      padding:
+                      const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                      ),
+                      decoration:
+                      BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius:
+                      BorderRadius.circular(
+                      12,
+                      ),
+                      ),
+                      child: Text(
+                      course.courseState,
+                      style:
+                      const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
                     children: [
                       _CourseMaterialsSection(
                         courseId: course.id,
@@ -122,6 +328,9 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
                   ),
                 );
               },
+            ),
+            ),
+              ],
             );
           },
         ),

@@ -26,6 +26,9 @@ class GoogleClassroomImportScreen
 class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImportScreen> {
   final Map<String, Map<String, dynamic>> _selectedAttachments = {};
   bool _isImporting = false;
+  int _currentImport = 0;
+  int _totalImports = 0;
+  String _currentFileName = '';
 
   late String _destinationFolderId;
 
@@ -41,7 +44,9 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
   Widget build(BuildContext context) {
     final coursesAsync = ref.watch(classroomCoursesProvider);
 
-    return Scaffold(
+    return Stack(
+        children: [
+    Scaffold(
       appBar: AppBar(
         title: const Text('Import from Google Classroom'),
         actions: [
@@ -55,7 +60,9 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
             ),
         ],
       ),
-      body: RefreshIndicator(
+        body: IgnorePointer(
+          ignoring: _isImporting,
+          child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(classroomCoursesProvider);
           await ref.read(classroomCoursesProvider.future);
@@ -118,13 +125,57 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
             );
           },
         ),
-      ),
+          ),
+        ),
+    ),
+          if (_isImporting)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+
+                        const SizedBox(height: 16),
+
+                        Text(
+                          'Importing $_currentImport / $_totalImports',
+                          style: const TextStyle(
+                            fontWeight:
+                            FontWeight.bold,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        Text(
+                          _currentFileName,
+                          textAlign:
+                          TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
     );
   }
 
   Future<void> _handleBatchImport() async {
     setState(() {
       _isImporting = true;
+
+      _currentImport = 0;
+      _totalImports =
+          _selectedAttachments.length;
+
+      _currentFileName = '';
     });
 
     try {
@@ -146,6 +197,13 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
 
         final fileName =
         file['title'] as String;
+
+        setState(() {
+          _currentImport++;
+
+          _currentFileName =
+              fileName;
+        });
 
         final fileId =
         file['id'] as String;

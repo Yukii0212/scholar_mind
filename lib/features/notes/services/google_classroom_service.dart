@@ -78,8 +78,11 @@ class GoogleClassroomService {
     );
 
     if (response.statusCode != 200) {
+      print('Status: ${response.statusCode}');
+      print(response.body);
+
       throw Exception(
-        'Failed to load courses',
+        'Failed to load courses (${response.statusCode})',
       );
     }
 

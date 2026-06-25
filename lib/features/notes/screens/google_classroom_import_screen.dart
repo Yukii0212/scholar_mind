@@ -5,6 +5,7 @@ import '../providers/google_classroom_provider.dart';
 import '../providers/library_provider.dart';
 import '../domain/note_category.dart';
 import '../services/google_classroom_service.dart';
+import '../services/file_cache_service.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 
@@ -436,18 +437,24 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
           fileId,
         );
 
-        final success =
+        final storagePath =
         await controller.uploadNote(
           folderId: _destinationFolderId,
           fileName: fileName,
           extension: extension,
           bytes: bytes,
-          category:
-          NoteCategory.selfStudyNotes,
+          category: NoteCategory.selfStudyNotes,
         );
 
-        if (success) {
+        if (storagePath != null) {
+
           importedCount++;
+
+          await FileCacheService.saveBytes(
+            storagePath: storagePath,
+            fileName: fileName,
+            bytes: bytes,
+          );
         }
       }
 

@@ -977,7 +977,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ? file.name.split('.').last
           : '';
 
-      final success =
+      final storagePath =
       await ref.read(libraryActionControllerProvider.notifier).uploadNote(
         folderId: _folderId,
         fileName: file.name,
@@ -988,7 +988,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
       if (!mounted) return;
 
-      if (success) {
+      if (storagePath != null) {
         uploaded++;
       } else {
         _showActionError();

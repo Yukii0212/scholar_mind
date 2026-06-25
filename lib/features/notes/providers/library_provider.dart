@@ -273,15 +273,34 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
-  Future<bool> uploadNote({
+  Future<String?> uploadNote({
     required String folderId,
     required String fileName,
     required String extension,
     required Uint8List bytes,
     required NoteCategory category,
-  }) {
-    return _run((userId, repository) {
-      return repository.uploadNote(
+  }) async {
+
+    final userId =
+        ref.read(firebaseAuthProvider).currentUser?.uid;
+
+    if (userId == null) {
+      state = AsyncValue.error(
+        StateError('You must be signed in.'),
+        StackTrace.current,
+      );
+
+      return null;
+    }
+
+    state = const AsyncValue.loading();
+
+    try {
+
+      final storagePath =
+      await ref
+          .read(libraryRepositoryProvider)
+          .uploadNote(
         userId: userId,
         folderId: folderId,
         fileName: fileName,
@@ -289,7 +308,20 @@ class LibraryActionController extends _$LibraryActionController {
         bytes: bytes,
         category: category,
       );
-    });
+
+      state = const AsyncValue.data(null);
+
+      return storagePath;
+
+    } catch (error, stackTrace) {
+
+      state = AsyncValue.error(
+        error,
+        stackTrace,
+      );
+
+      return null;
+    }
   }
 
   Future<bool> softDeleteNote(NoteItem note) {

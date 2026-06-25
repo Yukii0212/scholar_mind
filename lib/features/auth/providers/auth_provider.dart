@@ -11,7 +11,17 @@ part 'auth_provider.g.dart';
 FirebaseAuth firebaseAuth(FirebaseAuthRef ref) => FirebaseAuth.instance;
 
 @Riverpod(keepAlive: true)
-GoogleSignIn googleSignIn(GoogleSignInRef ref) => GoogleSignIn();
+GoogleSignIn googleSignIn(
+    GoogleSignInRef ref,
+    ) {
+  return GoogleSignIn(
+    scopes: const [
+      'https://www.googleapis.com/auth/classroom.courses.readonly',
+      'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
+      'https://www.googleapis.com/auth/drive.readonly',
+    ],
+  );
+}
 
 @riverpod
 Stream<User?> authState(AuthStateRef ref) {

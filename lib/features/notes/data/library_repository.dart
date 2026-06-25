@@ -599,7 +599,7 @@ class LibraryRepository {
     });
   }
 
-  Future<void> uploadNote({
+  Future<String> uploadNote({
     required String userId,
     required String folderId,
     required String fileName,
@@ -642,6 +642,8 @@ class LibraryRepository {
       await storageReference.delete();
       rethrow;
     }
+
+    return storagePath;
   }
 
   static int _sortFolders(LibraryFolder a, LibraryFolder b) {

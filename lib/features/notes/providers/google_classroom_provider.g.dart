@@ -7,7 +7,7 @@ part of 'google_classroom_provider.dart';
 // **************************************************************************
 
 String _$googleClassroomServiceHash() =>
-    r'93811f9aed6d150cd22ce603beec2fb5230c981f';
+    r'd190dc850d34df27d2ea00afe528418b888d63f2';
 
 /// See also [googleClassroomService].
 @ProviderFor(googleClassroomService)

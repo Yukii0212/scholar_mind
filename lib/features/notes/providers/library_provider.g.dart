@@ -395,7 +395,7 @@ class _NotesInFolderProviderElement
 }
 
 String _$libraryActionControllerHash() =>
-    r'924743d6818f88bdc621af3cd9c2b24d0b937e6f';
+    r'7d5c87c7357d1efde0fe8f3f85363baf58e46a1b';
 
 /// See also [LibraryActionController].
 @ProviderFor(LibraryActionController)

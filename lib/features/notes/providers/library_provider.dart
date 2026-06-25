@@ -124,6 +124,22 @@ Stream<List<NoteItem>> notesInFolder(
   return ref.watch(libraryRepositoryProvider).watchNotes(userId, folderId);
 }
 
+@riverpod
+Stream<List<NoteItem>> allUploadedNotes(
+    AllUploadedNotesRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchAllUploadedNotes(userId);
+}
+
 @Riverpod(keepAlive: true)
 class LibraryActionController extends _$LibraryActionController {
   @override

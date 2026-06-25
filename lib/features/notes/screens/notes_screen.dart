@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../data/library_repository.dart';
+
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
@@ -21,7 +22,10 @@ import '../widgets/note_card.dart';
 import '../widgets/folder_picker_dialog.dart';
 import '../widgets/category_dialog.dart';
 import '../widgets/folder_dialogs.dart';
+
+import '../services/file_cache_service.dart';
 import '../services/file_open_service.dart';
+
 import 'google_classroom_import_screen.dart';
 import 'note_editor_screen.dart';
 
@@ -41,13 +45,38 @@ class NotesScreen extends ConsumerStatefulWidget {
 class _NotesScreenState extends ConsumerState<NotesScreen> {
   final List<LibraryFolder> _folderStack = [];
   LibrarySection _section = LibrarySection.browse;
+  bool _cacheSyncStarted = false;
 
   String get _folderId =>
       _folderStack.isEmpty ? LibraryFolder.rootId : _folderStack.last.id;
 
   @override
+  void initState() {
+    super.initState();
+
+    ref.listenManual(
+      allUploadedNotesProvider,
+          (_, next) {
+        next.whenData((notes) {
+          if (_cacheSyncStarted) {
+            return;
+          }
+
+          _cacheSyncStarted = true;
+
+          unawaited(
+            FileCacheService.syncMissingCaches(notes),
+          );
+        });
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(libraryActionControllerProvider);
+    final actionState = ref.watch(
+      libraryActionControllerProvider,
+    );
     final folders = switch (_section) {
       LibrarySection.browse => ref.watch(childFoldersProvider(_folderId)),
       LibrarySection.favorites => ref.watch(favoriteFoldersProvider),

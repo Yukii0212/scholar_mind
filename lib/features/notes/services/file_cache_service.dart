@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import '../domain/note_item.dart';
+
 class FileCacheService {
   FileCacheService._();
 
@@ -115,6 +117,40 @@ class FileCacheService {
       fileName: fileName,
       bytes: response.bodyBytes,
     );
+  }
+
+  static Future<void> syncMissingCaches(
+      Iterable<NoteItem> notes,
+      ) async {
+    for (final note in notes) {
+      if (note.isInternal) {
+        continue;
+      }
+
+      if (note.storagePath.isEmpty) {
+        continue;
+      }
+
+      final cached = await exists(
+        note.storagePath,
+        note.name,
+      );
+
+      if (cached) {
+        continue;
+      }
+
+      try {
+        await downloadFromFirebase(
+          storagePath: note.storagePath,
+          fileName: note.name,
+        );
+      } catch (_) {
+      }
+    }
+
+    print('CACHE SYNC START');
+    print('Notes: ${notes.length}');
   }
 
   static Future<void> delete({

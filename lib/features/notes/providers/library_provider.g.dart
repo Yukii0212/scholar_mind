@@ -394,12 +394,11 @@ class _NotesInFolderProviderElement
   String get folderId => (origin as NotesInFolderProvider).folderId;
 }
 
-String _$allUploadedNotesHash() => r'dc6595246a65344618707fe4a6715c2e72d6d325';
+String _$allUploadedNotesHash() => r'f0b1ffd2e5e56a3ef7679d7924aa5359a24410ac';
 
 /// See also [allUploadedNotes].
 @ProviderFor(allUploadedNotes)
-final allUploadedNotesProvider =
-    AutoDisposeStreamProvider<List<NoteItem>>.internal(
+final allUploadedNotesProvider = StreamProvider<List<NoteItem>>.internal(
   allUploadedNotes,
   name: r'allUploadedNotesProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -409,7 +408,7 @@ final allUploadedNotesProvider =
   allTransitiveDependencies: null,
 );
 
-typedef AllUploadedNotesRef = AutoDisposeStreamProviderRef<List<NoteItem>>;
+typedef AllUploadedNotesRef = StreamProviderRef<List<NoteItem>>;
 String _$libraryActionControllerHash() =>
     r'7d5c87c7357d1efde0fe8f3f85363baf58e46a1b';
 

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +21,6 @@ import '../widgets/folder_picker_dialog.dart';
 import '../widgets/category_dialog.dart';
 import '../widgets/folder_dialogs.dart';
 
-import '../services/file_cache_service.dart';
 import '../services/file_open_service.dart';
 
 import 'google_classroom_import_screen.dart';
@@ -45,32 +42,9 @@ class NotesScreen extends ConsumerStatefulWidget {
 class _NotesScreenState extends ConsumerState<NotesScreen> {
   final List<LibraryFolder> _folderStack = [];
   LibrarySection _section = LibrarySection.browse;
-  bool _cacheSyncStarted = false;
 
   String get _folderId =>
       _folderStack.isEmpty ? LibraryFolder.rootId : _folderStack.last.id;
-
-  @override
-  void initState() {
-    super.initState();
-
-    ref.listenManual(
-      allUploadedNotesProvider,
-          (_, next) {
-        next.whenData((notes) {
-          if (_cacheSyncStarted) {
-            return;
-          }
-
-          _cacheSyncStarted = true;
-
-          unawaited(
-            FileCacheService.syncMissingCaches(notes),
-          );
-        });
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

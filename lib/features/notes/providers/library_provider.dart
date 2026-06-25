@@ -124,7 +124,7 @@ Stream<List<NoteItem>> notesInFolder(
   return ref.watch(libraryRepositoryProvider).watchNotes(userId, folderId);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<List<NoteItem>> allUploadedNotes(
     AllUploadedNotesRef ref,
     ) {

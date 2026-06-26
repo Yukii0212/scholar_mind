@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
+import '../services/file_cache_service.dart';
 
 class LibraryRepository {
   LibraryRepository(this._firestore, this._storage);
@@ -217,9 +218,16 @@ class LibraryRepository {
     required String userId,
     required String noteId,
   }) {
+    final expiresAt = Timestamp.fromDate(
+      DateTime.now().add(
+        FileCacheService.cacheDeletionDelay,
+      ),
+    );
+
     return _notes(userId).doc(noteId).update({
       'isDeleted': true,
       'deletedAt': FieldValue.serverTimestamp(),
+      'cacheExpiresAt': expiresAt,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -231,6 +239,7 @@ class LibraryRepository {
     return _notes(userId).doc(noteId).update({
       'isDeleted': false,
       'deletedAt': null,
+      'cacheExpiresAt': null,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -377,6 +386,7 @@ class LibraryRepository {
     data['name'] as String;
 
     await _notes(userId).add({
+      'cacheExpiresAt': null,
       ...data,
 
       'name': '$originalName (Copy)',
@@ -489,7 +499,6 @@ class LibraryRepository {
       String userId,
       ) {
     return _notes(userId)
-        .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       final notes =
@@ -657,6 +666,7 @@ class LibraryRepository {
         'createdAt': now,
         'updatedAt': now,
         'deletedAt': null,
+        'cacheExpiresAt': null,
       });
     } catch (_) {
       await storageReference.delete();

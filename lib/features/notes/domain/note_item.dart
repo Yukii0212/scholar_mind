@@ -16,8 +16,10 @@ class NoteItem {
     required this.source,
     required this.isFavorite,
     required this.isDeleted,
+    required this.cacheExpiresAt,
     required this.deletedAt,
     required this.createdAt,
+
   });
 
   factory NoteItem.fromDocument(
@@ -42,6 +44,11 @@ class NoteItem {
       deletedAt: data['deletedAt'] != null
           ? (data['deletedAt'] as Timestamp).toDate()
           : null,
+      cacheExpiresAt:
+      data['cacheExpiresAt'] != null
+          ? (data['cacheExpiresAt'] as Timestamp)
+          .toDate()
+          : null,
     );
   }
 
@@ -56,7 +63,8 @@ class NoteItem {
   final int sizeBytes;
   final bool isFavorite;
   final bool isDeleted;
+  final DateTime? cacheExpiresAt;
+  final DateTime? deletedAt;
   final bool isInternal;
   final DateTime createdAt;
-  final DateTime? deletedAt;
 }

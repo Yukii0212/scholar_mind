@@ -6,8 +6,13 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../domain/note_item.dart';
+import '../../../core/services/background_sync_service.dart';
 
 class FileCacheService {
+  static const cacheDeletionDelay = Duration(
+    seconds: 5,
+  );
+
   FileCacheService._();
 
   static Future<Directory> _cacheDirectory() async {
@@ -165,5 +170,33 @@ class FileCacheService {
     if (await file.exists()) {
       await file.delete();
     }
+  }
+
+  static Future<void> ensureCacheExists(
+      NoteItem note,
+      ) async {
+    final cached = await exists(
+      note.storagePath,
+      note.name,
+    );
+
+    if (cached) {
+      return;
+    }
+
+    await downloadFromFirebase(
+      storagePath: note.storagePath,
+      fileName: note.name,
+    );
+  }
+
+  static Future<void> deleteCache(
+      NoteItem note,
+      ) async {
+    print("DELETE FILE CALLED");
+    await delete(
+      storagePath: note.storagePath,
+      fileName: note.name,
+    );
   }
 }

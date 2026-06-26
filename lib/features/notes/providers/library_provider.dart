@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../data/library_repository.dart';
+import '../services/file_cache_service.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
@@ -340,22 +341,50 @@ class LibraryActionController extends _$LibraryActionController {
     }
   }
 
-  Future<bool> softDeleteNote(NoteItem note) {
-    return _run((userId, repository) {
-      return repository.softDeleteNote(
-        userId: userId,
-        noteId: note.id,
-      );
-    });
+  Future<bool> softDeleteNote(
+      NoteItem note,
+      ) async {
+
+    final stopwatch = Stopwatch()
+      ..start();
+
+    final success = await _run(
+          (userId, repository) {
+        return repository.softDeleteNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      },
+    );
+
+    print(
+      'Soft delete took ${stopwatch.elapsedMilliseconds} ms',
+    );
+
+    return success;
   }
 
-  Future<bool> restoreNote(NoteItem note) {
-    return _run((userId, repository) {
-      return repository.restoreNote(
-        userId: userId,
-        noteId: note.id,
-      );
-    });
+  Future<bool> restoreNote(
+      NoteItem note,
+      ) async {
+
+    final stopwatch = Stopwatch()
+      ..start();
+
+    final success = await _run(
+          (userId, repository) {
+        return repository.restoreNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      },
+    );
+
+    print(
+      'Restore took ${stopwatch.elapsedMilliseconds} ms',
+    );
+
+    return success;
   }
 
   Future<bool> updateInternalNote({
@@ -371,13 +400,25 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
-  Future<bool> permanentlyDeleteNote(NoteItem note) {
-    return _run((userId, repository) {
-      return repository.permanentlyDeleteNote(
-        userId: userId,
-        noteId: note.id,
+  Future<bool> permanentlyDeleteNote(
+      NoteItem note,
+      ) async {
+    final success = await _run(
+          (userId, repository) {
+        return repository.permanentlyDeleteNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      },
+    );
+
+    if (success) {
+      await FileCacheService.deleteCache(
+        note,
       );
-    });
+    }
+
+    return success;
   }
 
   Future<bool> permanentlyDeleteFolder(LibraryFolder folder) {

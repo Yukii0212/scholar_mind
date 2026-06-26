@@ -45,7 +45,36 @@ class _NoteEditorScreenState
       text: widget.content,
     );
 
-    _loadDraft();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final acquired = await ref
+          .read(
+        libraryActionControllerProvider.notifier,
+      )
+          .acquireNoteLock(
+        noteId: widget.noteId,
+      );
+
+      print('Lock acquired: $acquired');
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!acquired) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This note is currently being edited on another device.',
+            ),
+          ),
+        );
+
+        Navigator.pop(context);
+        return;
+      }
+
+      _loadDraft();
+    });
 
     _controller.addListener(() async {
       final prefs = await SharedPreferences.getInstance();

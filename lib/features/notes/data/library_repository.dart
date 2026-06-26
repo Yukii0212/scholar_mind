@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../../core/services/device_id_service.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
@@ -667,6 +668,10 @@ class LibraryRepository {
         'updatedAt': now,
         'deletedAt': null,
         'cacheExpiresAt': null,
+
+        'lockedBy': null,
+        'heartbeatAt': null,
+        'lockExpiresAt': null,
       });
     } catch (_) {
       await storageReference.delete();
@@ -674,6 +679,78 @@ class LibraryRepository {
     }
 
     return storagePath;
+  }
+
+  Future<bool> acquireNoteLock({
+    required String userId,
+    required String noteId,
+  }) async {
+    print('Attempting to acquire lock...');
+    final noteReference =
+    _notes(userId).doc(noteId);
+
+    final deviceId =
+    await DeviceIdService.getDeviceId();
+
+    print(deviceId);
+
+    return _firestore.runTransaction(
+          (transaction) async {
+        final snapshot =
+        await transaction.get(noteReference);
+
+        if (!snapshot.exists) {
+          throw ArgumentError(
+            'Note not found.',
+          );
+        }
+
+        final data = snapshot.data()!;
+
+        final now = Timestamp.now();
+
+        final lockExpiresAt =
+        data['lockExpiresAt'] as Timestamp?;
+
+        final lockedBy =
+        data['lockedBy'] as String?;
+
+        final isExpired =
+            lockExpiresAt == null ||
+                lockExpiresAt.compareTo(now) <= 0;
+
+        print('==============================');
+        print('Current device : $deviceId');
+        print('Firestore lock : $lockedBy');
+        print('Expired        : $isExpired');
+        print('==============================');
+
+        if (!isExpired &&
+            lockedBy != deviceId) {
+          print('LOCK DENIED');
+          return false;
+        }
+
+        print('LOCK GRANTED');
+
+        print('Writing lock for $deviceId');
+
+        transaction.update(
+          noteReference,
+          {
+            'lockedBy': deviceId,
+            'heartbeatAt': now,
+            'lockExpiresAt': Timestamp.fromDate(
+              DateTime.now().add(
+                const Duration(seconds: 5),
+              ),
+            ),
+          },
+        );
+
+        return true;
+      },
+    );
   }
 
   static int _sortFolders(LibraryFolder a, LibraryFolder b) {

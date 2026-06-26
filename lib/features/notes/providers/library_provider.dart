@@ -345,9 +345,6 @@ class LibraryActionController extends _$LibraryActionController {
       NoteItem note,
       ) async {
 
-    final stopwatch = Stopwatch()
-      ..start();
-
     final success = await _run(
           (userId, repository) {
         return repository.softDeleteNote(
@@ -357,19 +354,12 @@ class LibraryActionController extends _$LibraryActionController {
       },
     );
 
-    print(
-      'Soft delete took ${stopwatch.elapsedMilliseconds} ms',
-    );
-
     return success;
   }
 
   Future<bool> restoreNote(
       NoteItem note,
       ) async {
-
-    final stopwatch = Stopwatch()
-      ..start();
 
     final success = await _run(
           (userId, repository) {
@@ -379,12 +369,46 @@ class LibraryActionController extends _$LibraryActionController {
         );
       },
     );
-
-    print(
-      'Restore took ${stopwatch.elapsedMilliseconds} ms',
-    );
-
     return success;
+  }
+
+  Future<bool> acquireNoteLock({
+    required String noteId,
+  }) async {
+    final userId =
+        ref.read(firebaseAuthProvider).currentUser?.uid;
+
+    if (userId == null) {
+      state = AsyncValue.error(
+        StateError('You must be signed in.'),
+        StackTrace.current,
+      );
+
+      return false;
+    }
+
+    state = const AsyncValue.loading();
+
+    try {
+      final acquired =
+      await ref
+          .read(libraryRepositoryProvider)
+          .acquireNoteLock(
+        userId: userId,
+        noteId: noteId,
+      );
+
+      state = const AsyncValue.data(null);
+
+      return acquired;
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(
+        error,
+        stackTrace,
+      );
+
+      return false;
+    }
   }
 
   Future<bool> updateInternalNote({

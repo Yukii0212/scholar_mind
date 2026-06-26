@@ -411,6 +411,17 @@ class LibraryActionController extends _$LibraryActionController {
     }
   }
 
+  Future<bool> heartbeatNoteLock({
+    required String noteId,
+  }) {
+    return _run((userId, repository) {
+      return repository.heartbeatNoteLock(
+        userId: userId,
+        noteId: noteId,
+      );
+    });
+  }
+
   Future<bool> updateInternalNote({
     required String noteId,
     required String content,

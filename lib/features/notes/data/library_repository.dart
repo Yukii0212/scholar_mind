@@ -742,7 +742,7 @@ class LibraryRepository {
             'heartbeatAt': now,
             'lockExpiresAt': Timestamp.fromDate(
               DateTime.now().add(
-                const Duration(seconds: 5),
+                const Duration(seconds: 15),
               ),
             ),
           },
@@ -751,6 +751,24 @@ class LibraryRepository {
         return true;
       },
     );
+  }
+
+  Future<void> heartbeatNoteLock({
+    required String userId,
+    required String noteId,
+  }) async {
+    final deviceId =
+    await DeviceIdService.getDeviceId();
+
+    await _notes(userId).doc(noteId).update({
+      'lockedBy': deviceId,
+      'heartbeatAt': Timestamp.now(),
+      'lockExpiresAt': Timestamp.fromDate(
+        DateTime.now().add(
+          const Duration(seconds: 5),
+        ),
+      ),
+    });
   }
 
   static int _sortFolders(LibraryFolder a, LibraryFolder b) {

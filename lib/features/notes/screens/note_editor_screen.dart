@@ -32,6 +32,7 @@ class _NoteEditorScreenState
   late final String _draftKey;
 
   Timer? _autoSaveTimer;
+  Timer? _heartbeatTimer;
 
   String _saveStatus = 'Saved';
 
@@ -74,6 +75,19 @@ class _NoteEditorScreenState
       }
 
       _loadDraft();
+
+      _heartbeatTimer = Timer.periodic(
+        const Duration(seconds: 5),
+            (_) {
+          ref
+              .read(
+            libraryActionControllerProvider.notifier,
+          )
+              .heartbeatNoteLock(
+            noteId: widget.noteId,
+          );
+        },
+      );
     });
 
     _controller.addListener(() async {
@@ -121,6 +135,7 @@ class _NoteEditorScreenState
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _heartbeatTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

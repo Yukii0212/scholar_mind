@@ -198,31 +198,55 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
 
                     return CheckboxListTile(
                       value: selected,
-                      secondary:
-                      const Icon(
-                        Icons.insert_drive_file,
+                      secondary: Icon(
+                        item.isImage
+                            ? Icons.image_outlined
+                            : Icons.insert_drive_file,
+                        color: item.isSupported
+                            ? null
+                            : Theme.of(context)
+                            .disabledColor,
                       ),
                       title: Text(
                         item.name,
+                        style: item.isSupported
+                            ? null
+                            : TextStyle(
+                          color: Theme.of(context)
+                              .disabledColor,
+                        ),
                       ),
-                      onChanged: (value) {
+                      subtitle: item.isSupported
+                          ? null
+                          : const Text(
+                        'Unsupported file type',
+                      ),
+                      controlAffinity:
+                      ListTileControlAffinity.leading,
+                      onChanged: item.isSupported
+                          ? (value) {
                         setState(() {
-                          if (value ??
-                              false) {
-                            _selectedAttachments[
-                            item.id] =
-                            {
+                          if (value ?? false) {
+                            _selectedAttachments[item.id] = {
                               'id': item.id,
-                              'title':
-                              item.name,
+                              'title': item.name,
                             };
                           } else {
-                            _selectedAttachments
-                                .remove(
+                            _selectedAttachments.remove(
                               item.id,
                             );
                           }
                         });
+                      }
+                          : (_) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Unsupported file type.',
+                            ),
+                          ),
+                        );
                       },
                     );
                   },

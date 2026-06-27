@@ -24,6 +24,7 @@ import '../widgets/folder_dialogs.dart';
 import '../services/file_open_service.dart';
 
 import 'google_classroom_import_screen.dart';
+import 'google_drive_import_screen.dart';
 import 'note_editor_screen.dart';
 
 enum _ImportSource {
@@ -1014,8 +1015,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         break;
 
       case _ImportSource.drive:
-        _showMessage(
-          'Google Drive integration coming next.',
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GoogleDriveImportScreen(
+              defaultFolderId: _folderId,
+            ),
+          ),
         );
         break;
     }

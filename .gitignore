@@ -18,6 +18,9 @@
 # VS Code
 .vscode/
 
+# Temporary development utilities
+lib/debug/
+
 # Flutter/Dart
 .dart_tool/
 .flutter-plugins
@@ -64,3 +67,4 @@ app.*.symbols
 
 # Obfuscation
 app.*.map.json
+/lib/debug

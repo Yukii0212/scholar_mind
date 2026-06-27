@@ -26,6 +26,16 @@ public final class GeneratedPluginRegistrant {
       Log.e(TAG, "Error registering plugin file_selector_android, dev.flutter.packages.file_selector_android.FileSelectorAndroidPlugin", e);
     }
     try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.ai.FirebaseAIPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin firebase_ai, io.flutter.plugins.firebase.ai.FirebaseAIPlugin", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.appcheck.FirebaseAppCheckPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin firebase_app_check, io.flutter.plugins.firebase.appcheck.FirebaseAppCheckPlugin", e);
+    }
+    try {
       flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.auth.FlutterFirebaseAuthPlugin());
     } catch (Exception e) {
       Log.e(TAG, "Error registering plugin firebase_auth, io.flutter.plugins.firebase.auth.FlutterFirebaseAuthPlugin", e);

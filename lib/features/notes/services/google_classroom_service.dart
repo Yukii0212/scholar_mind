@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import '../domain/drive_item.dart';
 
 class GoogleClassroomService {
   GoogleClassroomService(
@@ -51,6 +52,54 @@ class GoogleClassroomService {
     }
 
     return response.bodyBytes;
+  }
+
+  Future<List<DriveItem>> fetchDriveItems(
+      String folderId,
+      ) async {
+    final user =
+        await _googleSignIn.signInSilently() ??
+            await _googleSignIn.signIn();
+
+    if (user == null) {
+      return [];
+    }
+
+    final auth =
+    await user.authentication;
+
+    final response = await http.get(
+      Uri.parse(
+        'https://www.googleapis.com/drive/v3/files'
+            '?q='
+            '\'${folderId == 'root' ? 'root' : folderId}\' in parents '
+            'and trashed=false'
+            '&fields=files(id,name,mimeType)'
+            '&orderBy=folder,name',
+      ),
+      headers: {
+        'Authorization':
+        'Bearer ${auth.accessToken}',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to load Google Drive files.',
+      );
+    }
+
+    final data =
+    jsonDecode(response.body);
+
+    final files =
+        (data['files'] as List?)
+            ?.cast<Map<String, dynamic>>() ??
+            [];
+
+    return files
+        .map(DriveItem.fromJson)
+        .toList();
   }
 
   Future<List<ClassroomCourse>>

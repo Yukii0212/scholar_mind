@@ -24,6 +24,7 @@ import '../widgets/folder_dialogs.dart';
 import '../services/file_open_service.dart';
 
 import 'google_classroom_import_screen.dart';
+import 'google_drive_import_screen.dart';
 import 'note_editor_screen.dart';
 
 enum _ImportSource {
@@ -87,6 +88,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   onCreateFolder: _createFolder,
                   onCreateNote: _createNote,
                   onUpload: _uploadNotes,
+                  onRestoreAll: _restoreAll,
+                  onDeleteAll: _permanentlyDeleteAll,
                 ),
               ),
             ),
@@ -110,6 +113,86 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             child: LinearProgressIndicator(),
           ),
       ],
+    );
+  }
+
+  Future<void> _restoreAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Restore everything?'),
+        content: const Text(
+          'All folders and notes currently in the Trash will be restored.\n\n'
+              'Do you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, true),
+            child: const Text('Restore All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .restoreAll();
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'All items restored.',
+    );
+  }
+
+  Future<void> _permanentlyDeleteAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete everything?'),
+        content: const Text(
+          'Everything in the Trash will be permanently deleted.\n\n'
+              'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, true),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .permanentlyDeleteAll();
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Trash emptied.',
     );
   }
 
@@ -932,8 +1015,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         break;
 
       case _ImportSource.drive:
-        _showMessage(
-          'Google Drive integration coming next.',
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GoogleDriveImportScreen(
+              defaultFolderId: _folderId,
+            ),
+          ),
         );
         break;
     }
@@ -958,6 +1046,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             'pptx',
             'txt',
             'md',
+            'jpg',
+            'jpeg',
+            'png',
+            'webp',
           ],
         ),
       ],

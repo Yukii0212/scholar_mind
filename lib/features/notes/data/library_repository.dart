@@ -496,6 +496,18 @@ class LibraryRepository {
     });
   }
 
+  Stream<NoteItem> watchNote(
+      String userId,
+      String noteId,
+      ) {
+    return _notes(userId)
+        .doc(noteId)
+        .snapshots()
+        .map((snapshot) {
+      return NoteItem.fromDocument(snapshot);
+    });
+  }
+
   Stream<List<NoteItem>> watchAllUploadedNotes(
       String userId,
       ) {
@@ -685,14 +697,11 @@ class LibraryRepository {
     required String userId,
     required String noteId,
   }) async {
-    print('Attempting to acquire lock...');
     final noteReference =
     _notes(userId).doc(noteId);
 
     final deviceId =
     await DeviceIdService.getDeviceId();
-
-    print(deviceId);
 
     return _firestore.runTransaction(
           (transaction) async {
@@ -719,21 +728,10 @@ class LibraryRepository {
             lockExpiresAt == null ||
                 lockExpiresAt.compareTo(now) <= 0;
 
-        print('==============================');
-        print('Current device : $deviceId');
-        print('Firestore lock : $lockedBy');
-        print('Expired        : $isExpired');
-        print('==============================');
-
         if (!isExpired &&
             lockedBy != deviceId) {
-          print('LOCK DENIED');
           return false;
         }
-
-        print('LOCK GRANTED');
-
-        print('Writing lock for $deviceId');
 
         transaction.update(
           noteReference,
@@ -751,6 +749,26 @@ class LibraryRepository {
         return true;
       },
     );
+  }
+
+  Future<void> forceAcquireNoteLock({
+    required String userId,
+    required String noteId,
+  }) async {
+    final deviceId =
+    await DeviceIdService.getDeviceId();
+
+    final now = Timestamp.now();
+
+    await _notes(userId).doc(noteId).update({
+      'lockedBy': deviceId,
+      'heartbeatAt': now,
+      'lockExpiresAt': Timestamp.fromDate(
+        DateTime.now().add(
+          const Duration(seconds: 15),
+        ),
+      ),
+    });
   }
 
   Future<void> heartbeatNoteLock({

@@ -19,7 +19,9 @@ class NoteItem {
     required this.cacheExpiresAt,
     required this.deletedAt,
     required this.createdAt,
-
+    required this.lockedBy,
+    required this.heartbeatAt,
+    required this.lockExpiresAt,
   });
 
   factory NoteItem.fromDocument(
@@ -49,6 +51,17 @@ class NoteItem {
           ? (data['cacheExpiresAt'] as Timestamp)
           .toDate()
           : null,
+      lockedBy: data['lockedBy'] as String?,
+      heartbeatAt:
+      data['heartbeatAt'] != null
+          ? (data['heartbeatAt'] as Timestamp)
+          .toDate()
+          : null,
+      lockExpiresAt:
+      data['lockExpiresAt'] != null
+          ? (data['lockExpiresAt'] as Timestamp)
+          .toDate()
+          : null,
     );
   }
 
@@ -67,4 +80,7 @@ class NoteItem {
   final DateTime? deletedAt;
   final bool isInternal;
   final DateTime createdAt;
+  final String? lockedBy;
+  final DateTime? heartbeatAt;
+  final DateTime? lockExpiresAt;
 }

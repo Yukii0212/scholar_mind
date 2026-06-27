@@ -125,6 +125,26 @@ Stream<List<NoteItem>> notesInFolder(
   return ref.watch(libraryRepositoryProvider).watchNotes(userId, folderId);
 }
 
+@riverpod
+Stream<NoteItem> note(
+    NoteRef ref,
+    String noteId,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchNote(
+    userId,
+    noteId,
+  );
+}
+
 @Riverpod(keepAlive: true)
 Stream<List<NoteItem>> allUploadedNotes(
     AllUploadedNotesRef ref,
@@ -416,6 +436,17 @@ class LibraryActionController extends _$LibraryActionController {
   }) {
     return _run((userId, repository) {
       return repository.heartbeatNoteLock(
+        userId: userId,
+        noteId: noteId,
+      );
+    });
+  }
+
+  Future<bool> forceAcquireNoteLock({
+    required String noteId,
+  }) {
+    return _run((userId, repository) {
+      return repository.forceAcquireNoteLock(
         userId: userId,
         noteId: noteId,
       );

@@ -87,6 +87,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   onCreateFolder: _createFolder,
                   onCreateNote: _createNote,
                   onUpload: _uploadNotes,
+                  onRestoreAll: _restoreAll,
+                  onDeleteAll: _permanentlyDeleteAll,
                 ),
               ),
             ),
@@ -110,6 +112,61 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             child: LinearProgressIndicator(),
           ),
       ],
+    );
+  }
+
+  Future<void> _restoreAll() async {
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .restoreAll();
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'All items restored.',
+    );
+  }
+
+  Future<void> _permanentlyDeleteAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete everything?'),
+        content: const Text(
+          'Everything in the Trash will be permanently deleted.\n\n'
+              'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, true),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(
+      libraryActionControllerProvider.notifier,
+    )
+        .permanentlyDeleteAll();
+
+    if (!mounted) return;
+
+    _showResult(
+      success,
+      successMessage: 'Trash emptied.',
     );
   }
 

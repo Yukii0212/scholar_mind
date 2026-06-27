@@ -392,6 +392,14 @@ class LibraryActionController extends _$LibraryActionController {
     return success;
   }
 
+  Future<bool> restoreAll() {
+    return _run((userId, repository) {
+      return repository.restoreAll(
+        userId: userId,
+      );
+    });
+  }
+
   Future<bool> acquireNoteLock({
     required String noteId,
   }) async {
@@ -492,6 +500,14 @@ class LibraryActionController extends _$LibraryActionController {
       return repository.permanentlyDeleteFolder(
         userId: userId,
         folderId: folder.id,
+      );
+    });
+  }
+
+  Future<bool> permanentlyDeleteAll() {
+    return _run((userId, repository) {
+      return repository.permanentlyDeleteAll(
+        userId: userId,
       );
     });
   }

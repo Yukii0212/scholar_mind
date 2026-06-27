@@ -245,6 +245,50 @@ class LibraryRepository {
     });
   }
 
+  Future<void> restoreAll({
+    required String userId,
+  }) async {
+    final folders = await _folders(userId)
+        .where('isDeleted', isEqualTo: true)
+        .get();
+
+    for (final folder in folders.docs) {
+      final parentId = folder.data()['parentId'] as String;
+
+      final parentDeleted = folders.docs.any(
+            (candidate) =>
+        candidate.id == parentId &&
+            candidate.data()['isDeleted'] == true,
+      );
+
+      if (!parentDeleted) {
+        await restoreFolder(
+          userId: userId,
+          folderId: folder.id,
+        );
+      }
+    }
+
+    final notes = await _notes(userId)
+        .where('isDeleted', isEqualTo: true)
+        .get();
+
+    for (final note in notes.docs) {
+      final folderId = note.data()['folderId'] as String;
+
+      final parentDeleted = folders.docs.any(
+            (folder) => folder.id == folderId,
+      );
+
+      if (!parentDeleted) {
+        await restoreNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      }
+    }
+  }
+
   Future<void> permanentlyDeleteNote({
     required String userId,
     required String noteId,
@@ -447,6 +491,50 @@ class LibraryRepository {
     );
 
     await _folders(userId).doc(folderId).delete();
+  }
+
+  Future<void> permanentlyDeleteAll({
+    required String userId,
+  }) async {
+    final folders = await _folders(userId)
+        .where('isDeleted', isEqualTo: true)
+        .get();
+
+    for (final folder in folders.docs) {
+      final parentId = folder.data()['parentId'] as String;
+
+      final parentDeleted = folders.docs.any(
+            (candidate) =>
+        candidate.id == parentId &&
+            candidate.data()['isDeleted'] == true,
+      );
+
+      if (!parentDeleted) {
+        await permanentlyDeleteFolder(
+          userId: userId,
+          folderId: folder.id,
+        );
+      }
+    }
+
+    final notes = await _notes(userId)
+        .where('isDeleted', isEqualTo: true)
+        .get();
+
+    for (final note in notes.docs) {
+      final folderId = note.data()['folderId'] as String;
+
+      final parentDeleted = folders.docs.any(
+            (folder) => folder.id == folderId,
+      );
+
+      if (!parentDeleted) {
+        await permanentlyDeleteNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      }
+    }
   }
 
   Future<void> _permanentlyDeleteChildren({

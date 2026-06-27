@@ -15,6 +15,8 @@ class LibraryHeader extends StatelessWidget {
     required this.onCreateFolder,
     required this.onCreateNote,
     required this.onUpload,
+    required this.onRestoreAll,
+    required this.onDeleteAll,
   });
 
   final LibrarySection section;
@@ -25,6 +27,8 @@ class LibraryHeader extends StatelessWidget {
   final VoidCallback onCreateFolder;
   final VoidCallback onCreateNote;
   final VoidCallback onUpload;
+  final VoidCallback onRestoreAll;
+  final VoidCallback onDeleteAll;
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +111,25 @@ class LibraryHeader extends StatelessWidget {
                 onPressed: isBusy ? null : onCreateNote,
                 icon: const Icon(Icons.note_add_outlined),
                 label: const Text('New note'),
+              ),
+            ],
+          ),
+        ],
+        if (section == LibrarySection.trash) ...[
+          const Gap(18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: isBusy ? null : onRestoreAll,
+                icon: const Icon(Icons.restore),
+                label: const Text('Restore All'),
+              ),
+              FilledButton.icon(
+                onPressed: isBusy ? null : onDeleteAll,
+                icon: const Icon(Icons.delete_forever),
+                label: const Text('Delete All'),
               ),
             ],
           ),

@@ -1,48 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../auth/providers/auth_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+import '../../auth/providers/auth_provider.dart';
+import '../../../core/services/background_sync_service.dart';
+import '../../notes/providers/library_provider.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
   final Widget child;
-  const HomeScreen({super.key, required this.child});
+  const HomeScreen({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  ConsumerState<HomeScreen> createState() =>
+      _HomeScreenState();
+}
+
+class _HomeScreenState
+    extends ConsumerState<HomeScreen> {
+  late final BackgroundSyncService _backgroundSync;
 
   static const _destinations = [
     NavigationDestination(
-        icon: Icon(Icons.home_outlined),
-        selectedIcon: Icon(Icons.home),
-        label: 'Home'),
+      icon: Icon(Icons.home_outlined),
+      selectedIcon: Icon(Icons.home),
+      label: 'Home',
+    ),
     NavigationDestination(
-        icon: Icon(Icons.description_outlined),
-        selectedIcon: Icon(Icons.description),
-        label: 'Notes'),
+      icon: Icon(Icons.description_outlined),
+      selectedIcon: Icon(Icons.description),
+      label: 'Notes',
+    ),
     NavigationDestination(
-        icon: Icon(Icons.style_outlined),
-        selectedIcon: Icon(Icons.style),
-        label: 'Flashcards'),
+      icon: Icon(Icons.style_outlined),
+      selectedIcon: Icon(Icons.style),
+      label: 'Flashcards',
+    ),
     NavigationDestination(
-        icon: Icon(Icons.quiz_outlined),
-        selectedIcon: Icon(Icons.quiz),
-        label: 'Quiz'),
+      icon: Icon(Icons.quiz_outlined),
+      selectedIcon: Icon(Icons.quiz),
+      label: 'Quiz',
+    ),
     NavigationDestination(
-        icon: Icon(Icons.bar_chart_outlined),
-        selectedIcon: Icon(Icons.bar_chart),
-        label: 'Grades'),
+      icon: Icon(Icons.bar_chart_outlined),
+      selectedIcon: Icon(Icons.bar_chart),
+      label: 'Grades',
+    ),
   ];
 
-  static const _routes = ['/home', '/notes', '/flashcards', '/quiz', '/grades'];
+  static const _routes = [
+    '/home',
+    '/notes',
+    '/flashcards',
+    '/quiz',
+    '/grades',
+  ];
 
   int _locationToIndex(String location) {
     for (int i = 0; i < _routes.length; i++) {
-      if (location.startsWith(_routes[i])) return i;
+      if (location.startsWith(_routes[i])) {
+        return i;
+      }
     }
     return 0;
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+
+    _backgroundSync = BackgroundSyncService();
+    _backgroundSync.start(
+      ref.read(
+        allUploadedNotesProvider.stream,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _backgroundSync.stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final selectedIndex = _locationToIndex(location);
+    final selectedIndex =
+    _locationToIndex(location);
     final isWide = MediaQuery.of(context).size.width >= 768;
 
     // Tablet/desktop: use NavigationRail on the side
@@ -67,14 +114,16 @@ class HomeScreen extends ConsumerWidget {
               onDestinationSelected: (i) => context.go(_routes[i]),
               destinations: _destinations
                   .map((d) => NavigationRailDestination(
-                        icon: d.icon,
-                        selectedIcon: d.selectedIcon ?? d.icon,
-                        label: Text(d.label),
-                      ))
+                icon: d.icon,
+                selectedIcon: d.selectedIcon ?? d.icon,
+                label: Text(d.label),
+              ))
                   .toList(),
             ),
             const VerticalDivider(thickness: 1, width: 1),
-            Expanded(child: child),
+            Expanded(
+              child: widget.child,
+            ),
           ],
         ),
       );
@@ -92,7 +141,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: child,
+      body: widget.child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (i) => context.go(_routes[i]),

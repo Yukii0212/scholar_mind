@@ -16,8 +16,12 @@ class NoteItem {
     required this.source,
     required this.isFavorite,
     required this.isDeleted,
+    required this.cacheExpiresAt,
     required this.deletedAt,
     required this.createdAt,
+    required this.lockedBy,
+    required this.heartbeatAt,
+    required this.lockExpiresAt,
   });
 
   factory NoteItem.fromDocument(
@@ -42,6 +46,22 @@ class NoteItem {
       deletedAt: data['deletedAt'] != null
           ? (data['deletedAt'] as Timestamp).toDate()
           : null,
+      cacheExpiresAt:
+      data['cacheExpiresAt'] != null
+          ? (data['cacheExpiresAt'] as Timestamp)
+          .toDate()
+          : null,
+      lockedBy: data['lockedBy'] as String?,
+      heartbeatAt:
+      data['heartbeatAt'] != null
+          ? (data['heartbeatAt'] as Timestamp)
+          .toDate()
+          : null,
+      lockExpiresAt:
+      data['lockExpiresAt'] != null
+          ? (data['lockExpiresAt'] as Timestamp)
+          .toDate()
+          : null,
     );
   }
 
@@ -56,7 +76,11 @@ class NoteItem {
   final int sizeBytes;
   final bool isFavorite;
   final bool isDeleted;
+  final DateTime? cacheExpiresAt;
+  final DateTime? deletedAt;
   final bool isInternal;
   final DateTime createdAt;
-  final DateTime? deletedAt;
+  final String? lockedBy;
+  final DateTime? heartbeatAt;
+  final DateTime? lockExpiresAt;
 }

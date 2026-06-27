@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/services/device_id_service.dart';
 import '../providers/library_provider.dart';
 
 class NoteEditorScreen extends ConsumerStatefulWidget {
@@ -28,10 +29,12 @@ class _NoteEditorScreenState
   late final TextEditingController _controller;
 
   bool _hasChanges = false;
+  bool _isReadOnly = false;
 
   late final String _draftKey;
 
   Timer? _autoSaveTimer;
+  Timer? _heartbeatTimer;
 
   String _saveStatus = 'Saved';
 
@@ -45,9 +48,50 @@ class _NoteEditorScreenState
       text: widget.content,
     );
 
-    _loadDraft();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final acquired = await ref
+          .read(
+        libraryActionControllerProvider.notifier,
+      )
+          .acquireNoteLock(
+        noteId: widget.noteId,
+      );
+
+      print('Lock acquired: $acquired');
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!acquired) {
+        setState(() {
+          _isReadOnly = true;
+        });
+
+        return;
+      }
+
+      _loadDraft();
+
+      _heartbeatTimer = Timer.periodic(
+        const Duration(seconds: 5),
+            (_) async {
+          await ref
+              .read(
+            libraryActionControllerProvider.notifier,
+          )
+              .heartbeatNoteLock(
+            noteId: widget.noteId,
+          );
+        },
+      );
+    });
 
     _controller.addListener(() async {
+      if (_isReadOnly) {
+        return;
+      }
+
       final prefs = await SharedPreferences.getInstance();
 
       await prefs.setString(
@@ -92,6 +136,7 @@ class _NoteEditorScreenState
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _heartbeatTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -151,18 +196,133 @@ class _NoteEditorScreenState
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: TextField(
-          controller: _controller,
-          expands: true,
-          maxLines: null,
-          textAlignVertical: TextAlignVertical.top,
-          decoration: const InputDecoration(
-            hintText: 'Start typing...',
-            border: OutlineInputBorder(),
+      body: Consumer(
+        builder: (context, ref, _) {
+          ref.watch(
+            noteProvider(widget.noteId),
+          ).whenData((note) async {
+            print('STREAM UPDATE');
+            print('lockedBy = ${note.lockedBy}');
+            final deviceId =
+            await DeviceIdService.getDeviceId();
+
+            final isReadOnly =
+                note.lockedBy != deviceId;
+
+            if (_isReadOnly != isReadOnly &&
+                mounted) {
+              setState(() {
+                _isReadOnly = isReadOnly;
+              });
+
+              if (isReadOnly) {
+                _heartbeatTimer?.cancel();
+              } else {
+                _heartbeatTimer?.cancel();
+
+                _heartbeatTimer = Timer.periodic(
+                  const Duration(seconds: 5),
+                      (_) {
+                    ref
+                        .read(
+                      libraryActionControllerProvider
+                          .notifier,
+                    )
+                        .heartbeatNoteLock(
+                      noteId: widget.noteId,
+                    );
+                  },
+                );
+              }
+            }
+
+            if (!_hasChanges &&
+                _controller.text != note.content) {
+              _controller.value =
+                  TextEditingValue(
+                    text: note.content,
+                    selection:
+                    TextSelection.collapsed(
+                      offset: note.content.length,
+                    ),
+                  );
+            }
+          });
+
+          return Padding(
+            padding:
+            const EdgeInsets.all(16),
+            child: Column(
+                children: [
+                if (_isReadOnly)
+            Padding(
+          padding: const EdgeInsets.only(
+          bottom: 12,
           ),
-        ),
+          child: FilledButton.icon(
+          onPressed: () async {
+          final success = await ref
+              .read(
+          libraryActionControllerProvider
+              .notifier,
+          )
+              .forceAcquireNoteLock(
+          noteId: widget.noteId,
+          );
+
+          if (!success || !mounted) {
+          return;
+          }
+
+          setState(() {
+          _isReadOnly = false;
+          });
+
+          _heartbeatTimer?.cancel();
+
+          _heartbeatTimer = Timer.periodic(
+            const Duration(seconds: 5),
+                (_) {
+              ref
+                  .read(
+                libraryActionControllerProvider.notifier,
+              )
+                  .heartbeatNoteLock(
+                noteId: widget.noteId,
+              );
+            },
+          );
+          },
+          icon: const Icon(
+          Icons.edit,
+          ),
+          label: const Text(
+          'Resume Editing',
+          ),
+          ),
+          ),
+          Expanded(
+          child: TextField(
+          controller: _controller,
+          readOnly: _isReadOnly,
+              expands: true,
+              maxLines: null,
+              textAlignVertical:
+              TextAlignVertical.top,
+            decoration:
+            InputDecoration(
+              hintText: _isReadOnly
+                  ? 'Read-only'
+                  : 'Start typing...',
+              border:
+              const OutlineInputBorder(),
+            ),
+          ),
+          ),
+                ],
+            ),
+          );
+        },
       ),
     );
   }

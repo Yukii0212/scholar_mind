@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../data/library_repository.dart';
+
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
@@ -21,7 +20,9 @@ import '../widgets/note_card.dart';
 import '../widgets/folder_picker_dialog.dart';
 import '../widgets/category_dialog.dart';
 import '../widgets/folder_dialogs.dart';
+
 import '../services/file_open_service.dart';
+
 import 'google_classroom_import_screen.dart';
 import 'note_editor_screen.dart';
 
@@ -47,7 +48,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final actionState = ref.watch(libraryActionControllerProvider);
+    final actionState = ref.watch(
+      libraryActionControllerProvider,
+    );
     final folders = switch (_section) {
       LibrarySection.browse => ref.watch(childFoldersProvider(_folderId)),
       LibrarySection.favorites => ref.watch(favoriteFoldersProvider),
@@ -977,7 +980,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ? file.name.split('.').last
           : '';
 
-      final success =
+      final storagePath =
       await ref.read(libraryActionControllerProvider.notifier).uploadNote(
         folderId: _folderId,
         fileName: file.name,
@@ -988,7 +991,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
       if (!mounted) return;
 
-      if (success) {
+      if (storagePath != null) {
         uploaded++;
       } else {
         _showActionError();

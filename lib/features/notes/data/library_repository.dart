@@ -3,9 +3,11 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../../core/services/device_id_service.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
+import '../services/file_cache_service.dart';
 
 class LibraryRepository {
   LibraryRepository(this._firestore, this._storage);
@@ -217,9 +219,16 @@ class LibraryRepository {
     required String userId,
     required String noteId,
   }) {
+    final expiresAt = Timestamp.fromDate(
+      DateTime.now().add(
+        FileCacheService.cacheDeletionDelay,
+      ),
+    );
+
     return _notes(userId).doc(noteId).update({
       'isDeleted': true,
       'deletedAt': FieldValue.serverTimestamp(),
+      'cacheExpiresAt': expiresAt,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -231,6 +240,7 @@ class LibraryRepository {
     return _notes(userId).doc(noteId).update({
       'isDeleted': false,
       'deletedAt': null,
+      'cacheExpiresAt': null,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -377,6 +387,7 @@ class LibraryRepository {
     data['name'] as String;
 
     await _notes(userId).add({
+      'cacheExpiresAt': null,
       ...data,
 
       'name': '$originalName (Copy)',
@@ -481,6 +492,37 @@ class LibraryRepository {
       notes.sort(
         (a, b) => b.createdAt.compareTo(a.createdAt),
       );
+      return notes;
+    });
+  }
+
+  Stream<NoteItem> watchNote(
+      String userId,
+      String noteId,
+      ) {
+    return _notes(userId)
+        .doc(noteId)
+        .snapshots()
+        .map((snapshot) {
+      return NoteItem.fromDocument(snapshot);
+    });
+  }
+
+  Stream<List<NoteItem>> watchAllUploadedNotes(
+      String userId,
+      ) {
+    return _notes(userId)
+        .snapshots()
+        .map((snapshot) {
+      final notes =
+      snapshot.docs.map(NoteItem.fromDocument).where((note) {
+        return !note.isInternal;
+      }).toList();
+
+      notes.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+      );
+
       return notes;
     });
   }
@@ -599,7 +641,7 @@ class LibraryRepository {
     });
   }
 
-  Future<void> uploadNote({
+  Future<String> uploadNote({
     required String userId,
     required String folderId,
     required String fileName,
@@ -637,11 +679,114 @@ class LibraryRepository {
         'createdAt': now,
         'updatedAt': now,
         'deletedAt': null,
+        'cacheExpiresAt': null,
+
+        'lockedBy': null,
+        'heartbeatAt': null,
+        'lockExpiresAt': null,
       });
     } catch (_) {
       await storageReference.delete();
       rethrow;
     }
+
+    return storagePath;
+  }
+
+  Future<bool> acquireNoteLock({
+    required String userId,
+    required String noteId,
+  }) async {
+    final noteReference =
+    _notes(userId).doc(noteId);
+
+    final deviceId =
+    await DeviceIdService.getDeviceId();
+
+    return _firestore.runTransaction(
+          (transaction) async {
+        final snapshot =
+        await transaction.get(noteReference);
+
+        if (!snapshot.exists) {
+          throw ArgumentError(
+            'Note not found.',
+          );
+        }
+
+        final data = snapshot.data()!;
+
+        final now = Timestamp.now();
+
+        final lockExpiresAt =
+        data['lockExpiresAt'] as Timestamp?;
+
+        final lockedBy =
+        data['lockedBy'] as String?;
+
+        final isExpired =
+            lockExpiresAt == null ||
+                lockExpiresAt.compareTo(now) <= 0;
+
+        if (!isExpired &&
+            lockedBy != deviceId) {
+          return false;
+        }
+
+        transaction.update(
+          noteReference,
+          {
+            'lockedBy': deviceId,
+            'heartbeatAt': now,
+            'lockExpiresAt': Timestamp.fromDate(
+              DateTime.now().add(
+                const Duration(seconds: 15),
+              ),
+            ),
+          },
+        );
+
+        return true;
+      },
+    );
+  }
+
+  Future<void> forceAcquireNoteLock({
+    required String userId,
+    required String noteId,
+  }) async {
+    final deviceId =
+    await DeviceIdService.getDeviceId();
+
+    final now = Timestamp.now();
+
+    await _notes(userId).doc(noteId).update({
+      'lockedBy': deviceId,
+      'heartbeatAt': now,
+      'lockExpiresAt': Timestamp.fromDate(
+        DateTime.now().add(
+          const Duration(seconds: 15),
+        ),
+      ),
+    });
+  }
+
+  Future<void> heartbeatNoteLock({
+    required String userId,
+    required String noteId,
+  }) async {
+    final deviceId =
+    await DeviceIdService.getDeviceId();
+
+    await _notes(userId).doc(noteId).update({
+      'lockedBy': deviceId,
+      'heartbeatAt': Timestamp.now(),
+      'lockExpiresAt': Timestamp.fromDate(
+        DateTime.now().add(
+          const Duration(seconds: 5),
+        ),
+      ),
+    });
   }
 
   static int _sortFolders(LibraryFolder a, LibraryFolder b) {

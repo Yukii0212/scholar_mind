@@ -5,16 +5,17 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
 class GoogleClassroomService {
+  GoogleClassroomService(
+      this._googleSignIn,
+      );
+
+  final GoogleSignIn _googleSignIn;
+
   static const _scopes = [
     'https://www.googleapis.com/auth/classroom.courses.readonly',
     'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
     'https://www.googleapis.com/auth/drive.readonly',
   ];
-
-  final GoogleSignIn _googleSignIn =
-  GoogleSignIn(
-    scopes: _scopes,
-  );
 
   Future<Uint8List> downloadDriveFile(
       String fileId,
@@ -68,7 +69,7 @@ class GoogleClassroomService {
     final response =
     await http.get(
       Uri.parse(
-        'https://classroom.googleapis.com/v1/courses',
+        'https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&courseStates=ARCHIVED',
       ),
       headers: {
         'Authorization':
@@ -77,8 +78,11 @@ class GoogleClassroomService {
     );
 
     if (response.statusCode != 200) {
+      print('Status: ${response.statusCode}');
+      print(response.body);
+
       throw Exception(
-        'Failed to load courses',
+        'Failed to load courses (${response.statusCode})',
       );
     }
 
@@ -89,7 +93,6 @@ class GoogleClassroomService {
         (data['courses'] as List?)
             ?.cast<Map<String, dynamic>>() ??
             [];
-
     return courses
         .map(
       ClassroomCourse.fromJson,
@@ -200,10 +203,12 @@ class ClassroomCourse {
   ClassroomCourse({
     required this.id,
     required this.name,
+    required this.courseState,
   });
 
   final String id;
   final String name;
+  final String courseState;
 
   factory ClassroomCourse.fromJson(
       Map<String, dynamic> json,
@@ -211,6 +216,8 @@ class ClassroomCourse {
     return ClassroomCourse(
       id: json['id'],
       name: json['name'] ?? 'Untitled',
+      courseState:
+      json['courseState'] ?? 'ACTIVE',
     );
   }
 }

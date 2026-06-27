@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../notes/providers/google_classroom_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -10,7 +11,17 @@ part 'auth_provider.g.dart';
 FirebaseAuth firebaseAuth(FirebaseAuthRef ref) => FirebaseAuth.instance;
 
 @Riverpod(keepAlive: true)
-GoogleSignIn googleSignIn(GoogleSignInRef ref) => GoogleSignIn();
+GoogleSignIn googleSignIn(
+    GoogleSignInRef ref,
+    ) {
+  return GoogleSignIn(
+    scopes: const [
+      'https://www.googleapis.com/auth/classroom.courses.readonly',
+      'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
+      'https://www.googleapis.com/auth/drive.readonly',
+    ],
+  );
+}
 
 @riverpod
 Stream<User?> authState(AuthStateRef ref) {
@@ -51,10 +62,19 @@ class AuthController extends _$AuthController {
 
     try {
       await ref.read(firebaseAuthProvider).signOut();
+
+      try {
+        await ref.read(googleSignInProvider).disconnect();
+      } catch (_) {
+      }
+
       await ref.read(googleSignInProvider).signOut();
+
+      ref.invalidate(classroomCoursesProvider);
+      ref.invalidate(googleClassroomServiceProvider);
       state = const AsyncValue.data(null);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = const AsyncValue.data(null);
     }
   }
 }

@@ -15,7 +15,6 @@ GoRouter appRouter(AppRouterRef ref) {
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
 
-      // Wait for Firebase to restore the persisted session before redirecting.
       if (authState.isLoading) return null;
 
       final isLoggedIn = authState.valueOrNull != null;

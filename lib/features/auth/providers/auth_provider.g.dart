@@ -20,7 +20,7 @@ final firebaseAuthProvider = Provider<FirebaseAuth>.internal(
 );
 
 typedef FirebaseAuthRef = ProviderRef<FirebaseAuth>;
-String _$googleSignInHash() => r'367cd1f96536fa0a7f72e2aaad86ec69d81fbc15';
+String _$googleSignInHash() => r'8ef9864663d54d279ed27b1e60e5f2bac53d87e5';
 
 /// See also [googleSignIn].
 @ProviderFor(googleSignIn)
@@ -48,7 +48,7 @@ final authStateProvider = AutoDisposeStreamProvider<User?>.internal(
 );
 
 typedef AuthStateRef = AutoDisposeStreamProviderRef<User?>;
-String _$authControllerHash() => r'e0ec012a41c7728a06a7e82f029a9f0bdb6641bd';
+String _$authControllerHash() => r'a7e383d1f01451cb7b27e07a8fdaf92794daf24b';
 
 /// See also [AuthController].
 @ProviderFor(AuthController)

@@ -394,8 +394,148 @@ class _NotesInFolderProviderElement
   String get folderId => (origin as NotesInFolderProvider).folderId;
 }
 
+String _$noteHash() => r'4856c32dd37d768a2d69e9bb09e7afae7c1aced8';
+
+/// See also [note].
+@ProviderFor(note)
+const noteProvider = NoteFamily();
+
+/// See also [note].
+class NoteFamily extends Family<AsyncValue<NoteItem>> {
+  /// See also [note].
+  const NoteFamily();
+
+  /// See also [note].
+  NoteProvider call(
+    String noteId,
+  ) {
+    return NoteProvider(
+      noteId,
+    );
+  }
+
+  @override
+  NoteProvider getProviderOverride(
+    covariant NoteProvider provider,
+  ) {
+    return call(
+      provider.noteId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'noteProvider';
+}
+
+/// See also [note].
+class NoteProvider extends AutoDisposeStreamProvider<NoteItem> {
+  /// See also [note].
+  NoteProvider(
+    String noteId,
+  ) : this._internal(
+          (ref) => note(
+            ref as NoteRef,
+            noteId,
+          ),
+          from: noteProvider,
+          name: r'noteProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product') ? null : _$noteHash,
+          dependencies: NoteFamily._dependencies,
+          allTransitiveDependencies: NoteFamily._allTransitiveDependencies,
+          noteId: noteId,
+        );
+
+  NoteProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.noteId,
+  }) : super.internal();
+
+  final String noteId;
+
+  @override
+  Override overrideWith(
+    Stream<NoteItem> Function(NoteRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: NoteProvider._internal(
+        (ref) => create(ref as NoteRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        noteId: noteId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<NoteItem> createElement() {
+    return _NoteProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NoteProvider && other.noteId == noteId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, noteId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin NoteRef on AutoDisposeStreamProviderRef<NoteItem> {
+  /// The parameter `noteId` of this provider.
+  String get noteId;
+}
+
+class _NoteProviderElement extends AutoDisposeStreamProviderElement<NoteItem>
+    with NoteRef {
+  _NoteProviderElement(super.provider);
+
+  @override
+  String get noteId => (origin as NoteProvider).noteId;
+}
+
+String _$allUploadedNotesHash() => r'f0b1ffd2e5e56a3ef7679d7924aa5359a24410ac';
+
+/// See also [allUploadedNotes].
+@ProviderFor(allUploadedNotes)
+final allUploadedNotesProvider = StreamProvider<List<NoteItem>>.internal(
+  allUploadedNotes,
+  name: r'allUploadedNotesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$allUploadedNotesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef AllUploadedNotesRef = StreamProviderRef<List<NoteItem>>;
 String _$libraryActionControllerHash() =>
-    r'924743d6818f88bdc621af3cd9c2b24d0b937e6f';
+    r'900e6edbe7fcad0d24be5156aacc1215e0c8484e';
 
 /// See also [LibraryActionController].
 @ProviderFor(LibraryActionController)

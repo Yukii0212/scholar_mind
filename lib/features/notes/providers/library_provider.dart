@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../data/library_repository.dart';
+import '../services/file_cache_service.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';
 import '../domain/note_item.dart';
@@ -122,6 +123,42 @@ Stream<List<NoteItem>> notesInFolder(
   if (userId == null) return const Stream.empty();
 
   return ref.watch(libraryRepositoryProvider).watchNotes(userId, folderId);
+}
+
+@riverpod
+Stream<NoteItem> note(
+    NoteRef ref,
+    String noteId,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchNote(
+    userId,
+    noteId,
+  );
+}
+
+@Riverpod(keepAlive: true)
+Stream<List<NoteItem>> allUploadedNotes(
+    AllUploadedNotesRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchAllUploadedNotes(userId);
 }
 
 @Riverpod(keepAlive: true)
@@ -273,15 +310,34 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
-  Future<bool> uploadNote({
+  Future<String?> uploadNote({
     required String folderId,
     required String fileName,
     required String extension,
     required Uint8List bytes,
     required NoteCategory category,
-  }) {
-    return _run((userId, repository) {
-      return repository.uploadNote(
+  }) async {
+
+    final userId =
+        ref.read(firebaseAuthProvider).currentUser?.uid;
+
+    if (userId == null) {
+      state = AsyncValue.error(
+        StateError('You must be signed in.'),
+        StackTrace.current,
+      );
+
+      return null;
+    }
+
+    state = const AsyncValue.loading();
+
+    try {
+
+      final storagePath =
+      await ref
+          .read(libraryRepositoryProvider)
+          .uploadNote(
         userId: userId,
         folderId: folderId,
         fileName: fileName,
@@ -289,23 +345,110 @@ class LibraryActionController extends _$LibraryActionController {
         bytes: bytes,
         category: category,
       );
-    });
+
+      state = const AsyncValue.data(null);
+
+      return storagePath;
+
+    } catch (error, stackTrace) {
+
+      state = AsyncValue.error(
+        error,
+        stackTrace,
+      );
+
+      return null;
+    }
   }
 
-  Future<bool> softDeleteNote(NoteItem note) {
-    return _run((userId, repository) {
-      return repository.softDeleteNote(
+  Future<bool> softDeleteNote(
+      NoteItem note,
+      ) async {
+
+    final success = await _run(
+          (userId, repository) {
+        return repository.softDeleteNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      },
+    );
+
+    return success;
+  }
+
+  Future<bool> restoreNote(
+      NoteItem note,
+      ) async {
+
+    final success = await _run(
+          (userId, repository) {
+        return repository.restoreNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      },
+    );
+    return success;
+  }
+
+  Future<bool> acquireNoteLock({
+    required String noteId,
+  }) async {
+    final userId =
+        ref.read(firebaseAuthProvider).currentUser?.uid;
+
+    if (userId == null) {
+      state = AsyncValue.error(
+        StateError('You must be signed in.'),
+        StackTrace.current,
+      );
+
+      return false;
+    }
+
+    state = const AsyncValue.loading();
+
+    try {
+      final acquired =
+      await ref
+          .read(libraryRepositoryProvider)
+          .acquireNoteLock(
         userId: userId,
-        noteId: note.id,
+        noteId: noteId,
+      );
+
+      state = const AsyncValue.data(null);
+
+      return acquired;
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(
+        error,
+        stackTrace,
+      );
+
+      return false;
+    }
+  }
+
+  Future<bool> heartbeatNoteLock({
+    required String noteId,
+  }) {
+    return _run((userId, repository) {
+      return repository.heartbeatNoteLock(
+        userId: userId,
+        noteId: noteId,
       );
     });
   }
 
-  Future<bool> restoreNote(NoteItem note) {
+  Future<bool> forceAcquireNoteLock({
+    required String noteId,
+  }) {
     return _run((userId, repository) {
-      return repository.restoreNote(
+      return repository.forceAcquireNoteLock(
         userId: userId,
-        noteId: note.id,
+        noteId: noteId,
       );
     });
   }
@@ -323,13 +466,25 @@ class LibraryActionController extends _$LibraryActionController {
     });
   }
 
-  Future<bool> permanentlyDeleteNote(NoteItem note) {
-    return _run((userId, repository) {
-      return repository.permanentlyDeleteNote(
-        userId: userId,
-        noteId: note.id,
+  Future<bool> permanentlyDeleteNote(
+      NoteItem note,
+      ) async {
+    final success = await _run(
+          (userId, repository) {
+        return repository.permanentlyDeleteNote(
+          userId: userId,
+          noteId: note.id,
+        );
+      },
+    );
+
+    if (success) {
+      await FileCacheService.deleteCache(
+        note,
       );
-    });
+    }
+
+    return success;
   }
 
   Future<bool> permanentlyDeleteFolder(LibraryFolder folder) {

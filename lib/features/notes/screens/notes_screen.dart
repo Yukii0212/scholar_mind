@@ -116,6 +116,31 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   Future<void> _restoreAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Restore everything?'),
+        content: const Text(
+          'All folders and notes currently in the Trash will be restored.\n\n'
+              'Do you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, true),
+            child: const Text('Restore All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     final success = await ref
         .read(
       libraryActionControllerProvider.notifier,

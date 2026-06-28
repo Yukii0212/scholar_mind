@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../notes/domain/library_folder.dart';
 import '../../notes/providers/library_provider.dart';
-import '../widgets/material_browser.dart';
+import '../widgets/library_browser.dart';
+import '../domain/material_browser_mode.dart';
+import '../widgets/library_browser.dart';
+import '../widgets/favorite_browser.dart';
 
 class StudyMaterialPickerScreen extends ConsumerStatefulWidget {
   const StudyMaterialPickerScreen({
@@ -22,12 +25,24 @@ class StudyMaterialPickerScreen extends ConsumerStatefulWidget {
 class _StudyMaterialPickerScreenState
     extends ConsumerState<StudyMaterialPickerScreen> {
 
-  String _currentFolderId = LibraryFolder.rootId;
+  String _libraryFolderId = LibraryFolder.rootId;
 
-  final List<LibraryFolder> _folderStack = [];
+  final List<LibraryFolder> _libraryFolderStack = [];
+
+  String _favoriteFolderId = LibraryFolder.rootId;
+
+  final List<LibraryFolder> _favoriteFolderStack = [];
+
+  MaterialBrowserMode _browserMode =
+      MaterialBrowserMode.library;
 
   @override
   Widget build(BuildContext context) {
+    final folderStack =
+    _browserMode == MaterialBrowserMode.library
+        ? _libraryFolderStack
+        : _favoriteFolderStack;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -40,7 +55,32 @@ class _StudyMaterialPickerScreenState
       body: Column(
         children: [
 
-          if (_folderStack.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SegmentedButton<MaterialBrowserMode>(
+              segments: const [
+                ButtonSegment(
+                  value: MaterialBrowserMode.library,
+                  label: Text('Library'),
+                ),
+                ButtonSegment(
+                  value: MaterialBrowserMode.favourites,
+                  label: Text('Favorites'),
+                ),
+              ],
+              selected: {_browserMode},
+              onSelectionChanged: (selection) {
+                setState(() {
+                  _browserMode = selection.first;
+                });
+              },
+            ),
+          ),
+
+          if ((_browserMode == MaterialBrowserMode.library
+              ? _libraryFolderStack
+              : _favoriteFolderStack)
+              .isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Wrap(
@@ -49,45 +89,76 @@ class _StudyMaterialPickerScreenState
                   TextButton(
                     onPressed: () {
                       setState(() {
-                        _folderStack.clear();
-                        _currentFolderId = LibraryFolder.rootId;
+                        if (_browserMode == MaterialBrowserMode.library) {
+                          _libraryFolderStack.clear();
+                          _libraryFolderId = LibraryFolder.rootId;
+                        } else {
+                          _favoriteFolderStack.clear();
+                          _favoriteFolderId = LibraryFolder.rootId;
+                        }
                       });
                     },
-                    child: const Text('Notes'),
+                    child: Text(
+                      _browserMode == MaterialBrowserMode.library
+                          ? 'Notes'
+                          : 'Favorites',
+                    ),
                   ),
 
-                  for (var i = 0; i < _folderStack.length; i++) ...[
+    for (var i = 0; i < folderStack.length; i++) ...[
                     const Icon(Icons.chevron_right, size: 18),
 
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          _folderStack.removeRange(
-                            i + 1,
-                            _folderStack.length,
-                          );
+    folderStack.removeRange(
+    i + 1,
+    folderStack.length,
+    );
 
-                          _currentFolderId = _folderStack.isEmpty
-                              ? LibraryFolder.rootId
-                              : _folderStack.last.id;
+    if (_browserMode == MaterialBrowserMode.library) {
+    _libraryFolderId = folderStack.isEmpty
+    ? LibraryFolder.rootId
+        : folderStack.last.id;
+    } else {
+    _favoriteFolderId = folderStack.isEmpty
+    ? LibraryFolder.rootId
+        : folderStack.last.id;
+    }
                         });
                       },
-                      child: Text(_folderStack[i].name),
+                      child: Text(folderStack[i].name),
                     ),
                   ],
                 ],
               ),
             ),
           Expanded(
-            child: MaterialBrowser(
-              currentFolderId: _currentFolderId,
-              folderStack: _folderStack,
-              onFolderOpened: (folder) {
-                setState(() {
-                  _folderStack.add(folder);
-                  _currentFolderId = folder.id;
-                });
-              },
+            child: IndexedStack(
+              index: _browserMode.index,
+              children: [
+                LibraryBrowser(
+                  currentFolderId: _libraryFolderId,
+                  folderStack: _libraryFolderStack,
+                  onFolderOpened: (folder) {
+                    setState(() {
+                      _libraryFolderStack.add(folder);
+                      _libraryFolderId = folder.id;
+                    });
+                  },
+                ),
+
+                FavoriteBrowser(
+                  currentFolderId: _favoriteFolderId,
+                  folderStack: _favoriteFolderStack,
+                  onFolderOpened: (folder) {
+                    setState(() {
+                      _favoriteFolderStack.add(folder);
+                      _favoriteFolderId = folder.id;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
 

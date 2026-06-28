@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../screens/study_material_picker_screen.dart';
+import '../domain/study_material_type.dart';
 
 class StudyMaterialsCard extends StatelessWidget {
   const StudyMaterialsCard({super.key});
@@ -25,7 +27,16 @@ class StudyMaterialsCard extends StatelessWidget {
               title: const Text('Lecture Notes'),
               subtitle: const Text('Tap to select'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const StudyMaterialPickerScreen(
+                      type: StudyMaterialType.lectureNotes,
+                    ),
+                  ),
+                );
+              },
             ),
 
             const Divider(),
@@ -38,7 +49,16 @@ class StudyMaterialsCard extends StatelessWidget {
               title: const Text('Past Year Questions'),
               subtitle: const Text('Tap to select'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const StudyMaterialPickerScreen(
+                      type: StudyMaterialType.pastYearQuestions,
+                    ),
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 20),

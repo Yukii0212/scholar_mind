@@ -7,6 +7,8 @@ environment:
   sdk: '>=3.2.0 <4.0.0'
 
 dependencies:
+  openai_dart: ^6.2.0
+  flutter_dotenv: ^5.2.1
   open_filex: ^4.7.0
   path_provider: ^2.1.5
   flutter:
@@ -40,7 +42,6 @@ dependencies:
   intl: ^0.19.0
   logger: ^2.3.0
   file_selector: ^1.1.0
-  firebase_ai: ^3.13.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -53,5 +54,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - assets/images/
     - assets/icons/

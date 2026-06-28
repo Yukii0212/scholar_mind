@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../notes/domain/library_folder.dart';
 import '../../notes/providers/library_provider.dart';
+import '../widgets/material_browser.dart';
 
 class StudyMaterialPickerScreen extends ConsumerStatefulWidget {
   const StudyMaterialPickerScreen({
@@ -78,77 +79,14 @@ class _StudyMaterialPickerScreenState
               ),
             ),
           Expanded(
-            child: Consumer(
-              builder: (context, ref, child) {
-                final foldersAsync = ref.watch(
-                  childFoldersProvider(_currentFolderId),
-                );
-
-                final notesAsync = ref.watch(
-                  notesInFolderProvider(_currentFolderId),
-                );
-
-                return foldersAsync.when(
-                  data: (folders) {
-                    return notesAsync.when(
-                      data: (notes) {
-                        return ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            ...folders.map(
-                                  (folder) => Card(
-                                child: ListTile(
-                                  leading: const Icon(Icons.folder),
-                                  title: Text(folder.name),
-                                  trailing: folder.isFavorite
-                                      ? const Icon(Icons.star)
-                                      : const Icon(Icons.chevron_right),
-                                  onTap: () {
-                                    setState(() {
-                                      _folderStack.add(folder);
-                                      _currentFolderId = folder.id;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-
-                            ...notes
-                                .where(
-                                  (note) =>
-                              note.extension.toLowerCase() == 'pdf' ||
-                                  note.extension.toLowerCase() == 'ppt' ||
-                                  note.extension.toLowerCase() == 'pptx',
-                            )
-                                .map(
-                                  (note) => Card(
-                                child: ListTile(
-                                  leading: const Icon(Icons.description_outlined),
-                                  title: Text(note.name),
-                                  subtitle: Text(
-                                    note.extension.toUpperCase(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      error: (error, _) => Center(
-                        child: Text(error.toString()),
-                      ),
-                    );
-                  },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (error, _) => Center(
-                    child: Text(error.toString()),
-                  ),
-                );
+            child: MaterialBrowser(
+              currentFolderId: _currentFolderId,
+              folderStack: _folderStack,
+              onFolderOpened: (folder) {
+                setState(() {
+                  _folderStack.add(folder);
+                  _currentFolderId = folder.id;
+                });
               },
             ),
           ),

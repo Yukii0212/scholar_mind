@@ -41,6 +41,36 @@ class FavoriteBrowser extends ConsumerWidget {
       data: (folders) {
         return notesAsync.when(
           data: (notes) {
+            final supportedNotes = notes.where(
+                  (note) =>
+              note.extension.toLowerCase() == 'pdf' ||
+                  note.extension.toLowerCase() == 'ppt' ||
+                  note.extension.toLowerCase() == 'pptx',
+            ).toList();
+
+            if (folders.isEmpty && supportedNotes.isEmpty) {
+              return const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.folder_open,
+                      size: 64,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'This folder is empty.',
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'There are no supported study materials in this folder.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -57,19 +87,10 @@ class FavoriteBrowser extends ConsumerWidget {
                   ),
                 ),
 
-                ...notes
-                    .where(
-                      (note) =>
-                  note.extension.toLowerCase() == 'pdf' ||
-                      note.extension.toLowerCase() == 'ppt' ||
-                      note.extension.toLowerCase() == 'pptx',
-                )
-                    .map(
+                ...supportedNotes.map(
                       (note) => Card(
                     child: ListTile(
-                      leading: const Icon(
-                        Icons.description_outlined,
-                      ),
+                      leading: const Icon(Icons.description_outlined),
                       title: Text(note.name),
                       subtitle: Text(
                         note.extension.toUpperCase(),

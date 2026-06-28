@@ -23,8 +23,6 @@ class _SelectionManagerScreenState
 
   late final Set<String> _selectedIds;
 
-  final List<NoteItem> _deselectedNotes = [];
-
   @override
   void initState() {
     super.initState();
@@ -36,24 +34,21 @@ class _SelectionManagerScreenState
 
   void _toggle(NoteItem note) {
     setState(() {
-      if (_selectedIds.remove(note.id)) {
-        _deselectedNotes.add(note);
+      if (_selectedIds.contains(note.id)) {
+        _selectedIds.remove(note.id);
       } else {
         _selectedIds.add(note.id);
-        _deselectedNotes.removeWhere(
-              (e) => e.id == note.id,
-        );
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final selected = widget.selectedNotes
-        .where(
-          (e) => _selectedIds.contains(e.id),
-    )
-        .toList();
+    final allNotes = widget.selectedNotes;
+
+    final allSelected =
+        _selectedIds.length ==
+            allNotes.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -68,50 +63,49 @@ class _SelectionManagerScreenState
               const EdgeInsets.all(16),
               children: [
 
-                if (selected.isNotEmpty) ...[
-                  Text(
-                    'Currently Selected',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  ...selected.map(
-                        (note) => CheckboxListTile(
-                      value: true,
-                      title: Text(note.name),
-                      onChanged: (_) =>
-                          _toggle(note),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.tonalIcon(
+                    icon: Icon(
+                      allSelected
+                          ? Icons.deselect
+                          : Icons.select_all,
                     ),
+                    label: Text(
+                      allSelected
+                          ? 'Deselect All'
+                          : 'Select All',
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (allSelected) {
+                          _selectedIds.clear();
+                        } else {
+                          _selectedIds
+                            ..clear()
+                            ..addAll(
+                              allNotes.map(
+                                    (e) => e.id,
+                              ),
+                            );
+                        }
+                      });
+                    },
                   ),
-                ],
+                ),
 
-                if (_deselectedNotes
-                    .isNotEmpty) ...[
-                  const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                  Text(
-                    'Deselected This Session',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                ...allNotes.map(
+                      (note) => CheckboxListTile(
+                    value: _selectedIds.contains(
+                      note.id,
+                    ),
+                    title: Text(note.name),
+                    onChanged: (_) =>
+                        _toggle(note),
                   ),
-
-                  const SizedBox(height: 12),
-
-                  ..._deselectedNotes.map(
-                        (note) =>
-                        CheckboxListTile(
-                          value: false,
-                          title:
-                          Text(note.name),
-                          onChanged: (_) =>
-                              _toggle(note),
-                        ),
-                  ),
-                ],
+                ),
               ],
             ),
           ),
@@ -129,7 +123,7 @@ class _SelectionManagerScreenState
                   );
                 },
                 child: Text(
-                  'Done (${_selectedIds.length} Selected)',
+                  'Done (${_selectedIds.length}/${allNotes.length})',
                 ),
               ),
             ),

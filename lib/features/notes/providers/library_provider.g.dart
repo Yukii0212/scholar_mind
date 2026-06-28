@@ -535,7 +535,7 @@ final allUploadedNotesProvider = StreamProvider<List<NoteItem>>.internal(
 
 typedef AllUploadedNotesRef = StreamProviderRef<List<NoteItem>>;
 String _$libraryActionControllerHash() =>
-    r'900e6edbe7fcad0d24be5156aacc1215e0c8484e';
+    r'ecd49356156b88be29afa72437df7c06bb1b1592';
 
 /// See also [LibraryActionController].
 @ProviderFor(LibraryActionController)

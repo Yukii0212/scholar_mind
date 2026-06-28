@@ -11,6 +11,7 @@ import '../widgets/quiz_configuration_card.dart';
 import '../widgets/study_materials_card.dart';
 import '../domain/study_material_type.dart';
 import 'study_material_picker_screen.dart';
+import 'selection_manager_screen.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
   const QuizScreen({super.key});
@@ -59,6 +60,10 @@ class _QuizScreenState
                 _selectedLectureNotes,
                 selectedPastYearQuestions:
                 _selectedPastYearQuestions,
+                processedLectureNotes:
+                _processedLectureNotes.values.toList(),
+                processedPastYearQuestions:
+                _processedPastYearQuestions.values.toList(),
                 lectureNotesStatus:
                 _lectureNotesStatus,
                 pastYearQuestionsStatus:
@@ -67,6 +72,10 @@ class _QuizScreenState
                 _selectLectureNotes,
                 onPastYearQuestionsTap:
                 _selectPastYearQuestions,
+                onManageLectureNotesTap:
+                _manageLectureNotes,
+                onManagePastYearQuestionsTap:
+                _managePastYearQuestions,
               ),
 
               SizedBox(height: 20),
@@ -124,6 +133,72 @@ class _QuizScreenState
           type: StudyMaterialType
               .pastYearQuestions,
         ),
+      ),
+    );
+
+    if (!mounted || selected == null) {
+      return;
+    }
+
+    final previousSelection =
+        _selectedPastYearQuestions;
+
+    setState(() {
+      _selectedPastYearQuestions =
+          selected;
+    });
+
+    await _processPastYearQuestions(
+      previousSelection,
+    );
+  }
+
+  Future<void> _manageLectureNotes() async {
+    final selected =
+    await Navigator.push<Set<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            SelectionManagerScreen(
+              title: 'Lecture Notes',
+              selectedNotes:
+              _processedLectureNotes.values
+                  .map((e) => e.note)
+                  .toList(),
+            ),
+      ),
+    );
+
+    if (!mounted || selected == null) {
+      return;
+    }
+
+    final previousSelection =
+        _selectedLectureNotes;
+
+    setState(() {
+      _selectedLectureNotes = selected;
+    });
+
+    await _processLectureNotes(
+      previousSelection,
+    );
+  }
+
+  Future<void> _managePastYearQuestions() async {
+    final selected =
+    await Navigator.push<Set<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            SelectionManagerScreen(
+              title: 'Past Year Questions',
+              selectedNotes:
+              _processedPastYearQuestions
+                  .values
+                  .map((e) => e.note)
+                  .toList(),
+            ),
       ),
     );
 

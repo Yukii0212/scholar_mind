@@ -3,24 +3,26 @@ import '../domain/study_material_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../notes/domain/library_folder.dart';
-import '../../notes/providers/library_provider.dart';
 import '../widgets/library_browser.dart';
 import '../domain/material_browser_mode.dart';
-import '../widgets/library_browser.dart';
 import '../widgets/favorite_browser.dart';
 
 class StudyMaterialPickerScreen extends ConsumerStatefulWidget {
   const StudyMaterialPickerScreen({
     super.key,
     required this.type,
+    this.initialSelection = const {},
   });
 
   final StudyMaterialType type;
+
+  final Set<String> initialSelection;
 
   @override
   ConsumerState<StudyMaterialPickerScreen> createState() =>
       _StudyMaterialPickerScreenState();
 }
+
 
 class _StudyMaterialPickerScreenState
     extends ConsumerState<StudyMaterialPickerScreen> {
@@ -36,7 +38,16 @@ class _StudyMaterialPickerScreenState
   MaterialBrowserMode _browserMode =
       MaterialBrowserMode.library;
 
-  final Set<String> _selectedNoteIds = {};
+  late final Set<String> _selectedNoteIds;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _selectedNoteIds = {
+      ...widget.initialSelection,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {

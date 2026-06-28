@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../domain/processing_status.dart';
-import '../domain/study_material_type.dart';
-import '../screens/study_material_picker_screen.dart';
 
 class StudyMaterialsCard extends StatelessWidget {
   const StudyMaterialsCard({
@@ -11,15 +9,15 @@ class StudyMaterialsCard extends StatelessWidget {
     required this.selectedPastYearQuestions,
     required this.lectureNotesStatus,
     required this.pastYearQuestionsStatus,
+    required this.onLectureNotesTap,
+    required this.onPastYearQuestionsTap,
   });
-
   final Set<String> selectedLectureNotes;
-
   final Set<String> selectedPastYearQuestions;
-
   final ProcessingStatus lectureNotesStatus;
-
   final ProcessingStatus pastYearQuestionsStatus;
+  final VoidCallback onLectureNotesTap;
+  final VoidCallback onPastYearQuestionsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -47,16 +45,7 @@ class StudyMaterialsCard extends StatelessWidget {
                     : '${selectedLectureNotes.length} selected',
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const StudyMaterialPickerScreen(
-                      type: StudyMaterialType.lectureNotes,
-                    ),
-                  ),
-                );
-              },
+              onTap: onLectureNotesTap,
             ),
 
             const Divider(),
@@ -73,16 +62,7 @@ class StudyMaterialsCard extends StatelessWidget {
                     : '${selectedPastYearQuestions.length} selected',
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const StudyMaterialPickerScreen(
-                      type: StudyMaterialType.pastYearQuestions,
-                    ),
-                  ),
-                );
-              },
+              onTap: onPastYearQuestionsTap,
             ),
 
             const SizedBox(height: 20),

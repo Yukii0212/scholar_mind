@@ -78,50 +78,71 @@ class _StudyMaterialPickerScreenState
               ),
             ),
           Expanded(
-            child: ref.watch(
-              childFoldersProvider(
-                _currentFolderId,
-              ),
-            ).when(
-              data: (folders) {
-                if (folders.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No folders found.',
-                    ),
-                  );
-                }
+            child: Consumer(
+              builder: (context, ref, child) {
+                final foldersAsync = ref.watch(
+                  childFoldersProvider(_currentFolderId),
+                );
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: folders.length,
-                  itemBuilder: (context, index) {
-                    final folder = folders[index];
+                final notesAsync = ref.watch(
+                  notesInFolderProvider(_currentFolderId),
+                );
 
-                    return Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.folder),
-                        title: Text(folder.name),
-                        trailing: folder.isFavorite
-                            ? const Icon(Icons.star)
-                            : const Icon(Icons.chevron_right),
-                        onTap: () {
-                          setState(() {
-                            _folderStack.add(folder);
-                            _currentFolderId = folder.id;
-                          });
-                        },
+                return foldersAsync.when(
+                  data: (folders) {
+                    return notesAsync.when(
+                      data: (notes) {
+                        return ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: [
+                            ...folders.map(
+                                  (folder) => Card(
+                                child: ListTile(
+                                  leading: const Icon(Icons.folder),
+                                  title: Text(folder.name),
+                                  trailing: folder.isFavorite
+                                      ? const Icon(Icons.star)
+                                      : const Icon(Icons.chevron_right),
+                                  onTap: () {
+                                    setState(() {
+                                      _folderStack.add(folder);
+                                      _currentFolderId = folder.id;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            ...notes.map(
+                                  (note) => Card(
+                                child: ListTile(
+                                  leading: const Icon(Icons.description_outlined),
+                                  title: Text(note.name),
+                                  subtitle: Text(
+                                    note.extension.toUpperCase(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (error, _) => Center(
+                        child: Text(error.toString()),
                       ),
                     );
                   },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, _) => Center(
+                    child: Text(error.toString()),
+                  ),
                 );
               },
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (error, stackTrace) => Center(
-                child: Text(error.toString()),
-              ),
             ),
           ),
 

@@ -10,11 +10,16 @@ class FavoriteBrowser extends ConsumerWidget {
     required this.currentFolderId,
     required this.folderStack,
     required this.onFolderOpened,
+    required this.selectedNoteIds,
+    required this.onNoteSelectionChanged,
   });
 
   final String currentFolderId;
   final List<LibraryFolder> folderStack;
   final ValueChanged<LibraryFolder> onFolderOpened;
+  final Set<String> selectedNoteIds;
+  final void Function(String noteId, bool selected)
+  onNoteSelectionChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -89,8 +94,22 @@ class FavoriteBrowser extends ConsumerWidget {
 
                 ...supportedNotes.map(
                       (note) => Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.description_outlined),
+                        child: ListTile(
+                          onTap: () {
+                            final isSelected =
+                            selectedNoteIds.contains(note.id);
+
+                            onNoteSelectionChanged(
+                              note.id,
+                              !isSelected,
+                            );
+                          },
+                          leading: IgnorePointer(
+                            child: Checkbox(
+                              value: selectedNoteIds.contains(note.id),
+                              onChanged: (_) {},
+                            ),
+                          ),
                       title: Text(note.name),
                       subtitle: Text(
                         note.extension.toUpperCase(),

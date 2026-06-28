@@ -36,6 +36,8 @@ class _StudyMaterialPickerScreenState
   MaterialBrowserMode _browserMode =
       MaterialBrowserMode.library;
 
+  final Set<String> _selectedNoteIds = {};
+
   @override
   Widget build(BuildContext context) {
     final folderStack =
@@ -138,6 +140,16 @@ class _StudyMaterialPickerScreenState
               index: _browserMode.index,
               children: [
                 LibraryBrowser(
+                  selectedNoteIds: _selectedNoteIds,
+                  onNoteSelectionChanged: (noteId, selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedNoteIds.add(noteId);
+                      } else {
+                        _selectedNoteIds.remove(noteId);
+                      }
+                    });
+                  },
                   currentFolderId: _libraryFolderId,
                   folderStack: _libraryFolderStack,
                   onFolderOpened: (folder) {
@@ -149,6 +161,16 @@ class _StudyMaterialPickerScreenState
                 ),
 
                 FavoriteBrowser(
+                  selectedNoteIds: _selectedNoteIds,
+                  onNoteSelectionChanged: (noteId, selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedNoteIds.add(noteId);
+                      } else {
+                        _selectedNoteIds.remove(noteId);
+                      }
+                    });
+                  },
                   currentFolderId: _favoriteFolderId,
                   folderStack: _favoriteFolderStack,
                   onFolderOpened: (folder) {
@@ -168,10 +190,26 @@ class _StudyMaterialPickerScreenState
             child: SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: null,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  child: Text('Select at least one note'),
+                onPressed: _selectedNoteIds.isEmpty
+                    ? null
+                    : () {
+                  Navigator.pop(
+                    context,
+                    _selectedNoteIds,
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Text(
+                    _selectedNoteIds.isEmpty
+                        ? switch (widget.type) {
+                      StudyMaterialType.lectureNotes =>
+                      'Select lecture notes',
+                      StudyMaterialType.pastYearQuestions =>
+                      'Select past year questions',
+                    }
+                        : 'Done (${_selectedNoteIds.length} Selected)',
+                  ),
                 ),
               ),
             ),

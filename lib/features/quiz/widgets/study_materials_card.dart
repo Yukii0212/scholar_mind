@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
-import '../screens/study_material_picker_screen.dart';
+
+import '../domain/processing_status.dart';
 import '../domain/study_material_type.dart';
+import '../screens/study_material_picker_screen.dart';
 
 class StudyMaterialsCard extends StatelessWidget {
-  const StudyMaterialsCard({super.key});
+  const StudyMaterialsCard({
+    super.key,
+    required this.selectedLectureNotes,
+    required this.selectedPastYearQuestions,
+    required this.lectureNotesStatus,
+    required this.pastYearQuestionsStatus,
+  });
+
+  final Set<String> selectedLectureNotes;
+
+  final Set<String> selectedPastYearQuestions;
+
+  final ProcessingStatus lectureNotesStatus;
+
+  final ProcessingStatus pastYearQuestionsStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +41,11 @@ class StudyMaterialsCard extends StatelessWidget {
                 child: Icon(Icons.description_outlined),
               ),
               title: const Text('Lecture Notes'),
-              subtitle: const Text('Tap to select'),
+              subtitle: Text(
+                selectedLectureNotes.isEmpty
+                    ? 'Tap to select'
+                    : '${selectedLectureNotes.length} selected',
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () async {
                 await Navigator.push(
@@ -47,7 +67,11 @@ class StudyMaterialsCard extends StatelessWidget {
                 child: Icon(Icons.quiz_outlined),
               ),
               title: const Text('Past Year Questions'),
-              subtitle: const Text('Tap to select'),
+              subtitle: Text(
+                selectedPastYearQuestions.isEmpty
+                    ? 'Tap to select'
+                    : '${selectedPastYearQuestions.length} selected',
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () async {
                 await Navigator.push(

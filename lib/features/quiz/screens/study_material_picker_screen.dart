@@ -113,7 +113,14 @@ class _StudyMaterialPickerScreenState
                               ),
                             ),
 
-                            ...notes.map(
+                            ...notes
+                                .where(
+                                  (note) =>
+                              note.extension.toLowerCase() == 'pdf' ||
+                                  note.extension.toLowerCase() == 'ppt' ||
+                                  note.extension.toLowerCase() == 'pptx',
+                            )
+                                .map(
                                   (note) => Card(
                                 child: ListTile(
                                   leading: const Icon(Icons.description_outlined),

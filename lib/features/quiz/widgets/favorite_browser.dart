@@ -25,8 +25,9 @@ class FavoriteBrowser extends ConsumerWidget {
       ) onNoteSelectionChanged;
 
   final void Function(
-      List<String> noteIds,
+      List<String> ids,
       ) onToggleSelectAll;
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -59,23 +60,6 @@ class FavoriteBrowser extends ConsumerWidget {
                   note.extension.toLowerCase() == 'ppt' ||
                   note.extension.toLowerCase() == 'pptx',
             ).toList();
-
-            final selectedInFolder = supportedNotes
-                .where(
-                  (note) => selectedNoteIds.contains(note.id),
-            )
-                .length;
-
-            final allSelected =
-                supportedNotes.isNotEmpty &&
-                    selectedInFolder == supportedNotes.length;
-
-            final remainingSlots =
-                30 - selectedNoteIds.length;
-
-            final selectableIds = supportedNotes
-                .map((e) => e.id)
-                .toList();
 
             if (folders.isEmpty && supportedNotes.isEmpty) {
               return const Center(
@@ -130,28 +114,6 @@ class FavoriteBrowser extends ConsumerWidget {
                     ),
                   ),
 
-                if (supportedNotes.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton.tonalIcon(
-                      icon: Icon(
-                        allSelected
-                            ? Icons.deselect
-                            : Icons.select_all,
-                      ),
-                      label: Text(
-                        allSelected
-                            ? 'Deselect All'
-                            : 'Select All',
-                      ),
-                      onPressed: () =>
-                          onToggleSelectAll(
-                            selectableIds,
-                          ),
-                    ),
-                  ),
-
-                const SizedBox(height: 12),
                 ...folders.map(
                       (folder) => Card(
                     child: ListTile(

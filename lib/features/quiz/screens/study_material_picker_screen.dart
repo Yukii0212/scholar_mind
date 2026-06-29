@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../notes/providers/library_provider.dart';
 import '../domain/study_material_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -103,10 +104,89 @@ class _StudyMaterialPickerScreenState
       appBar: AppBar(
         title: Text(
           switch (widget.type) {
-            StudyMaterialType.lectureNotes => 'Lecture Notes',
-            StudyMaterialType.pastYearQuestions => 'Past Year Questions',
+            StudyMaterialType.lectureNotes =>
+            'Lecture Notes',
+            StudyMaterialType.pastYearQuestions =>
+            'Past Year Questions',
           },
         ),
+        actions: [
+          Builder(
+            builder: (context) {
+              final folderId =
+              _browserMode ==
+                  MaterialBrowserMode.library
+                  ? _libraryFolderId
+                  : _favoriteFolderId;
+
+              return Consumer(
+                builder: (context, ref, _) {
+                  final notesAsync = ref.watch(
+                    notesInFolderProvider(folderId),
+                  );
+
+                  return notesAsync.when(
+                    data: (notes) {
+                      final supported = notes
+                          .where(
+                            (note) =>
+                        note.extension
+                            .toLowerCase() ==
+                            'pdf' ||
+                            note.extension
+                                .toLowerCase() ==
+                                'ppt' ||
+                            note.extension
+                                .toLowerCase() ==
+                                'pptx',
+                      )
+                          .toList();
+
+                      if (supported.length < 2) {
+                        return const SizedBox();
+                      }
+
+                      final ids = supported
+                          .map((e) => e.id)
+                          .toList();
+
+                      final allSelected =
+                      ids.every(
+                        _selectedNoteIds.contains,
+                      );
+
+                      return Padding(
+                        padding:
+                        const EdgeInsets.only(
+                          right: 8,
+                        ),
+                        child: TextButton.icon(
+                          icon: Icon(
+                            allSelected
+                                ? Icons.remove_done
+                                : Icons.done_all,
+                          ),
+                          label: Text(
+                            allSelected
+                                ? 'Deselect'
+                                : 'Select All',
+                          ),
+                          onPressed: () {
+                            _toggleSelectAll(ids);
+                          },
+                        ),
+                      );
+                    },
+                    loading: () =>
+                    const SizedBox(),
+                    error: (_, __) =>
+                    const SizedBox(),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

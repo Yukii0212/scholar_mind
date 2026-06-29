@@ -12,14 +12,21 @@ class FavoriteBrowser extends ConsumerWidget {
     required this.onFolderOpened,
     required this.selectedNoteIds,
     required this.onNoteSelectionChanged,
+    required this.onToggleSelectAll,
   });
 
   final String currentFolderId;
   final List<LibraryFolder> folderStack;
   final ValueChanged<LibraryFolder> onFolderOpened;
   final Set<String> selectedNoteIds;
-  final void Function(String noteId, bool selected)
-  onNoteSelectionChanged;
+  final void Function(
+      String noteId,
+      bool selected,
+      ) onNoteSelectionChanged;
+
+  final void Function(
+      List<String> noteIds,
+      ) onToggleSelectAll;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,6 +60,23 @@ class FavoriteBrowser extends ConsumerWidget {
                   note.extension.toLowerCase() == 'pptx',
             ).toList();
 
+            final selectedInFolder = supportedNotes
+                .where(
+                  (note) => selectedNoteIds.contains(note.id),
+            )
+                .length;
+
+            final allSelected =
+                supportedNotes.isNotEmpty &&
+                    selectedInFolder == supportedNotes.length;
+
+            final remainingSlots =
+                30 - selectedNoteIds.length;
+
+            final selectableIds = supportedNotes
+                .map((e) => e.id)
+                .toList();
+
             if (folders.isEmpty && supportedNotes.isEmpty) {
               return const Center(
                 child: Column(
@@ -79,6 +103,55 @@ class FavoriteBrowser extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
+
+                if (selectedNoteIds.length >= 30)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: 12,
+                    ),
+                    child: Card(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .errorContainer,
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Maximum of 30 study materials can be selected.',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                if (supportedNotes.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.tonalIcon(
+                      icon: Icon(
+                        allSelected
+                            ? Icons.deselect
+                            : Icons.select_all,
+                      ),
+                      label: Text(
+                        allSelected
+                            ? 'Deselect All'
+                            : 'Select All',
+                      ),
+                      onPressed: () =>
+                          onToggleSelectAll(
+                            selectableIds,
+                          ),
+                    ),
+                  ),
+
+                const SizedBox(height: 12),
                 ...folders.map(
                       (folder) => Card(
                     child: ListTile(
@@ -99,6 +172,11 @@ class FavoriteBrowser extends ConsumerWidget {
                             final isSelected =
                             selectedNoteIds.contains(note.id);
 
+                            if (!isSelected &&
+                                selectedNoteIds.length >= 30) {
+                              return;
+                            }
+
                             onNoteSelectionChanged(
                               note.id,
                               !isSelected,
@@ -110,6 +188,9 @@ class FavoriteBrowser extends ConsumerWidget {
                               onChanged: (_) {},
                             ),
                           ),
+
+                          enabled: selectedNoteIds.contains(note.id) ||
+                              selectedNoteIds.length < 30,
                       title: Text(note.name),
                       subtitle: Text(
                         note.extension.toUpperCase(),

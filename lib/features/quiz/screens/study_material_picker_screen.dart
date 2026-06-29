@@ -49,6 +49,49 @@ class _StudyMaterialPickerScreenState
     };
   }
 
+  void _toggleLibrarySelectAll(
+      List<String> ids,
+      ) {
+    _toggleSelectAll(ids);
+  }
+
+  void _toggleFavoriteSelectAll(
+      List<String> ids,
+      ) {
+    _toggleSelectAll(ids);
+  }
+
+  void _toggleSelectAll(
+      List<String> ids,
+      ) {
+    setState(() {
+      final allSelected = ids.every(
+        _selectedNoteIds.contains,
+      );
+
+      if (allSelected) {
+        _selectedNoteIds.removeAll(ids);
+        return;
+      }
+
+      var remaining =
+          30 - _selectedNoteIds.length;
+
+      for (final id in ids) {
+        if (_selectedNoteIds.contains(id)) {
+          continue;
+        }
+
+        if (remaining == 0) {
+          break;
+        }
+
+        _selectedNoteIds.add(id);
+        remaining--;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final folderStack =
@@ -151,6 +194,8 @@ class _StudyMaterialPickerScreenState
               index: _browserMode.index,
               children: [
                 LibraryBrowser(
+                  onToggleSelectAll:
+                  _toggleLibrarySelectAll,
                   selectedNoteIds: _selectedNoteIds,
                   onNoteSelectionChanged: (noteId, selected) {
                     setState(() {
@@ -172,6 +217,8 @@ class _StudyMaterialPickerScreenState
                 ),
 
                 FavoriteBrowser(
+                  onToggleSelectAll:
+                  _toggleFavoriteSelectAll,
                   selectedNoteIds: _selectedNoteIds,
                   onNoteSelectionChanged: (noteId, selected) {
                     setState(() {

@@ -40,6 +40,7 @@ class _StudyMaterialPickerScreenState
       MaterialBrowserMode.library;
 
   late final Set<String> _selectedNoteIds;
+  bool _breadcrumbExpanded = false;
 
   @override
   void initState() {
@@ -218,54 +219,145 @@ class _StudyMaterialPickerScreenState
               : _favoriteFolderStack)
               .isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                8,
+              ),
               child: Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
+                crossAxisAlignment:
+                WrapCrossAlignment.center,
                 children: [
                   TextButton(
                     onPressed: () {
                       setState(() {
-                        if (_browserMode == MaterialBrowserMode.library) {
+                        if (_browserMode ==
+                            MaterialBrowserMode.library) {
                           _libraryFolderStack.clear();
-                          _libraryFolderId = LibraryFolder.rootId;
+                          _libraryFolderId =
+                              LibraryFolder.rootId;
                         } else {
                           _favoriteFolderStack.clear();
-                          _favoriteFolderId = LibraryFolder.rootId;
+                          _favoriteFolderId =
+                              LibraryFolder.rootId;
                         }
+
+                        _breadcrumbExpanded = false;
                       });
                     },
                     child: Text(
-                      _browserMode == MaterialBrowserMode.library
+                      _browserMode ==
+                          MaterialBrowserMode.library
                           ? 'Notes'
                           : 'Favorites',
                     ),
                   ),
 
-    for (var i = 0; i < folderStack.length; i++) ...[
-                    const Icon(Icons.chevron_right, size: 18),
+                  if (!_breadcrumbExpanded &&
+                      folderStack.length > 2) ...[
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                    ),
 
                     TextButton(
                       onPressed: () {
                         setState(() {
-    folderStack.removeRange(
-    i + 1,
-    folderStack.length,
-    );
-
-    if (_browserMode == MaterialBrowserMode.library) {
-    _libraryFolderId = folderStack.isEmpty
-    ? LibraryFolder.rootId
-        : folderStack.last.id;
-    } else {
-    _favoriteFolderId = folderStack.isEmpty
-    ? LibraryFolder.rootId
-        : folderStack.last.id;
-    }
+                          _breadcrumbExpanded = true;
                         });
                       },
-                      child: Text(folderStack[i].name),
+                      child: const Text('...'),
                     ),
-                  ],
+
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                    ),
+
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          folderStack.removeRange(
+                            folderStack.length - 1,
+                            folderStack.length,
+                          );
+
+                          if (_browserMode ==
+                              MaterialBrowserMode.library) {
+                            _libraryFolderId =
+                                folderStack.last.id;
+                          } else {
+                            _favoriteFolderId =
+                                folderStack.last.id;
+                          }
+
+                          _breadcrumbExpanded =
+                          false;
+                        });
+                      },
+                      child: Text(
+                        folderStack[
+                        folderStack.length - 2]
+                            .name,
+                      ),
+                    ),
+
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                    ),
+
+                    Text(
+                      folderStack.last.name,
+                    ),
+                  ] else
+                    ...[
+                      for (var i = 0;
+                      i < folderStack.length;
+                      i++) ...[
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              folderStack.removeRange(
+                                i + 1,
+                                folderStack.length,
+                              );
+
+                              if (_browserMode ==
+                                  MaterialBrowserMode
+                                      .library) {
+                                _libraryFolderId =
+                                folderStack.isEmpty
+                                    ? LibraryFolder
+                                    .rootId
+                                    : folderStack
+                                    .last
+                                    .id;
+                              } else {
+                                _favoriteFolderId =
+                                folderStack.isEmpty
+                                    ? LibraryFolder
+                                    .rootId
+                                    : folderStack
+                                    .last
+                                    .id;
+                              }
+
+                              _breadcrumbExpanded =
+                              false;
+                            });
+                          },
+                          child: Text(
+                            folderStack[i].name,
+                          ),
+                        ),
+                      ],
+                    ],
                 ],
               ),
             ),
@@ -292,6 +384,7 @@ class _StudyMaterialPickerScreenState
                     setState(() {
                       _libraryFolderStack.add(folder);
                       _libraryFolderId = folder.id;
+                      _breadcrumbExpanded = false;
                     });
                   },
                 ),
@@ -315,6 +408,7 @@ class _StudyMaterialPickerScreenState
                     setState(() {
                       _favoriteFolderStack.add(folder);
                       _favoriteFolderId = folder.id;
+                      _breadcrumbExpanded = false;
                     });
                   },
                 ),

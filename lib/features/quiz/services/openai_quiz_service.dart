@@ -78,18 +78,38 @@ Never return markdown.
 Never return ```json.
 ''';
 
+      final stopwatch = Stopwatch()
+        ..start();
       final response = await client.responses.create(
         CreateResponseRequest(
-          model: 'gpt-5',
+          model: 'gpt-5-mini',
           input: ResponseInput.text(prompt),
         ),
       );
 
-      final json =
-      jsonDecode(response.outputText)
-      as Map<String, dynamic>;
+      stopwatch.stop();
 
-      return QuizResponse.fromJson(json);
+      print(
+        '[OPENAI] Generation took '
+            '${stopwatch.elapsed.inSeconds}s',
+      );
+
+      print(response.outputText);
+
+      final decoded =
+      jsonDecode(response.outputText);
+
+      print(decoded.runtimeType);
+
+      if (decoded is List) {
+        return QuizResponse.fromJson({
+          'questions': decoded,
+        });
+      }
+
+      return QuizResponse.fromJson(
+        decoded as Map<String, dynamic>,
+      );
     } finally {
       client.close();
     }

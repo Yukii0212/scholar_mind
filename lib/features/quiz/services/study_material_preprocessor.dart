@@ -108,10 +108,21 @@ class StudyMaterialPreprocessor {
   String _cleanText(
       String text,
       ) {
-    return text
+    var cleaned = text
         .replaceAll('\r', '')
         .replaceAll(RegExp(r'\n{3,}'), '\n\n')
         .replaceAll(RegExp(r'[ \t]+'), ' ')
         .trim();
+
+    const maxCharacters = 30000;
+
+    if (cleaned.length > maxCharacters) {
+      cleaned = cleaned.substring(
+        0,
+        maxCharacters,
+      );
+    }
+
+    return cleaned;
   }
 }

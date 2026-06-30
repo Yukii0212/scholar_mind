@@ -204,7 +204,7 @@ class _QuizViewerScreenState
                       });
                     },
                     title: const Text(
-                      'Mark for Review',
+                      'Review this question later',
                     ),
                   ),
 
@@ -226,7 +226,7 @@ class _QuizViewerScreenState
                       });
                     },
                     title: const Text(
-                      'I guessed this answer',
+                      'I was not confident in this answer',
                     ),
                   ),
                 ],

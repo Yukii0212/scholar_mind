@@ -64,8 +64,11 @@ Never generate a question whose type is not listed above.
 
 Schema:
 
+Schema:
+
 {
   "questions": [
+
     {
       "type": "multiple_choice",
       "question": "...",
@@ -77,13 +80,29 @@ Schema:
       ],
       "correctAnswerIndex": 0,
       "explanation": "..."
+    },
+
+    {
+      "type": "true_false",
+      "question": "...",
+      "options": [
+        "True",
+        "False"
+      ],
+      "correctAnswerIndex": 0,
+      "explanation": "..."
+    },
+
+    {
+      "type": "open_ended",
+      "question": "...",
+      "sampleAnswer": "...",
+      "explanation": "..."
     }
+
   ]
 }
 ''',
-        ),
-        Future.delayed(
-          const Duration(seconds: 1),
         ),
       ]);
 

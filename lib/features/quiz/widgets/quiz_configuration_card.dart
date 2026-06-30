@@ -258,40 +258,96 @@ class QuizConfigurationCard extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            Text(
-              'Question Distribution',
-              style:
-              Theme.of(context)
-                  .textTheme
-                  .titleMedium,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Question Distribution',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium,
+                  ),
+                ),
+
+                IconButton(
+                  icon: const Icon(
+                    Icons.info_outline,
+                    size: 20,
+                  ),
+                  tooltip: 'Question Distribution',
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text(
+                          'Question Distribution',
+                        ),
+                        content: const Text(
+                          'By default, ScholarMind automatically balances the selected question types.\n\n'
+                              'Customize this only if you want certain question types to appear more frequently than others.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(dialogContext),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
 
             const SizedBox(height: 8),
 
-            SwitchListTile(
-              contentPadding:
-              EdgeInsets.zero,
+            const SizedBox(height: 8),
+
+            Text(
+              'Automatic (Recommended)',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(
+                color: Theme.of(context)
+                    .colorScheme
+                    .secondary,
+              ),
+            ),
+
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+
               title: const Text(
                 'Customize Distribution',
               ),
-              subtitle: const Text(
-                'Equal distribution is recommended.',
-              ),
-              value:
-              questionTypeWeight.isCustom,
-              onChanged: (value) {
-                onQuestionTypeWeightChanged(
-                  questionTypeWeight.copyWith(
-                    isCustom: value,
-                  ),
-                );
-              },
-            ),
 
-            if (questionTypeWeight.isCustom)
-              ..._buildQuestionTypeSliders(
+              initiallyExpanded:
+              questionTypeWeight.isCustom,
+
+              onExpansionChanged: (expanded) {
+                if (expanded) {
+                  onQuestionTypeWeightChanged(
+                    _equalWeights(
+                      questionTypes,
+                    ),
+                  );
+                } else {
+                  onQuestionTypeWeightChanged(
+                    questionTypeWeight.copyWith(
+                      isCustom: false,
+                    ),
+                  );
+                }
+              },
+
+              children: questionTypeWeight.isCustom
+                  ? _buildQuestionTypeSliders(
                 context,
-              ),
+              )
+                  : const [],
+            ),
 
             TextFormField(
               initialValue:
@@ -378,19 +434,28 @@ class QuizConfigurationCard extends StatelessWidget {
           ),
         ),
 
-      Align(
-        alignment:
-        Alignment.centerRight,
-        child: TextButton(
-          onPressed: () {
-            onQuestionTypeWeightChanged(
-              _equalWeights(
-                enabledTypes,
-              ),
-            );
-          },
-          child: const Text(
-            'Reset to Equal',
+      Padding(
+        padding:
+        const EdgeInsets.only(
+          top: 8,
+        ),
+        child: Align(
+          alignment:
+          Alignment.centerRight,
+          child: TextButton.icon(
+            icon: const Icon(
+              Icons.refresh,
+            ),
+            label: const Text(
+              'Reset to Equal',
+            ),
+            onPressed: () {
+              onQuestionTypeWeightChanged(
+                _equalWeights(
+                  enabledTypes,
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -445,7 +510,7 @@ class QuizConfigurationCard extends StatelessWidget {
       openEnded:
       values[
       QuestionType.openEnded]!,
-      isCustom: false,
+      isCustom: true,
     );
   }
 

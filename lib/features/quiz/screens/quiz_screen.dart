@@ -134,6 +134,12 @@ class _QuizScreenState
                 onQuestionTypesChanged: (value) {
                   setState(() {
                     _questionTypes = value;
+
+                    _questionTypeWeight =
+                        _rebalanceQuestionTypes(
+                          value,
+                          _questionTypeWeight,
+                        );
                   });
                 },
 
@@ -193,6 +199,46 @@ class _QuizScreenState
 
     await _processLectureNotes(
       previousSelection,
+    );
+  }
+
+  QuestionTypeWeight
+  _rebalanceQuestionTypes(
+      List<QuestionType> types,
+      QuestionTypeWeight current,
+      ) {
+    if (!current.isCustom) {
+      return current;
+    }
+
+    final enabled = types.length;
+    final base = 100 ~/ enabled;
+    var remainder = 100 % enabled;
+
+    var mcq = 0;
+    var tf = 0;
+    var oe = 0;
+
+    if (types.contains(
+        QuestionType.multipleChoice)) {
+      mcq = base + (remainder-- > 0 ? 1 : 0);
+    }
+
+    if (types.contains(
+        QuestionType.trueFalse)) {
+      tf = base + (remainder-- > 0 ? 1 : 0);
+    }
+
+    if (types.contains(
+        QuestionType.openEnded)) {
+      oe = base + (remainder-- > 0 ? 1 : 0);
+    }
+
+    return QuestionTypeWeight(
+      multipleChoice: mcq,
+      trueFalse: tf,
+      openEnded: oe,
+      isCustom: true,
     );
   }
 

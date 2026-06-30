@@ -47,4 +47,27 @@ class QuizAttempt {
       completedAt: completedAt ?? this.completedAt,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'status': status.name,
+      'startedAt':
+      startedAt.toIso8601String(),
+      'submittedAt':
+      submittedAt
+          ?.toIso8601String(),
+      'completedAt':
+      completedAt
+          ?.toIso8601String(),
+      'answers':
+      answers.map(
+            (key, value) => MapEntry(
+          key.toString(),
+          value.toJson(),
+        ),
+      ),
+    };
+  }
+
 }

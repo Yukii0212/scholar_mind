@@ -70,4 +70,24 @@ class QuizAnswer {
           this.aiFeedback,
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'selectedOptionIndex':
+      selectedOptionIndex,
+      'openEndedAnswer':
+      openEndedAnswer,
+      'markedForReview':
+      markedForReview,
+      'guessed':
+      guessed,
+      'aiReviewPending':
+      aiReviewPending,
+      'aiScore':
+      aiScore,
+      'aiMaxScore':
+      aiMaxScore,
+      'aiFeedback':
+      aiFeedback,
+    };
+  }
 }

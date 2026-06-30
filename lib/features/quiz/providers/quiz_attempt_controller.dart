@@ -29,6 +29,10 @@ class QuizAttemptController
   void startAttempt(
       QuizAttempt attempt,
       ) {
+    if (state != null) {
+      return;
+    }
+
     state = attempt;
   }
 
@@ -156,7 +160,7 @@ class QuizAttemptController
       completedAt: DateTime.now(),
     );
 
-    _saveNow();
+    await _saveNow();
   }
 
   void _markDirty() {
@@ -193,8 +197,9 @@ class QuizAttemptController
     _dirtyTimer?.cancel();
     _dirtyTimer = null;
 
-    // TODO
-    // Save through repository.
+    await _repository.saveAttempt(
+      state!.toJson(),
+    );
   }
 
   @override

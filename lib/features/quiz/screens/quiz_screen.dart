@@ -7,13 +7,16 @@ import '../../notes/providers/library_provider.dart';
 import '../domain/processing_status.dart';
 import '../services/study_material_preprocessor.dart';
 import '../data/quiz_repository.dart';
-import '../services/openai_quiz_service.dart';
 import '../widgets/generate_quiz_button.dart';
 import '../widgets/quiz_configuration_card.dart';
 import '../widgets/study_materials_card.dart';
 import '../domain/study_material_type.dart';
+import '../domain/question_type.dart';
+import '../domain/quiz_difficulty.dart';
+import '../domain/quiz_generation_request.dart';
 import 'study_material_picker_screen.dart';
 import 'selection_manager_screen.dart';
+import 'quiz_generating_screen.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
   const QuizScreen({super.key});
@@ -48,10 +51,18 @@ class _QuizScreenState
   final _quizRepository =
   const QuizRepository();
 
-  final _openAIQuizService =
-  const OpenAIQuizService();
-
   String? _studyContext;
+
+  int _questionCount = 10;
+
+  QuizDifficulty _difficulty =
+      QuizDifficulty.medium;
+
+  List<QuestionType> _questionTypes = [
+    QuestionType.multipleChoice,
+  ];
+
+  String _extraInstructions = '';
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +101,36 @@ class _QuizScreenState
 
               SizedBox(height: 20),
 
-              QuizConfigurationCard(),
+              QuizConfigurationCard(
+                questionCount: _questionCount,
+                difficulty: _difficulty,
+                questionTypes: _questionTypes,
+                extraInstructions: _extraInstructions,
+
+                onQuestionCountChanged: (value) {
+                  setState(() {
+                    _questionCount = value;
+                  });
+                },
+
+                onDifficultyChanged: (value) {
+                  setState(() {
+                    _difficulty = value;
+                  });
+                },
+
+                onQuestionTypesChanged: (value) {
+                  setState(() {
+                    _questionTypes = value;
+                  });
+                },
+
+                onExtraInstructionsChanged: (value) {
+                  setState(() {
+                    _extraInstructions = value;
+                  });
+                },
+              ),
 
               SizedBox(height: 32),
 
@@ -367,51 +407,26 @@ class _QuizScreenState
       return;
     }
 
-    debugPrint('[OPENAI] Generating quiz...');
+    if (!mounted) return;
 
-    try {
-      final quiz =
-      await _openAIQuizService.generateQuiz(
-        studyContext: _studyContext!,
-        instructions: '''
-Generate 5 multiple choice questions.
+    final request =
+    QuizGenerationRequest(
+      studyContext: _studyContext!,
+      questionCount: _questionCount,
+      difficulty: _difficulty,
+      questionTypes: _questionTypes,
+      extraInstructions:
+      _extraInstructions,
+    );
 
-Difficulty: Medium.
-
-Return ONLY valid JSON.
-
-Schema:
-
-{
-  "questions": [
-    {
-      "type": "multiple_choice",
-      "question": "...",
-      "options": [
-        "...",
-        "...",
-        "...",
-        "..."
-      ],
-      "correctAnswerIndex": 0,
-      "explanation": "..."
-    }
-  ]
-}
-''',
-      );
-
-      debugPrint(
-        '[QUIZ] Generated ${quiz.questions.length} questions.',
-      );
-
-      for (final question in quiz.questions) {
-        debugPrint(question.question);
-      }
-    } catch (e, stackTrace) {
-      debugPrint('[OPENAI] FAILED');
-      debugPrint(e.toString());
-      debugPrint(stackTrace.toString());
-    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            QuizGeneratingScreen(
+              request: request,
+            ),
+      ),
+    );
   }
 }

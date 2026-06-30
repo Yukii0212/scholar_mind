@@ -259,82 +259,39 @@ class QuizConfigurationCard extends StatelessWidget {
             const SizedBox(height: 20),
 
             Text(
-              'Question Type Weighting',
-              style: Theme.of(context)
+              'Question Distribution',
+              style:
+              Theme.of(context)
                   .textTheme
                   .titleMedium,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
-            Text(
-              'Multiple Choice (${questionTypeWeight.multipleChoice}%)',
-            ),
-
-            Slider(
-              value: questionTypeWeight.multipleChoice.toDouble(),
-              min: 0,
-              max: 100,
-              divisions: 20,
+            SwitchListTile(
+              contentPadding:
+              EdgeInsets.zero,
+              title: const Text(
+                'Customize Distribution',
+              ),
+              subtitle: const Text(
+                'Equal distribution is recommended.',
+              ),
+              value:
+              questionTypeWeight.isCustom,
               onChanged: (value) {
                 onQuestionTypeWeightChanged(
-                  QuestionTypeWeight(
-                    multipleChoice:
-                    value.round(),
-                    trueFalse:
-                    questionTypeWeight.trueFalse,
-                    openEnded:
-                    questionTypeWeight.openEnded,
+                  questionTypeWeight.copyWith(
+                    isCustom: value,
                   ),
                 );
               },
             ),
 
-            Text(
-              'True / False (${questionTypeWeight.trueFalse}%)',
-            ),
-
-            Slider(
-              value: questionTypeWeight.trueFalse.toDouble(),
-              min: 0,
-              max: 100,
-              divisions: 20,
-              onChanged: (value) {
-                onQuestionTypeWeightChanged(
-                  QuestionTypeWeight(
-                    multipleChoice:
-                    questionTypeWeight.multipleChoice,
-                    trueFalse:
-                    value.round(),
-                    openEnded:
-                    questionTypeWeight.openEnded,
-                  ),
-                );
-              },
-            ),
-
-            Text(
-              'Open Ended (${questionTypeWeight.openEnded}%)',
-            ),
-
-            Slider(
-              value: questionTypeWeight.openEnded.toDouble(),
-              min: 0,
-              max: 100,
-              divisions: 20,
-              onChanged: (value) {
-                onQuestionTypeWeightChanged(
-                  QuestionTypeWeight(
-                    multipleChoice:
-                    questionTypeWeight.multipleChoice,
-                    trueFalse:
-                    questionTypeWeight.trueFalse,
-                    openEnded:
-                    value.round(),
-                  ),
-                );
-              },
-            ),
+            if (questionTypeWeight.isCustom)
+              ..._buildQuestionTypeSliders(
+                context,
+              ),
 
             TextFormField(
               initialValue:
@@ -354,5 +311,216 @@ class QuizConfigurationCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildQuestionTypeSliders(
+      BuildContext context,
+      ) {
+    final enabledTypes =
+    questionTypes.toList();
+
+    final weights = <QuestionType, int>{
+      QuestionType.multipleChoice:
+      questionTypeWeight.multipleChoice,
+      QuestionType.trueFalse:
+      questionTypeWeight.trueFalse,
+      QuestionType.openEnded:
+      questionTypeWeight.openEnded,
+    };
+
+    return [
+      for (final type in enabledTypes)
+        Padding(
+          padding:
+          const EdgeInsets.only(
+            bottom: 12,
+          ),
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_label(type)} (${weights[type]}%)',
+              ),
+              Slider(
+                value:
+                weights[type]!
+                    .toDouble(),
+                min: 0,
+                max: 100,
+                divisions: 100,
+                onChanged: (value) {
+                  final updated =
+                  _redistribute(
+                    type,
+                    value.round(),
+                    weights,
+                    enabledTypes,
+                  );
+
+                  onQuestionTypeWeightChanged(
+                    QuestionTypeWeight(
+                      multipleChoice:
+                      updated[
+                      QuestionType.multipleChoice]!,
+                      trueFalse:
+                      updated[
+                      QuestionType.trueFalse]!,
+                      openEnded:
+                      updated[
+                      QuestionType.openEnded]!,
+                      isCustom: true,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+
+      Align(
+        alignment:
+        Alignment.centerRight,
+        child: TextButton(
+          onPressed: () {
+            onQuestionTypeWeightChanged(
+              _equalWeights(
+                enabledTypes,
+              ),
+            );
+          },
+          child: const Text(
+            'Reset to Equal',
+          ),
+        ),
+      ),
+    ];
+  }
+
+  String _label(
+      QuestionType type,
+      ) {
+    switch (type) {
+      case QuestionType.multipleChoice:
+        return 'Multiple Choice';
+      case QuestionType.trueFalse:
+        return 'True / False';
+      case QuestionType.openEnded:
+        return 'Open Ended';
+    }
+  }
+
+  QuestionTypeWeight _equalWeights(
+      List<QuestionType> enabled,
+      ) {
+    final values = {
+      QuestionType.multipleChoice: 0,
+      QuestionType.trueFalse: 0,
+      QuestionType.openEnded: 0,
+    };
+
+    final base =
+        100 ~/ enabled.length;
+
+    var remainder =
+        100 % enabled.length;
+
+    for (final type in enabled) {
+      values[type] = base;
+
+      if (remainder > 0) {
+        values[type] =
+            values[type]! + 1;
+        remainder--;
+      }
+    }
+
+    return QuestionTypeWeight(
+      multipleChoice:
+      values[
+      QuestionType.multipleChoice]!,
+      trueFalse:
+      values[
+      QuestionType.trueFalse]!,
+      openEnded:
+      values[
+      QuestionType.openEnded]!,
+      isCustom: false,
+    );
+  }
+
+  Map<QuestionType, int>
+  _redistribute(
+      QuestionType changed,
+      int newValue,
+      Map<QuestionType, int> current,
+      List<QuestionType> enabled,
+      ) {
+    final updated =
+    Map<QuestionType, int>.from(
+      current,
+    );
+
+    updated[changed] = newValue;
+
+    final others =
+    enabled.where(
+          (e) => e != changed,
+    );
+
+    final remaining =
+        100 - newValue;
+
+    final totalOthers =
+    others.fold(
+      0,
+          (sum, type) =>
+      sum + updated[type]!,
+    );
+
+    if (totalOthers == 0) {
+      final equal =
+          remaining ~/
+              others.length;
+
+      for (final type in others) {
+        updated[type] = equal;
+      }
+
+      return updated;
+    }
+
+    var allocated = 0;
+
+    final otherList =
+    others.toList();
+
+    for (var i = 0;
+    i < otherList.length;
+    i++) {
+      final type =
+      otherList[i];
+
+      if (i ==
+          otherList.length -
+              1) {
+        updated[type] =
+            remaining -
+                allocated;
+      } else {
+        final value =
+        ((updated[type]! /
+            totalOthers) *
+            remaining)
+            .round();
+
+        updated[type] =
+            value;
+
+        allocated += value;
+      }
+    }
+
+    return updated;
   }
 }

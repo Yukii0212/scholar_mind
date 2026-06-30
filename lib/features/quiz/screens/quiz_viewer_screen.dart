@@ -7,7 +7,6 @@ import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
 import 'quiz_result_screen.dart';
-import '../services/openai_quiz_service.dart';
 import '../domain/quiz_attempt.dart';
 
 class QuizViewerScreen
@@ -27,9 +26,6 @@ class QuizViewerScreen
 
 class _QuizViewerScreenState
     extends ConsumerState<QuizViewerScreen> {
-
-  final _openAIQuizService =
-  const OpenAIQuizService();
 
 // TODO:
 // Remove after migration to
@@ -429,47 +425,11 @@ class _QuizViewerScreenState
       ),
     );
 
-    final openEndedAnswers =
-    <Map<String, String>>[];
-
-    for (var i = 0;
-    i < widget.quiz.questions.length;
-    i++) {
-      final question =
-      widget.quiz.questions[i];
-
-      if (question.type !=
-          QuestionType.openEnded) {
-        continue;
-      }
-
-      final answer =
-      _answers[i];
-
-      openEndedAnswers.add({
-        'questionIndex':
-        i.toString(),
-        'question':
-        question.question,
-        'sampleAnswer':
-        question.sampleAnswer ?? '',
-        'studentAnswer':
-        answer?.openEndedAnswer ?? '',
-      });
-
-      _answers[i] =
-          (answer ??
-              const QuizAnswer())
-              .copyWith(
-            aiReviewPending: true,
-          );
-    }
-
-    if (openEndedAnswers.isNotEmpty) {
-      _evaluateOpenEndedAnswers(
-        openEndedAnswers,
-      );
-    }
+    await ref
+        .read(
+      quizAttemptProvider.notifier,
+    )
+        .submitAttempt();
 
     await Navigator.push(
       context,
@@ -480,43 +440,5 @@ class _QuizViewerScreenState
         ),
       ),
     );
-  }
-  Future<void> _evaluateOpenEndedAnswers(
-      List<Map<String, String>> answers,
-      ) async {
-
-    final results =
-    await _openAIQuizService
-        .evaluateOpenEndedAnswers(
-      answers: answers,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      for (final result in results) {
-        final index = int.parse(
-          result['questionIndex']
-              .toString(),
-        );
-
-        _answers[index] =
-            (_answers[index] ??
-                const QuizAnswer())
-                .copyWith(
-              aiReviewPending: false,
-              aiScore:
-              result['score'] as int?,
-              aiMaxScore:
-              result['maxScore']
-              as int?,
-              aiFeedback:
-              result['feedback']
-              as String?,
-            );
-      }
-    });
   }
 }

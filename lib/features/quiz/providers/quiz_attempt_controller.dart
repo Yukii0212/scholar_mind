@@ -54,7 +54,7 @@ class QuizAttemptController
     _markDirty();
   }
 
-  void submitAttempt() {
+  Future<void> submitAttempt() async {
     if (state == null) {
       return;
     }
@@ -62,14 +62,13 @@ class QuizAttemptController
     state = state!.copyWith(
       status:
       QuizAttemptStatus.submitted,
-      submittedAt: DateTime.now(),
+      submittedAt:
+      DateTime.now(),
     );
 
     _saveNow();
 
-    unawaited(
-      _evaluateOpenEnded(),
-    );
+    await _evaluateOpenEnded();
   }
 
   Future<void> _evaluateOpenEnded() async {

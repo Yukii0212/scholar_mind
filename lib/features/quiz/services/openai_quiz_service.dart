@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:openai_dart/openai_dart.dart';
+
+import '../domain/quiz_response.dart';
 
 class OpenAIQuizService {
   const OpenAIQuizService();
 
-  Future<String> generateQuiz({
+  Future<QuizResponse> generateQuiz({
     required String studyContext,
     required String instructions,
   }) async {
@@ -44,7 +48,11 @@ Do not wrap the JSON in markdown.
         ),
       );
 
-      return response.outputText;
+      final json =
+      jsonDecode(response.outputText)
+      as Map<String, dynamic>;
+
+      return QuizResponse.fromJson(json);
     } finally {
       client.close();
     }

@@ -7,6 +7,7 @@ import '../../notes/providers/library_provider.dart';
 import '../domain/processing_status.dart';
 import '../services/study_material_preprocessor.dart';
 import '../data/quiz_repository.dart';
+import '../services/openai_quiz_service.dart';
 import '../widgets/generate_quiz_button.dart';
 import '../widgets/quiz_configuration_card.dart';
 import '../widgets/study_materials_card.dart';
@@ -46,6 +47,9 @@ class _QuizScreenState
 
   final _quizRepository =
   const QuizRepository();
+
+  final _openAIQuizService =
+  const OpenAIQuizService();
 
   String? _studyContext;
 
@@ -355,17 +359,59 @@ class _QuizScreenState
   }
 
   Future<void> _generateQuiz() async {
-    if (_studyContext == null || _studyContext!.isEmpty) {
-      debugPrint('[QUIZ] No study material available.');
+    if (_studyContext == null ||
+        _studyContext!.isEmpty) {
+      debugPrint(
+        '[QUIZ] No study material available.',
+      );
       return;
     }
 
     debugPrint('[OPENAI] Generating quiz...');
 
-    // TODO:
-    // Replace this with OpenAIQuizService
-    // returning QuizResponse in this sprint.
+    try {
+      final quiz =
+      await _openAIQuizService.generateQuiz(
+        studyContext: _studyContext!,
+        instructions: '''
+Generate 5 multiple choice questions.
 
-    debugPrint('[OPENAI] Ready for QuizResponse parsing.');
+Difficulty: Medium.
+
+Return ONLY valid JSON.
+
+Schema:
+
+{
+  "questions": [
+    {
+      "type": "multiple_choice",
+      "question": "...",
+      "options": [
+        "...",
+        "...",
+        "...",
+        "..."
+      ],
+      "correctAnswerIndex": 0,
+      "explanation": "..."
+    }
+  ]
+}
+''',
+      );
+
+      debugPrint(
+        '[QUIZ] Generated ${quiz.questions.length} questions.',
+      );
+
+      for (final question in quiz.questions) {
+        debugPrint(question.question);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('[OPENAI] FAILED');
+      debugPrint(e.toString());
+      debugPrint(stackTrace.toString());
+    }
   }
 }

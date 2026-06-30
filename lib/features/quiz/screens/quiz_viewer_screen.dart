@@ -8,6 +8,7 @@ import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
 import 'quiz_result_screen.dart';
 import '../services/openai_quiz_service.dart';
+import '../domain/quiz_attempt.dart';
 
 class QuizViewerScreen
     extends ConsumerStatefulWidget {
@@ -150,12 +151,25 @@ class _QuizViewerScreenState
                             ),
                             onChanged: (value) {
                               setState(() {
-                                _answers[index] =
-                                    (_answers[index] ??
-                                        const QuizAnswer())
-                                        .copyWith(
-                                      selectedOptionIndex: value!,
-                                    );
+                                final updated =
+                                (_answers[index] ??
+                                    const QuizAnswer())
+                                    .copyWith(
+                                  selectedOptionIndex: value!,
+                                );
+
+                                _answers[index] = updated;
+
+                                ref
+                                    .read(
+                                  quizAttemptProvider.notifier,
+                                )
+                                    .updateAnswer(
+                                  questionIndex: index,
+                                  answer: updated,
+                                );
+
+                                setState(() {});
                               });
                             },
                           ),
@@ -224,13 +238,23 @@ class _QuizViewerScreenState
                         'Enter your answer...',
                       ),
                       onChanged: (value) {
-                        _answers[index] =
-                            (_answers[index] ??
-                                const QuizAnswer())
-                                .copyWith(
-                              openEndedAnswer:
-                              value,
-                            );
+                        final updated =
+                        (_answers[index] ??
+                            const QuizAnswer())
+                            .copyWith(
+                          openEndedAnswer: value,
+                        );
+
+                        _answers[index] = updated;
+
+                        ref
+                            .read(
+                          quizAttemptProvider.notifier,
+                        )
+                            .updateAnswer(
+                          questionIndex: index,
+                          answer: updated,
+                        );
                       },
                     ),
 
@@ -247,13 +271,25 @@ class _QuizViewerScreenState
                         false,
                     onChanged: (value) {
                       setState(() {
-                        _answers[index] =
-                            (_answers[index] ??
-                                const QuizAnswer())
-                                .copyWith(
-                              markedForReview:
-                              value!,
-                            );
+                        final updated =
+                        (_answers[index] ??
+                            const QuizAnswer())
+                            .copyWith(
+                          markedForReview: value!,
+                        );
+
+                        _answers[index] = updated;
+
+                        ref
+                            .read(
+                          quizAttemptProvider.notifier,
+                        )
+                            .updateAnswer(
+                          questionIndex: index,
+                          answer: updated,
+                        );
+
+                        setState(() {});
                       });
                     },
                     title: const Text(
@@ -270,12 +306,25 @@ class _QuizViewerScreenState
                         false,
                     onChanged: (value) {
                       setState(() {
-                        _answers[index] =
-                            (_answers[index] ??
-                                const QuizAnswer())
-                                .copyWith(
-                              guessed: value!,
-                            );
+                        final updated =
+                        (_answers[index] ??
+                            const QuizAnswer())
+                            .copyWith(
+                          guessed: value!,
+                        );
+
+                        _answers[index] = updated;
+
+                        ref
+                            .read(
+                          quizAttemptProvider.notifier,
+                        )
+                            .updateAnswer(
+                          questionIndex: index,
+                          answer: updated,
+                        );
+
+                        setState(() {});
                       });
                     },
                     title: const Text(
@@ -360,6 +409,26 @@ class _QuizViewerScreenState
     if (!mounted) {
       return;
     }
+
+    ref
+        .read(
+      quizAttemptProvider.notifier,
+    )
+        .startAttempt(
+      QuizAttempt(
+        id: DateTime.now()
+            .millisecondsSinceEpoch
+            .toString(),
+        quiz: widget.quiz,
+        answers: Map<int, QuizAnswer>.from(
+          _answers,
+        ),
+        status:
+        QuizAttemptStatus.inProgress,
+        startedAt: DateTime.now(),
+      ),
+    );
+
     final openEndedAnswers =
     <Map<String, String>>[];
 

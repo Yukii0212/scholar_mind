@@ -139,13 +139,23 @@ class QuizConfigurationCard extends StatelessWidget {
 
                 if (value == true) {
                   updated.add(
-                    QuestionType
-                        .multipleChoice,
+                    QuestionType.multipleChoice,
                   );
                 } else {
+                  if (updated.length == 1) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Select at least one question type.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
                   updated.remove(
-                    QuestionType
-                        .multipleChoice,
+                    QuestionType.multipleChoice,
                   );
                 }
 
@@ -170,13 +180,23 @@ class QuizConfigurationCard extends StatelessWidget {
 
                 if (value == true) {
                   updated.add(
-                    QuestionType
-                        .trueFalse,
+                    QuestionType.trueFalse,
                   );
                 } else {
+                  if (updated.length == 1) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Select at least one question type.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
                   updated.remove(
-                    QuestionType
-                        .trueFalse,
+                    QuestionType.trueFalse,
                   );
                 }
 
@@ -201,13 +221,23 @@ class QuizConfigurationCard extends StatelessWidget {
 
                 if (value == true) {
                   updated.add(
-                    QuestionType
-                        .openEnded,
+                    QuestionType.openEnded,
                   );
                 } else {
+                  if (updated.length == 1) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Select at least one question type.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
                   updated.remove(
-                    QuestionType
-                        .openEnded,
+                    QuestionType.openEnded,
                   );
                 }
 

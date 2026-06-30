@@ -399,11 +399,35 @@ class _QuizScreenState
   }
 
   Future<void> _generateQuiz() async {
+    if (_selectedLectureNotes.isEmpty &&
+        _selectedPastYearQuestions.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select at least one Lecture Note or Past Year Question before generating a quiz.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
     if (_studyContext == null ||
         _studyContext!.isEmpty) {
-      debugPrint(
-        '[QUIZ] No study material available.',
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Your study materials are still being processed. Please wait a moment and try again.',
+          ),
+        ),
       );
+
       return;
     }
 

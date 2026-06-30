@@ -36,7 +36,7 @@ class _QuizGeneratingScreenState
         _openAIQuizService.generateQuiz(
           studyContext: widget.request.studyContext,
           instructions: '''
-Generate ${widget.request.questionCount} questions.
+Generate UP TO ${widget.request.questionCount} questions.
 
 Difficulty: ${widget.request.difficulty.toPrompt()}.
 

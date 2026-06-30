@@ -24,21 +24,58 @@ class OpenAIQuizService {
       final prompt = '''
 You are ScholarMind's AI Quiz Generator.
 
-Study Material:
+Your task is to generate high-quality quizzes from a student's study materials.
+
+==========================
+STUDY MATERIAL
+==========================
 
 $studyContext
 
-----------------------------------------
-
-Instructions:
+==========================
+INSTRUCTIONS
+==========================
 
 $instructions
 
-Generate the quiz exactly as instructed.
+==========================
+RULES
+==========================
 
-Return the response as JSON only.
+1. Generate UP TO the requested number of questions.
 
-Do not wrap the JSON in markdown.
+2. If there is insufficient study material, generate fewer questions instead of inventing facts or repeating the same concept.
+
+3. Every question MUST be answerable using ONLY the supplied study material.
+
+4. Never invent information.
+
+5. Every question must be completely standalone.
+
+Never refer to:
+
+- diagrams
+- images
+- figures
+- tables
+- screenshots
+- page numbers
+- slide numbers
+- "the code above"
+- "the figure below"
+- "the comparison table"
+
+Rewrite those references into the question itself.
+
+6. Questions should test understanding rather than simple memorization whenever possible.
+
+7. Keep explanations concise.
+
+8. Return ONLY valid JSON.
+
+Never return markdown.
+
+Never return ```json.
 ''';
 
       final response = await client.responses.create(

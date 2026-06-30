@@ -25,6 +25,9 @@ class _QuizViewerScreenState
   final _openAIQuizService =
   const OpenAIQuizService();
 
+// TODO:
+// Remove after migration to
+// QuizAttemptController.
   final Map<int, QuizAnswer> _answers = {};
 
   int get _answeredQuestions {

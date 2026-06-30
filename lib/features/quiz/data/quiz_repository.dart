@@ -1,7 +1,21 @@
 import '../services/study_material_preprocessor.dart';
 
+import '../services/openai_quiz_service.dart';
+import '../services/quiz_local_cache_service.dart';
+
 class QuizRepository {
-  const QuizRepository();
+
+  const QuizRepository({
+    this.openAI =
+    const OpenAIQuizService(),
+    this.localCache =
+    const QuizLocalCacheService(),
+  });
+
+  final OpenAIQuizService openAI;
+
+  final QuizLocalCacheService
+  localCache;
 
   Future<String> buildStudyContext({
     required List<ProcessedStudyMaterial> lectureNotes,
@@ -52,5 +66,20 @@ class QuizRepository {
     }
 
     return buffer.toString().trim();
+  }
+
+  Future<void> saveAttempt(
+      Map<String, dynamic> json,
+      ) {
+    return localCache.save(json);
+  }
+
+  Future<Map<String, dynamic>?>
+  restoreAttempt() {
+    return localCache.load();
+  }
+
+  Future<void> clearAttempt() {
+    return localCache.clear();
   }
 }

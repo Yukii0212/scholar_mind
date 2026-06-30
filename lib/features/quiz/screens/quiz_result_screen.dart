@@ -100,6 +100,15 @@ class _QuizResultScreenState
         : ((correct / total) * 100)
         .round();
 
+    final openEndedCount =
+        widget.quiz.questions
+            .where(
+              (question) =>
+          question.type ==
+              QuestionType.openEnded,
+        )
+            .length;
+
     return Scaffold(
       appBar: AppBar(
         title:
@@ -131,7 +140,7 @@ class _QuizResultScreenState
                   ),
 
                   Text(
-                    '$correct / $total Correct',
+                    '$correct Objective Questions Correct',
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium,
@@ -140,6 +149,26 @@ class _QuizResultScreenState
               ),
             ),
           ),
+
+          const SizedBox(height: 20),
+
+          if (openEndedCount > 0)
+            Card(
+              child: ListTile(
+                leading: const Icon(
+                  Icons.auto_awesome,
+                ),
+                title: const Text(
+                  'AI Review',
+                ),
+                subtitle: const Text(
+                  'Open-ended responses are evaluated separately after submission.',
+                ),
+                trailing: Text(
+                  '$openEndedCount',
+                ),
+              ),
+            ),
 
           const SizedBox(height: 20),
 
@@ -237,18 +266,46 @@ class _QuizResultScreenState
                         QuestionType
                             .openEnded)
 
-                      const ListTile(
+                      answer?.aiReviewPending ?? true
+                          ? const ListTile(
                         leading: Icon(
-                          Icons
-                              .hourglass_top,
+                          Icons.hourglass_top,
                         ),
                         title: Text(
                           'Pending AI Review',
                         ),
                         subtitle: Text(
-                          'ScholarMind is evaluating your answer.\n\n'
-                              'Your feedback will appear here shortly.',
+                          'ScholarMind is reviewing your open-ended response.\n\n'
+                              'This usually takes less than 30 seconds.',
                         ),
+                      )
+                          : Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(
+                              Icons.auto_awesome,
+                            ),
+                            title: const Text(
+                              'AI Score',
+                            ),
+                            subtitle: Text(
+                              '${answer?.aiScore ?? 0} / ${answer?.aiMaxScore ?? 0}',
+                            ),
+                          ),
+
+                          ListTile(
+                            leading: const Icon(
+                              Icons.feedback_outlined,
+                            ),
+                            title: const Text(
+                              'AI Feedback',
+                            ),
+                            subtitle: Text(
+                              answer?.aiFeedback ??
+                                  'No feedback available.',
+                            ),
+                          ),
+                        ],
                       ),
                   ],
                 ),

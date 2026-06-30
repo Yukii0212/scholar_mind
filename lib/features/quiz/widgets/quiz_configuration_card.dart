@@ -304,7 +304,31 @@ class QuizConfigurationCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            if (!questionTypeWeight.isCustom) ...[
+            AnimatedSwitcher(
+              duration: const Duration(
+                milliseconds: 250,
+              ),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder:
+                  (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SizeTransition(
+                    sizeFactor: animation,
+                    axisAlignment: -1,
+                    child: child,
+                  ),
+                );
+              },
+              child: !questionTypeWeight.isCustom
+                  ? Column(
+                  key: const ValueKey(
+                    'balanced',
+                  ),
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
               Chip(
                 backgroundColor:
                 Theme.of(context)
@@ -334,7 +358,15 @@ class QuizConfigurationCard extends StatelessWidget {
                   ),
                 ),
               ),
-            ] else ...[
+                  ],
+              )
+                  : Column(
+                key: const ValueKey(
+                  'custom',
+                ),
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
               Chip(
                 backgroundColor:
                 Theme.of(context)
@@ -411,7 +443,9 @@ class QuizConfigurationCard extends StatelessWidget {
               ..._buildQuestionTypeSliders(
                 context,
               ),
-            ],
+                ],
+              ),
+            ),
 
             TextFormField(
               initialValue:

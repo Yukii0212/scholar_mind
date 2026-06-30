@@ -32,6 +32,8 @@ class _QuizGeneratingScreenState
 
   Future<void> _generateQuiz() async {
     try {
+      final extraInstructions =
+      widget.request.extraInstructions.trim();
       final result = await Future.wait([
         _openAIQuizService.generateQuiz(
           studyContext: widget.request.studyContext,
@@ -40,13 +42,25 @@ Generate UP TO ${widget.request.questionCount} questions.
 
 Difficulty: ${widget.request.difficulty.toPrompt()}.
 
-Question Types:
+ALLOWED QUESTION TYPES
+
+You MUST generate ONLY the following question types.
+
 ${widget.request.questionTypes.map((e) => '- ${e.toJson()}').join('\n')}
 
+Generating any other question type is STRICTLY prohibited.
+
+Every generated question MUST use one of the allowed question types above.
+
 Extra Instructions:
-${widget.request.extraInstructions.isEmpty ? 'None.' : widget.request.extraInstructions}
+
+${extraInstructions.length >= 5 ? extraInstructions : 'None.'}
 
 Return ONLY valid JSON.
+
+The "type" field MUST exactly match one of the allowed question types.
+
+Never generate a question whose type is not listed above.
 
 Schema:
 

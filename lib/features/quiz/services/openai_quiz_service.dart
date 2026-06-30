@@ -78,23 +78,12 @@ Never return markdown.
 Never return ```json.
 ''';
 
-      final stopwatch = Stopwatch()
-        ..start();
       final response = await client.responses.create(
         CreateResponseRequest(
           model: 'gpt-5-mini',
           input: ResponseInput.text(prompt),
         ),
       );
-
-      stopwatch.stop();
-
-      print(
-        '[OPENAI] Generation took '
-            '${stopwatch.elapsed.inSeconds}s',
-      );
-
-      print(response.outputText);
 
       final decoded =
       jsonDecode(response.outputText);
@@ -109,6 +98,59 @@ Never return ```json.
 
       return QuizResponse.fromJson(
         decoded as Map<String, dynamic>,
+      );
+    } finally {
+      client.close();
+    }
+  }
+  Future<List<Map<String, dynamic>>> evaluateOpenEndedAnswers({
+    required List<Map<String, String>> answers,
+  }) async {
+    final apiKey = dotenv.env['OPENAI_API_KEY'];
+
+    if (apiKey == null || apiKey.isEmpty) {
+      throw Exception('OPENAI_API_KEY not found.');
+    }
+
+    final client = OpenAIClient.withApiKey(apiKey);
+
+    try {
+      final prompt = '''
+You are ScholarMind's AI Marker.
+
+Evaluate each student's answer.
+
+Return ONLY valid JSON.
+
+Each item MUST contain:
+
+[
+  {
+    "questionIndex": 0,
+    "score": 4,
+    "maxScore": 5,
+    "feedback": "..."
+  }
+]
+
+Questions:
+
+${jsonEncode(answers)}
+''';
+
+      final response =
+      await client.responses.create(
+        CreateResponseRequest(
+          model: 'gpt-5-mini',
+          input: ResponseInput.text(prompt),
+        ),
+      );
+
+      final decoded =
+      jsonDecode(response.outputText);
+
+      return List<Map<String, dynamic>>.from(
+        decoded,
       );
     } finally {
       client.close();

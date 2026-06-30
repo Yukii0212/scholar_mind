@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
+import 'quiz_result_screen.dart';
+import '../services/openai_quiz_service.dart';
 
 class QuizViewerScreen extends StatefulWidget {
   const QuizViewerScreen({
@@ -20,7 +22,46 @@ class QuizViewerScreen extends StatefulWidget {
 class _QuizViewerScreenState
     extends State<QuizViewerScreen> {
 
+  final _openAIQuizService =
+  const OpenAIQuizService();
+
   final Map<int, QuizAnswer> _answers = {};
+
+  int get _answeredQuestions {
+    var answered = 0;
+
+    for (var i = 0;
+    i < widget.quiz.questions.length;
+    i++) {
+      final answer = _answers[i];
+
+      if (answer == null) {
+        continue;
+      }
+
+      final question =
+      widget.quiz.questions[i];
+
+      switch (question.type) {
+        case QuestionType.multipleChoice:
+        case QuestionType.trueFalse:
+          if (answer.selectedOptionIndex != null) {
+            answered++;
+          }
+          break;
+
+        case QuestionType.openEnded:
+          if ((answer.openEndedAnswer ?? '')
+              .trim()
+              .isNotEmpty) {
+            answered++;
+          }
+          break;
+      }
+    }
+
+    return answered;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +70,11 @@ class _QuizViewerScreenState
         title:
         const Text('Generated Quiz'),
       ),
-      body: ListView.builder(
+      body: SafeArea(
+        child: Column(
+            children: [
+        Expanded(
+        child: ListView.builder(
         padding:
         const EdgeInsets.all(20),
         itemCount:
@@ -234,7 +279,167 @@ class _QuizViewerScreenState
             ),
           );
         },
+        ),
+        ),
+
+              SafeArea(
+                top: false,
+                minimum: const EdgeInsets.all(16),
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  icon: const Icon(Icons.check_circle),
+                  label: const Text(
+                    'Submit Quiz',
+                  ),
+                  onPressed: _submitQuiz,
+                ),
+              ),
+            ],
+        ),
       ),
     );
+  }
+
+  Future<void> _submitQuiz() async {
+    final submit =
+    await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Submit Quiz?',
+          ),
+          content: Text(
+            'You have answered '
+                '$_answeredQuestions of '
+                '${widget.quiz.questions.length} questions.\n\n'
+                'You can still review your answers after submitting.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text(
+                'Cancel',
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child: const Text(
+                'Submit',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (submit != true) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+    final openEndedAnswers =
+    <Map<String, String>>[];
+
+    for (var i = 0;
+    i < widget.quiz.questions.length;
+    i++) {
+      final question =
+      widget.quiz.questions[i];
+
+      if (question.type !=
+          QuestionType.openEnded) {
+        continue;
+      }
+
+      final answer =
+      _answers[i];
+
+      openEndedAnswers.add({
+        'questionIndex':
+        i.toString(),
+        'question':
+        question.question,
+        'sampleAnswer':
+        question.sampleAnswer ?? '',
+        'studentAnswer':
+        answer?.openEndedAnswer ?? '',
+      });
+
+      _answers[i] =
+          (answer ??
+              const QuizAnswer())
+              .copyWith(
+            aiReviewPending: true,
+          );
+    }
+
+    if (openEndedAnswers.isNotEmpty) {
+      _evaluateOpenEndedAnswers(
+        openEndedAnswers,
+      );
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QuizResultScreen(
+          quiz: widget.quiz,
+          answers: _answers,
+        ),
+      ),
+    );
+  }
+  Future<void> _evaluateOpenEndedAnswers(
+      List<Map<String, String>> answers,
+      ) async {
+
+    final results =
+    await _openAIQuizService
+        .evaluateOpenEndedAnswers(
+      answers: answers,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      for (final result in results) {
+        final index = int.parse(
+          result['questionIndex']
+              .toString(),
+        );
+
+        _answers[index] =
+            (_answers[index] ??
+                const QuizAnswer())
+                .copyWith(
+              aiReviewPending: false,
+              aiScore:
+              result['score'] as int?,
+              aiMaxScore:
+              result['maxScore']
+              as int?,
+              aiFeedback:
+              result['feedback']
+              as String?,
+            );
+      }
+    });
   }
 }

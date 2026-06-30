@@ -90,7 +90,9 @@ class _QuizScreenState
 
               SizedBox(height: 32),
 
-              GenerateQuizButton(),
+              GenerateQuizButton(
+                onPressed: _generateQuiz,
+              ),
             ],
           ),
         ),
@@ -277,13 +279,7 @@ class _QuizScreenState
         lectureNotes:
         _processedLectureNotes.values.toList(),
         pastYearQuestions:
-        _processedPastYearQuestions.values
-            .toList(),
-      );
-
-      debugPrint(
-        '===== STUDY CONTEXT =====\n'
-            '$_studyContext',
+        _processedPastYearQuestions.values.toList(),
       );
 
       if (!mounted) return;
@@ -339,13 +335,7 @@ class _QuizScreenState
         lectureNotes:
         _processedLectureNotes.values.toList(),
         pastYearQuestions:
-        _processedPastYearQuestions.values
-            .toList(),
-      );
-
-      debugPrint(
-        '===== STUDY CONTEXT =====\n'
-            '$_studyContext',
+        _processedPastYearQuestions.values.toList(),
       );
 
       if (!mounted) return;
@@ -362,5 +352,20 @@ class _QuizScreenState
             ProcessingStatus.failed;
       });
     }
+  }
+
+  Future<void> _generateQuiz() async {
+    if (_studyContext == null || _studyContext!.isEmpty) {
+      debugPrint('[QUIZ] No study material available.');
+      return;
+    }
+
+    debugPrint('[OPENAI] Generating quiz...');
+
+    // TODO:
+    // Replace this with OpenAIQuizService
+    // returning QuizResponse in this sprint.
+
+    debugPrint('[OPENAI] Ready for QuizResponse parsing.');
   }
 }

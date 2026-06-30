@@ -304,50 +304,114 @@ class QuizConfigurationCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            Text(
-              'Automatic (Recommended)',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(
-                color: Theme.of(context)
+            if (!questionTypeWeight.isCustom) ...[
+              Chip(
+                backgroundColor:
+                Theme.of(context)
                     .colorScheme
-                    .secondary,
+                    .surfaceContainerHighest,
+                avatar: const Icon(
+                  Icons.check_circle_outline,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Balanced (Recommended)',
+                ),
               ),
-            ),
 
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-
-              title: const Text(
-                'Customize Distribution',
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () {
+                    onQuestionTypeWeightChanged(
+                      _equalWeights(
+                        questionTypes,
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Customize',
+                  ),
+                ),
+              ),
+            ] else ...[
+              Chip(
+                backgroundColor:
+                Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest,
+                avatar: const Icon(
+                  Icons.tune,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Custom',
+                ),
               ),
 
-              initiallyExpanded:
-              questionTypeWeight.isCustom,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () async {
+                    final discard =
+                    await showDialog<bool>(
+                      context: context,
+                      builder:
+                          (dialogContext) =>
+                          AlertDialog(
+                            title: const Text(
+                              'Discard Custom Distribution?',
+                            ),
+                            content: const Text(
+                              'Your custom question distribution will be discarded and ScholarMind will use the recommended balanced distribution instead.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(
+                                    dialogContext,
+                                    false,
+                                  );
+                                },
+                                child: const Text(
+                                  'Cancel',
+                                ),
+                              ),
+                              FilledButton(
+                                onPressed: () {
+                                  Navigator.pop(
+                                    dialogContext,
+                                    true,
+                                  );
+                                },
+                                child: const Text(
+                                  'Discard',
+                                ),
+                              ),
+                            ],
+                          ),
+                    );
 
-              onExpansionChanged: (expanded) {
-                if (expanded) {
-                  onQuestionTypeWeightChanged(
-                    _equalWeights(
-                      questionTypes,
-                    ),
-                  );
-                } else {
-                  onQuestionTypeWeightChanged(
-                    questionTypeWeight.copyWith(
-                      isCustom: false,
-                    ),
-                  );
-                }
-              },
+                    if (discard == true) {
+                      onQuestionTypeWeightChanged(
+                        questionTypeWeight.copyWith(
+                          isCustom: false,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Discard',
+                  ),
+                ),
+              ),
 
-              children: questionTypeWeight.isCustom
-                  ? _buildQuestionTypeSliders(
+              const SizedBox(height: 8),
+
+              ..._buildQuestionTypeSliders(
                 context,
-              )
-                  : const [],
-            ),
+              ),
+            ],
 
             TextFormField(
               initialValue:

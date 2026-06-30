@@ -4,6 +4,7 @@ import '../domain/quiz_generation_request.dart';
 import '../domain/quiz_response.dart';
 import '../services/openai_quiz_service.dart';
 import 'quiz_viewer_screen.dart';
+import '../services/quiz_prompt_builder.dart';
 
 class QuizGeneratingScreen extends StatefulWidget {
   const QuizGeneratingScreen({
@@ -24,6 +25,9 @@ class _QuizGeneratingScreenState
   final _openAIQuizService =
   const OpenAIQuizService();
 
+  final _promptBuilder =
+  const QuizPromptBuilder();
+
   @override
   void initState() {
     super.initState();
@@ -32,77 +36,14 @@ class _QuizGeneratingScreenState
 
   Future<void> _generateQuiz() async {
     try {
-      final extraInstructions =
-      widget.request.extraInstructions.trim();
+      final prompt =
+      _promptBuilder.build(
+        widget.request,
+      );
       final result = await Future.wait([
         _openAIQuizService.generateQuiz(
           studyContext: widget.request.studyContext,
-          instructions: '''
-Generate UP TO ${widget.request.questionCount} questions.
-
-Difficulty: ${widget.request.difficulty.toPrompt()}.
-
-ALLOWED QUESTION TYPES
-
-You MUST generate ONLY the following question types.
-
-${widget.request.questionTypes.map((e) => '- ${e.toJson()}').join('\n')}
-
-Generating any other question type is STRICTLY prohibited.
-
-Every generated question MUST use one of the allowed question types above.
-
-Extra Instructions:
-
-${extraInstructions.length >= 5 ? extraInstructions : 'None.'}
-
-Return ONLY valid JSON.
-
-The "type" field MUST exactly match one of the allowed question types.
-
-Never generate a question whose type is not listed above.
-
-Schema:
-
-Schema:
-
-{
-  "questions": [
-
-    {
-      "type": "multiple_choice",
-      "question": "...",
-      "options": [
-        "...",
-        "...",
-        "...",
-        "..."
-      ],
-      "correctAnswerIndex": 0,
-      "explanation": "..."
-    },
-
-    {
-      "type": "true_false",
-      "question": "...",
-      "options": [
-        "True",
-        "False"
-      ],
-      "correctAnswerIndex": 0,
-      "explanation": "..."
-    },
-
-    {
-      "type": "open_ended",
-      "question": "...",
-      "sampleAnswer": "...",
-      "explanation": "..."
-    }
-
-  ]
-}
-''',
+          instructions: prompt,
         ),
       ]);
 

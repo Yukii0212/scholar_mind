@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../domain/question_type.dart';
 import '../domain/quiz_difficulty.dart';
+import '../domain/question_type_weight.dart';
 
 class QuizConfigurationCard extends StatelessWidget {
   const QuizConfigurationCard({
@@ -10,6 +11,8 @@ class QuizConfigurationCard extends StatelessWidget {
     required this.difficulty,
     required this.questionTypes,
     required this.extraInstructions,
+    required this.questionTypeWeight,
+    required this.onQuestionTypeWeightChanged,
     required this.onQuestionCountChanged,
     required this.onDifficultyChanged,
     required this.onQuestionTypesChanged,
@@ -28,6 +31,10 @@ class QuizConfigurationCard extends StatelessWidget {
   onQuestionTypesChanged;
   final ValueChanged<String>
   onExtraInstructionsChanged;
+  final QuestionTypeWeight
+  questionTypeWeight;
+  final ValueChanged<QuestionTypeWeight>
+  onQuestionTypeWeightChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -248,6 +255,86 @@ class QuizConfigurationCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
+
+            const SizedBox(height: 20),
+
+            Text(
+              'Question Type Weighting',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium,
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              'Multiple Choice (${questionTypeWeight.multipleChoice}%)',
+            ),
+
+            Slider(
+              value: questionTypeWeight.multipleChoice.toDouble(),
+              min: 0,
+              max: 100,
+              divisions: 20,
+              onChanged: (value) {
+                onQuestionTypeWeightChanged(
+                  QuestionTypeWeight(
+                    multipleChoice:
+                    value.round(),
+                    trueFalse:
+                    questionTypeWeight.trueFalse,
+                    openEnded:
+                    questionTypeWeight.openEnded,
+                  ),
+                );
+              },
+            ),
+
+            Text(
+              'True / False (${questionTypeWeight.trueFalse}%)',
+            ),
+
+            Slider(
+              value: questionTypeWeight.trueFalse.toDouble(),
+              min: 0,
+              max: 100,
+              divisions: 20,
+              onChanged: (value) {
+                onQuestionTypeWeightChanged(
+                  QuestionTypeWeight(
+                    multipleChoice:
+                    questionTypeWeight.multipleChoice,
+                    trueFalse:
+                    value.round(),
+                    openEnded:
+                    questionTypeWeight.openEnded,
+                  ),
+                );
+              },
+            ),
+
+            Text(
+              'Open Ended (${questionTypeWeight.openEnded}%)',
+            ),
+
+            Slider(
+              value: questionTypeWeight.openEnded.toDouble(),
+              min: 0,
+              max: 100,
+              divisions: 20,
+              onChanged: (value) {
+                onQuestionTypeWeightChanged(
+                  QuestionTypeWeight(
+                    multipleChoice:
+                    questionTypeWeight.multipleChoice,
+                    trueFalse:
+                    questionTypeWeight.trueFalse,
+                    openEnded:
+                    value.round(),
+                  ),
+                );
+              },
+            ),
 
             TextFormField(
               initialValue:

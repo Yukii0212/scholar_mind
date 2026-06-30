@@ -1,5 +1,6 @@
 import 'question_type.dart';
 import 'quiz_difficulty.dart';
+import 'question_type_weight.dart';
 
 class QuizGenerationRequest {
   const QuizGenerationRequest({
@@ -8,6 +9,7 @@ class QuizGenerationRequest {
     required this.difficulty,
     required this.questionTypes,
     required this.extraInstructions,
+    required this.questionTypeWeight,
   });
 
   final String studyContext;
@@ -19,4 +21,7 @@ class QuizGenerationRequest {
   final List<QuestionType> questionTypes;
 
   final String extraInstructions;
+
+  final QuestionTypeWeight
+  questionTypeWeight;
 }

@@ -17,6 +17,7 @@ import '../domain/quiz_generation_request.dart';
 import 'study_material_picker_screen.dart';
 import 'selection_manager_screen.dart';
 import 'quiz_generating_screen.dart';
+import '../domain/question_type_weight.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
   const QuizScreen({super.key});
@@ -64,6 +65,14 @@ class _QuizScreenState
 
   String _extraInstructions = '';
 
+  QuestionTypeWeight
+  _questionTypeWeight =
+  const QuestionTypeWeight(
+    multipleChoice: 50,
+    trueFalse: 30,
+    openEnded: 20,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +114,10 @@ class _QuizScreenState
                 questionCount: _questionCount,
                 difficulty: _difficulty,
                 questionTypes: _questionTypes,
-                extraInstructions: _extraInstructions,
+                questionTypeWeight:
+                _questionTypeWeight,
+                extraInstructions:
+                _extraInstructions,
 
                 onQuestionCountChanged: (value) {
                   setState(() {
@@ -125,7 +137,16 @@ class _QuizScreenState
                   });
                 },
 
-                onExtraInstructionsChanged: (value) {
+                onQuestionTypeWeightChanged:
+                    (value) {
+                  setState(() {
+                    _questionTypeWeight =
+                        value;
+                  });
+                },
+
+                onExtraInstructionsChanged:
+                    (value) {
                   setState(() {
                     _extraInstructions = value;
                   });
@@ -439,6 +460,8 @@ class _QuizScreenState
       questionCount: _questionCount,
       difficulty: _difficulty,
       questionTypes: _questionTypes,
+      questionTypeWeight:
+      _questionTypeWeight,
       extraInstructions:
       _extraInstructions,
     );

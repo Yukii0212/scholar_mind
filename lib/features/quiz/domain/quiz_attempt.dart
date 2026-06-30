@@ -31,7 +31,6 @@ class QuizAttempt {
   final DateTime? submittedAt;
 
   final DateTime? completedAt;
-
   QuizAttempt copyWith({
     Map<int, QuizAnswer>? answers,
     QuizAttemptStatus? status,

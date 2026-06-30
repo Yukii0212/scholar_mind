@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/quiz_attempt_provider.dart';
 
 import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
@@ -6,7 +9,8 @@ import '../domain/quiz_response.dart';
 import 'quiz_result_screen.dart';
 import '../services/openai_quiz_service.dart';
 
-class QuizViewerScreen extends StatefulWidget {
+class QuizViewerScreen
+    extends ConsumerStatefulWidget {
   const QuizViewerScreen({
     super.key,
     required this.quiz,
@@ -15,12 +19,13 @@ class QuizViewerScreen extends StatefulWidget {
   final QuizResponse quiz;
 
   @override
-  State<QuizViewerScreen> createState() =>
+  ConsumerState<QuizViewerScreen>
+  createState() =>
       _QuizViewerScreenState();
 }
 
 class _QuizViewerScreenState
-    extends State<QuizViewerScreen> {
+    extends ConsumerState<QuizViewerScreen> {
 
   final _openAIQuizService =
   const OpenAIQuizService();

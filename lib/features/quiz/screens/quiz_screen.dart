@@ -6,6 +6,7 @@ import '../../notes/providers/library_provider.dart';
 
 import '../domain/processing_status.dart';
 import '../services/study_material_preprocessor.dart';
+import '../data/quiz_repository.dart';
 import '../widgets/generate_quiz_button.dart';
 import '../widgets/quiz_configuration_card.dart';
 import '../widgets/study_materials_card.dart';
@@ -42,6 +43,11 @@ class _QuizScreenState
 
   final _preprocessor =
   const StudyMaterialPreprocessor();
+
+  final _quizRepository =
+  const QuizRepository();
+
+  String? _studyContext;
 
   @override
   Widget build(BuildContext context) {
@@ -266,6 +272,20 @@ class _QuizScreenState
         _processedLectureNotes.addAll(processed);
       }
 
+      _studyContext =
+      await _quizRepository.buildStudyContext(
+        lectureNotes:
+        _processedLectureNotes.values.toList(),
+        pastYearQuestions:
+        _processedPastYearQuestions.values
+            .toList(),
+      );
+
+      debugPrint(
+        '===== STUDY CONTEXT =====\n'
+            '$_studyContext',
+      );
+
       if (!mounted) return;
 
       setState(() {
@@ -313,6 +333,20 @@ class _QuizScreenState
 
         _processedPastYearQuestions.addAll(processed);
       }
+
+      _studyContext =
+      await _quizRepository.buildStudyContext(
+        lectureNotes:
+        _processedLectureNotes.values.toList(),
+        pastYearQuestions:
+        _processedPastYearQuestions.values
+            .toList(),
+      );
+
+      debugPrint(
+        '===== STUDY CONTEXT =====\n'
+            '$_studyContext',
+      );
 
       if (!mounted) return;
 

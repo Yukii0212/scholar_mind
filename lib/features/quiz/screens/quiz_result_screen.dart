@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/quiz_attempt_provider.dart';
 
 import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
 
-class QuizResultScreen extends StatefulWidget {
+class QuizResultScreen
+    extends ConsumerStatefulWidget {
   const QuizResultScreen({
     super.key,
     required this.quiz,
@@ -15,12 +19,13 @@ class QuizResultScreen extends StatefulWidget {
   final Map<int, QuizAnswer> answers;
 
   @override
-  State<QuizResultScreen> createState() =>
+  ConsumerState<QuizResultScreen>
+  createState() =>
       _QuizResultScreenState();
 }
 
 class _QuizResultScreenState
-    extends State<QuizResultScreen> {
+    extends ConsumerState<QuizResultScreen> {
 
   late final List<bool> _expanded;
 
@@ -65,6 +70,15 @@ class _QuizResultScreenState
 
   @override
   Widget build(BuildContext context) {
+
+    final attempt =
+    ref.watch(
+      quizAttemptProvider,
+    );
+
+    final answers =
+        attempt?.answers ??
+            widget.answers;
 
     final total =
         widget.quiz.questions.length;
@@ -222,7 +236,7 @@ class _QuizResultScreenState
               index];
 
               final answer =
-              widget.answers[index];
+              answers[index];
 
               final correctAnswer =
                   question.correctAnswerIndex != null &&

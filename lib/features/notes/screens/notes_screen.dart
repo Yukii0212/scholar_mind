@@ -93,7 +93,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 ),
               ),
             ),
-            ..._buildFolderSlivers(folders),
+            ..._buildFolderSlivers(
+              folders,
+              notes.hasValue
+                  ? notes.valueOrNull?.isNotEmpty ?? false
+                  : false,
+            ),
             if (_section == LibrarySection.browse ||
                 _section == LibrarySection.favorites ||
                 _section == LibrarySection.trash) ..._buildNoteSlivers(
@@ -198,7 +203,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   List<Widget> _buildFolderSlivers(
       AsyncValue<List<LibraryFolder>> folders,
-      ){
+      bool hasNotes,
+      ) {
     return folders.when(
       loading: () => const [
         SliverFillRemaining(
@@ -261,7 +267,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             },
           ),
         ),
-        if (items.isEmpty && _section != LibrarySection.browse)
+        if (items.isEmpty &&
+            !hasNotes &&
+            _section != LibrarySection.browse)
           SliverFillRemaining(
             hasScrollBody: false,
             child: EmptyState(
@@ -363,7 +371,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             ),
           ),
         ),
-        if (items.isEmpty && !hasFolders)
+        if (items.isEmpty &&
+            !hasFolders &&
+            _section != LibrarySection.trash)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
               20,

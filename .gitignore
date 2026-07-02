@@ -18,6 +18,12 @@
 # VS Code
 .vscode/
 
+# Gemini environment test
+lib/debug/openai_stub.dart
+
+# Environment variables
+.env
+
 # Flutter/Dart
 .dart_tool/
 .flutter-plugins
@@ -64,3 +70,5 @@ app.*.symbols
 
 # Obfuscation
 app.*.map.json
+/lib/debug
+.env

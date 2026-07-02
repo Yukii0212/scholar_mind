@@ -1,0 +1,4 @@
+enum MaterialBrowserMode {
+  library,
+  favourites,
+}

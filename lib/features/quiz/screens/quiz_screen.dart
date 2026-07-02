@@ -5,6 +5,8 @@ import '../../notes/domain/note_item.dart';
 import '../../notes/providers/library_provider.dart';
 
 import '../domain/processing_status.dart';
+import '../domain/assessment_mode.dart';
+import '../domain/blooms_level.dart';
 import '../services/study_material_preprocessor.dart';
 import '../data/quiz_repository.dart';
 import '../widgets/generate_quiz_button.dart';
@@ -56,8 +58,17 @@ class _QuizScreenState
 
   int _questionCount = 10;
 
+  AssessmentMode _assessmentMode =
+      AssessmentMode.informal;
+
   QuizDifficulty _difficulty =
       QuizDifficulty.medium;
+
+  BloomsLevel _minimumBloomsLevel =
+      BloomsLevel.c1;
+
+  BloomsLevel _maximumBloomsLevel =
+      BloomsLevel.c3;
 
   List<QuestionType> _questionTypes = [
     QuestionType.multipleChoice,
@@ -112,7 +123,10 @@ class _QuizScreenState
 
               QuizConfigurationCard(
                 questionCount: _questionCount,
+                assessmentMode: _assessmentMode,
                 difficulty: _difficulty,
+                minimumBloomsLevel: _minimumBloomsLevel,
+                maximumBloomsLevel: _maximumBloomsLevel,
                 questionTypes: _questionTypes,
                 questionTypeWeight:
                 _questionTypeWeight,
@@ -125,9 +139,37 @@ class _QuizScreenState
                   });
                 },
 
+                onAssessmentModeChanged: (value) {
+                  setState(() {
+                    _assessmentMode = value;
+                  });
+                },
+
                 onDifficultyChanged: (value) {
                   setState(() {
                     _difficulty = value;
+                  });
+                },
+
+                onMinimumBloomsLevelChanged: (value) {
+                  setState(() {
+                    _minimumBloomsLevel = value;
+
+                    if (_minimumBloomsLevel.level >
+                        _maximumBloomsLevel.level) {
+                      _maximumBloomsLevel = value;
+                    }
+                  });
+                },
+
+                onMaximumBloomsLevelChanged: (value) {
+                  setState(() {
+                    _maximumBloomsLevel = value;
+
+                    if (_maximumBloomsLevel.level <
+                        _minimumBloomsLevel.level) {
+                      _minimumBloomsLevel = value;
+                    }
                   });
                 },
 
@@ -541,7 +583,10 @@ class _QuizScreenState
     QuizGenerationRequest(
       studyContext: _studyContext!,
       questionCount: _questionCount,
+      assessmentMode: _assessmentMode,
       difficulty: _difficulty,
+      minimumBloomsLevel: _minimumBloomsLevel,
+      maximumBloomsLevel: _maximumBloomsLevel,
       questionTypes: _questionTypes,
       questionTypeWeight:
       _questionTypeWeight,

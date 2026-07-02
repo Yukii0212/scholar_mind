@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../domain/assessment_mode.dart';
+import '../domain/blooms_level.dart';
 import '../domain/question_type.dart';
 import '../domain/quiz_difficulty.dart';
 import '../domain/question_type_weight.dart';
@@ -8,31 +10,54 @@ class QuizConfigurationCard extends StatelessWidget {
   const QuizConfigurationCard({
     super.key,
     required this.questionCount,
+    required this.assessmentMode,
     required this.difficulty,
+    required this.minimumBloomsLevel,
+    required this.maximumBloomsLevel,
     required this.questionTypes,
     required this.extraInstructions,
     required this.questionTypeWeight,
     required this.onQuestionTypeWeightChanged,
     required this.onQuestionCountChanged,
+    required this.onAssessmentModeChanged,
     required this.onDifficultyChanged,
+    required this.onMinimumBloomsLevelChanged,
+    required this.onMaximumBloomsLevelChanged,
     required this.onQuestionTypesChanged,
     required this.onExtraInstructionsChanged,
   });
 
   final int questionCount;
+  final AssessmentMode assessmentMode;
   final QuizDifficulty difficulty;
+  final BloomsLevel minimumBloomsLevel;
+  final BloomsLevel maximumBloomsLevel;
   final List<QuestionType> questionTypes;
   final String extraInstructions;
 
   final ValueChanged<int> onQuestionCountChanged;
+
+  final ValueChanged<AssessmentMode>
+  onAssessmentModeChanged;
+
   final ValueChanged<QuizDifficulty>
   onDifficultyChanged;
+
+  final ValueChanged<BloomsLevel>
+  onMinimumBloomsLevelChanged;
+
+  final ValueChanged<BloomsLevel>
+  onMaximumBloomsLevelChanged;
+
   final ValueChanged<List<QuestionType>>
   onQuestionTypesChanged;
+
   final ValueChanged<String>
   onExtraInstructionsChanged;
+
   final QuestionTypeWeight
   questionTypeWeight;
+
   final ValueChanged<QuestionTypeWeight>
   onQuestionTypeWeightChanged;
 
@@ -91,34 +116,164 @@ class QuizConfigurationCard extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            DropdownButtonFormField<
-                QuizDifficulty>(
-              value: difficulty,
-              decoration:
-              const InputDecoration(
-                labelText: 'Difficulty',
-              ),
-              items:
-              QuizDifficulty.values
-                  .map(
-                    (difficulty) =>
-                    DropdownMenuItem(
-                      value:
-                      difficulty,
-                      child: Text(
-                        difficulty
-                            .toString(),
+            SegmentedButton<AssessmentMode>(
+              segments: const [
+                ButtonSegment(
+                  value: AssessmentMode.informal,
+                  label: Text('Informal'),
+                ),
+                ButtonSegment(
+                  value: AssessmentMode.formal,
+                  label: Text('Formal'),
+                ),
+              ],
+              selected: {assessmentMode},
+              onSelectionChanged: (selection) {
+                onAssessmentModeChanged(
+                  selection.first,
+                );
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: assessmentMode ==
+                  AssessmentMode.informal
+                  ? DropdownButtonFormField<QuizDifficulty>(
+                key: const ValueKey('informal'),
+                value: difficulty,
+                decoration: const InputDecoration(
+                  labelText: 'Difficulty',
+                ),
+                items: QuizDifficulty.values
+                    .map(
+                      (difficulty) =>
+                      DropdownMenuItem(
+                        value: difficulty,
+                        child: Text(
+                          difficulty.toString(),
+                        ),
+                      ),
+                )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    onDifficultyChanged(value);
+                  }
+                },
+              )
+                  : Column(
+                key: const ValueKey('formal'),
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
+
+                  Card(
+                    child: Padding(
+                      padding:
+                      const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: const [
+
+                          Text(
+                            'Bloom\'s Cognitive Levels',
+                            style: TextStyle(
+                              fontWeight:
+                              FontWeight.bold,
+                            ),
+                          ),
+
+                          SizedBox(height: 12),
+
+                          Text('C1 • Remember'),
+                          Text('C2 • Understand'),
+                          Text('C3 • Apply'),
+                          Text('C4 • Analyze'),
+                          Text('C5 • Evaluate'),
+                          Text('C6 • Create'),
+                        ],
                       ),
                     ),
-              )
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  onDifficultyChanged(
-                    value,
-                  );
-                }
-              },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+
+                      Expanded(
+                        child:
+                        DropdownButtonFormField<
+                            BloomsLevel>(
+                          value:
+                          minimumBloomsLevel,
+                          decoration:
+                          const InputDecoration(
+                            labelText:
+                            'Minimum',
+                          ),
+                          items:
+                          BloomsLevel.values
+                              .map(
+                                (level) =>
+                                DropdownMenuItem(
+                                  value: level,
+                                  child: Text(
+                                    level.toString(),
+                                  ),
+                                ),
+                          )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              onMinimumBloomsLevelChanged(
+                                  value);
+                            }
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      Expanded(
+                        child:
+                        DropdownButtonFormField<
+                            BloomsLevel>(
+                          value:
+                          maximumBloomsLevel,
+                          decoration:
+                          const InputDecoration(
+                            labelText:
+                            'Maximum',
+                          ),
+                          items:
+                          BloomsLevel.values
+                              .map(
+                                (level) =>
+                                DropdownMenuItem(
+                                  value: level,
+                                  child: Text(
+                                    level.toString(),
+                                  ),
+                                ),
+                          )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              onMaximumBloomsLevelChanged(
+                                  value);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 20),

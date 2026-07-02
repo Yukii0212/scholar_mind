@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../data/quiz_repository.dart';
+import '../domain/quiz_attempt.dart';
 import '../domain/quiz_generation_request.dart';
 import '../domain/quiz_response.dart';
 import '../services/openai_quiz_service.dart';
@@ -51,6 +53,23 @@ class _QuizGeneratingScreenState
 
       final quiz =
       result.first as QuizResponse;
+
+      final attempt = QuizAttempt(
+        id: DateTime.now()
+            .millisecondsSinceEpoch
+            .toString(),
+        quiz: quiz,
+        answers: {},
+        status: QuizAttemptStatus.inProgress,
+        startedAt: DateTime.now(),
+      );
+
+      await const QuizRepository()
+          .saveCurrentAttempt(
+        attempt.toJson(),
+      );
+
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,

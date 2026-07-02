@@ -205,7 +205,7 @@ class QuizAttemptController
     _dirtyTimer?.cancel();
     _dirtyTimer = null;
 
-    await _repository.saveAttempt(
+    await _repository.saveCurrentAttempt(
       attempt.toJson(),
     );
   }

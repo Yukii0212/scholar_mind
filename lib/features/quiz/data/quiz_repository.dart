@@ -69,26 +69,26 @@ class QuizRepository {
     return buffer.toString().trim();
   }
 
-  Future<void> saveAttempt(
+  Future<void> saveCurrentAttempt(
       Map<String, dynamic> json,
       ) {
-    return localCache.save(json);
+    return localCache.saveAttempt(json);
   }
 
   Future<Map<String, dynamic>?>
-  restoreAttempt() async {
-    return await localCache.load();
+  restoreCurrentAttempt() async {
+    return await localCache.loadCurrentAttempt();
   }
 
-  Future<void> clearAttempt() {
-    return localCache.clear();
+  Future<void> clearCurrentAttempt() {
+    return localCache.clearCurrentAttempt();
   }
 
   Future<QuizAttempt?> restoreQuizAttempt({
     required QuizResponse quiz,
   }) async {
     final json =
-    await restoreAttempt();
+    await restoreCurrentAttempt();
 
     if (json == null) {
       return null;
@@ -99,4 +99,16 @@ class QuizRepository {
       json: json,
     );
   }
+
+  Future<List<QuizAttempt>> getSavedAttempts() async {
+    return [];
+  }
+
+  Future<void> saveCompletedAttempt(
+      QuizAttempt attempt,
+      ) async {}
+
+  Future<void> deleteAttempt(
+      String attemptId,
+      ) async {}
 }

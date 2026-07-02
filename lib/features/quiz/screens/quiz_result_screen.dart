@@ -96,7 +96,7 @@ class _QuizResultScreenState
 
     for (var i = 0; i < total; i++) {
       final answer =
-      widget.answers[i];
+      answers[i];
 
       if (answer == null) {
         continue;
@@ -134,6 +134,19 @@ class _QuizResultScreenState
         )
             .length;
 
+    final pendingReview =
+    answers.values.any(
+          (answer) => answer.aiReviewPending,
+    );
+
+    var essayScore = 0;
+    var essayMax = 0;
+
+    for (final answer in answers.values) {
+      essayScore += answer.aiScore ?? 0;
+      essayMax += answer.aiMaxScore ?? 0;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title:
@@ -144,84 +157,55 @@ class _QuizResultScreenState
         const EdgeInsets.all(20),
         children: [
 
-          Card(
-            child: Padding(
-              padding:
-              const EdgeInsets.all(24),
-              child: objectiveTotal == 0
-                  ? Column(
-                children: [
+          if (objectiveTotal > 0)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
 
-                  const Icon(
-                    Icons.auto_awesome,
-                    size: 48,
-                  ),
+                    Text(
+                      '$percentage%',
+                      style: Theme.of(context)
+                          .textTheme
+                          .displayMedium,
+                    ),
 
-                  const SizedBox(
-                    height: 16,
-                  ),
+                    const SizedBox(height: 8),
 
-                  Text(
-                    'AI Review in Progress',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall,
-                  ),
-
-                  const SizedBox(
-                    height: 8,
-                  ),
-
-                  const Text(
-                    'This quiz contains only open-ended questions.\n\n'
-                        'ScholarMind is reviewing your answers.\n'
-                        'This usually takes less than 30 seconds.',
-                    textAlign:
-                    TextAlign.center,
-                  ),
-                ],
-              )
-                  : Column(
-                children: [
-
-                  Text(
-                    '$percentage%',
-                    style: Theme.of(context)
-                        .textTheme
-                        .displayMedium,
-                  ),
-
-                  const SizedBox(
-                    height: 8,
-                  ),
-
-                  Text(
-                    '$correct / $objectiveTotal Correct',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
-                  ),
-                ],
+                    Text(
+                      '$correct / $objectiveTotal Correct',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+
+          if (objectiveTotal > 0)
+            const SizedBox(height: 20),
 
           const SizedBox(height: 20),
 
           if (openEndedCount > 0)
             Card(
               child: ListTile(
-                leading: const Icon(
-                  Icons.auto_awesome,
+                leading: Icon(
+                  pendingReview
+                      ? Icons.hourglass_top
+                      : Icons.auto_awesome,
                 ),
-                title: const Text(
-                  'AI Review',
+                title: Text(
+                  pendingReview
+                      ? 'AI Review in Progress'
+                      : 'Open-ended Review Complete',
                 ),
-                subtitle: const Text(
-                  'Objective questions are graded immediately.\nOpen-ended questions are reviewed by AI separately.',
-                ),
-                trailing: Text(
-                  '$openEndedCount',
+                subtitle: Text(
+                  pendingReview
+                      ? 'Score: ? / $essayMax\n\nScholarMind is reviewing your answers.'
+                      : 'Score: $essayScore / $essayMax',
                 ),
               ),
             ),
@@ -323,16 +307,17 @@ class _QuizResultScreenState
                             .openEnded)
 
                       answer?.aiReviewPending ?? true
-                          ? const ListTile(
-                        leading: Icon(
+                          ? ListTile(
+                        leading: const Icon(
                           Icons.hourglass_top,
                         ),
-                        title: Text(
-                          'Pending AI Review',
+                        title: const Text(
+                          'AI Review in Progress',
                         ),
                         subtitle: Text(
-                          'ScholarMind is reviewing your open-ended response.\n\n'
-                              'This usually takes less than 30 seconds.',
+                          essayMax == 0
+                              ? 'Preparing AI review...\n\nYour score will appear automatically.'
+                              : 'Score: ? / $essayMax\n\nScholarMind is reviewing your answer.',
                         ),
                       )
                           : Column(
@@ -346,6 +331,20 @@ class _QuizResultScreenState
                             ),
                             subtitle: Text(
                               '${answer?.aiScore ?? 0} / ${answer?.aiMaxScore ?? 0}',
+                            ),
+                          ),
+
+                          ListTile(
+                            leading: const Icon(
+                              Icons.person_outline,
+                            ),
+                            title: const Text(
+                              'Your Answer',
+                            ),
+                            subtitle: SelectableText(
+                              answer?.openEndedAnswer.isNotEmpty == true
+                                  ? answer!.openEndedAnswer
+                                  : 'No answer provided.',
                             ),
                           ),
 

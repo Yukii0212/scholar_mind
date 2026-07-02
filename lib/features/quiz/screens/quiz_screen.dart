@@ -68,9 +68,9 @@ class _QuizScreenState
   QuestionTypeWeight
   _questionTypeWeight =
   const QuestionTypeWeight(
-    multipleChoice: 50,
-    trueFalse: 30,
-    openEnded: 20,
+    multipleChoice: 100,
+    trueFalse: 0,
+    openEnded: 0,
   );
 
   @override
@@ -208,7 +208,44 @@ class _QuizScreenState
       QuestionTypeWeight current,
       ) {
     if (!current.isCustom) {
-      return current;
+      switch (types.length) {
+        case 1:
+          return QuestionTypeWeight(
+            multipleChoice: types.contains(QuestionType.multipleChoice) ? 100 : 0,
+            trueFalse: types.contains(QuestionType.trueFalse) ? 100 : 0,
+            openEnded: types.contains(QuestionType.openEnded) ? 100 : 0,
+          );
+
+        case 2:
+          var mcq = 0;
+          var tf = 0;
+          var oe = 0;
+
+          if (types.contains(QuestionType.multipleChoice)) {
+            mcq = 50;
+          }
+
+          if (types.contains(QuestionType.trueFalse)) {
+            tf = 50;
+          }
+
+          if (types.contains(QuestionType.openEnded)) {
+            oe = 50;
+          }
+
+          return QuestionTypeWeight(
+            multipleChoice: mcq,
+            trueFalse: tf,
+            openEnded: oe,
+          );
+
+        default:
+          return const QuestionTypeWeight(
+            multipleChoice: 34,
+            trueFalse: 33,
+            openEnded: 33,
+          );
+      }
     }
 
     final enabled = types.length;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scholar_mind/features/quiz/screens/quiz_viewer_screen.dart';
 
 import '../providers/quiz_provider.dart';
 import '../domain/quiz_sort_order.dart';
@@ -82,8 +83,22 @@ class QuizLibraryScreen extends ConsumerWidget {
                       ' Questions Answered',
                 ),
                 trailing: FilledButton(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                    ),
+                  ),
                   onPressed: () {
-                    // TODO
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => QuizViewerScreen(
+                          attempt: currentQuiz.attempt,
+                        ),
+                      ),
+                    );
                   },
                   child: const Text(
                     'Continue',

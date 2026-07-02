@@ -10,11 +10,12 @@ StateNotifierProvider<
     QuizAttemptController,
     QuizAttempt?>(
       (ref) {
-    return QuizAttemptController(
-      ref.read(
-        quizRepositoryProvider,
-      ),
-      const OpenAIQuizService(),
-    );
+        return QuizAttemptController(
+          ref.read(
+            quizRepositoryProvider,
+          ),
+          const OpenAIQuizService(),
+          ref,
+        );
   },
 );

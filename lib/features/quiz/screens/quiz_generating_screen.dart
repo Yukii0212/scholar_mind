@@ -7,6 +7,7 @@ import '../domain/quiz_library_item.dart';
 import '../domain/quiz_generation_request.dart';
 import '../domain/quiz_response.dart';
 import '../providers/quiz_provider.dart';
+import '../providers/quiz_attempt_provider.dart';
 import '../services/openai_quiz_service.dart';
 import 'quiz_viewer_screen.dart';
 import '../services/quiz_prompt_builder.dart';
@@ -111,12 +112,20 @@ class _QuizGeneratingScreenState
 
       if (!mounted) return;
 
+      ref
+          .read(
+        quizAttemptProvider.notifier,
+      )
+          .restoreAttempt(
+        attempt: attempt,
+      );
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) =>
               QuizViewerScreen(
-                quiz: quiz,
+                attempt: attempt,
               ),
         ),
       );

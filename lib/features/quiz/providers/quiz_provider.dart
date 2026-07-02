@@ -14,6 +14,13 @@ StateProvider<List<QuizLibraryItem>>(
       (_) => [],
 );
 
+final quizLibraryControllerProvider =
+Provider<QuizLibraryController>(
+      (ref) {
+    return QuizLibraryController(ref);
+  },
+);
+
 final currentQuizProvider =
 Provider<QuizLibraryItem?>((ref) {
 
@@ -32,3 +39,46 @@ Provider<QuizLibraryItem?>((ref) {
     return null;
   }
 });
+
+class QuizLibraryController {
+  QuizLibraryController(this.ref);
+
+  final Ref ref;
+
+  void updateAttempt(
+      QuizAttempt updatedAttempt,
+      ) {
+    final library = [
+      ...ref.read(
+        quizLibraryProvider,
+      ),
+    ];
+
+    final index =
+    library.indexWhere(
+          (item) =>
+      item.attempt.id ==
+          updatedAttempt.id,
+    );
+
+    if (index == -1) {
+      return;
+    }
+
+    library[index] =
+        library[index].copyWith(
+          attempt: updatedAttempt,
+          lastModifiedAt:
+          DateTime.now(),
+          lastOpenedAt:
+          DateTime.now(),
+        );
+
+    ref
+        .read(
+      quizLibraryProvider
+          .notifier,
+    )
+        .state = library;
+  }
+}

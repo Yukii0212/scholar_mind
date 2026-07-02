@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/quiz_folder.dart';
 import '../providers/quiz_attempt_provider.dart';
 
 import '../domain/question_type.dart';
@@ -14,10 +13,10 @@ class QuizViewerScreen
     extends ConsumerStatefulWidget {
   const QuizViewerScreen({
     super.key,
-    required this.quiz,
+    required this.attempt,
   });
 
-  final QuizResponse quiz;
+  final QuizAttempt attempt;
 
   @override
   ConsumerState<QuizViewerScreen>
@@ -28,18 +27,25 @@ class QuizViewerScreen
 class _QuizViewerScreenState
     extends ConsumerState<QuizViewerScreen> {
 
-  bool _attemptInitialized = false;
+  QuizResponse get quiz =>
+      widget.attempt.quiz;
 
-// TODO:
-// Remove after migration to
-// QuizAttemptController.
-  final Map<int, QuizAnswer> _answers = {};
+  late final Map<int, QuizAnswer> _answers;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _answers = Map<int, QuizAnswer>.from(
+      widget.attempt.answers,
+    );
+  }
 
   int get _answeredQuestions {
     var answered = 0;
 
     for (var i = 0;
-    i < widget.quiz.questions.length;
+    i < quiz.questions.length;
     i++) {
       final answer = _answers[i];
 
@@ -48,7 +54,7 @@ class _QuizViewerScreenState
       }
 
       final question =
-      widget.quiz.questions[i];
+      quiz.questions[i];
 
       switch (question.type) {
         case QuestionType.multipleChoice:
@@ -73,47 +79,6 @@ class _QuizViewerScreenState
 
   @override
   Widget build(BuildContext context) {
-    if (!_attemptInitialized) {
-      _attemptInitialized = true;
-
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) {
-        ref
-            .read(
-          quizAttemptProvider.notifier,
-        )
-            .startAttempt(
-          QuizAttempt(
-            id: DateTime.now()
-                .millisecondsSinceEpoch
-                .toString(),
-
-            quiz: widget.quiz,
-
-            name: 'Temporary Attempt',
-
-            folderId: QuizFolder.rootId,
-
-            createdAt: DateTime.now(),
-
-            updatedAt: DateTime.now(),
-
-            answers:
-            Map<int, QuizAnswer>.from(
-              _answers,
-            ),
-
-            status:
-            QuizAttemptStatus
-                .inProgress,
-
-            startedAt:
-            DateTime.now(),
-          ),
-        );
-      });
-    }
-
     return Scaffold(
       appBar: AppBar(
         title:
@@ -127,11 +92,11 @@ class _QuizViewerScreenState
         padding:
         const EdgeInsets.all(20),
         itemCount:
-        widget.quiz.questions.length,
+        quiz.questions.length,
         itemBuilder:
             (context, index) {
           final question =
-          widget.quiz.questions[index];
+          quiz.questions[index];
 
           return Card(
             margin:
@@ -427,7 +392,7 @@ class _QuizViewerScreenState
           content: Text(
             'You have answered '
                 '$_answeredQuestions of '
-                '${widget.quiz.questions.length} questions.\n\n'
+                '${quiz.questions.length} questions.\n\n'
                 'You can still review your answers after submitting.',
           ),
           actions: [
@@ -476,7 +441,7 @@ class _QuizViewerScreenState
       context,
       MaterialPageRoute(
         builder: (_) => QuizResultScreen(
-          quiz: widget.quiz,
+          quiz: quiz,
           answers: _answers,
         ),
       ),

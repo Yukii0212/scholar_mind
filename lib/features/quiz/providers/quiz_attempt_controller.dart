@@ -7,6 +7,7 @@ import '../domain/quiz_answer.dart';
 import '../domain/quiz_attempt.dart';
 import '../domain/question_type.dart';
 import '../services/openai_quiz_service.dart';
+import 'quiz_provider.dart';
 
 class QuizAttemptController
     extends StateNotifier<QuizAttempt?> {
@@ -14,11 +15,13 @@ class QuizAttemptController
   QuizAttemptController(
       this._repository,
       this._openAI,
+      this._ref,
       ) : super(null);
 
   final QuizRepository _repository;
 
   final OpenAIQuizService _openAI;
+  final Ref _ref;
 
   Timer? _idleTimer;
 
@@ -48,15 +51,25 @@ class QuizAttemptController
       return;
     }
 
-    final updated =
+    final updatedAnswers =
     Map<int, QuizAnswer>.from(
       state!.answers,
     );
 
-    updated[questionIndex] = answer;
+    updatedAnswers[questionIndex] =
+        answer;
 
     state = state!.copyWith(
-      answers: updated,
+      answers: updatedAnswers,
+      updatedAt: DateTime.now(),
+    );
+
+    _ref
+        .read(
+      quizLibraryControllerProvider,
+    )
+        .updateAttempt(
+      state!,
     );
 
     _markDirty();

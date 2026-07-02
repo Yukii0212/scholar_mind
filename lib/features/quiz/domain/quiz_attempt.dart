@@ -69,5 +69,59 @@ class QuizAttempt {
       ),
     };
   }
+  factory QuizAttempt.fromJson({
+    required QuizResponse quiz,
+    required Map<String, dynamic> json,
+  }) {
+    final rawAnswers =
+    (json['answers']
+    as Map)
+        .cast<String, dynamic>();
 
+    return QuizAttempt(
+      id: json['id'] as String,
+
+      quiz: quiz,
+
+      answers: rawAnswers.map(
+            (key, value) => MapEntry(
+          int.parse(key),
+          QuizAnswer.fromJson(
+            Map<String, dynamic>.from(
+              value,
+            ),
+          ),
+        ),
+      ),
+
+      status:
+      QuizAttemptStatus.values
+          .firstWhere(
+            (element) =>
+        element.name ==
+            json['status'],
+      ),
+
+      startedAt:
+      DateTime.parse(
+        json['startedAt'],
+      ),
+
+      submittedAt:
+      json['submittedAt'] ==
+          null
+          ? null
+          : DateTime.parse(
+        json['submittedAt'],
+      ),
+
+      completedAt:
+      json['completedAt'] ==
+          null
+          ? null
+          : DateTime.parse(
+        json['completedAt'],
+      ),
+    );
+  }
 }

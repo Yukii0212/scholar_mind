@@ -90,4 +90,46 @@ class QuizAnswer {
       aiFeedback,
     };
   }
+
+  factory QuizAnswer.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return QuizAnswer(
+      selectedOptionIndex:
+      json['selectedOptionIndex']
+      as int?,
+
+      openEndedAnswer:
+      json['openEndedAnswer']
+      as String? ??
+          '',
+
+      markedForReview:
+      json['markedForReview']
+      as bool? ??
+          false,
+
+      guessed:
+      json['guessed']
+      as bool? ??
+          false,
+
+      aiReviewPending:
+      json['aiReviewPending']
+      as bool? ??
+          false,
+
+      aiScore:
+      json['aiScore']
+      as int?,
+
+      aiMaxScore:
+      json['aiMaxScore']
+      as int?,
+
+      aiFeedback:
+      json['aiFeedback']
+      as String?,
+    );
+  }
 }

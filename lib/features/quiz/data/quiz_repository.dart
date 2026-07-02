@@ -1,5 +1,6 @@
 import '../services/study_material_preprocessor.dart';
-
+import '../domain/quiz_attempt.dart';
+import '../domain/quiz_response.dart';
 import '../services/openai_quiz_service.dart';
 import '../services/quiz_local_cache_service.dart';
 
@@ -75,11 +76,27 @@ class QuizRepository {
   }
 
   Future<Map<String, dynamic>?>
-  restoreAttempt() {
-    return localCache.load();
+  restoreAttempt() async {
+    return await localCache.load();
   }
 
   Future<void> clearAttempt() {
     return localCache.clear();
+  }
+
+  Future<QuizAttempt?> restoreQuizAttempt({
+    required QuizResponse quiz,
+  }) async {
+    final json =
+    await restoreAttempt();
+
+    if (json == null) {
+      return null;
+    }
+
+    return QuizAttempt.fromJson(
+      quiz: quiz,
+      json: json,
+    );
   }
 }

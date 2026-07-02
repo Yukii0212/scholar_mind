@@ -26,13 +26,17 @@ class QuizAttemptController
 
   bool _dirty = false;
 
-  void startAttempt(
+  Future<void> startAttempt(
       QuizAttempt attempt,
-      ) {
-    if (state != null) {
-      return;
-    }
+      ) async {
+    state = attempt;
 
+    await _saveNow();
+  }
+
+  Future<void> restoreAttempt({
+    required QuizAttempt attempt,
+  }) async {
     state = attempt;
   }
 
@@ -69,6 +73,8 @@ class QuizAttemptController
       submittedAt:
       DateTime.now(),
     );
+
+    _dirty = true;
 
     _saveNow();
 
@@ -189,6 +195,8 @@ class QuizAttemptController
       return;
     }
 
+    final attempt = state!;
+
     _dirty = false;
 
     _idleTimer?.cancel();
@@ -198,7 +206,7 @@ class QuizAttemptController
     _dirtyTimer = null;
 
     await _repository.saveAttempt(
-      state!.toJson(),
+      attempt.toJson(),
     );
   }
 

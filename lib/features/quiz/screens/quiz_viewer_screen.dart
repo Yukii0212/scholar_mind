@@ -27,6 +27,8 @@ class QuizViewerScreen
 class _QuizViewerScreenState
     extends ConsumerState<QuizViewerScreen> {
 
+  bool _attemptInitialized = false;
+
 // TODO:
 // Remove after migration to
 // QuizAttemptController.
@@ -70,6 +72,35 @@ class _QuizViewerScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!_attemptInitialized) {
+      _attemptInitialized = true;
+
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) {
+        ref
+            .read(
+          quizAttemptProvider.notifier,
+        )
+            .startAttempt(
+          QuizAttempt(
+            id: DateTime.now()
+                .millisecondsSinceEpoch
+                .toString(),
+            quiz: widget.quiz,
+            answers:
+            Map<int, QuizAnswer>.from(
+              _answers,
+            ),
+            status:
+            QuizAttemptStatus
+                .inProgress,
+            startedAt:
+            DateTime.now(),
+          ),
+        );
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title:
@@ -146,27 +177,25 @@ class _QuizViewerScreenState
                               optionIndex],
                             ),
                             onChanged: (value) {
-                              setState(() {
-                                final updated =
-                                (_answers[index] ??
-                                    const QuizAnswer())
-                                    .copyWith(
-                                  selectedOptionIndex: value!,
-                                );
+                              final updated =
+                              (_answers[index] ??
+                                  const QuizAnswer())
+                                  .copyWith(
+                                selectedOptionIndex: value!,
+                              );
 
-                                _answers[index] = updated;
+                              _answers[index] = updated;
 
-                                ref
-                                    .read(
-                                  quizAttemptProvider.notifier,
-                                )
-                                    .updateAnswer(
-                                  questionIndex: index,
-                                  answer: updated,
-                                );
+                              ref
+                                  .read(
+                                quizAttemptProvider.notifier,
+                              )
+                                  .updateAnswer(
+                                questionIndex: index,
+                                answer: updated,
+                              );
 
-                                setState(() {});
-                              });
+                              setState(() {});
                             },
                           ),
                     ),
@@ -184,14 +213,25 @@ class _QuizViewerScreenState
                           'True',
                         ),
                         onChanged: (value) {
-                          setState(() {
-                            _answers[index] =
-                                (_answers[index] ??
-                                    const QuizAnswer())
-                                    .copyWith(
-                                  selectedOptionIndex: value!,
-                                );
-                          });
+                          final updated =
+                          (_answers[index] ??
+                              const QuizAnswer())
+                              .copyWith(
+                            selectedOptionIndex: value!,
+                          );
+
+                          _answers[index] = updated;
+
+                          ref
+                              .read(
+                            quizAttemptProvider.notifier,
+                          )
+                              .updateAnswer(
+                            questionIndex: index,
+                            answer: updated,
+                          );
+
+                          setState(() {});
                         },
                       ),
                       RadioListTile<int>(
@@ -203,14 +243,25 @@ class _QuizViewerScreenState
                           'False',
                         ),
                         onChanged: (value) {
-                          setState(() {
-                            _answers[index] =
-                                (_answers[index] ??
-                                    const QuizAnswer())
-                                    .copyWith(
-                                  selectedOptionIndex: value!,
-                                );
-                          });
+                          final updated =
+                          (_answers[index] ??
+                              const QuizAnswer())
+                              .copyWith(
+                            selectedOptionIndex: value!,
+                          );
+
+                          _answers[index] = updated;
+
+                          ref
+                              .read(
+                            quizAttemptProvider.notifier,
+                          )
+                              .updateAnswer(
+                            questionIndex: index,
+                            answer: updated,
+                          );
+
+                          setState(() {});
                         },
                       ),
                     ],
@@ -266,27 +317,25 @@ class _QuizViewerScreenState
                         ?.markedForReview ??
                         false,
                     onChanged: (value) {
-                      setState(() {
-                        final updated =
-                        (_answers[index] ??
-                            const QuizAnswer())
-                            .copyWith(
-                          markedForReview: value!,
-                        );
+                      final updated =
+                      (_answers[index] ??
+                          const QuizAnswer())
+                          .copyWith(
+                        markedForReview: value!,
+                      );
 
-                        _answers[index] = updated;
+                      _answers[index] = updated;
 
-                        ref
-                            .read(
-                          quizAttemptProvider.notifier,
-                        )
-                            .updateAnswer(
-                          questionIndex: index,
-                          answer: updated,
-                        );
+                      ref
+                          .read(
+                        quizAttemptProvider.notifier,
+                      )
+                          .updateAnswer(
+                        questionIndex: index,
+                        answer: updated,
+                      );
 
-                        setState(() {});
-                      });
+                      setState(() {});
                     },
                     title: const Text(
                       'Review this question later',
@@ -301,27 +350,25 @@ class _QuizViewerScreenState
                         ?.guessed ??
                         false,
                     onChanged: (value) {
-                      setState(() {
-                        final updated =
-                        (_answers[index] ??
-                            const QuizAnswer())
-                            .copyWith(
-                          guessed: value!,
-                        );
+                      final updated =
+                      (_answers[index] ??
+                          const QuizAnswer())
+                          .copyWith(
+                        guessed: value!,
+                      );
 
-                        _answers[index] = updated;
+                      _answers[index] = updated;
 
-                        ref
-                            .read(
-                          quizAttemptProvider.notifier,
-                        )
-                            .updateAnswer(
-                          questionIndex: index,
-                          answer: updated,
-                        );
+                      ref
+                          .read(
+                        quizAttemptProvider.notifier,
+                      )
+                          .updateAnswer(
+                        questionIndex: index,
+                        answer: updated,
+                      );
 
-                        setState(() {});
-                      });
+                      setState(() {});
                     },
                     title: const Text(
                       'I was not confident in this answer',
@@ -405,25 +452,6 @@ class _QuizViewerScreenState
     if (!mounted) {
       return;
     }
-
-    ref
-        .read(
-      quizAttemptProvider.notifier,
-    )
-        .startAttempt(
-      QuizAttempt(
-        id: DateTime.now()
-            .millisecondsSinceEpoch
-            .toString(),
-        quiz: widget.quiz,
-        answers: Map<int, QuizAnswer>.from(
-          _answers,
-        ),
-        status:
-        QuizAttemptStatus.inProgress,
-        startedAt: DateTime.now(),
-      ),
-    );
 
     await ref
         .read(

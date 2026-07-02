@@ -69,6 +69,15 @@ class _QuizResultScreenState
     final total =
         widget.quiz.questions.length;
 
+    final objectiveTotal =
+        widget.quiz.questions
+            .where(
+              (question) =>
+          question.type !=
+              QuestionType.openEnded,
+        )
+            .length;
+
     var correct = 0;
 
     for (var i = 0; i < total; i++) {
@@ -95,9 +104,11 @@ class _QuizResultScreenState
     }
 
     final percentage =
-    total == 0
+    objectiveTotal == 0
         ? 0
-        : ((correct / total) * 100)
+        : ((correct /
+        objectiveTotal) *
+        100)
         .round();
 
     final openEndedCount =
@@ -140,7 +151,7 @@ class _QuizResultScreenState
                   ),
 
                   Text(
-                    '$correct Objective Questions Correct',
+                    '$correct / $objectiveTotal Correct',
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium,
@@ -162,7 +173,7 @@ class _QuizResultScreenState
                   'AI Review',
                 ),
                 subtitle: const Text(
-                  'Open-ended responses are evaluated separately after submission.',
+                  'Objective questions are graded immediately.\nOpen-ended questions are reviewed by AI separately.',
                 ),
                 trailing: Text(
                   '$openEndedCount',

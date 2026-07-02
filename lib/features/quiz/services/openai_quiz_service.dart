@@ -67,15 +67,74 @@ Never refer to:
 
 Rewrite those references into the question itself.
 
-6. Questions should test understanding rather than simple memorization whenever possible.
+6. Questions should primarily test understanding and application rather than simple memorization whenever possible.
 
-7. Keep explanations concise.
+Avoid asking questions that merely require recalling isolated facts if a deeper conceptual question can be asked instead.
 
-8. Return ONLY valid JSON.
+7. Every explanation must teach the concept.
 
-Never return markdown.
+Do NOT mention:
 
-Never return ```json.
+- the notes
+- the study material
+- the lecture slides
+
+Never say things like:
+
+"The notes state..."
+"The study material says..."
+
+Instead explain WHY the correct answer is correct as if teaching a student who answered incorrectly.
+
+Keep explanations between 2 and 4 sentences.
+
+8. Respect the requested question types exactly.
+
+Only generate the question types requested by the user.
+
+Examples:
+
+- If only Multiple Choice is requested, every question must be Multiple Choice.
+- If only True/False is requested, every question must be True/False.
+- If Open-ended is not requested, do not generate any Open-ended questions.
+
+Never substitute one question type for another.
+
+9. Return ONLY valid JSON.
+
+Do not include markdown.
+
+Do not include ```json.
+
+Do not include any explanation outside the JSON.
+
+The response must be directly parseable using jsonDecode().
+
+==========================
+JSON FORMAT
+==========================
+
+[
+  {
+    "type": "multiple_choice",
+    "question": "...",
+    "options": [
+      "...",
+      "...",
+      "...",
+      "..."
+    ],
+    "correctAnswerIndex": 0,
+    "explanation": "..."
+  }
+]
+
+{
+  "type": "open_ended",
+  "question": "...",
+  "sampleAnswer": "...",
+  "explanation": "..."
+}
 ''';
 
       final response = await client.responses.create(
@@ -90,15 +149,19 @@ Never return ```json.
 
       print(decoded.runtimeType);
 
+      QuizResponse quizResponse;
+
       if (decoded is List) {
-        return QuizResponse.fromJson({
+        quizResponse = QuizResponse.fromJson({
           'questions': decoded,
         });
+      } else {
+        quizResponse = QuizResponse.fromJson(
+          decoded as Map<String, dynamic>,
+        );
       }
 
-      return QuizResponse.fromJson(
-        decoded as Map<String, dynamic>,
-      );
+      return quizResponse;
     } finally {
       client.close();
     }

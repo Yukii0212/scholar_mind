@@ -68,17 +68,17 @@ class QuizAttemptController
     }
 
     state = state!.copyWith(
-      status:
-      QuizAttemptStatus.submitted,
-      submittedAt:
-      DateTime.now(),
+      status: QuizAttemptStatus.submitted,
+      submittedAt: DateTime.now(),
     );
 
     _dirty = true;
 
-    _saveNow();
+    await _saveNow();
 
-    await _evaluateOpenEnded();
+    unawaited(
+      _evaluateOpenEnded(),
+    );
   }
 
   Future<void> _evaluateOpenEnded() async {

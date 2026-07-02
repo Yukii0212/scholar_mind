@@ -116,6 +116,155 @@ class QuizConfigurationCard extends StatelessWidget {
 
             const SizedBox(height: 20),
 
+            Row(
+              children: [
+
+                Expanded(
+                  child: Text(
+                    'Assessment Method',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium,
+                  ),
+                ),
+
+                IconButton(
+                  icon: const Icon(
+                    Icons.info_outline,
+                    size: 20,
+                  ),
+                  tooltip: 'Assessment Method',
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (dialogContext) =>
+                          AlertDialog(
+                            title: const Text(
+                              'Assessment Method',
+                            ),
+                            content: const SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                                mainAxisSize:
+                                MainAxisSize.min,
+                                children: [
+
+                                  Text(
+                                    'ScholarMind supports two methods for generating quizzes.',
+                                  ),
+
+                                  SizedBox(height: 20),
+
+                                  Text(
+                                    '📘 Informal Practice',
+                                    style: TextStyle(
+                                      fontWeight:
+                                      FontWeight.bold,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 8),
+
+                                  Text(
+                                    'Recommended for everyday revision.\n\n'
+                                        'ScholarMind estimates the overall difficulty of the quiz using Easy, Medium, Hard or Mixed.',
+                                  ),
+
+                                  SizedBox(height: 20),
+
+                                  Text(
+                                    '🎓 Formal Assessment',
+                                    style: TextStyle(
+                                      fontWeight:
+                                      FontWeight.bold,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 8),
+
+                                  Text(
+                                    'Uses Bloom\'s Taxonomy, a framework commonly used by universities when designing assessments.\n\n'
+                                        'Choose a minimum and maximum cognitive level and ScholarMind will generate questions only within that range.',
+                                  ),
+
+                                  SizedBox(height: 20),
+
+                                  Text(
+                                    'Bloom\'s Cognitive Levels',
+                                    style: TextStyle(
+                                      fontWeight:
+                                      FontWeight.bold,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 8),
+
+                                  Text('C1 • Remember'),
+                                  Text('Recall facts and definitions.'),
+
+                                  SizedBox(height: 12),
+
+                                  Text('C2 • Understand'),
+                                  Text('Explain concepts and ideas.'),
+
+                                  SizedBox(height: 12),
+
+                                  Text('C3 • Apply'),
+                                  Text('Use knowledge to solve problems.'),
+
+                                  SizedBox(height: 12),
+
+                                  Text('C4 • Analyze'),
+                                  Text('Compare, examine and investigate.'),
+
+                                  SizedBox(height: 12),
+
+                                  Text('C5 • Evaluate'),
+                                  Text('Justify decisions and make judgments.'),
+
+                                  SizedBox(height: 12),
+
+                                  Text('C6 • Create'),
+                                  Text('Design or produce original solutions.'),
+
+                                  SizedBox(height: 20),
+
+                                  Text(
+                                    'Example',
+                                    style: TextStyle(
+                                      fontWeight:
+                                      FontWeight.bold,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 8),
+
+                                  Text(
+                                    'Minimum: C2\n'
+                                        'Maximum: C4\n\n'
+                                        'Questions may assess Understanding, Application and Analysis only.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(
+                                        dialogContext),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                    );
+                  },
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
             SegmentedButton<AssessmentMode>(
               segments: const [
                 ButtonSegment(
@@ -170,107 +319,62 @@ class QuizConfigurationCard extends StatelessWidget {
                 CrossAxisAlignment.start,
                 children: [
 
-                  Card(
-                    child: Padding(
-                      padding:
-                      const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                        children: const [
-
-                          Text(
-                            'Bloom\'s Cognitive Levels',
-                            style: TextStyle(
-                              fontWeight:
-                              FontWeight.bold,
+                  DropdownButtonFormField<
+                      BloomsLevel>(
+                    value: minimumBloomsLevel,
+                    decoration:
+                    const InputDecoration(
+                      labelText:
+                      'Minimum Cognitive Level',
+                    ),
+                    items: BloomsLevel.values
+                        .map(
+                          (level) =>
+                          DropdownMenuItem(
+                            value: level,
+                            child: Text(
+                              level.toString(),
                             ),
                           ),
-
-                          SizedBox(height: 12),
-
-                          Text('C1 • Remember'),
-                          Text('C2 • Understand'),
-                          Text('C3 • Apply'),
-                          Text('C4 • Analyze'),
-                          Text('C5 • Evaluate'),
-                          Text('C6 • Create'),
-                        ],
-                      ),
-                    ),
+                    )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        onMinimumBloomsLevelChanged(
+                          value,
+                        );
+                      }
+                    },
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                  Row(
-                    children: [
-
-                      Expanded(
-                        child:
-                        DropdownButtonFormField<
-                            BloomsLevel>(
-                          value:
-                          minimumBloomsLevel,
-                          decoration:
-                          const InputDecoration(
-                            labelText:
-                            'Minimum',
+                  DropdownButtonFormField<
+                      BloomsLevel>(
+                    value: maximumBloomsLevel,
+                    decoration:
+                    const InputDecoration(
+                      labelText:
+                      'Maximum Cognitive Level',
+                    ),
+                    items: BloomsLevel.values
+                        .map(
+                          (level) =>
+                          DropdownMenuItem(
+                            value: level,
+                            child: Text(
+                              level.toString(),
+                            ),
                           ),
-                          items:
-                          BloomsLevel.values
-                              .map(
-                                (level) =>
-                                DropdownMenuItem(
-                                  value: level,
-                                  child: Text(
-                                    level.toString(),
-                                  ),
-                                ),
-                          )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              onMinimumBloomsLevelChanged(
-                                  value);
-                            }
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      Expanded(
-                        child:
-                        DropdownButtonFormField<
-                            BloomsLevel>(
-                          value:
-                          maximumBloomsLevel,
-                          decoration:
-                          const InputDecoration(
-                            labelText:
-                            'Maximum',
-                          ),
-                          items:
-                          BloomsLevel.values
-                              .map(
-                                (level) =>
-                                DropdownMenuItem(
-                                  value: level,
-                                  child: Text(
-                                    level.toString(),
-                                  ),
-                                ),
-                          )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              onMaximumBloomsLevelChanged(
-                                  value);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
+                    )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        onMaximumBloomsLevelChanged(
+                          value,
+                        );
+                      }
+                    },
                   ),
                 ],
               ),

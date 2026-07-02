@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/quiz_library_provider.dart';
+import '../providers/quiz_provider.dart';
 import '../domain/quiz_sort_order.dart';
 import 'package:scholar_mind/features/quiz/screens/generate_quiz_screen.dart';
 

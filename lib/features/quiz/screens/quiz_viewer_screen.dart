@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/quiz_folder.dart';
 import '../providers/quiz_attempt_provider.dart';
 
 import '../domain/question_type.dart';
@@ -86,14 +87,26 @@ class _QuizViewerScreenState
             id: DateTime.now()
                 .millisecondsSinceEpoch
                 .toString(),
+
             quiz: widget.quiz,
+
+            name: 'Temporary Attempt',
+
+            folderId: QuizFolder.rootId,
+
+            createdAt: DateTime.now(),
+
+            updatedAt: DateTime.now(),
+
             answers:
             Map<int, QuizAnswer>.from(
               _answers,
             ),
+
             status:
             QuizAttemptStatus
                 .inProgress,
+
             startedAt:
             DateTime.now(),
           ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
-import '../domain/library_folder.dart';
-import '../domain/library_enums.dart';
+import '../domain/quiz_enums.dart';
 
 class LibraryHeader extends StatelessWidget {
   const LibraryHeader({
@@ -19,10 +18,10 @@ class LibraryHeader extends StatelessWidget {
     required this.onDeleteAll,
   });
 
-  final LibrarySection section;
-  final List<LibraryFolder> folderStack;
+  final QuizSection section;
+  final List<QuizSection> folderStack;
   final bool isBusy;
-  final ValueChanged<LibrarySection> onSectionChanged;
+  final ValueChanged<QuizSection> onSectionChanged;
   final ValueChanged<int> onBreadcrumbPressed;
   final VoidCallback onCreateFolder;
   final VoidCallback onCreateNote;
@@ -35,34 +34,34 @@ class LibraryHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Notes', style: Theme.of(context).textTheme.headlineMedium),
+        Text('My Quizzes', style: Theme.of(context).textTheme.headlineMedium),
         const Gap(4),
         Text(
-          'Organise study material into folders and categories.',
+          'Organise generated quizzes into folders.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const Gap(20),
-        SegmentedButton<LibrarySection>(
+        SegmentedButton<QuizSection>(
           segments: const [
             ButtonSegment(
-              value: LibrarySection.browse,
+              value: QuizSection.browse,
               icon: Icon(Icons.folder_outlined),
               label: Text('Library'),
             ),
             ButtonSegment(
-              value: LibrarySection.favorites,
+              value: QuizSection.favorites,
               icon: Icon(Icons.star_outline),
               label: Text('Favourites'),
             ),
             ButtonSegment(
-              value: LibrarySection.archived,
+              value: QuizSection.archived,
               icon: Icon(Icons.archive_outlined),
               label: Text('Archived'),
             ),
             ButtonSegment(
-              value: LibrarySection.trash,
+              value: QuizSection.trash,
               icon: Icon(Icons.delete_outline),
               label: Text('Trash'),
             ),
@@ -71,7 +70,7 @@ class LibraryHeader extends StatelessWidget {
           onSelectionChanged:
           isBusy ? null : (selection) => onSectionChanged(selection.first),
         ),
-        if (section == LibrarySection.browse) ...[
+        if (section == QuizSection.browse) ...[
           const Gap(18),
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -80,7 +79,7 @@ class LibraryHeader extends StatelessWidget {
               TextButton.icon(
                 onPressed: () => onBreadcrumbPressed(-1),
                 icon: const Icon(Icons.home_outlined, size: 18),
-                label: const Text('Notes'),
+                label: const Text('My Quizzes'),
               ),
               for (var index = 0; index < folderStack.length; index++) ...[
                 const Icon(Icons.chevron_right, size: 18),
@@ -101,21 +100,15 @@ class LibraryHeader extends StatelessWidget {
                 icon: const Icon(Icons.create_new_folder_outlined),
                 label: const Text('New folder'),
               ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onCreateNote,
-                icon: const Icon(Icons.note_add_outlined),
-                label: const Text('New note'),
-              ),
               FilledButton.icon(
                 onPressed: isBusy ? null : onUpload,
                 icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Upload files'),
+                label: const Text('Generate Quiz'),
               ),
             ],
           ),
         ],
-        if (section == LibrarySection.trash) ...[
+        if (section == QuizSection.trash) ...[
           const Gap(18),
           Wrap(
             spacing: 10,

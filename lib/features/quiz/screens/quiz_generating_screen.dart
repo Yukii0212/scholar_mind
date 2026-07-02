@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../data/quiz_repository.dart';
 import '../domain/quiz_attempt.dart';
+import '../domain/quiz_folder.dart';
 import '../domain/quiz_library_item.dart';
 import '../domain/quiz_generation_request.dart';
 import '../domain/quiz_response.dart';
-import '../providers/quiz_library_provider.dart';
+import '../providers/quiz_provider.dart';
 import '../services/openai_quiz_service.dart';
 import 'quiz_viewer_screen.dart';
 import '../services/quiz_prompt_builder.dart';
@@ -69,10 +70,22 @@ class _QuizGeneratingScreenState
         id: DateTime.now()
             .millisecondsSinceEpoch
             .toString(),
+
         quiz: quiz,
+
+        name: quizTitle,
+
+        folderId: QuizFolder.rootId,
+
+        createdAt: now,
+
+        updatedAt: now,
+
         answers: {},
+
         status: QuizAttemptStatus.inProgress,
-        startedAt: DateTime.now(),
+
+        startedAt: now,
       );
 
       await const QuizRepository()

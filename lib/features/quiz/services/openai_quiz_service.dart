@@ -37,6 +37,38 @@ INSTRUCTIONS
 ==========================
 
 $instructions
+==========================
+QUESTION STYLE
+==========================
+
+If past-year papers are provided:
+
+Treat them as the primary reference for:
+- wording
+- structure
+- question style
+- lecturer expectations
+- difficulty
+
+Use lecture notes primarily to determine WHAT concepts should be assessed.
+
+Never copy past-year questions verbatim.
+
+Generate NEW questions that imitate the lecturer's assessment style.
+
+==========================
+FORMATTING
+==========================
+
+Use blank lines generously.
+
+Avoid long paragraphs.
+
+If numerical data is provided, format it neatly.
+
+If a scenario is required, make it easy to read.
+
+Good formatting is part of the assessment quality.
 
 ==========================
 RULES
@@ -88,15 +120,11 @@ Instead explain WHY the correct answer is correct as if teaching a student who a
 
 Keep explanations between 2 and 4 sentences.
 
-8. Respect the requested question types exactly.
+8. The selected question types are STRICT requirements.
 
-Only generate the question types requested by the user.
-
-Examples:
-
-- If only Multiple Choice is requested, every question must be Multiple Choice.
-- If only True/False is requested, every question must be True/False.
-- If Open-ended is not requested, do not generate any Open-ended questions.
+Difficulty must change.
+Question type must NOT.
+Never generate question types that the user did not request.
 
 Never substitute one question type for another.
 

@@ -105,7 +105,7 @@ class _QuizResultScreenState
 
     final percentage =
     objectiveTotal == 0
-        ? 0
+        ? null
         : ((correct /
         objectiveTotal) *
         100)
@@ -133,10 +133,41 @@ class _QuizResultScreenState
           Card(
             child: Padding(
               padding:
-              const EdgeInsets.all(
-                24,
-              ),
-              child: Column(
+              const EdgeInsets.all(24),
+              child: objectiveTotal == 0
+                  ? Column(
+                children: [
+
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 48,
+                  ),
+
+                  const SizedBox(
+                    height: 16,
+                  ),
+
+                  Text(
+                    'AI Review in Progress',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall,
+                  ),
+
+                  const SizedBox(
+                    height: 8,
+                  ),
+
+                  const Text(
+                    'This quiz contains only open-ended questions.\n\n'
+                        'ScholarMind is reviewing your answers.\n'
+                        'This usually takes less than 30 seconds.',
+                    textAlign:
+                    TextAlign.center,
+                  ),
+                ],
+              )
+                  : Column(
                 children: [
 
                   Text(

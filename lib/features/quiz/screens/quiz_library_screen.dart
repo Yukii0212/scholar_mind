@@ -15,6 +15,10 @@ class QuizLibraryScreen extends ConsumerWidget {
       BuildContext context,
       WidgetRef ref,
       ) {
+    final currentQuiz = ref.watch(
+      currentQuizProvider,
+    );
+
     return Scaffold(
       floatingActionButton:
       FloatingActionButton.extended(
@@ -46,41 +50,85 @@ class QuizLibraryScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          Card(
-            child: Padding(
-              padding:
-              const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
+    if (currentQuiz != null)
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
 
-                  Text(
-                    'Continue Quiz',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  const ListTile(
-                    leading: Icon(
-                      Icons.play_circle_fill,
-                    ),
-                    title: Text(
-                      'No quiz in progress',
-                    ),
-                    subtitle: Text(
-                      'Start a new quiz to begin studying.',
-                    ),
-                  ),
-                ],
+              Text(
+                'Continue',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge,
               ),
-            ),
-          ),
 
-          const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              ListTile(
+                leading: const Icon(
+                  Icons.play_circle_fill,
+                ),
+                title: Text(
+                  currentQuiz.title,
+                ),
+                subtitle: Text(
+                  '${currentQuiz.attempt.answers.length}'
+                      ' / '
+                      '${currentQuiz.attempt.quiz.questions.length}'
+                      ' Questions Answered',
+                ),
+                trailing: FilledButton(
+                  onPressed: () {
+                    // TODO
+                  },
+                  child: const Text(
+                    'Continue',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+    else
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+
+              Text(
+                'Continue',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge,
+              ),
+
+              const SizedBox(height: 16),
+
+              const ListTile(
+                leading: Icon(
+                  Icons.play_circle_fill,
+                ),
+                title: Text(
+                  'No quiz in progress',
+                ),
+                subtitle: Text(
+                  'Start a new quiz to begin studying.',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
+    const SizedBox(height: 20),
 
           Card(
             child: Padding(

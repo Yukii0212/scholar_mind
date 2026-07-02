@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../data/quiz_repository.dart';
 import '../domain/quiz_attempt.dart';
+import '../domain/quiz_library_item.dart';
 import '../domain/quiz_generation_request.dart';
 import '../domain/quiz_response.dart';
+import '../providers/quiz_library_provider.dart';
 import '../services/openai_quiz_service.dart';
 import 'quiz_viewer_screen.dart';
 import '../services/quiz_prompt_builder.dart';
 
-class QuizGeneratingScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class QuizGeneratingScreen extends ConsumerStatefulWidget {
   const QuizGeneratingScreen({
     super.key,
     required this.request,
@@ -17,12 +21,13 @@ class QuizGeneratingScreen extends StatefulWidget {
   final QuizGenerationRequest request;
 
   @override
-  State<QuizGeneratingScreen> createState() =>
+  ConsumerState<QuizGeneratingScreen>
+  createState() =>
       _QuizGeneratingScreenState();
 }
 
 class _QuizGeneratingScreenState
-    extends State<QuizGeneratingScreen> {
+    extends ConsumerState<QuizGeneratingScreen> {
 
   final _openAIQuizService =
   const OpenAIQuizService();
@@ -54,6 +59,12 @@ class _QuizGeneratingScreenState
       final quiz =
       result.first as QuizResponse;
 
+      final now = DateTime.now();
+
+      final quizTitle =
+          'Quiz ${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} '
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+
       final attempt = QuizAttempt(
         id: DateTime.now()
             .millisecondsSinceEpoch
@@ -68,6 +79,22 @@ class _QuizGeneratingScreenState
           .saveCurrentAttempt(
         attempt.toJson(),
       );
+
+      final library =
+      ref.read(
+        quizLibraryProvider.notifier,
+      );
+
+      library.state = [
+        QuizLibraryItem(
+          attempt: attempt,
+          title: quizTitle,
+          createdAt: now,
+          lastOpenedAt: now,
+          lastModifiedAt: now,
+        ),
+        ...library.state,
+      ];
 
       if (!mounted) return;
 

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
 import '../domain/quiz_enums.dart';
+import '../domain/quiz_folder.dart';
 
-class LibraryHeader extends StatelessWidget {
-  const LibraryHeader({
+class QuizHeader extends StatelessWidget {
+  const QuizHeader({
     super.key,
     required this.section,
     required this.folderStack,
@@ -12,20 +13,18 @@ class LibraryHeader extends StatelessWidget {
     required this.onSectionChanged,
     required this.onBreadcrumbPressed,
     required this.onCreateFolder,
-    required this.onCreateNote,
-    required this.onUpload,
+    required this.onGenerateQuiz,
     required this.onRestoreAll,
     required this.onDeleteAll,
   });
 
   final QuizSection section;
-  final List<QuizSection> folderStack;
+  final List<QuizFolder> folderStack;
   final bool isBusy;
   final ValueChanged<QuizSection> onSectionChanged;
   final ValueChanged<int> onBreadcrumbPressed;
   final VoidCallback onCreateFolder;
-  final VoidCallback onCreateNote;
-  final VoidCallback onUpload;
+  final VoidCallback onGenerateQuiz;
   final VoidCallback onRestoreAll;
   final VoidCallback onDeleteAll;
 
@@ -101,8 +100,8 @@ class LibraryHeader extends StatelessWidget {
                 label: const Text('New folder'),
               ),
               FilledButton.icon(
-                onPressed: isBusy ? null : onUpload,
-                icon: const Icon(Icons.upload_file_outlined),
+                onPressed: isBusy ? null : onGenerateQuiz,
+                icon: const Icon(Icons.quiz_outlined),
                 label: const Text('Generate Quiz'),
               ),
             ],

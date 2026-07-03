@@ -7,14 +7,22 @@ import '../domain/quiz_attempt.dart';
 import '../domain/quiz_folder.dart';
 import '../providers/quiz_library_provider.dart';
 import '../providers/quiz_provider.dart';
+import '../widgets/quiz_folder_dialogs.dart';
 import '../widgets/quiz_folder_picker_dialog.dart';
 import '../domain/quiz_sort_order.dart';
 import 'package:scholar_mind/features/quiz/screens/generate_quiz_screen.dart';
 
 class QuizLibraryScreen extends ConsumerWidget {
+
   const QuizLibraryScreen({
+
     super.key,
+
+    this.folderId = QuizFolder.rootId,
+
   });
+
+  final String folderId;
 
   @override
   Widget build(
@@ -48,11 +56,66 @@ class QuizLibraryScreen extends ConsumerWidget {
         const EdgeInsets.all(20),
         children: [
 
-          Text(
-            'Quiz Library',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              Text(
+                'Quiz Library',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall,
+              ),
+
+              const SizedBox(height: 12),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.icon(
+
+                  icon: const Icon(
+                    Icons.create_new_folder,
+                  ),
+
+                  label: const Text(
+                    'New Folder',
+                  ),
+
+                  onPressed: () async {
+
+                    final folderName =
+                    await showDialog<String>(
+
+                      context: context,
+
+                      builder: (_) =>
+                      const CreateQuizFolderDialog(),
+
+                    );
+
+                    if (folderName == null) {
+                      return;
+                    }
+
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    await ref
+                        .read(
+                      quizLibraryActionControllerProvider.notifier,
+                    )
+                        .createQuizFolder(
+                      parentId: folderId,
+                      name: folderName,
+                    );
+
+                  },
+
+                ),
+              ),
+
+            ],
           ),
 
           const SizedBox(height: 24),
@@ -446,6 +509,117 @@ class QuizLibraryScreen extends ConsumerWidget {
               ),
             )
           else
+
+            Builder(
+              builder: (context) {
+
+                final foldersAsync = ref.watch(
+                  childFoldersProvider(
+                    folderId,
+                  ),
+                );
+
+                return foldersAsync.when(
+
+                  loading: () =>
+                  const SizedBox.shrink(),
+
+                  error: (_, __) =>
+                  const SizedBox.shrink(),
+
+                  data: (folders) {
+
+                    if (folders.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Column(
+
+                      children: [
+
+                        Card(
+
+                          child: Padding(
+
+                            padding:
+                            const EdgeInsets.all(20),
+
+                            child: Column(
+
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+
+                              children: [
+
+                                Text(
+                                  'Folders',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge,
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                ...folders.map(
+                                      (folder) {
+
+                                    return ListTile(
+
+                                      leading:
+                                      const Icon(Icons.folder),
+
+                                      title:
+                                      Text(folder.name),
+
+                                      trailing:
+                                      const Icon(
+                                        Icons.chevron_right,
+                                      ),
+
+                                      onTap: () {
+
+                                        Navigator.push(
+
+                                          context,
+
+                                          MaterialPageRoute(
+
+                                            builder: (_) => QuizLibraryScreen(
+                                              folderId: folder.id,
+                                            ),
+
+                                          ),
+
+                                        );
+
+                                      },
+
+                                    );
+
+                                  },
+                                ),
+
+                              ],
+
+                            ),
+
+                          ),
+
+                        ),
+
+                        const SizedBox(height: 20),
+
+                      ],
+
+                    );
+
+                  },
+
+                );
+
+              },
+            ),
+
     const SizedBox(height: 20),
 
           Card(
@@ -541,9 +715,9 @@ class QuizLibraryScreen extends ConsumerWidget {
     Builder(
     builder: (context) {
     final libraryAsync = ref.watch(
-    quizzesInFolderProvider(
-    QuizFolder.rootId,
-    ),
+      quizzesInFolderProvider(
+        folderId,
+      ),
     );
 
     return libraryAsync.when(

@@ -20,6 +20,9 @@ import 'study_material_picker_screen.dart';
 import 'selection_manager_screen.dart';
 import 'quiz_generating_screen.dart';
 import '../domain/question_type_weight.dart';
+import '../domain/quiz_folder.dart';
+import '../providers/quiz_library_provider.dart' as quiz_library;
+import '../widgets/quiz_folder_picker_dialog.dart';
 
 class GenerateQuizScreen extends ConsumerStatefulWidget {
   const GenerateQuizScreen({super.key});
@@ -53,6 +56,10 @@ class _QuizScreenState
 
   final _quizRepository =
   QuizRepository();
+
+  String _destinationFolderId = 'root';
+
+  String _destinationFolderName = 'My Quizzes';
 
   String? _studyContext;
 
@@ -203,8 +210,66 @@ class _QuizScreenState
 
               SizedBox(height: 32),
 
+              Card(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.folder,
+                  ),
+                  title: const Text(
+                    'Destination',
+                  ),
+                  subtitle: Text(
+                    _destinationFolderName,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
               GenerateQuizButton(
                 onPressed: _generateQuiz,
+
+                onGenerateToFolder: () async {
+
+                  final folders = await ref.read(
+                    quiz_library.allFoldersProvider.future,
+                  );
+
+                  if (!mounted) {
+                    return;
+                  }
+
+                  final folderId =
+                  await showDialog<String>(
+                    context: context,
+                    builder: (_) {
+                      return QuizFolderPickerDialog(
+                        folders: folders,
+                      );
+                    },
+                  );
+
+                  if (folderId == null) {
+                    return;
+                  }
+
+                  final folderName = folderId ==
+                      QuizFolder.rootId
+                      ? 'My Quizzes'
+                      : folders
+                      .firstWhere(
+                        (folder) =>
+                    folder.id == folderId,
+                  )
+                      .name;
+
+                  setState(() {
+                    _destinationFolderId = folderId;
+                    _destinationFolderName = folderName;
+                  });
+
+                  _generateQuiz();
+
+                },
               ),
             ],
           ),

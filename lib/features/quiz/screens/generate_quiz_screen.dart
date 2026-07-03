@@ -52,7 +52,7 @@ class _QuizScreenState
   const StudyMaterialPreprocessor();
 
   final _quizRepository =
-  const QuizRepository();
+  QuizRepository();
 
   String? _studyContext;
 

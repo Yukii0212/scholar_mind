@@ -132,6 +132,8 @@ class QuizAttempt {
       'completedAt':
       completedAt
           ?.toIso8601String(),
+      'quiz': quiz.toJson(),
+
       'answers':
       answers.map(
             (key, value) => MapEntry(
@@ -142,90 +144,70 @@ class QuizAttempt {
     };
   }
   factory QuizAttempt.fromJson({
-    required QuizResponse quiz,
+    QuizResponse? quiz,
     required Map<String, dynamic> json,
   }) {
     final rawAnswers =
-    (json['answers']
-    as Map)
+    (json['answers'] as Map)
         .cast<String, dynamic>();
+
+    final quizResponse = quiz ??
+        (json['quiz'] == null
+            ? const QuizResponse(
+          title: 'Legacy Quiz',
+          questions: [],
+        )
+            : QuizResponse.fromJson(
+          Map<String, dynamic>.from(
+            json['quiz'],
+          ),
+        ));
 
     return QuizAttempt(
       id: json['id'] as String,
 
-      quiz: quiz,
+      quiz: quizResponse,
 
       answers: rawAnswers.map(
             (key, value) => MapEntry(
           int.parse(key),
           QuizAnswer.fromJson(
-            Map<String, dynamic>.from(
-              value,
-            ),
+            Map<String, dynamic>.from(value),
           ),
         ),
       ),
 
-      status:
-      QuizAttemptStatus.values
-          .firstWhere(
-            (element) =>
-        element.name ==
-            json['status'],
+      status: QuizAttemptStatus.values.firstWhere(
+            (element) => element.name == json['status'],
       ),
 
-      startedAt:
-      DateTime.parse(
-        json['startedAt'],
-      ),
+      startedAt: DateTime.parse(json['startedAt']),
 
-      name:
-      json['name'] as String,
+      name: json['name'] as String,
 
-      folderId:
-      json['folderId'] as String,
+      folderId: json['folderId'] as String,
 
-      createdAt:
-      DateTime.parse(
-        json['createdAt'],
-      ),
+      createdAt: DateTime.parse(json['createdAt']),
 
-      updatedAt:
-      DateTime.parse(
-        json['updatedAt'],
-      ),
+      updatedAt: DateTime.parse(json['updatedAt']),
 
-      isFavorite:
-      json['isFavorite'] ?? false,
+      isFavorite: json['isFavorite'] ?? false,
 
-      isArchived:
-      json['isArchived'] ?? false,
+      isArchived: json['isArchived'] ?? false,
 
-      isDeleted:
-      json['isDeleted'] ?? false,
+      isDeleted: json['isDeleted'] ?? false,
 
-      deletedAt:
-      json['deletedAt'] == null
+      deletedAt: json['deletedAt'] == null
           ? null
-          : DateTime.parse(
-        json['deletedAt'],
-      ),
+          : DateTime.parse(json['deletedAt']),
 
-      submittedAt:
-      json['submittedAt'] ==
-          null
+      submittedAt: json['submittedAt'] == null
           ? null
-          : DateTime.parse(
-        json['submittedAt'],
-      ),
+          : DateTime.parse(json['submittedAt']),
 
-      completedAt:
-      json['completedAt'] ==
-          null
+      completedAt: json['completedAt'] == null
           ? null
-          : DateTime.parse(
-        json['completedAt'],
-      ),
+          : DateTime.parse(json['completedAt']),
     );
   }
 
@@ -234,9 +216,8 @@ class QuizAttempt {
       ) {
     final data = document.data()!;
 
-    throw UnimplementedError(
-      'fromDocument() will be implemented after '
-          'QuizResponse is migrated to Firestore.',
+    return QuizAttempt.fromJson(
+      json: data,
     );
   }
 }

@@ -64,14 +64,6 @@ class QuizAttemptController
       updatedAt: DateTime.now(),
     );
 
-    _ref
-        .read(
-      quizLibraryControllerProvider,
-    )
-        .updateAttempt(
-      state!,
-    );
-
     _markDirty();
   }
 
@@ -83,14 +75,6 @@ class QuizAttemptController
     state = state!.copyWith(
       status: QuizAttemptStatus.grading,
       submittedAt: DateTime.now(),
-    );
-
-    _ref
-        .read(
-      quizLibraryControllerProvider,
-    )
-        .updateAttempt(
-      state!,
     );
 
     _dirty = true;
@@ -141,14 +125,6 @@ class QuizAttemptController
       state = state!.copyWith(
         status: QuizAttemptStatus.completed,
         completedAt: DateTime.now(),
-      );
-
-      _ref
-          .read(
-        quizLibraryControllerProvider,
-      )
-          .updateAttempt(
-        state!,
       );
 
       await _saveNow();
@@ -202,14 +178,6 @@ class QuizAttemptController
       completedAt: DateTime.now(),
     );
 
-    _ref
-        .read(
-      quizLibraryControllerProvider,
-    )
-        .updateAttempt(
-      state!,
-    );
-
     await _saveNow();
   }
 
@@ -251,6 +219,10 @@ class QuizAttemptController
 
     await _repository.saveCurrentAttempt(
       attempt.toJson(),
+    );
+
+    await _repository.saveAttemptToCloud(
+      attempt,
     );
   }
 

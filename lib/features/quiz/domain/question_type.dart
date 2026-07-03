@@ -6,13 +6,17 @@ enum QuestionType {
   factory QuestionType.fromJson(
       String value,
       ) {
-    switch (value.toLowerCase()) {
+    switch (value) {
+
+      case 'multipleChoice':
       case 'multiple_choice':
         return QuestionType.multipleChoice;
 
+      case 'trueFalse':
       case 'true_false':
         return QuestionType.trueFalse;
 
+      case 'openEnded':
       case 'open_ended':
         return QuestionType.openEnded;
 

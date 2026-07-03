@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../data/quiz_library_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../data/quiz_repository.dart';
 import '../domain/quiz_attempt.dart';
 import '../domain/quiz_folder.dart';
-import '../domain/quiz_library_item.dart';
 import '../domain/quiz_generation_request.dart';
 import '../domain/quiz_response.dart';
 import '../providers/quiz_provider.dart';
@@ -63,10 +65,6 @@ class _QuizGeneratingScreenState
 
       final now = DateTime.now();
 
-      final quizTitle =
-          'Quiz ${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} '
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-
       final attempt = QuizAttempt(
         id: DateTime.now()
             .millisecondsSinceEpoch
@@ -74,7 +72,7 @@ class _QuizGeneratingScreenState
 
         quiz: quiz,
 
-        name: quizTitle,
+        name: quiz.title,
 
         folderId: QuizFolder.rootId,
 
@@ -89,26 +87,23 @@ class _QuizGeneratingScreenState
         startedAt: now,
       );
 
-      await const QuizRepository()
-          .saveCurrentAttempt(
+      final repository =
+      QuizRepository();
+
+      await repository.saveCurrentAttempt(
         attempt.toJson(),
       );
 
-      final library =
-      ref.read(
-        quizLibraryProvider.notifier,
+      final libraryRepository =
+      QuizLibraryRepository(
+        FirebaseFirestore.instance,
       );
 
-      library.state = [
-        QuizLibraryItem(
-          attempt: attempt,
-          title: quizTitle,
-          createdAt: now,
-          lastOpenedAt: now,
-          lastModifiedAt: now,
-        ),
-        ...library.state,
-      ];
+      await libraryRepository.createQuiz(
+        userId:
+        FirebaseAuth.instance.currentUser!.uid,
+        quiz: attempt,
+      );
 
       if (!mounted) return;
 
@@ -120,15 +115,16 @@ class _QuizGeneratingScreenState
         attempt: attempt,
       );
 
-      Navigator.pushReplacement(
-        context,
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              QuizViewerScreen(
-                attempt: attempt,
-              ),
+          builder: (_) => QuizViewerScreen(
+            attempt: attempt,
+          ),
         ),
       );
+
     } catch (e) {
       if (!mounted) return;
 

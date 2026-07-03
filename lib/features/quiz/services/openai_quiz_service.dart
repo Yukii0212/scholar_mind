@@ -142,27 +142,53 @@ The response must be directly parseable using jsonDecode().
 JSON FORMAT
 ==========================
 
-[
-  {
-    "type": "multiple_choice",
-    "question": "...",
-    "options": [
-      "...",
-      "...",
-      "...",
-      "..."
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "..."
-  }
-]
-
 {
-  "type": "open_ended",
-  "question": "...",
-  "sampleAnswer": "...",
-  "explanation": "..."
+  "title": "Database Normalization",
+
+  "questions": [
+    {
+      "type": "multiple_choice",
+      "question": "...",
+      "options": [
+        "...",
+        "...",
+        "...",
+        "..."
+      ],
+      "correctAnswerIndex": 0,
+      "explanation": "..."
+    },
+    {
+      "type": "true_false",
+      "question": "...",
+      "options": [
+        "True",
+        "False"
+      ],
+      "correctAnswerIndex": 0,
+      "explanation": "..."
+    },
+    {
+      "type": "open_ended",
+      "question": "...",
+      "sampleAnswer": "...",
+      "explanation": "..."
+    }
+  ]
 }
+
+Quiz Title Rules
+
+- Generate a concise title between 3 and 8 words.
+- The title should summarize the overall topic of the quiz.
+- Do not include timestamps.
+- Do not include "Generated Quiz".
+- Do not include "Practice Quiz" unless it genuinely describes the quiz.
+- Examples:
+  - TCP Congestion Control
+  - Binary Search Trees
+  - Database Normalization
+  - Object-Oriented Programming
 ''';
 
       final response = await client.responses.create(

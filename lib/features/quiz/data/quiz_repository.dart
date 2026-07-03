@@ -3,10 +3,12 @@ import '../domain/quiz_attempt.dart';
 import '../domain/quiz_response.dart';
 import '../services/openai_quiz_service.dart';
 import '../services/quiz_local_cache_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class QuizRepository {
 
-  const QuizRepository({
+  QuizRepository({
     this.openAI =
     const OpenAIQuizService(),
     this.localCache =
@@ -17,6 +19,9 @@ class QuizRepository {
 
   final QuizLocalCacheService
   localCache;
+
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
   Future<String> buildStudyContext({
     required List<ProcessedStudyMaterial> lectureNotes,
@@ -111,4 +116,25 @@ class QuizRepository {
   Future<void> deleteAttempt(
       String attemptId,
       ) async {}
+
+  Future<void> saveAttemptToCloud(
+      QuizAttempt attempt,
+      ) async {
+
+    final user =
+        FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('quizzes')
+        .doc(attempt.id)
+        .set(
+      attempt.toJson(),
+    );
+  }
 }

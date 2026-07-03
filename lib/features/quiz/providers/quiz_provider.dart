@@ -3,44 +3,42 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/quiz_attempt.dart';
 import '../domain/quiz_library_item.dart';
 import '../domain/quiz_sort_order.dart';
+import 'quiz_library_provider.dart';
+import '../domain/quiz_folder.dart';
 
 final quizSortOrderProvider =
 StateProvider<QuizSortOrder>(
       (_) => QuizSortOrder.lastOpened,
 );
 
-final quizLibraryProvider =
-StateProvider<List<QuizLibraryItem>>(
-      (_) => [],
-);
-
-final quizLibraryControllerProvider =
-Provider<QuizLibraryController>(
-      (ref) {
-    return QuizLibraryController(ref);
-  },
-);
-
 final activeQuizzesProvider =
-Provider<List<QuizLibraryItem>>((ref) {
+Provider<List<QuizAttempt>>((ref) {
 
-  final library = ref.watch(
-    quizLibraryProvider,
+  final quizzes = ref.watch(
+    quizzesInFolderProvider(
+      QuizFolder.rootId,
+    ),
   );
 
-  return library.where((item) {
+  return quizzes.maybeWhen(
+    data: (items) {
 
-    return item.attempt.status ==
-        QuizAttemptStatus.inProgress ||
-        item.attempt.status ==
-            QuizAttemptStatus.grading;
+      return items.where(
+            (quiz) =>
+        quiz.status ==
+            QuizAttemptStatus.inProgress ||
+            quiz.status ==
+                QuizAttemptStatus.grading,
+      ).toList();
 
-  }).toList();
+    },
+
+    orElse: () => [],
+  );
 
 });
-
 final currentQuizProvider =
-Provider<QuizLibraryItem?>((ref) {
+Provider<QuizAttempt?>((ref) {
 
   final active =
   ref.watch(activeQuizzesProvider);
@@ -51,46 +49,3 @@ Provider<QuizLibraryItem?>((ref) {
 
   return active.first;
 });
-
-class QuizLibraryController {
-  QuizLibraryController(this.ref);
-
-  final Ref ref;
-
-  void updateAttempt(
-      QuizAttempt updatedAttempt,
-      ) {
-    final library = [
-      ...ref.read(
-        quizLibraryProvider,
-      ),
-    ];
-
-    final index =
-    library.indexWhere(
-          (item) =>
-      item.attempt.id ==
-          updatedAttempt.id,
-    );
-
-    if (index == -1) {
-      return;
-    }
-
-    library[index] =
-        library[index].copyWith(
-          attempt: updatedAttempt,
-          lastModifiedAt:
-          DateTime.now(),
-          lastOpenedAt:
-          DateTime.now(),
-        );
-
-    ref
-        .read(
-      quizLibraryProvider
-          .notifier,
-    )
-        .state = library;
-  }
-}

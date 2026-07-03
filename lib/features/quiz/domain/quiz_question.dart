@@ -52,4 +52,15 @@ class QuizQuestion {
       as String,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.name,
+      'question': question,
+      'options': options,
+      'correctAnswerIndex': correctAnswerIndex,
+      'sampleAnswer': sampleAnswer,
+      'explanation': explanation,
+    };
+  }
 }

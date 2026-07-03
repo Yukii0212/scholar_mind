@@ -58,6 +58,8 @@ ${extraInstructions.length >= 5 ? extraInstructions : 'None.'}
 Return ONLY valid JSON.
 
 {
+  "title":"Short descriptive quiz title",
+
   "questions":[
     {
       "type":"multiple_choice",
@@ -81,6 +83,18 @@ Return ONLY valid JSON.
     }
   ]
 }
+
+Quiz Title Rules
+- Generate a concise title between 3 and 8 words.
+- Summarize the overall topic being assessed.
+- Do not include timestamps.
+- Do not include words like "Generated Quiz".
+- Do not include "Practice" unless appropriate.
+- Examples:
+  - TCP Congestion Control
+  - Database Normalization
+  - Binary Search Trees
+  - Object-Oriented Programming
 ''';
   }
 }

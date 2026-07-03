@@ -604,6 +604,15 @@ class QuizLibraryRepository {
     });
   }
 
+  Future<void> createQuiz({
+    required String userId,
+    required QuizAttempt quiz,
+  }) async {
+    await _quizzes(userId).doc(quiz.id).set(
+      quiz.toJson(),
+    );
+  }
+
   static int _sortFolders(QuizFolder a, QuizFolder b) {
     if (a.isFavorite != b.isFavorite) return a.isFavorite ? -1 : 1;
     return a.name.toLowerCase().compareTo(b.name.toLowerCase());

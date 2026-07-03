@@ -42,6 +42,20 @@ class _QuizViewerScreenState
     _answers = Map<int, QuizAnswer>.from(
       widget.attempt.answers,
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+
+      await ref
+          .read(
+        quizAttemptProvider.notifier,
+      )
+          .restoreAttempt(
+        attempt: widget.attempt,
+      );
+    });
   }
 
   int get _answeredQuestions {

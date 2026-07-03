@@ -509,117 +509,6 @@ class QuizLibraryScreen extends ConsumerWidget {
               ),
             )
           else
-
-            Builder(
-              builder: (context) {
-
-                final foldersAsync = ref.watch(
-                  childFoldersProvider(
-                    folderId,
-                  ),
-                );
-
-                return foldersAsync.when(
-
-                  loading: () =>
-                  const SizedBox.shrink(),
-
-                  error: (_, __) =>
-                  const SizedBox.shrink(),
-
-                  data: (folders) {
-
-                    if (folders.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return Column(
-
-                      children: [
-
-                        Card(
-
-                          child: Padding(
-
-                            padding:
-                            const EdgeInsets.all(20),
-
-                            child: Column(
-
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-
-                              children: [
-
-                                Text(
-                                  'Folders',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge,
-                                ),
-
-                                const SizedBox(height: 16),
-
-                                ...folders.map(
-                                      (folder) {
-
-                                    return ListTile(
-
-                                      leading:
-                                      const Icon(Icons.folder),
-
-                                      title:
-                                      Text(folder.name),
-
-                                      trailing:
-                                      const Icon(
-                                        Icons.chevron_right,
-                                      ),
-
-                                      onTap: () {
-
-                                        Navigator.push(
-
-                                          context,
-
-                                          MaterialPageRoute(
-
-                                            builder: (_) => QuizLibraryScreen(
-                                              folderId: folder.id,
-                                            ),
-
-                                          ),
-
-                                        );
-
-                                      },
-
-                                    );
-
-                                  },
-                                ),
-
-                              ],
-
-                            ),
-
-                          ),
-
-                        ),
-
-                        const SizedBox(height: 20),
-
-                      ],
-
-                    );
-
-                  },
-
-                );
-
-              },
-            ),
-
     const SizedBox(height: 20),
 
           Card(
@@ -720,6 +609,12 @@ class QuizLibraryScreen extends ConsumerWidget {
       ),
     );
 
+    final foldersAsync = ref.watch(
+      childFoldersProvider(
+        folderId,
+      ),
+    );
+
     return libraryAsync.when(
     loading: () => const Center(
     child: CircularProgressIndicator(),
@@ -735,23 +630,81 @@ class QuizLibraryScreen extends ConsumerWidget {
     ),
     ),
 
-    data: (library) {
-    if (library.isEmpty) {
-    return const ListTile(
-    leading: Icon(Icons.history),
-    title: Text('No quizzes yet'),
-    subtitle: Text(
-    'Generate your first quiz to start building your quiz library.',
-    ),
-    );
-    }
+      data: (library) {
+        final folders = foldersAsync.value ?? [];
+        if (folders.isEmpty &&
+            library.isEmpty) {
+          return const ListTile(
+          leading: Icon(Icons.history),
+          title: Text('No quizzes yet'),
+          subtitle: Text(
+          'Generate your first quiz to start building your quiz library.',
+          ),
+        );
+      }
 
-    return ListView.separated(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: library.length,
-    separatorBuilder: (_, __) => const Divider(height: 1),
-    itemBuilder: (context, index) {
+return ListView(
+
+shrinkWrap: true,
+
+physics:
+const NeverScrollableScrollPhysics(),
+
+children: [
+
+...folders.map(
+
+(folder) {
+
+return Card(
+
+margin: const EdgeInsets.only(
+bottom: 12,
+),
+
+child: ListTile(
+
+leading: const Icon(
+Icons.folder,
+),
+
+title: Text(
+folder.name,
+),
+
+trailing: const Icon(
+Icons.chevron_right,
+),
+
+onTap: () {
+
+Navigator.push(
+
+context,
+
+MaterialPageRoute(
+
+builder: (_) => QuizLibraryScreen(
+folderId: folder.id,
+),
+
+),
+
+);
+
+},
+
+),
+
+);
+
+},
+
+),
+
+...List.generate(
+library.length,
+(index) {
     final item = library[index];
 
                           return Card(
@@ -1068,9 +1021,14 @@ class QuizLibraryScreen extends ConsumerWidget {
 
                               ],
                             ),
-                          );
-                        },
-    );
+);
+
+},
+),
+
+],
+
+);
     },
     );
     },

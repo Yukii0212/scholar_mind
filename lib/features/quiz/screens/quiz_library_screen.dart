@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scholar_mind/features/quiz/screens/quiz_result_screen.dart';
 import 'package:scholar_mind/features/quiz/screens/quiz_viewer_screen.dart';
 
+import '../domain/quiz_attempt.dart';
 import '../providers/quiz_provider.dart';
 import '../domain/quiz_sort_order.dart';
 import 'package:scholar_mind/features/quiz/screens/generate_quiz_screen.dart';
@@ -16,8 +18,9 @@ class QuizLibraryScreen extends ConsumerWidget {
       BuildContext context,
       WidgetRef ref,
       ) {
-    final currentQuiz = ref.watch(
-      currentQuizProvider,
+    final activeQuizzes =
+    ref.watch(
+      activeQuizzesProvider,
     );
 
     return Scaffold(
@@ -51,7 +54,7 @@ class QuizLibraryScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-    if (currentQuiz != null)
+          if (activeQuizzes.isNotEmpty)
       Card(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -69,42 +72,72 @@ class QuizLibraryScreen extends ConsumerWidget {
 
               const SizedBox(height: 16),
 
-              ListTile(
-                leading: const Icon(
-                  Icons.play_circle_fill,
-                ),
-                title: Text(
-                  currentQuiz.title,
-                ),
-                subtitle: Text(
-                  '${currentQuiz.attempt.answers.length}'
-                      ' / '
-                      '${currentQuiz.attempt.quiz.questions.length}'
-                      ' Questions Answered',
-                ),
-                trailing: FilledButton(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+              ...activeQuizzes.map((item) {
+
+                final grading =
+                    item.attempt.status ==
+                        QuizAttemptStatus.grading;
+
+                return ListTile(
+
+                  leading: Icon(
+                    grading
+                        ? Icons.hourglass_top
+                        : Icons.play_circle_fill,
+                  ),
+
+                  title: Text(
+                    item.title,
+                  ),
+
+                  subtitle: Text(
+
+                    grading
+                        ? 'Waiting for AI grading...'
+                        : '${item.attempt.answers.length}'
+                        ' / '
+                        '${item.attempt.quiz.questions.length}'
+                        ' Questions Answered',
+
+                  ),
+
+                  trailing: FilledButton(
+
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 40),
                     ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => QuizViewerScreen(
-                          attempt: currentQuiz.attempt,
+
+                    onPressed: () {
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => grading
+
+                              ? QuizResultScreen(
+                            quiz: item.attempt.quiz,
+                            answers: item.attempt.answers,
+                          )
+
+                              : QuizViewerScreen(
+                            attempt: item.attempt,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Continue',
+                      );
+
+                    },
+
+                    child: Text(
+                      grading
+                          ? 'View Results'
+                          : 'Continue',
+                    ),
+
                   ),
-                ),
-              ),
+
+                );
+
+              }),
             ],
           ),
         ),

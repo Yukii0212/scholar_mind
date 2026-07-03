@@ -75,14 +75,22 @@ class QuizAttemptController
     _markDirty();
   }
 
-  Future<void> submitAttempt() async {
+  Future<void> startGrading() async {
     if (state == null) {
       return;
     }
 
     state = state!.copyWith(
-      status: QuizAttemptStatus.submitted,
+      status: QuizAttemptStatus.grading,
       submittedAt: DateTime.now(),
+    );
+
+    _ref
+        .read(
+      quizLibraryControllerProvider,
+    )
+        .updateAttempt(
+      state!,
     );
 
     _dirty = true;
@@ -129,6 +137,22 @@ class QuizAttemptController
     );
 
     if (payload.isEmpty) {
+
+      state = state!.copyWith(
+        status: QuizAttemptStatus.completed,
+        completedAt: DateTime.now(),
+      );
+
+      _ref
+          .read(
+        quizLibraryControllerProvider,
+      )
+          .updateAttempt(
+        state!,
+      );
+
+      await _saveNow();
+
       return;
     }
 
@@ -174,9 +198,16 @@ class QuizAttemptController
 
     state = state!.copyWith(
       answers: updated,
-      status:
-      QuizAttemptStatus.completed,
+      status: QuizAttemptStatus.completed,
       completedAt: DateTime.now(),
+    );
+
+    _ref
+        .read(
+      quizLibraryControllerProvider,
+    )
+        .updateAttempt(
+      state!,
     );
 
     await _saveNow();

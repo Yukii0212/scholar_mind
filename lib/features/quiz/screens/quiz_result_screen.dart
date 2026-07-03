@@ -149,8 +149,22 @@ class _QuizResultScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title:
-        const Text('Quiz Results'),
+        leading: BackButton(
+
+          onPressed: () {
+
+            Navigator.popUntil(
+              context,
+                  (route) => route.isFirst,
+            );
+
+          },
+
+        ),
+
+        title: const Text(
+          'Quiz Results',
+        ),
       ),
       body: ListView(
         padding:

@@ -435,9 +435,9 @@ class _QuizViewerScreenState
         .read(
       quizAttemptProvider.notifier,
     )
-        .submitAttempt();
+        .startGrading();
 
-    await Navigator.push(
+    await Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => QuizResultScreen(

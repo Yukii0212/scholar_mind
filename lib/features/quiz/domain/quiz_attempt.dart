@@ -4,8 +4,9 @@ import 'quiz_response.dart';
 
 enum QuizAttemptStatus {
   inProgress,
-  submitted,
+  grading,
   completed,
+  archived,
 }
 
 class QuizAttempt {

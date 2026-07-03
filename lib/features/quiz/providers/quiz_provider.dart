@@ -21,23 +21,35 @@ Provider<QuizLibraryController>(
   },
 );
 
-final currentQuizProvider =
-Provider<QuizLibraryItem?>((ref) {
+final activeQuizzesProvider =
+Provider<List<QuizLibraryItem>>((ref) {
 
-  final library =
-  ref.watch(
+  final library = ref.watch(
     quizLibraryProvider,
   );
 
-  try {
-    return library.firstWhere(
-          (item) =>
-      item.attempt.status ==
-          QuizAttemptStatus.inProgress,
-    );
-  } catch (_) {
+  return library.where((item) {
+
+    return item.attempt.status ==
+        QuizAttemptStatus.inProgress ||
+        item.attempt.status ==
+            QuizAttemptStatus.grading;
+
+  }).toList();
+
+});
+
+final currentQuizProvider =
+Provider<QuizLibraryItem?>((ref) {
+
+  final active =
+  ref.watch(activeQuizzesProvider);
+
+  if (active.isEmpty) {
     return null;
   }
+
+  return active.first;
 });
 
 class QuizLibraryController {

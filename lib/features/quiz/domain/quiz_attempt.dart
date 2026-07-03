@@ -143,6 +143,27 @@ class QuizAttempt {
       ),
     };
   }
+
+  static DateTime? _readDate(dynamic value) {
+
+    if (value == null) {
+      return null;
+    }
+
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+
+    if (value is String) {
+      return DateTime.parse(value);
+    }
+
+    throw Exception(
+      'Unsupported date type: ${value.runtimeType}',
+    );
+
+  }
+
   factory QuizAttempt.fromJson({
     QuizResponse? quiz,
     required Map<String, dynamic> json,
@@ -181,15 +202,21 @@ class QuizAttempt {
             (element) => element.name == json['status'],
       ),
 
-      startedAt: DateTime.parse(json['startedAt']),
+      startedAt: _readDate(
+        json['startedAt'],
+      )!,
 
       name: json['name'] as String,
 
       folderId: json['folderId'] as String,
 
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt: _readDate(
+        json['createdAt'],
+      )!,
 
-      updatedAt: DateTime.parse(json['updatedAt']),
+      updatedAt: _readDate(
+        json['updatedAt'],
+      )!,
 
       isFavorite: json['isFavorite'] ?? false,
 
@@ -197,17 +224,17 @@ class QuizAttempt {
 
       isDeleted: json['isDeleted'] ?? false,
 
-      deletedAt: json['deletedAt'] == null
-          ? null
-          : DateTime.parse(json['deletedAt']),
+      deletedAt: _readDate(
+        json['deletedAt'],
+      ),
 
-      submittedAt: json['submittedAt'] == null
-          ? null
-          : DateTime.parse(json['submittedAt']),
+      submittedAt: _readDate(
+        json['submittedAt'],
+      ),
 
-      completedAt: json['completedAt'] == null
-          ? null
-          : DateTime.parse(json['completedAt']),
+      completedAt: _readDate(
+        json['completedAt'],
+      ),
     );
   }
 

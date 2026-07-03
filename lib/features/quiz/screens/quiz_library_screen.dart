@@ -566,7 +566,7 @@ class QuizLibraryScreen extends ConsumerWidget {
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.pop(
-                                                    context,
+                                                    dialogContext,
                                                     false,
                                                   );
                                                 },
@@ -578,7 +578,7 @@ class QuizLibraryScreen extends ConsumerWidget {
                                               FilledButton(
                                                 onPressed: () {
                                                   Navigator.pop(
-                                                    context,
+                                                    dialogContext,
                                                     true,
                                                   );
                                                 },

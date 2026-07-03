@@ -107,12 +107,12 @@ class _QuizGeneratingScreenState
 
       if (!mounted) return;
 
-      ref
+      await ref
           .read(
         quizAttemptProvider.notifier,
       )
-          .restoreAttempt(
-        attempt: attempt,
+          .startAttempt(
+        attempt,
       );
 
       if (!mounted) return;

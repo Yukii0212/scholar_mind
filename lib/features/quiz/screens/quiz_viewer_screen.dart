@@ -27,10 +27,13 @@ class QuizViewerScreen
 class _QuizViewerScreenState
     extends ConsumerState<QuizViewerScreen> {
 
-  QuizResponse get quiz =>
-      widget.attempt.quiz;
+  QuizAttempt get attempt =>
+      widget.attempt;
 
-  late final Map<int, QuizAnswer> _answers;
+  QuizResponse get quiz =>
+      attempt.quiz;
+
+  late Map<int, QuizAnswer> _answers;
 
   @override
   void initState() {
@@ -79,7 +82,15 @@ class _QuizViewerScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+        onPopInvokedWithResult: (_, __) async {
+          await ref
+              .read(
+            quizAttemptProvider.notifier,
+          )
+              .saveNow();
+        },
+        child: Scaffold(
       appBar: AppBar(
         title:
         const Text('Generated Quiz'),
@@ -377,6 +388,7 @@ class _QuizViewerScreenState
             ],
         ),
       ),
+        ),
     );
   }
 

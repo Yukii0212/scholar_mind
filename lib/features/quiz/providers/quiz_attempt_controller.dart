@@ -34,7 +34,7 @@ class QuizAttemptController
       ) async {
     state = attempt;
 
-    await _saveNow();
+    await saveNow();
   }
 
   Future<void> restoreAttempt({
@@ -79,7 +79,7 @@ class QuizAttemptController
 
     _dirty = true;
 
-    await _saveNow();
+    await saveNow();
 
     unawaited(
       _evaluateOpenEnded(),
@@ -127,7 +127,7 @@ class QuizAttemptController
         completedAt: DateTime.now(),
       );
 
-      await _saveNow();
+      await saveNow();
 
       return;
     }
@@ -178,7 +178,7 @@ class QuizAttemptController
       completedAt: DateTime.now(),
     );
 
-    await _saveNow();
+    await saveNow();
   }
 
   void _markDirty() {
@@ -190,18 +190,18 @@ class QuizAttemptController
       const Duration(
         seconds: 10,
       ),
-      _saveNow,
+      saveNow,
     );
 
     _dirtyTimer ??= Timer(
       const Duration(
         seconds: 30,
       ),
-      _saveNow,
+      saveNow,
     );
   }
 
-  Future<void> _saveNow() async {
+  Future<void> saveNow() async {
     if (!_dirty ||
         state == null) {
       return;

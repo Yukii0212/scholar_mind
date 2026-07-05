@@ -1,6 +1,7 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:gap/gap.dart';
 
 import '../data/library_repository.dart';
@@ -72,7 +73,65 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       const AsyncValue<List<NoteItem>>.data([]),
     };
 
-    return Stack(
+    return Scaffold(
+
+        floatingActionButton:
+
+        _section == LibrarySection.browse
+
+            ? SpeedDial(
+
+          icon: Icons.add,
+
+          activeIcon: Icons.close,
+
+          spacing: 12,
+
+          children: [
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.upload_file,
+              ),
+
+              label: 'Upload Files',
+
+              onTap: _uploadNotes,
+
+            ),
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.note_add_outlined,
+              ),
+
+              label: 'New Note',
+
+              onTap: _createNote,
+
+            ),
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.create_new_folder,
+              ),
+
+              label: 'New Folder',
+
+              onTap: _createFolder,
+
+            ),
+
+          ],
+
+        )
+
+            : null,
+
+        body: Stack(
       children: [
         CustomScrollView(
           slivers: [
@@ -117,8 +176,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             top: 0,
             child: LinearProgressIndicator(),
           ),
-      ],
+         ],
+        ),
     );
+
   }
 
   Future<void> _restoreAll() async {

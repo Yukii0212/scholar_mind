@@ -291,30 +291,44 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             ),
           ),
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverGrid.builder(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 320,
-              mainAxisExtent: 92,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+          ),
+          sliver: SliverList.separated(
+
             itemCount: items.length,
+
+            separatorBuilder: (_, __) =>
+            const Gap(8),
+
             itemBuilder: (context, index) {
+
               final folder = items[index];
+
               return FolderCard(
+
                 folder: folder,
+
                 isArchivedSection:
                 _section == LibrarySection.archived,
+
                 isTrashSection:
                 _section == LibrarySection.trash,
-                onOpen: () => _openFolder(folder),
-                onDelete: () => _moveFolderToTrash(folder),
 
-                onMove: () => _moveFolder(folder),
+                onOpen: () =>
+                    _openFolder(folder),
 
-                onRestore: () => _restoreFolder(folder),
-                onRename: () => _renameFolder(folder),
+                onDelete: () =>
+                    _moveFolderToTrash(folder),
+
+                onMove: () =>
+                    _moveFolder(folder),
+
+                onRestore: () =>
+                    _restoreFolder(folder),
+
+                onRename: () =>
+                    _renameFolder(folder),
 
                 onPermanentDelete: () =>
                     _permanentlyDeleteFolder(folder),
@@ -324,9 +338,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
                 onToggleArchived: () =>
                     _toggleArchived(folder),
+
               );
+
             },
+
           ),
+
         ),
         if (items.isEmpty &&
             !hasNotes &&

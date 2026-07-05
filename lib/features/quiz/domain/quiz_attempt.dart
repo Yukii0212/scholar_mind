@@ -104,6 +104,38 @@ class QuizAttempt {
     );
   }
 
+  QuizAttempt reset() {
+
+    final now = DateTime.now();
+
+    return QuizAttempt(
+      id: id,
+      quiz: quiz,
+      name: name,
+      folderId: folderId,
+
+      answers: const {},
+
+      status: QuizAttemptStatus.inProgress,
+
+      startedAt: now,
+
+      createdAt: createdAt,
+
+      updatedAt: now,
+
+      submittedAt: null,
+
+      completedAt: null,
+
+      isFavorite: isFavorite,
+      isArchived: isArchived,
+      isDeleted: isDeleted,
+      deletedAt: deletedAt,
+    );
+
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

@@ -236,4 +236,18 @@ class QuizAttemptController
     _dirtyTimer?.cancel();
     super.dispose();
   }
+
+  Future<void> retryAttempt() async {
+
+    if (state == null) {
+      return;
+    }
+
+    state = state!.reset();
+
+    _dirty = true;
+
+    await saveNow();
+
+  }
 }

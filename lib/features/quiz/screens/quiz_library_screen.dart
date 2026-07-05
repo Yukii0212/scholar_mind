@@ -5,6 +5,7 @@ import 'package:scholar_mind/features/quiz/screens/quiz_viewer_screen.dart';
 
 import '../domain/quiz_attempt.dart';
 import '../domain/quiz_folder.dart';
+import '../providers/quiz_attempt_provider.dart';
 import '../providers/quiz_library_provider.dart'
 as quiz_library;
 
@@ -122,7 +123,8 @@ class QuizLibraryScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-activeQuizzesAsync.when(
+          if (folderId == QuizFolder.rootId)
+            activeQuizzesAsync.when(
 
 loading: () =>
 const SizedBox.shrink(),
@@ -287,8 +289,81 @@ data: (activeQuizzes) {
                         label: const Text(
                           'Retry',
                         ),
-                        onPressed: () {
-                          // TODO
+                        onPressed: () async {
+
+                          final confirmed =
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (dialogContext) {
+                              return AlertDialog(
+
+                                title: const Text(
+                                  'Retry Quiz?',
+                                ),
+
+                                content: const Text(
+                                  'This will reset all answers, score and AI feedback for this quiz.',
+                                ),
+
+                                actions: [
+
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(
+                                        dialogContext,
+                                        false,
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Cancel',
+                                    ),
+                                  ),
+
+                                  FilledButton(
+                                    onPressed: () {
+                                      Navigator.pop(
+                                        dialogContext,
+                                        true,
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Retry',
+                                    ),
+                                  ),
+
+                                ],
+
+                              );
+                            },
+                          );
+
+                          if (confirmed != true) {
+                            return;
+                          }
+
+                          final controller = ref.read(
+                            quizAttemptProvider.notifier,
+                          );
+
+                          await controller.restoreAttempt(
+                            attempt: item,
+                          );
+
+                          await controller.retryAttempt();
+
+                          if (!context.mounted) {
+                            return;
+                          }
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => QuizViewerScreen(
+                                attempt: controller.state!,
+                              ),
+                            ),
+                          );
+
                         },
                       ),
                     ),
@@ -507,6 +582,7 @@ data: (activeQuizzes) {
   );
 }
 ),
+
 
 const SizedBox(height: 20),
 
@@ -799,8 +875,81 @@ library.length,
                                     label: const Text(
                                       'Retry',
                                     ),
-                                    onPressed: () {
-                                      // TODO
+                                    onPressed: () async {
+
+                                      final confirmed =
+                                      await showDialog<bool>(
+                                        context: context,
+                                        builder: (dialogContext) {
+                                          return AlertDialog(
+
+                                            title: const Text(
+                                              'Retry Quiz?',
+                                            ),
+
+                                            content: const Text(
+                                              'This will reset all answers, score and AI feedback for this quiz.',
+                                            ),
+
+                                            actions: [
+
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(
+                                                    dialogContext,
+                                                    false,
+                                                  );
+                                                },
+                                                child: const Text(
+                                                  'Cancel',
+                                                ),
+                                              ),
+
+                                              FilledButton(
+                                                onPressed: () {
+                                                  Navigator.pop(
+                                                    dialogContext,
+                                                    true,
+                                                  );
+                                                },
+                                                child: const Text(
+                                                  'Retry',
+                                                ),
+                                              ),
+
+                                            ],
+
+                                          );
+                                        },
+                                      );
+
+                                      if (confirmed != true) {
+                                        return;
+                                      }
+
+                                      final controller = ref.read(
+                                        quizAttemptProvider.notifier,
+                                      );
+
+                                      await controller.restoreAttempt(
+                                        attempt: item,
+                                      );
+
+                                      await controller.retryAttempt();
+
+                                      if (!context.mounted) {
+                                        return;
+                                      }
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => QuizViewerScreen(
+                                            attempt: controller.state!,
+                                          ),
+                                        ),
+                                      );
+
                                     },
                                   ),
                                 ),

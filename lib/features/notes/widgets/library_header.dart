@@ -157,25 +157,6 @@ class LibraryHeader extends StatelessWidget {
           isBusy ? null : (selection) => onSectionChanged(selection.first),
         ),
         ),
-        if (section == LibrarySection.trash) ...[
-          const Gap(18),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onRestoreAll,
-                icon: const Icon(Icons.restore),
-                label: const Text('Restore All'),
-              ),
-              FilledButton.icon(
-                onPressed: isBusy ? null : onDeleteAll,
-                icon: const Icon(Icons.delete_forever),
-                label: const Text('Delete All'),
-              ),
-            ],
-          ),
-        ],
       ],
     );
   }

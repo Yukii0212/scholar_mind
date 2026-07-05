@@ -21,6 +21,7 @@ import '../widgets/note_card.dart';
 import '../widgets/folder_picker_dialog.dart';
 import '../widgets/category_dialog.dart';
 import '../widgets/folder_dialogs.dart';
+import '../widgets/trash_section.dart';
 
 import '../services/file_open_service.dart';
 
@@ -152,6 +153,90 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 ),
               ),
             ),
+            if (_section == LibrarySection.trash)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  12,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: TrashSection(
+
+                    onRestoreAll: _restoreAll,
+
+                    onDeleteAll: _permanentlyDeleteAll,
+
+                    folders: folders.valueOrNull?.map((folder) {
+
+                      return FolderCard(
+
+                        folder: folder,
+
+                        isTrashSection: true,
+
+                        isArchivedSection: false,
+
+                        onOpen: () => _openFolder(folder),
+
+                        onDelete: () => _moveFolderToTrash(folder),
+
+                        onMove: () => _moveFolder(folder),
+
+                        onRestore: () => _restoreFolder(folder),
+
+                        onRename: () => _renameFolder(folder),
+
+                        onPermanentDelete: () =>
+                            _permanentlyDeleteFolder(folder),
+
+                        onToggleFavorite: () =>
+                            _toggleFavorite(folder),
+
+                        onToggleArchived: () =>
+                            _toggleArchived(folder),
+
+                      );
+
+                    }).toList() ?? const [],
+
+                    files: notes.valueOrNull?.map((note) {
+
+                      return NoteCard(
+
+                        note: note,
+
+                        onTap: () => _openNote(note),
+
+                        onRename: () => _renameNote(note),
+
+                        onMove: () => _moveNote(note),
+
+                        onCopy: () => _copyNote(note),
+
+                        onToggleFavorite: () =>
+                            _toggleNoteFavorite(note),
+
+                        onDelete: () =>
+                            _deleteNote(note),
+
+                        isTrashSection: true,
+
+                        onRestore: () =>
+                            _restoreNote(note),
+
+                        onPermanentDelete: () =>
+                            _permanentlyDeleteNote(note),
+
+                      );
+
+                    }).toList() ?? const [],
+
+                  ),
+                ),
+              ),
+
             ..._buildFolderSlivers(
               folders,
               notes.hasValue
@@ -279,7 +364,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           child: ErrorState(message: _friendlyError(error)),
         ),
       ],
-      data: (items) => [
+data: (items) {
+
+if (_section == LibrarySection.trash) {
+return const <Widget>[];
+}
+
+return [
         if (items.isNotEmpty)
           const SliverPadding(
             padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
@@ -378,7 +469,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               },
             ),
           ),
-      ],
+];
+
+},
     );
   }
 
@@ -403,16 +496,52 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ),
         ),
       ],
-      data: (items) => [
+data: (items) {
+
+if (_section == LibrarySection.trash) {
+return const <Widget>[];
+}
+
+return [
         if (items.isNotEmpty)
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                'Files',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              24,
+              20,
+              8,
             ),
+            sliver: SliverToBoxAdapter(
+
+              child: Row(
+
+                children: [
+
+                  const Expanded(
+
+                    child: Text(
+
+                      'Files',
+
+                      style: TextStyle(
+
+                        fontSize: 18,
+
+                        fontWeight:
+                        FontWeight.w600,
+
+                      ),
+
+                    ),
+
+                  ),
+
+                ],
+
+              ),
+
+            ),
+
           ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -474,7 +603,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
           ),
-      ],
+];
+
+},
     );
   }
 

@@ -42,10 +42,6 @@ class _QuizLibraryScreenState
   Widget build(
       BuildContext context,
       ) {
-    ref.watch(
-      quiz_library.activeQuizzesProvider,
-    );
-
     return Scaffold(
       floatingActionButton: SpeedDial(
 
@@ -251,15 +247,6 @@ class _QuizLibraryScreenState
 
           const SizedBox(height: 24),
 
-          if (widget.folderId ==
-              QuizFolder.rootId &&
-              _section ==
-                  QuizLibrarySection
-                      .continueSection)
-            const QuizContinueSection(),
-
-          const SizedBox(height: 20),
-
           SegmentedButton<QuizLibrarySection>(
 
             segments: [
@@ -330,11 +317,25 @@ class _QuizLibraryScreenState
 
           const SizedBox(height: 20),
 
-          if (_section ==
-              QuizLibrarySection.library)
-            QuizLibrarySectionWidget(
-              folderId: widget.folderId,
-            ),
+          switch (_section) {
+
+            QuizLibrarySection.continueSection =>
+
+            const QuizContinueSection(),
+
+            QuizLibrarySection.library =>
+
+                QuizLibrarySectionWidget(
+                  folderId: widget.folderId,
+                ),
+
+            QuizLibrarySection.trash =>
+
+            const SizedBox(),
+
+          },
+
+          const SizedBox(height: 100),
 
           const SizedBox(height: 100),
         ],

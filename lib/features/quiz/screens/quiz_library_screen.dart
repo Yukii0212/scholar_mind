@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:scholar_mind/features/quiz/screens/quiz_result_screen.dart';
 import 'package:scholar_mind/features/quiz/screens/quiz_viewer_screen.dart';
 
@@ -38,21 +39,85 @@ class QuizLibraryScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      floatingActionButton:
-      FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'Generate Quiz',
-        ),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-              const GenerateQuizScreen(),
+      floatingActionButton: SpeedDial(
+
+        icon: Icons.add,
+        activeIcon: Icons.close,
+
+        spacing: 12,
+
+        children: [
+
+          SpeedDialChild(
+
+            child: const Icon(
+              Icons.quiz,
             ),
-          );
-        },
+
+            label: 'New Quiz',
+
+            onTap: () {
+
+              Navigator.push(
+
+                context,
+
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const GenerateQuizScreen(),
+                ),
+
+              );
+
+            },
+
+          ),
+
+          SpeedDialChild(
+
+            child: const Icon(
+              Icons.create_new_folder,
+            ),
+
+            label: 'New Folder',
+
+            onTap: () async {
+
+              final folderName =
+              await showDialog<String>(
+
+                context: context,
+
+                builder: (_) =>
+                const CreateQuizFolderDialog(),
+
+              );
+
+              if (folderName == null) {
+                return;
+              }
+
+              if (!context.mounted) {
+                return;
+              }
+
+              await ref
+                  .read(
+                quiz_library
+                    .quizLibraryActionControllerProvider
+                    .notifier,
+              )
+                  .createQuizFolder(
+                parentId: folderId,
+                name: folderName,
+              );
+
+            },
+
+          ),
+
+        ],
+
       ),
       body: ListView(
         padding:
@@ -173,53 +238,6 @@ class QuizLibraryScreen extends ConsumerWidget {
               ),
 
               const SizedBox(height: 12),
-
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-
-                  icon: const Icon(
-                    Icons.create_new_folder,
-                  ),
-
-                  label: const Text(
-                    'New Folder',
-                  ),
-
-                  onPressed: () async {
-
-                    final folderName =
-                    await showDialog<String>(
-
-                      context: context,
-
-                      builder: (_) =>
-                      const CreateQuizFolderDialog(),
-
-                    );
-
-                    if (folderName == null) {
-                      return;
-                    }
-
-                    if (!context.mounted) {
-                      return;
-                    }
-
-                    await ref
-                        .read(
-                      quiz_library.quizLibraryActionControllerProvider.notifier,
-                    )
-                        .createQuizFolder(
-                      parentId: folderId,
-                      name: folderName,
-                    );
-
-                  },
-
-                ),
-              ),
-
             ],
           ),
 

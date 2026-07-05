@@ -13,10 +13,12 @@ as quiz_library;
 import '../providers/quiz_provider.dart';
 import '../widgets/quiz_folder_dialogs.dart';
 import '../widgets/quiz_folder_picker_dialog.dart';
+import '../domain/quiz_library_section.dart';
 import '../domain/quiz_sort_order.dart';
 import 'package:scholar_mind/features/quiz/screens/generate_quiz_screen.dart';
 
-class QuizLibraryScreen extends ConsumerWidget {
+class QuizLibraryScreen
+    extends ConsumerStatefulWidget {
 
   const QuizLibraryScreen({
 
@@ -29,9 +31,21 @@ class QuizLibraryScreen extends ConsumerWidget {
   final String folderId;
 
   @override
+  ConsumerState<QuizLibraryScreen>
+  createState() =>
+      _QuizLibraryScreenState();
+
+}
+
+class _QuizLibraryScreenState
+    extends ConsumerState<QuizLibraryScreen> {
+
+  QuizLibrarySection _section =
+      QuizLibrarySection.continueSection;
+
+  @override
   Widget build(
       BuildContext context,
-      WidgetRef ref,
       ) {
     final activeQuizzesAsync =
     ref.watch(
@@ -108,7 +122,7 @@ class QuizLibraryScreen extends ConsumerWidget {
                     .notifier,
               )
                   .createQuizFolder(
-                parentId: folderId,
+                parentId: widget.folderId,
                 name: folderName,
               );
 
@@ -139,7 +153,7 @@ class QuizLibraryScreen extends ConsumerWidget {
 
               ref.watch(
                 quiz_library.folderPathProvider(
-                  folderId,
+                  widget.folderId,
                 ),
               ).when(
 
@@ -243,7 +257,11 @@ class QuizLibraryScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          if (folderId == QuizFolder.rootId)
+          if (widget.folderId ==
+              QuizFolder.rootId &&
+              _section ==
+                  QuizLibrarySection
+                      .continueSection)
             activeQuizzesAsync.when(
 
 loading: () =>
@@ -704,7 +722,77 @@ data: (activeQuizzes) {
 ),
 
 
-const SizedBox(height: 20),
+          const SizedBox(height: 20),
+
+          SegmentedButton<QuizLibrarySection>(
+
+            segments: [
+
+              if (widget.folderId == QuizFolder.rootId)
+                const ButtonSegment(
+
+                  value:
+                  QuizLibrarySection.continueSection,
+
+                  icon: Icon(
+                    Icons.play_circle_outline,
+                  ),
+
+                  label: Text(
+                    'Resume',
+                  ),
+
+                ),
+
+              const ButtonSegment(
+
+                value: QuizLibrarySection.library,
+
+                icon: Icon(
+                  Icons.folder_outlined,
+                ),
+
+                label: Text(
+                  'Library',
+                ),
+
+              ),
+
+              const ButtonSegment(
+
+                value: QuizLibrarySection.trash,
+
+                icon: Icon(
+                  Icons.delete_outline,
+                ),
+
+                label: Text(
+                  'Trash',
+                ),
+
+              ),
+
+            ],
+
+            selected: {
+
+              _section,
+
+            },
+
+            onSelectionChanged: (selection) {
+
+              setState(() {
+
+                _section = selection.first;
+
+              });
+
+            },
+
+          ),
+
+          const SizedBox(height: 20),
 
           Card(
             child: Padding(
@@ -800,13 +888,13 @@ const SizedBox(height: 20),
     builder: (context) {
     final libraryAsync = ref.watch(
       quiz_library.quizzesInFolderProvider(
-        folderId,
+        widget.folderId,
       ),
     );
 
     final foldersAsync = ref.watch(
       quiz_library.childFoldersProvider(
-        folderId,
+        widget.folderId,
       ),
     );
 

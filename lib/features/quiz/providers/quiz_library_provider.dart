@@ -113,7 +113,34 @@ Stream<List<QuizAttempt>> deletedQuizzes(DeletedQuizzesRef ref) {
   final userId = ref.watch(authStateProvider).valueOrNull?.uid;
   if (userId == null) return const Stream.empty();
 
-  return ref.watch(quizLibraryRepositoryProvider).watchDeletedQuizzes(userId);
+  return ref
+      .watch(
+    quizLibraryRepositoryProvider,
+  )
+      .watchDeletedQuizzes(userId)
+      .asyncMap((quizzes) async {
+
+    final folders = await ref.watch(
+      allFoldersProvider.future,
+    );
+
+    return quizzes.where((quiz) {
+
+      if (quiz.folderId == QuizFolder.rootId) {
+        return true;
+      }
+
+      final parentDeleted = folders.any(
+            (folder) =>
+        folder.id == quiz.folderId &&
+            folder.isDeleted,
+      );
+
+      return !parentDeleted;
+
+    }).toList();
+
+  });
 }
 
 @riverpod

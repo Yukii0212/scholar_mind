@@ -33,7 +33,56 @@ class QuizContinueSection extends ConsumerWidget {
 
           data: (activeQuizzes) {
             if (activeQuizzes.isEmpty) {
-              return const SizedBox.shrink();
+
+              return Card(
+
+                child: Padding(
+
+                  padding: const EdgeInsets.all(20),
+
+                  child: Column(
+
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+
+                    children: [
+
+                      Text(
+
+                        'Resume',
+
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge,
+
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      const ListTile(
+
+                        leading: Icon(
+                          Icons.check_circle_outline,
+                        ),
+
+                        title: Text(
+                          'You\'re all caught up!',
+                        ),
+
+                        subtitle: Text(
+                          'You have no quizzes waiting to be resumed.',
+                        ),
+
+                      ),
+
+                    ],
+
+                  ),
+
+                ),
+
+              );
+
             }
 
             return Card(

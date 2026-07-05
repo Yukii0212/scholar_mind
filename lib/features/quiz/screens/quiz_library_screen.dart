@@ -183,9 +183,16 @@ class _QuizLibraryScreenState
 
                         onPressed: () {
 
-                          Navigator.popUntil(
+                          Navigator.pushAndRemoveUntil(
+
                             context,
-                                (route) => route.isFirst,
+
+                            MaterialPageRoute(
+                              builder: (_) => const QuizLibraryScreen(),
+                            ),
+
+                                (route) => false,
+
                           );
 
                         },
@@ -221,7 +228,6 @@ class _QuizLibraryScreenState
                                 builder: (_) =>
                                     QuizLibraryScreen(
                                       folderId: path[i].id,
-                                      initialSection: _section,
                                     ),
                               ),
 
@@ -253,6 +259,7 @@ class _QuizLibraryScreenState
 
           const SizedBox(height: 24),
 
+        if (widget.folderId == QuizFolder.rootId) ...[
           SegmentedButton<QuizLibrarySection>(
 
             segments: [
@@ -323,7 +330,15 @@ class _QuizLibraryScreenState
 
           const SizedBox(height: 20),
 
-          switch (_section) {
+          ],
+
+          switch (
+
+          widget.folderId == QuizFolder.rootId
+              ? _section
+              : QuizLibrarySection.library
+
+          ) {
 
             QuizLibrarySection.continueSection =>
 

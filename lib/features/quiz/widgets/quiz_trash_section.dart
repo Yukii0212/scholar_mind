@@ -12,6 +12,150 @@ class QuizTrashSection extends ConsumerWidget {
     super.key,
   });
 
+  Future<void> restoreAll(
+      BuildContext context,
+      WidgetRef ref,
+      ) async {
+
+    final confirmed =
+    await showDialog<bool>(
+
+      context: context,
+
+      builder: (dialogContext) =>
+          AlertDialog(
+
+            title: const Text(
+              'Restore everything?',
+            ),
+
+            content: const Text(
+              'All folders and quizzes currently in the Trash will be restored.\n\n'
+                  'Do you want to continue?',
+            ),
+
+            actions: [
+
+              TextButton(
+
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      false,
+                    ),
+
+                child: const Text(
+                  'Cancel',
+                ),
+
+              ),
+
+              FilledButton(
+
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      true,
+                    ),
+
+                child: const Text(
+                  'Restore All',
+                ),
+
+              ),
+
+            ],
+
+          ),
+
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await ref
+        .read(
+      quiz_library
+          .quizLibraryActionControllerProvider
+          .notifier,
+    )
+        .restoreAll();
+
+  }
+
+  Future<void> deleteAll(
+      BuildContext context,
+      WidgetRef ref,
+      ) async {
+
+    final confirmed =
+    await showDialog<bool>(
+
+      context: context,
+
+      builder: (dialogContext) =>
+          AlertDialog(
+
+            title: const Text(
+              'Delete everything?',
+            ),
+
+            content: const Text(
+              'Everything in the Trash will be permanently deleted.\n\n'
+                  'This action cannot be undone.',
+            ),
+
+            actions: [
+
+              TextButton(
+
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      false,
+                    ),
+
+                child: const Text(
+                  'Cancel',
+                ),
+
+              ),
+
+              FilledButton(
+
+                onPressed: () =>
+                    Navigator.pop(
+                      dialogContext,
+                      true,
+                    ),
+
+                child: const Text(
+                  'Delete All',
+                ),
+
+              ),
+
+            ],
+
+          ),
+
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await ref
+        .read(
+      quiz_library
+          .quizLibraryActionControllerProvider
+          .notifier,
+    )
+        .permanentlyDeleteAll();
+
+  }
+
   @override
   Widget build(
       BuildContext context,
@@ -45,13 +189,79 @@ class QuizTrashSection extends ConsumerWidget {
 
           children: [
 
-            Text(
+            Row(
 
-              'Trash',
+              children: [
 
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
+                Expanded(
+
+                  child: Text(
+
+                    'Trash',
+
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge,
+
+                  ),
+
+                ),
+
+                PopupMenuButton<String>(
+
+                  itemBuilder: (_) => const [
+
+                    PopupMenuItem(
+
+                      value: 'restore_all',
+
+                      child: Text(
+                        'Restore All',
+                      ),
+
+                    ),
+
+                    PopupMenuItem(
+
+                      value: 'delete_all',
+
+                      child: Text(
+                        'Empty Trash',
+                      ),
+
+                    ),
+
+                  ],
+
+                  onSelected: (value) async {
+
+                    switch (value) {
+
+                      case 'restore_all':
+
+                        await restoreAll(
+                          context,
+                          ref,
+                        );
+
+                        break;
+
+                      case 'delete_all':
+
+                        await deleteAll(
+                          context,
+                          ref,
+                        );
+
+                        break;
+
+                    }
+
+                  },
+
+                ),
+
+              ],
 
             ),
 

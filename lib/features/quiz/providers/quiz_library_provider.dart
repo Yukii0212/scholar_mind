@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:scholar_mind/features/quiz/providers/quiz_provider.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../data/quiz_library_repository.dart';
 import '../domain/quiz_folder.dart';
 import '../domain/quiz_attempt.dart';
+import '../domain/quiz_sort_order.dart';
 
 part 'quiz_library_provider.g.dart';
 
@@ -118,10 +120,76 @@ Stream<List<QuizAttempt>> quizzesInFolder(
     QuizzesInFolderRef ref,
     String folderId,
     ) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
-  if (userId == null) return const Stream.empty();
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
 
-  return ref.watch(quizLibraryRepositoryProvider).watchQuizzes(userId, folderId);
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  final sortOrder = ref.watch(
+    quizSortOrderProvider,
+  );
+
+  return ref
+      .watch(
+    quizLibraryRepositoryProvider,
+  )
+      .watchQuizzes(
+    userId,
+    folderId,
+  )
+      .map((quizzes) {
+
+    final sorted = [...quizzes];
+
+    switch (sortOrder) {
+
+      case QuizSortOrder.lastOpened:
+      case QuizSortOrder.lastModified:
+        sorted.sort(
+              (a, b) =>
+              b.updatedAt.compareTo(
+                a.updatedAt,
+              ),
+        );
+        break;
+
+      case QuizSortOrder.dateCreated:
+        sorted.sort(
+              (a, b) =>
+              b.createdAt.compareTo(
+                a.createdAt,
+              ),
+        );
+        break;
+
+      case QuizSortOrder.dateCompleted:
+        sorted.sort(
+              (a, b) =>
+              (b.completedAt ?? b.createdAt)
+                  .compareTo(
+                a.completedAt ??
+                    a.createdAt,
+              ),
+        );
+        break;
+
+      case QuizSortOrder.name:
+        sorted.sort(
+              (a, b) => a.name
+              .toLowerCase()
+              .compareTo(
+            b.name.toLowerCase(),
+          ),
+        );
+        break;
+
+    }
+
+    return sorted;
+
+  });
 }
 
 @riverpod

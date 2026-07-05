@@ -57,7 +57,7 @@ class _QuizScreenState
   final _quizRepository =
   QuizRepository();
 
-  String _destinationFolderId = 'root';
+  String _destinationFolderId = QuizFolder.rootId;
 
   String _destinationFolderName = 'My Quizzes';
 
@@ -212,64 +212,80 @@ class _QuizScreenState
 
               Card(
                 child: ListTile(
+
                   leading: const Icon(
                     Icons.folder,
                   ),
+
                   title: const Text(
                     'Destination',
                   ),
+
                   subtitle: Text(
                     _destinationFolderName,
                   ),
+
+                  trailing: TextButton(
+
+                    onPressed: () async {
+
+                      final folders = await ref.read(
+                        quiz_library.allFoldersProvider.future,
+                      );
+
+                      if (!mounted) {
+                        return;
+                      }
+
+                      final folderId =
+                      await showDialog<String>(
+                        context: context,
+                        builder: (_) {
+                          return QuizFolderPickerDialog(
+                            folders: folders,
+                          );
+                        },
+                      );
+
+                      if (folderId == null) {
+                        return;
+                      }
+
+                      final folderName =
+                      folderId == QuizFolder.rootId
+                          ? 'My Quizzes'
+                          : folders
+                          .firstWhere(
+                            (folder) =>
+                        folder.id ==
+                            folderId,
+                      )
+                          .name;
+
+                      setState(() {
+
+                        _destinationFolderId =
+                            folderId;
+
+                        _destinationFolderName =
+                            folderName;
+
+                      });
+
+                    },
+
+                    child: const Text(
+                      'Change',
+                    ),
+
+                  ),
+
                 ),
               ),
 
               const SizedBox(height: 20),
               GenerateQuizButton(
                 onPressed: _generateQuiz,
-
-                onGenerateToFolder: () async {
-
-                  final folders = await ref.read(
-                    quiz_library.allFoldersProvider.future,
-                  );
-
-                  if (!mounted) {
-                    return;
-                  }
-
-                  final folderId =
-                  await showDialog<String>(
-                    context: context,
-                    builder: (_) {
-                      return QuizFolderPickerDialog(
-                        folders: folders,
-                      );
-                    },
-                  );
-
-                  if (folderId == null) {
-                    return;
-                  }
-
-                  final folderName = folderId ==
-                      QuizFolder.rootId
-                      ? 'My Quizzes'
-                      : folders
-                      .firstWhere(
-                        (folder) =>
-                    folder.id == folderId,
-                  )
-                      .name;
-
-                  setState(() {
-                    _destinationFolderId = folderId;
-                    _destinationFolderName = folderName;
-                  });
-
-                  _generateQuiz();
-
-                },
               ),
             ],
           ),

@@ -127,6 +127,8 @@ class QuizAttemptController
         completedAt: DateTime.now(),
       );
 
+      _dirty = true;
+
       await saveNow();
 
       return;
@@ -177,6 +179,8 @@ class QuizAttemptController
       status: QuizAttemptStatus.completed,
       completedAt: DateTime.now(),
     );
+
+    _dirty = true;
 
     await saveNow();
   }

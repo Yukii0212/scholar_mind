@@ -600,7 +600,7 @@ const SizedBox(height: 20),
 
                       Expanded(
                         child: Text(
-                          'History',
+                          'Library',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge,
@@ -747,9 +747,240 @@ title: Text(
 folder.name,
 ),
 
-trailing: const Icon(
-Icons.chevron_right,
-),
+  trailing: PopupMenuButton<String>(
+
+    onSelected: (value) async {
+
+      switch (value) {
+
+        case 'rename':
+
+          final controller =
+          TextEditingController(
+            text: folder.name,
+          );
+
+          final newName =
+          await showDialog<String>(
+            context: context,
+            builder: (dialogContext) {
+
+              return AlertDialog(
+
+                title: const Text(
+                  'Rename Folder',
+                ),
+
+                content: TextField(
+                  controller: controller,
+                  autofocus: true,
+                  decoration:
+                  const InputDecoration(
+                    labelText:
+                    'Folder Name',
+                  ),
+                ),
+
+                actions: [
+
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        dialogContext,
+                      );
+                    },
+                    child: const Text(
+                      'Cancel',
+                    ),
+                  ),
+
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        dialogContext,
+                        controller.text.trim(),
+                      );
+                    },
+                    child: const Text(
+                      'Rename',
+                    ),
+                  ),
+
+                ],
+
+              );
+
+            },
+          );
+
+          if (newName == null ||
+              newName.trim().isEmpty) {
+            return;
+          }
+
+          await ref
+              .read(
+            quiz_library
+                .quizLibraryActionControllerProvider
+                .notifier,
+          )
+              .renameQuizFolder(
+            folderId: folder.id,
+            name: newName,
+          );
+
+          break;
+
+        case 'move':
+
+          final folders = await ref.read(
+            quiz_library.allFoldersProvider.future,
+          );
+
+          if (!context.mounted) {
+            return;
+          }
+
+          final destinationFolderId =
+          await showDialog<String>(
+            context: context,
+            builder: (_) {
+              return QuizFolderPickerDialog(
+                folders: folders,
+              );
+            },
+          );
+
+          if (destinationFolderId == null) {
+            return;
+          }
+
+          final success = await ref
+              .read(
+            quiz_library
+                .quizLibraryActionControllerProvider
+                .notifier,
+          )
+              .moveQuizFolder(
+            folderId: folder.id,
+            destinationFolderId:
+            destinationFolderId,
+          );
+
+          if (!success && context.mounted) {
+
+            ScaffoldMessenger.of(context)
+                .showSnackBar(
+
+              const SnackBar(
+
+                content: Text(
+                  'That folder cannot be moved there.',
+                ),
+
+              ),
+
+            );
+
+          }
+
+          break;
+
+        case 'delete':
+
+          final confirmed =
+          await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) {
+
+              return AlertDialog(
+
+                title: const Text(
+                  'Delete Folder?',
+                ),
+
+                content: Text(
+                  'Move "${folder.name}" and all of its subfolders and quizzes to Trash?',
+                ),
+
+                actions: [
+
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        dialogContext,
+                        false,
+                      );
+                    },
+                    child: const Text(
+                      'Cancel',
+                    ),
+                  ),
+
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        dialogContext,
+                        true,
+                      );
+                    },
+                    child: const Text(
+                      'Delete',
+                    ),
+                  ),
+
+                ],
+
+              );
+
+            },
+          );
+
+          if (confirmed != true) {
+            return;
+          }
+
+          await ref
+              .read(
+            quiz_library
+                .quizLibraryActionControllerProvider
+                .notifier,
+          )
+              .softDeleteQuizFolder(
+            folder,
+          );
+
+          break;
+
+      }
+
+    },
+
+    itemBuilder: (_) => const [
+
+      PopupMenuItem(
+        value: 'rename',
+        child: Text(
+          'Rename',
+        ),
+      ),
+
+      PopupMenuItem(
+        value: 'move',
+        child: Text(
+          'Move',
+        ),
+      ),
+
+      PopupMenuItem(
+        value: 'delete',
+        child: Text(
+          'Delete',
+        ),
+      ),
+    ],
+
+  ),
 
 onTap: () {
 

@@ -72,6 +72,108 @@ class QuizLibraryScreen extends ConsumerWidget {
 
               const SizedBox(height: 12),
 
+              ref.watch(
+                quiz_library.folderPathProvider(
+                  folderId,
+                ),
+              ).when(
+
+                loading: () =>
+                const SizedBox.shrink(),
+
+                error: (_, __) =>
+                const SizedBox.shrink(),
+
+                data: (path) {
+
+                  return Wrap(
+
+                    crossAxisAlignment:
+                    WrapCrossAlignment.center,
+
+                    spacing: 2,
+
+                    children: [
+
+                      TextButton.icon(
+
+                        onPressed: () {
+
+                          Navigator.pushAndRemoveUntil(
+
+                            context,
+
+                            MaterialPageRoute(
+                              builder: (_) =>
+                              const QuizLibraryScreen(),
+                            ),
+
+                                (_) => false,
+
+                          );
+
+                        },
+
+                        icon: const Icon(
+                          Icons.home_outlined,
+                          size: 18,
+                        ),
+
+                        label: const Text(
+                          'My Quizzes',
+                        ),
+
+                      ),
+
+                      for (var i = 0;
+                      i < path.length;
+                      i++) ...[
+
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                        ),
+
+                        TextButton(
+
+                          onPressed: () {
+
+                            Navigator.pushAndRemoveUntil(
+
+                              context,
+
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    QuizLibraryScreen(
+                                      folderId:
+                                      path[i].id,
+                                    ),
+                              ),
+
+                                  (route) => false,
+
+                            );
+
+                          },
+
+                          child: Text(
+                            path[i].name,
+                          ),
+
+                        ),
+
+                      ],
+
+                    ],
+
+                  );
+
+                },
+
+              ),
+
+              const SizedBox(height: 12),
+
               Align(
                 alignment: Alignment.centerLeft,
                 child: FilledButton.icon(

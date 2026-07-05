@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:scholar_mind/features/quiz/providers/quiz_provider.dart';
 
@@ -232,6 +233,32 @@ Stream<QuizAttempt> quiz(
     userId,
     quizId,
   );
+}
+
+@riverpod
+Future<List<QuizFolder>> folderPath(
+    FolderPathRef ref,
+    String folderId,
+    ) async {
+
+  final userId =
+      ref.watch(authStateProvider)
+          .valueOrNull
+          ?.uid;
+
+  if (userId == null) {
+    return [];
+  }
+
+  return ref
+      .watch(
+    quizLibraryRepositoryProvider,
+  )
+      .getFolderPath(
+    userId: userId,
+    folderId: folderId,
+  );
+
 }
 
 @Riverpod(keepAlive: true)

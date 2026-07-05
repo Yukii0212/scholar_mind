@@ -266,7 +266,7 @@ final deletedQuizzesProvider =
 );
 
 typedef DeletedQuizzesRef = AutoDisposeStreamProviderRef<List<QuizAttempt>>;
-String _$quizzesInFolderHash() => r'2a570d6254c86785f17d08c0dc4f4b06f9e7a19f';
+String _$quizzesInFolderHash() => r'81c291430850e1de1c625270813752818704c87a';
 
 /// See also [quizzesInFolder].
 @ProviderFor(quizzesInFolder)
@@ -535,6 +535,135 @@ class _QuizProviderElement extends AutoDisposeStreamProviderElement<QuizAttempt>
 
   @override
   String get quizId => (origin as QuizProvider).quizId;
+}
+
+String _$folderPathHash() => r'07222646272594768a74cbb4642eab9ac95b9980';
+
+/// See also [folderPath].
+@ProviderFor(folderPath)
+const folderPathProvider = FolderPathFamily();
+
+/// See also [folderPath].
+class FolderPathFamily extends Family<AsyncValue<List<QuizFolder>>> {
+  /// See also [folderPath].
+  const FolderPathFamily();
+
+  /// See also [folderPath].
+  FolderPathProvider call(
+    String folderId,
+  ) {
+    return FolderPathProvider(
+      folderId,
+    );
+  }
+
+  @override
+  FolderPathProvider getProviderOverride(
+    covariant FolderPathProvider provider,
+  ) {
+    return call(
+      provider.folderId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'folderPathProvider';
+}
+
+/// See also [folderPath].
+class FolderPathProvider extends AutoDisposeFutureProvider<List<QuizFolder>> {
+  /// See also [folderPath].
+  FolderPathProvider(
+    String folderId,
+  ) : this._internal(
+          (ref) => folderPath(
+            ref as FolderPathRef,
+            folderId,
+          ),
+          from: folderPathProvider,
+          name: r'folderPathProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$folderPathHash,
+          dependencies: FolderPathFamily._dependencies,
+          allTransitiveDependencies:
+              FolderPathFamily._allTransitiveDependencies,
+          folderId: folderId,
+        );
+
+  FolderPathProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.folderId,
+  }) : super.internal();
+
+  final String folderId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<QuizFolder>> Function(FolderPathRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: FolderPathProvider._internal(
+        (ref) => create(ref as FolderPathRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        folderId: folderId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<QuizFolder>> createElement() {
+    return _FolderPathProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FolderPathProvider && other.folderId == folderId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, folderId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin FolderPathRef on AutoDisposeFutureProviderRef<List<QuizFolder>> {
+  /// The parameter `folderId` of this provider.
+  String get folderId;
+}
+
+class _FolderPathProviderElement
+    extends AutoDisposeFutureProviderElement<List<QuizFolder>>
+    with FolderPathRef {
+  _FolderPathProviderElement(super.provider);
+
+  @override
+  String get folderId => (origin as FolderPathProvider).folderId;
 }
 
 String _$quizLibraryActionControllerHash() =>

@@ -646,6 +646,42 @@ class QuizLibraryRepository {
     );
   }
 
+  Future<List<QuizFolder>> getFolderPath({
+    required String userId,
+    required String folderId,
+  }) async {
+
+    if (folderId == QuizFolder.rootId) {
+      return [];
+    }
+
+    final path = <QuizFolder>[];
+
+    String currentFolderId = folderId;
+
+    while (currentFolderId != QuizFolder.rootId) {
+
+      final snapshot = await _folders(userId)
+          .doc(currentFolderId)
+          .get();
+
+      if (!snapshot.exists) {
+        break;
+      }
+
+      final folder =
+      QuizFolder.fromDocument(snapshot);
+
+      path.insert(0, folder);
+
+      currentFolderId = folder.parentId;
+
+    }
+
+    return path;
+
+  }
+
   static int _sortFolders(QuizFolder a, QuizFolder b) {
     if (a.isFavorite != b.isFavorite) return a.isFavorite ? -1 : 1;
     return a.name.toLowerCase().compareTo(b.name.toLowerCase());

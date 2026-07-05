@@ -11,6 +11,7 @@ import '../domain/quiz_library_section.dart';
 import 'package:scholar_mind/features/quiz/screens/generate_quiz_screen.dart';
 import '../widgets/quiz_continue_section.dart';
 import '../widgets/quiz_library_section_widget.dart';
+import '../widgets/quiz_trash_section.dart';
 
 class QuizLibraryScreen
     extends ConsumerStatefulWidget {
@@ -21,9 +22,13 @@ class QuizLibraryScreen
 
     this.folderId = QuizFolder.rootId,
 
+    this.initialSection,
+
   });
 
   final String folderId;
+
+  final QuizLibrarySection? initialSection;
 
   @override
   ConsumerState<QuizLibraryScreen>
@@ -35,8 +40,18 @@ class QuizLibraryScreen
 class _QuizLibraryScreenState
     extends ConsumerState<QuizLibraryScreen> {
 
-  QuizLibrarySection _section =
-      QuizLibrarySection.continueSection;
+  late QuizLibrarySection _section;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _section =
+        widget.initialSection ??
+            (widget.folderId == QuizFolder.rootId
+                ? QuizLibrarySection.continueSection
+                : QuizLibrarySection.library);
+  }
 
   @override
   Widget build(
@@ -168,17 +183,9 @@ class _QuizLibraryScreenState
 
                         onPressed: () {
 
-                          Navigator.pushAndRemoveUntil(
-
+                          Navigator.popUntil(
                             context,
-
-                            MaterialPageRoute(
-                              builder: (_) =>
-                              const QuizLibraryScreen(),
-                            ),
-
-                                (_) => false,
-
+                                (route) => route.isFirst,
                           );
 
                         },
@@ -189,9 +196,8 @@ class _QuizLibraryScreenState
                         ),
 
                         label: const Text(
-                          'My Quizzes',
+                          'Home',
                         ),
-
                       ),
 
                       for (var i = 0;
@@ -214,8 +220,8 @@ class _QuizLibraryScreenState
                               MaterialPageRoute(
                                 builder: (_) =>
                                     QuizLibraryScreen(
-                                      folderId:
-                                      path[i].id,
+                                      folderId: path[i].id,
+                                      initialSection: _section,
                                     ),
                               ),
 
@@ -331,11 +337,9 @@ class _QuizLibraryScreenState
 
             QuizLibrarySection.trash =>
 
-            const SizedBox(),
+            const QuizTrashSection(),
 
           },
-
-          const SizedBox(height: 100),
 
           const SizedBox(height: 100),
         ],

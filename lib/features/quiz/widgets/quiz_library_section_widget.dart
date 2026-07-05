@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scholar_mind/features/quiz/widgets/quiz_folder_picker_dialog.dart';
 
 import '../domain/quiz_attempt.dart';
+import '../domain/quiz_library_section.dart';
 import '../domain/quiz_sort_order.dart';
 import '../providers/quiz_attempt_provider.dart';
 import '../providers/quiz_library_provider.dart' as quiz_library;
@@ -433,6 +434,7 @@ class QuizLibrarySectionWidget
 
                                       builder: (_) => QuizLibraryScreen(
                                         folderId: folder.id,
+                                        initialSection: QuizLibrarySection.library,
                                       ),
 
                                     ),

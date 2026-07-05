@@ -513,6 +513,39 @@ class QuizLibraryRepository {
     });
   }
 
+  Stream<List<QuizAttempt>> watchActiveQuizzes(
+      String userId,
+      ) {
+    return _quizzes(userId)
+        .where(
+      'isDeleted',
+      isEqualTo: false,
+    )
+        .snapshots()
+        .map((snapshot) {
+
+      final quizzes = snapshot.docs
+          .map(QuizAttempt.fromDocument)
+          .where(
+            (quiz) =>
+        quiz.status ==
+            QuizAttemptStatus.inProgress ||
+            quiz.status ==
+                QuizAttemptStatus.grading,
+      )
+          .toList();
+
+      quizzes.sort(
+            (a, b) =>
+            b.updatedAt.compareTo(
+              a.updatedAt,
+            ),
+      );
+
+      return quizzes;
+    });
+  }
+
   Stream<QuizAttempt> watchQuiz(
       String userId,
       String quizId,

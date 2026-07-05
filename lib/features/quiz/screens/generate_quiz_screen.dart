@@ -665,6 +665,8 @@ class _QuizScreenState
         builder: (_) =>
             QuizGeneratingScreen(
               request: request,
+              destinationFolderId:
+              _destinationFolderId,
             ),
       ),
     );

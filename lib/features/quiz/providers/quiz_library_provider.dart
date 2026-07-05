@@ -125,6 +125,28 @@ Stream<List<QuizAttempt>> quizzesInFolder(
 }
 
 @riverpod
+Stream<List<QuizAttempt>> activeQuizzes(
+    ActiveQuizzesRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider)
+          .valueOrNull
+          ?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(
+    quizLibraryRepositoryProvider,
+  )
+      .watchActiveQuizzes(
+    userId,
+  );
+}
+
+@riverpod
 Stream<QuizAttempt> quiz(
     QuizRef ref,
     String quizId,

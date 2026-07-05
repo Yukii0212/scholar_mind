@@ -20,9 +20,12 @@ class QuizGeneratingScreen extends ConsumerStatefulWidget {
   const QuizGeneratingScreen({
     super.key,
     required this.request,
+    required this.destinationFolderId,
   });
 
   final QuizGenerationRequest request;
+
+  final String destinationFolderId;
 
   @override
   ConsumerState<QuizGeneratingScreen>
@@ -74,7 +77,7 @@ class _QuizGeneratingScreenState
 
         name: quiz.title,
 
-        folderId: QuizFolder.rootId,
+        folderId: widget.destinationFolderId,
 
         createdAt: now,
 

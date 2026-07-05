@@ -396,6 +396,22 @@ class _QuizzesInFolderProviderElement
   String get folderId => (origin as QuizzesInFolderProvider).folderId;
 }
 
+String _$activeQuizzesHash() => r'abc1af6d7a9c8c181aabdb0db1df5349b7985690';
+
+/// See also [activeQuizzes].
+@ProviderFor(activeQuizzes)
+final activeQuizzesProvider =
+    AutoDisposeStreamProvider<List<QuizAttempt>>.internal(
+  activeQuizzes,
+  name: r'activeQuizzesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$activeQuizzesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef ActiveQuizzesRef = AutoDisposeStreamProviderRef<List<QuizAttempt>>;
 String _$quizHash() => r'fcedb308edd35253fbdaf9587fd31d6fc5fd6e0f';
 
 /// See also [quiz].

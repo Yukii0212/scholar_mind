@@ -5,7 +5,9 @@ import 'package:scholar_mind/features/quiz/screens/quiz_viewer_screen.dart';
 
 import '../domain/quiz_attempt.dart';
 import '../domain/quiz_folder.dart';
-import '../providers/quiz_library_provider.dart';
+import '../providers/quiz_library_provider.dart'
+as quiz_library;
+
 import '../providers/quiz_provider.dart';
 import '../widgets/quiz_folder_dialogs.dart';
 import '../widgets/quiz_folder_picker_dialog.dart';
@@ -29,9 +31,9 @@ class QuizLibraryScreen extends ConsumerWidget {
       BuildContext context,
       WidgetRef ref,
       ) {
-    final activeQuizzes =
+    final activeQuizzesAsync =
     ref.watch(
-      activeQuizzesProvider,
+      quiz_library.activeQuizzesProvider,
     );
 
     return Scaffold(
@@ -103,7 +105,7 @@ class QuizLibraryScreen extends ConsumerWidget {
 
                     await ref
                         .read(
-                      quizLibraryActionControllerProvider.notifier,
+                      quiz_library.quizLibraryActionControllerProvider.notifier,
                     )
                         .createQuizFolder(
                       parentId: folderId,
@@ -120,396 +122,393 @@ class QuizLibraryScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          if (activeQuizzes.isNotEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+activeQuizzesAsync.when(
+
+loading: () =>
+const SizedBox.shrink(),
+
+error: (_, __) =>
+const SizedBox.shrink(),
+
+data: (activeQuizzes) {
+  if (activeQuizzes.isEmpty) {
+    return const SizedBox.shrink();
+  }
+
+  return Card(
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+
+          Text(
+            'Continue',
+            style: Theme
+                .of(context)
+                .textTheme
+                .titleLarge,
+          ),
+
+          const SizedBox(height: 16),
+
+          ListView.separated(
+            shrinkWrap: true,
+            physics:
+            const NeverScrollableScrollPhysics(),
+            itemCount: activeQuizzes.length,
+            separatorBuilder:
+                (_, __) =>
+            const SizedBox(height: 12),
+            itemBuilder:
+                (context, index) {
+              final item =
+              activeQuizzes[index];
+
+              return Card(
+                margin: EdgeInsets.zero,
+                child: ExpansionTile(
+
+                  leading: Icon(
+
+                    switch (item.status) {
+
+                      QuizAttemptStatus.inProgress =>
+                      Icons.play_circle_fill,
+
+                      QuizAttemptStatus.grading =>
+                      Icons.hourglass_top,
+
+                      QuizAttemptStatus.completed =>
+                      Icons.check_circle,
+
+                      QuizAttemptStatus.archived =>
+                      Icons.archive,
+
+                    },
+
+                  ),
+
+                  title: Text(
+                    item.name,
+                    maxLines: 2,
+                    overflow:
+                    TextOverflow.ellipsis,
+                  ),
+
+                  subtitle: Text(
+
+                    switch (item.status) {
+
+                      QuizAttemptStatus.inProgress =>
+                      '${item.answers.length}'
+                          ' / '
+                          '${item.quiz.questions.length}'
+                          ' Questions Answered',
+
+                      QuizAttemptStatus.grading =>
+                      'Waiting for AI grading...',
+
+                      QuizAttemptStatus.completed =>
+                      'Results Ready',
+
+                      QuizAttemptStatus.archived =>
+                      'Archived',
+
+                    },
+
+                  ),
+
+                  childrenPadding:
+                  const EdgeInsets.fromLTRB(
+                    16,
+                    0,
+                    16,
+                    16,
+                  ),
+
                   children: [
 
-                    Text(
-                      'Continue',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge,
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+
+                        icon: Icon(
+
+                          item.status ==
+                              QuizAttemptStatus.inProgress
+                              ? Icons.play_arrow
+                              : Icons.visibility,
+
+                        ),
+
+                        label: Text(
+
+                          item.status ==
+                              QuizAttemptStatus.inProgress
+                              ? 'Continue'
+                              : 'View Results',
+
+                        ),
+
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) {
+                                if (item.status ==
+                                    QuizAttemptStatus.inProgress) {
+                                  return QuizViewerScreen(
+                                    attempt: item,
+                                  );
+                                }
+
+                                return QuizResultScreen(
+                                  quiz: item.quiz,
+                                  answers: item.answers,
+                                );
+                              },
+                            ),
+                          );
+                        },
+
+                      ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
 
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics:
-                      const NeverScrollableScrollPhysics(),
-                      itemCount: activeQuizzes.length,
-                      separatorBuilder:
-                          (_, __) =>
-                      const SizedBox(height: 12),
-                      itemBuilder:
-                          (context, index) {
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.refresh,
+                        ),
+                        label: const Text(
+                          'Retry',
+                        ),
+                        onPressed: () {
+                          // TODO
+                        },
+                      ),
+                    ),
 
-                        final item =
-                        activeQuizzes[index];
+                    const SizedBox(height: 8),
 
-                        return Card(
-                          margin: EdgeInsets.zero,
-                          child: ExpansionTile(
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.edit,
+                        ),
+                        label: const Text(
+                          'Rename',
+                        ),
+                        onPressed: () async {
+                          final controller = TextEditingController(
+                            text: item.name,
+                          );
 
-                            leading: Icon(
+                          final newName = await showDialog<String>(
+                            context: context,
+                            builder: (dialogContext) {
+                              return AlertDialog(
 
-                              switch (item.status) {
-
-                                QuizAttemptStatus.inProgress =>
-                                Icons.play_circle_fill,
-
-                                QuizAttemptStatus.grading =>
-                                Icons.hourglass_top,
-
-                                QuizAttemptStatus.completed =>
-                                Icons.check_circle,
-
-                                QuizAttemptStatus.archived =>
-                                Icons.archive,
-
-                              },
-
-                            ),
-
-                            title: Text(
-                              item.name,
-                              maxLines: 2,
-                              overflow:
-                              TextOverflow.ellipsis,
-                            ),
-
-                            subtitle: Text(
-
-                              switch (item.status) {
-
-                                QuizAttemptStatus.inProgress =>
-                                '${item.answers.length}'
-                                    ' / '
-                                    '${item.quiz.questions.length}'
-                                    ' Questions Answered',
-
-                                QuizAttemptStatus.grading =>
-                                'Waiting for AI grading...',
-
-                                QuizAttemptStatus.completed =>
-                                'Results Ready',
-
-                                QuizAttemptStatus.archived =>
-                                'Archived',
-
-                              },
-
-                            ),
-
-                            childrenPadding:
-                            const EdgeInsets.fromLTRB(
-                              16,
-                              0,
-                              16,
-                              16,
-                            ),
-
-                            children: [
-
-                              SizedBox(
-                                width: double.infinity,
-                                child: FilledButton.icon(
-
-                                  icon: Icon(
-
-                                    item.status ==
-                                        QuizAttemptStatus.inProgress
-                                        ? Icons.play_arrow
-                                        : Icons.visibility,
-
-                                  ),
-
-                                  label: Text(
-
-                                    item.status ==
-                                        QuizAttemptStatus.inProgress
-                                        ? 'Continue'
-                                        : 'View Results',
-
-                                  ),
-
-                                  onPressed: () {
-
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) {
-
-                                          if (item.status ==
-                                              QuizAttemptStatus.inProgress) {
-                                            return QuizViewerScreen(
-                                              attempt: item,
-                                            );
-                                          }
-
-                                          return QuizResultScreen(
-                                            quiz: item.quiz,
-                                            answers: item.answers,
-                                          );
-
-                                        },
-                                      ),
-                                    );
-
-                                  },
-
+                                title: const Text(
+                                  'Rename Quiz',
                                 ),
-                              ),
 
-                              const SizedBox(height: 8),
-
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  icon: const Icon(
-                                    Icons.refresh,
+                                content: TextField(
+                                  controller: controller,
+                                  autofocus: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Quiz Name',
                                   ),
-                                  label: const Text(
-                                    'Retry',
-                                  ),
-                                  onPressed: () {
-                                    // TODO
-                                  },
                                 ),
-                              ),
 
-                              const SizedBox(height: 8),
+                                actions: [
 
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  icon: const Icon(
-                                    Icons.edit,
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(dialogContext);
+                                    },
+                                    child: const Text(
+                                      'Cancel',
+                                    ),
                                   ),
-                                  label: const Text(
-                                    'Rename',
+
+                                  FilledButton(
+                                    onPressed: () {
+                                      Navigator.pop(
+                                        dialogContext,
+                                        controller.text.trim(),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Rename',
+                                    ),
                                   ),
-                                  onPressed: () async {
 
-                                    final controller = TextEditingController(
-                                      text: item.name,
-                                    );
+                                ],
 
-                                    final newName = await showDialog<String>(
-                                      context: context,
-                                      builder: (dialogContext) {
+                              );
+                            },
+                          );
 
-                                        return AlertDialog(
+                          if (newName == null || newName
+                              .trim()
+                              .isEmpty) {
+                            return;
+                          }
 
-                                          title: const Text(
-                                            'Rename Quiz',
-                                          ),
-
-                                          content: TextField(
-                                            controller: controller,
-                                            autofocus: true,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Quiz Name',
-                                            ),
-                                          ),
-
-                                          actions: [
-
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.pop(dialogContext);
-                                              },
-                                              child: const Text(
-                                                'Cancel',
-                                              ),
-                                            ),
-
-                                            FilledButton(
-                                              onPressed: () {
-
-                                                Navigator.pop(
-                                                  dialogContext,
-                                                  controller.text.trim(),
-                                                );
-
-                                              },
-                                              child: const Text(
-                                                'Rename',
-                                              ),
-                                            ),
-
-                                          ],
-
-                                        );
-
-                                      },
-                                    );
-
-                                    if (newName == null || newName.trim().isEmpty) {
-                                      return;
-                                    }
-
-                                    if (!context.mounted) {
-                                      return;
-                                    }
+                          if (!context.mounted) {
+                            return;
+                          }
 
 
-                                    await ref
-                                        .read(
-                                      quizLibraryActionControllerProvider.notifier,
-                                    )
-                                        .renameQuiz(
-                                      quizId: item.id,
-                                      name: newName,
-                                    );
+                          await ref
+                              .read(
+                            quiz_library.quizLibraryActionControllerProvider.notifier,
+                          )
+                              .renameQuiz(
+                            quizId: item.id,
+                            name: newName,
+                          );
+                        },
+                      ),
+                    ),
 
-                                  },
+                    const SizedBox(height: 8),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.drive_file_move,
+                        ),
+                        label: const Text(
+                          'Move',
+                        ),
+                        onPressed: () async {
+                          final folders = await ref
+                              .read(
+                            quiz_library.allFoldersProvider.future,
+                          );
+
+                          final destinationFolderId =
+                          await showDialog<String>(
+                            context: context,
+                            builder: (_) {
+                              return QuizFolderPickerDialog(
+                                folders: folders,
+                              );
+                            },
+                          );
+
+                          if (destinationFolderId == null) {
+                            return;
+                          }
+
+                          await ref
+                              .read(
+                            quiz_library.quizLibraryActionControllerProvider.notifier,
+                          )
+                              .moveQuiz(
+                            quizId: item.id,
+                            destinationFolderId:
+                            destinationFolderId,
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.delete_outline,
+                        ),
+                        label: const Text(
+                          'Delete',
+                        ),
+                        onPressed: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (dialogContext) {
+                              return AlertDialog(
+
+                                title: const Text(
+                                  'Delete Quiz?',
                                 ),
-                              ),
 
-                              const SizedBox(height: 8),
-
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  icon: const Icon(
-                                    Icons.drive_file_move,
-                                  ),
-                                  label: const Text(
-                                    'Move',
-                                  ),
-                                  onPressed: () async {
-
-                                    final folders = await ref
-                                        .read(
-                                      allFoldersProvider.future,
-                                    );
-
-                                    final destinationFolderId =
-                                    await showDialog<String>(
-                                      context: context,
-                                      builder: (_) {
-
-                                        return QuizFolderPickerDialog(
-                                          folders: folders,
-                                        );
-
-                                      },
-                                    );
-
-                                    if (destinationFolderId == null) {
-                                      return;
-                                    }
-
-                                    await ref
-                                        .read(
-                                      quizLibraryActionControllerProvider.notifier,
-                                    )
-                                        .moveQuiz(
-                                      quizId: item.id,
-                                      destinationFolderId:
-                                      destinationFolderId,
-                                    );
-
-                                  },
+                                content: Text(
+                                  'Move "${item.name}" to Trash?',
                                 ),
-                              ),
 
-                              const SizedBox(height: 8),
+                                actions: [
 
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(
+                                        dialogContext,
+                                        false,
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Cancel',
+                                    ),
                                   ),
-                                  label: const Text(
-                                    'Delete',
+
+                                  FilledButton(
+                                    onPressed: () {
+                                      Navigator.pop(
+                                        dialogContext,
+                                        true,
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Delete',
+                                    ),
                                   ),
-                                  onPressed: () async {
 
-                                    final confirmed = await showDialog<bool>(
-                                      context: context,
-                                      builder: (dialogContext) {
+                                ],
 
-                                        return AlertDialog(
+                              );
+                            },
+                          );
 
-                                          title: const Text(
-                                            'Delete Quiz?',
-                                          ),
+                          if (confirmed != true) {
+                            return;
+                          }
 
-                                          content: Text(
-                                            'Move "${item.name}" to Trash?',
-                                          ),
-
-                                          actions: [
-
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.pop(
-                                                  dialogContext,
-                                                  false,
-                                                );
-                                              },
-                                              child: const Text(
-                                                'Cancel',
-                                              ),
-                                            ),
-
-                                            FilledButton(
-                                              onPressed: () {
-                                                Navigator.pop(
-                                                  dialogContext,
-                                                  true,
-                                                );
-                                              },
-                                              child: const Text(
-                                                'Delete',
-                                              ),
-                                            ),
-
-                                          ],
-
-                                        );
-
-                                      },
-                                    );
-
-                                    if (confirmed != true) {
-                                      return;
-                                    }
-
-                                    await ref
-                                        .read(
-                                      quizLibraryActionControllerProvider.notifier,
-                                    )
-                                        .softDeleteQuiz(
-                                      item,
-                                    );
-
-                                  },
-                                ),
-                              ),
-
-                            ],
-
-                          ),
-                        );
-
-                      },
+                          await ref
+                              .read(
+                            quiz_library.quizLibraryActionControllerProvider.notifier,
+                          )
+                              .softDeleteQuiz(
+                            item,
+                          );
+                        },
+                      ),
                     ),
 
                   ],
+
                 ),
-              ),
-            )
-          else
-    const SizedBox(height: 20),
+              );
+            },
+          ),
+
+        ],
+      ),
+    ),
+  );
+}
+),
+
+const SizedBox(height: 20),
 
           Card(
             child: Padding(
@@ -604,13 +603,13 @@ class QuizLibraryScreen extends ConsumerWidget {
     Builder(
     builder: (context) {
     final libraryAsync = ref.watch(
-      quizzesInFolderProvider(
+      quiz_library.quizzesInFolderProvider(
         folderId,
       ),
     );
 
     final foldersAsync = ref.watch(
-      childFoldersProvider(
+      quiz_library.childFoldersProvider(
         folderId,
       ),
     );
@@ -884,7 +883,7 @@ library.length,
 
                                       await ref
                                           .read(
-                                        quizLibraryActionControllerProvider.notifier,
+                                        quiz_library.quizLibraryActionControllerProvider.notifier,
                                       )
                                           .renameQuiz(
                                         quizId: item.id,
@@ -910,7 +909,7 @@ library.length,
 
                                       final folders = await ref
                                           .read(
-                                        allFoldersProvider.future,
+                                        quiz_library.allFoldersProvider.future,
                                       );
 
                                       final destinationFolderId =
@@ -931,7 +930,7 @@ library.length,
 
                                       await ref
                                           .read(
-                                        quizLibraryActionControllerProvider.notifier,
+                                        quiz_library.quizLibraryActionControllerProvider.notifier,
                                       )
                                           .moveQuiz(
                                         quizId: item.id,
@@ -1009,7 +1008,7 @@ library.length,
 
                                       await ref
                                           .read(
-                                        quizLibraryActionControllerProvider.notifier,
+                                        quiz_library.quizLibraryActionControllerProvider.notifier,
                                       )
                                           .softDeleteQuiz(
                                         item,

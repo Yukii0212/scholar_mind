@@ -9,7 +9,7 @@ class QuizLocalCacheService {
   static const _attemptKey =
       'active_quiz_attempt';
 
-  Future<void> save(
+  Future<void> saveAttempt(
       Map<String, dynamic> json,
       ) async {
     final prefs =
@@ -21,8 +21,7 @@ class QuizLocalCacheService {
     );
   }
 
-  Future<Map<String, dynamic>?>
-  load() async {
+  Future<Map<String, dynamic>?> loadCurrentAttempt() async {
 
     final prefs =
     await SharedPreferences.getInstance();
@@ -38,7 +37,7 @@ class QuizLocalCacheService {
     as Map<String, dynamic>;
   }
 
-  Future<void> clear() async {
+  Future<void> clearCurrentAttempt() async {
     final prefs =
     await SharedPreferences.getInstance();
 

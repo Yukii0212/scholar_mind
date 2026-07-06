@@ -1,6 +1,7 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:gap/gap.dart';
 
 import '../data/library_repository.dart';
@@ -20,6 +21,7 @@ import '../widgets/note_card.dart';
 import '../widgets/folder_picker_dialog.dart';
 import '../widgets/category_dialog.dart';
 import '../widgets/folder_dialogs.dart';
+import '../widgets/trash_section.dart';
 
 import '../services/file_open_service.dart';
 
@@ -72,7 +74,65 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       const AsyncValue<List<NoteItem>>.data([]),
     };
 
-    return Stack(
+    return Scaffold(
+
+        floatingActionButton:
+
+        _section == LibrarySection.browse
+
+            ? SpeedDial(
+
+          icon: Icons.add,
+
+          activeIcon: Icons.close,
+
+          spacing: 12,
+
+          children: [
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.upload_file,
+              ),
+
+              label: 'Upload Files',
+
+              onTap: _uploadNotes,
+
+            ),
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.note_add_outlined,
+              ),
+
+              label: 'New Note',
+
+              onTap: _createNote,
+
+            ),
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.create_new_folder,
+              ),
+
+              label: 'New Folder',
+
+              onTap: _createFolder,
+
+            ),
+
+          ],
+
+        )
+
+            : null,
+
+        body: Stack(
       children: [
         CustomScrollView(
           slivers: [
@@ -93,6 +153,90 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 ),
               ),
             ),
+            if (_section == LibrarySection.trash)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  12,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: TrashSection(
+
+                    onRestoreAll: _restoreAll,
+
+                    onDeleteAll: _permanentlyDeleteAll,
+
+                    folders: folders.valueOrNull?.map((folder) {
+
+                      return FolderCard(
+
+                        folder: folder,
+
+                        isTrashSection: true,
+
+                        isArchivedSection: false,
+
+                        onOpen: () => _openFolder(folder),
+
+                        onDelete: () => _moveFolderToTrash(folder),
+
+                        onMove: () => _moveFolder(folder),
+
+                        onRestore: () => _restoreFolder(folder),
+
+                        onRename: () => _renameFolder(folder),
+
+                        onPermanentDelete: () =>
+                            _permanentlyDeleteFolder(folder),
+
+                        onToggleFavorite: () =>
+                            _toggleFavorite(folder),
+
+                        onToggleArchived: () =>
+                            _toggleArchived(folder),
+
+                      );
+
+                    }).toList() ?? const [],
+
+                    files: notes.valueOrNull?.map((note) {
+
+                      return NoteCard(
+
+                        note: note,
+
+                        onTap: () => _openNote(note),
+
+                        onRename: () => _renameNote(note),
+
+                        onMove: () => _moveNote(note),
+
+                        onCopy: () => _copyNote(note),
+
+                        onToggleFavorite: () =>
+                            _toggleNoteFavorite(note),
+
+                        onDelete: () =>
+                            _deleteNote(note),
+
+                        isTrashSection: true,
+
+                        onRestore: () =>
+                            _restoreNote(note),
+
+                        onPermanentDelete: () =>
+                            _permanentlyDeleteNote(note),
+
+                      );
+
+                    }).toList() ?? const [],
+
+                  ),
+                ),
+              ),
+
             ..._buildFolderSlivers(
               folders,
               notes.hasValue
@@ -117,8 +261,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             top: 0,
             child: LinearProgressIndicator(),
           ),
-      ],
+         ],
+        ),
     );
+
   }
 
   Future<void> _restoreAll() async {
@@ -218,7 +364,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           child: ErrorState(message: _friendlyError(error)),
         ),
       ],
-      data: (items) => [
+data: (items) {
+
+if (_section == LibrarySection.trash) {
+return const <Widget>[];
+}
+
+return [
         if (items.isNotEmpty)
           const SliverPadding(
             padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
@@ -230,30 +382,44 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             ),
           ),
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverGrid.builder(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 320,
-              mainAxisExtent: 92,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+          ),
+          sliver: SliverList.separated(
+
             itemCount: items.length,
+
+            separatorBuilder: (_, __) =>
+            const Gap(8),
+
             itemBuilder: (context, index) {
+
               final folder = items[index];
+
               return FolderCard(
+
                 folder: folder,
+
                 isArchivedSection:
                 _section == LibrarySection.archived,
+
                 isTrashSection:
                 _section == LibrarySection.trash,
-                onOpen: () => _openFolder(folder),
-                onDelete: () => _moveFolderToTrash(folder),
 
-                onMove: () => _moveFolder(folder),
+                onOpen: () =>
+                    _openFolder(folder),
 
-                onRestore: () => _restoreFolder(folder),
-                onRename: () => _renameFolder(folder),
+                onDelete: () =>
+                    _moveFolderToTrash(folder),
+
+                onMove: () =>
+                    _moveFolder(folder),
+
+                onRestore: () =>
+                    _restoreFolder(folder),
+
+                onRename: () =>
+                    _renameFolder(folder),
 
                 onPermanentDelete: () =>
                     _permanentlyDeleteFolder(folder),
@@ -263,9 +429,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
                 onToggleArchived: () =>
                     _toggleArchived(folder),
+
               );
+
             },
+
           ),
+
         ),
         if (items.isEmpty &&
             !hasNotes &&
@@ -299,7 +469,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               },
             ),
           ),
-      ],
+];
+
+},
     );
   }
 
@@ -324,16 +496,52 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ),
         ),
       ],
-      data: (items) => [
+data: (items) {
+
+if (_section == LibrarySection.trash) {
+return const <Widget>[];
+}
+
+return [
         if (items.isNotEmpty)
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                'Files',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              24,
+              20,
+              8,
             ),
+            sliver: SliverToBoxAdapter(
+
+              child: Row(
+
+                children: [
+
+                  const Expanded(
+
+                    child: Text(
+
+                      'Files',
+
+                      style: TextStyle(
+
+                        fontSize: 18,
+
+                        fontWeight:
+                        FontWeight.w600,
+
+                      ),
+
+                    ),
+
+                  ),
+
+                ],
+
+              ),
+
+            ),
+
           ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -395,7 +603,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               ),
             ),
           ),
-      ],
+];
+
+},
     );
   }
 

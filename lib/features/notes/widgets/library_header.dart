@@ -35,105 +35,128 @@ class LibraryHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Notes', style: Theme.of(context).textTheme.headlineMedium),
-        const Gap(4),
         Text(
-          'Organise study material into folders and categories.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          'Notes',
+          style: Theme.of(context)
+              .textTheme
+              .headlineMedium,
         ),
+
         const Gap(20),
-        SegmentedButton<LibrarySection>(
+
+        if (section == LibrarySection.browse) ...[
+
+          Wrap(
+
+            crossAxisAlignment:
+            WrapCrossAlignment.center,
+
+            spacing: 2,
+
+            children: [
+
+              TextButton.icon(
+
+                onPressed: () =>
+                    onBreadcrumbPressed(-1),
+
+                icon: const Icon(
+                  Icons.home_outlined,
+                  size: 18,
+                ),
+
+                label: const Text(
+                  'Home',
+                ),
+
+              ),
+
+              for (var index = 0;
+              index < folderStack.length;
+              index++) ...[
+
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                ),
+
+                TextButton(
+
+                  onPressed: () =>
+                      onBreadcrumbPressed(index),
+
+                  child: Text(
+                    folderStack[index].name,
+                  ),
+
+                ),
+
+              ],
+
+            ],
+
+          ),
+
+          const Gap(20),
+
+        ],
+
+        SizedBox(
+
+            width: double.infinity,
+
+            child: SegmentedButton<LibrarySection>(
+
+              showSelectedIcon: false,
+
           segments: const [
+
             ButtonSegment(
+
               value: LibrarySection.browse,
-              icon: Icon(Icons.folder_outlined),
-              label: Text('Library'),
+
+              icon: Icon(
+                Icons.folder_outlined,
+              ),
+
             ),
+
             ButtonSegment(
+
               value: LibrarySection.favorites,
-              icon: Icon(Icons.star_outline),
-              label: Text('Favourites'),
+
+              icon: Icon(
+                Icons.star_outline,
+              ),
+
             ),
+
             ButtonSegment(
+
               value: LibrarySection.archived,
-              icon: Icon(Icons.archive_outlined),
-              label: Text('Archived'),
+
+              icon: Icon(
+                Icons.archive_outlined,
+              ),
+
             ),
+
             ButtonSegment(
+
               value: LibrarySection.trash,
-              icon: Icon(Icons.delete_outline),
-              label: Text('Trash'),
+
+              icon: Icon(
+                Icons.delete_outline,
+              ),
+
             ),
+
           ],
           selected: {section},
           onSelectionChanged:
           isBusy ? null : (selection) => onSectionChanged(selection.first),
         ),
-        if (section == LibrarySection.browse) ...[
-          const Gap(18),
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 2,
-            children: [
-              TextButton.icon(
-                onPressed: () => onBreadcrumbPressed(-1),
-                icon: const Icon(Icons.home_outlined, size: 18),
-                label: const Text('Notes'),
-              ),
-              for (var index = 0; index < folderStack.length; index++) ...[
-                const Icon(Icons.chevron_right, size: 18),
-                TextButton(
-                  onPressed: () => onBreadcrumbPressed(index),
-                  child: Text(folderStack[index].name),
-                ),
-              ],
-            ],
-          ),
-          const Gap(10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onCreateFolder,
-                icon: const Icon(Icons.create_new_folder_outlined),
-                label: const Text('New folder'),
-              ),
-              FilledButton.icon(
-                onPressed: isBusy ? null : onUpload,
-                icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Upload files'),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onCreateNote,
-                icon: const Icon(Icons.note_add_outlined),
-                label: const Text('New note'),
-              ),
-            ],
-          ),
-        ],
-        if (section == LibrarySection.trash) ...[
-          const Gap(18),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              OutlinedButton.icon(
-                onPressed: isBusy ? null : onRestoreAll,
-                icon: const Icon(Icons.restore),
-                label: const Text('Restore All'),
-              ),
-              FilledButton.icon(
-                onPressed: isBusy ? null : onDeleteAll,
-                icon: const Icon(Icons.delete_forever),
-                label: const Text('Delete All'),
-              ),
-            ],
-          ),
-        ],
+        ),
       ],
     );
   }

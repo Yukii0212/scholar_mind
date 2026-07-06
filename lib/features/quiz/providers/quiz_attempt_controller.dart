@@ -7,6 +7,7 @@ import '../domain/quiz_answer.dart';
 import '../domain/quiz_attempt.dart';
 import '../domain/question_type.dart';
 import '../services/openai_quiz_service.dart';
+import 'quiz_provider.dart';
 
 class QuizAttemptController
     extends StateNotifier<QuizAttempt?> {
@@ -14,11 +15,13 @@ class QuizAttemptController
   QuizAttemptController(
       this._repository,
       this._openAI,
+      this._ref,
       ) : super(null);
 
   final QuizRepository _repository;
 
   final OpenAIQuizService _openAI;
+  final Ref _ref;
 
   Timer? _idleTimer;
 
@@ -31,7 +34,7 @@ class QuizAttemptController
       ) async {
     state = attempt;
 
-    await _saveNow();
+    await saveNow();
   }
 
   Future<void> restoreAttempt({
@@ -48,33 +51,35 @@ class QuizAttemptController
       return;
     }
 
-    final updated =
+    final updatedAnswers =
     Map<int, QuizAnswer>.from(
       state!.answers,
     );
 
-    updated[questionIndex] = answer;
+    updatedAnswers[questionIndex] =
+        answer;
 
     state = state!.copyWith(
-      answers: updated,
+      answers: updatedAnswers,
+      updatedAt: DateTime.now(),
     );
 
     _markDirty();
   }
 
-  Future<void> submitAttempt() async {
+  Future<void> startGrading() async {
     if (state == null) {
       return;
     }
 
     state = state!.copyWith(
-      status: QuizAttemptStatus.submitted,
+      status: QuizAttemptStatus.grading,
       submittedAt: DateTime.now(),
     );
 
     _dirty = true;
 
-    await _saveNow();
+    await saveNow();
 
     unawaited(
       _evaluateOpenEnded(),
@@ -116,6 +121,16 @@ class QuizAttemptController
     );
 
     if (payload.isEmpty) {
+
+      state = state!.copyWith(
+        status: QuizAttemptStatus.completed,
+        completedAt: DateTime.now(),
+      );
+
+      _dirty = true;
+
+      await saveNow();
+
       return;
     }
 
@@ -161,12 +176,13 @@ class QuizAttemptController
 
     state = state!.copyWith(
       answers: updated,
-      status:
-      QuizAttemptStatus.completed,
+      status: QuizAttemptStatus.completed,
       completedAt: DateTime.now(),
     );
 
-    await _saveNow();
+    _dirty = true;
+
+    await saveNow();
   }
 
   void _markDirty() {
@@ -178,18 +194,18 @@ class QuizAttemptController
       const Duration(
         seconds: 10,
       ),
-      _saveNow,
+      saveNow,
     );
 
     _dirtyTimer ??= Timer(
       const Duration(
         seconds: 30,
       ),
-      _saveNow,
+      saveNow,
     );
   }
 
-  Future<void> _saveNow() async {
+  Future<void> saveNow() async {
     if (!_dirty ||
         state == null) {
       return;
@@ -205,8 +221,12 @@ class QuizAttemptController
     _dirtyTimer?.cancel();
     _dirtyTimer = null;
 
-    await _repository.saveAttempt(
+    await _repository.saveCurrentAttempt(
       attempt.toJson(),
+    );
+
+    await _repository.saveAttemptToCloud(
+      attempt,
     );
   }
 
@@ -215,5 +235,19 @@ class QuizAttemptController
     _idleTimer?.cancel();
     _dirtyTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> retryAttempt() async {
+
+    if (state == null) {
+      return;
+    }
+
+    state = state!.reset();
+
+    _dirty = true;
+
+    await saveNow();
+
   }
 }

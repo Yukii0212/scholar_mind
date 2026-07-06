@@ -1,6 +1,6 @@
 import '../domain/question_type.dart';
 import '../domain/quiz_generation_request.dart';
-
+import '../domain/assessment_mode.dart';
 
 class QuizPromptBuilder {
   const QuizPromptBuilder();
@@ -14,7 +14,27 @@ class QuizPromptBuilder {
     return '''
 Generate UP TO ${request.questionCount} questions.
 
+${request.assessmentMode == AssessmentMode.informal
+        ? '''
+Assessment Style
+
+Informal Practice
+
 Difficulty: ${request.difficulty.toPrompt()}.
+'''
+        : '''
+Assessment Style
+
+Formal Assessment
+
+Generate questions that assess Bloom's Cognitive Levels C${request.minimumBloomsLevel.level} through C${request.maximumBloomsLevel.level}.
+
+Every question MUST primarily assess one cognitive level within this range.
+
+Do not generate questions below C${request.minimumBloomsLevel.level}.
+
+Do not generate questions above C${request.maximumBloomsLevel.level}.
+'''}
 
 ALLOWED QUESTION TYPES
 
@@ -38,6 +58,8 @@ ${extraInstructions.length >= 5 ? extraInstructions : 'None.'}
 Return ONLY valid JSON.
 
 {
+  "title":"Short descriptive quiz title",
+
   "questions":[
     {
       "type":"multiple_choice",
@@ -61,6 +83,18 @@ Return ONLY valid JSON.
     }
   ]
 }
+
+Quiz Title Rules
+- Generate a concise title between 3 and 8 words.
+- Summarize the overall topic being assessed.
+- Do not include timestamps.
+- Do not include words like "Generated Quiz".
+- Do not include "Practice" unless appropriate.
+- Examples:
+  - TCP Congestion Control
+  - Database Normalization
+  - Binary Search Trees
+  - Object-Oriented Programming
 ''';
   }
 }

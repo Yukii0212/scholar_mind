@@ -3,10 +3,12 @@ import '../domain/quiz_attempt.dart';
 import '../domain/quiz_response.dart';
 import '../services/openai_quiz_service.dart';
 import '../services/quiz_local_cache_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class QuizRepository {
 
-  const QuizRepository({
+  QuizRepository({
     this.openAI =
     const OpenAIQuizService(),
     this.localCache =
@@ -17,6 +19,9 @@ class QuizRepository {
 
   final QuizLocalCacheService
   localCache;
+
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
   Future<String> buildStudyContext({
     required List<ProcessedStudyMaterial> lectureNotes,
@@ -69,26 +74,26 @@ class QuizRepository {
     return buffer.toString().trim();
   }
 
-  Future<void> saveAttempt(
+  Future<void> saveCurrentAttempt(
       Map<String, dynamic> json,
       ) {
-    return localCache.save(json);
+    return localCache.saveAttempt(json);
   }
 
   Future<Map<String, dynamic>?>
-  restoreAttempt() async {
-    return await localCache.load();
+  restoreCurrentAttempt() async {
+    return await localCache.loadCurrentAttempt();
   }
 
-  Future<void> clearAttempt() {
-    return localCache.clear();
+  Future<void> clearCurrentAttempt() {
+    return localCache.clearCurrentAttempt();
   }
 
   Future<QuizAttempt?> restoreQuizAttempt({
     required QuizResponse quiz,
   }) async {
     final json =
-    await restoreAttempt();
+    await restoreCurrentAttempt();
 
     if (json == null) {
       return null;
@@ -97,6 +102,39 @@ class QuizRepository {
     return QuizAttempt.fromJson(
       quiz: quiz,
       json: json,
+    );
+  }
+
+  Future<List<QuizAttempt>> getSavedAttempts() async {
+    return [];
+  }
+
+  Future<void> saveCompletedAttempt(
+      QuizAttempt attempt,
+      ) async {}
+
+  Future<void> deleteAttempt(
+      String attemptId,
+      ) async {}
+
+  Future<void> saveAttemptToCloud(
+      QuizAttempt attempt,
+      ) async {
+
+    final user =
+        FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('quizzes')
+        .doc(attempt.id)
+        .set(
+      attempt.toJson(),
     );
   }
 }

@@ -13,10 +13,10 @@ class QuizViewerScreen
     extends ConsumerStatefulWidget {
   const QuizViewerScreen({
     super.key,
-    required this.quiz,
+    required this.attempt,
   });
 
-  final QuizResponse quiz;
+  final QuizAttempt attempt;
 
   @override
   ConsumerState<QuizViewerScreen>
@@ -27,18 +27,42 @@ class QuizViewerScreen
 class _QuizViewerScreenState
     extends ConsumerState<QuizViewerScreen> {
 
-  bool _attemptInitialized = false;
+  QuizAttempt get attempt =>
+      widget.attempt;
 
-// TODO:
-// Remove after migration to
-// QuizAttemptController.
-  final Map<int, QuizAnswer> _answers = {};
+  QuizResponse get quiz =>
+      attempt.quiz;
+
+  late Map<int, QuizAnswer> _answers;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _answers = Map<int, QuizAnswer>.from(
+      widget.attempt.answers,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+
+      await ref
+          .read(
+        quizAttemptProvider.notifier,
+      )
+          .restoreAttempt(
+        attempt: widget.attempt,
+      );
+    });
+  }
 
   int get _answeredQuestions {
     var answered = 0;
 
     for (var i = 0;
-    i < widget.quiz.questions.length;
+    i < quiz.questions.length;
     i++) {
       final answer = _answers[i];
 
@@ -47,7 +71,7 @@ class _QuizViewerScreenState
       }
 
       final question =
-      widget.quiz.questions[i];
+      quiz.questions[i];
 
       switch (question.type) {
         case QuestionType.multipleChoice:
@@ -72,36 +96,15 @@ class _QuizViewerScreenState
 
   @override
   Widget build(BuildContext context) {
-    if (!_attemptInitialized) {
-      _attemptInitialized = true;
-
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) {
-        ref
-            .read(
-          quizAttemptProvider.notifier,
-        )
-            .startAttempt(
-          QuizAttempt(
-            id: DateTime.now()
-                .millisecondsSinceEpoch
-                .toString(),
-            quiz: widget.quiz,
-            answers:
-            Map<int, QuizAnswer>.from(
-              _answers,
-            ),
-            status:
-            QuizAttemptStatus
-                .inProgress,
-            startedAt:
-            DateTime.now(),
-          ),
-        );
-      });
-    }
-
-    return Scaffold(
+    return PopScope(
+        onPopInvokedWithResult: (_, __) async {
+          await ref
+              .read(
+            quizAttemptProvider.notifier,
+          )
+              .saveNow();
+        },
+        child: Scaffold(
       appBar: AppBar(
         title:
         const Text('Generated Quiz'),
@@ -114,11 +117,11 @@ class _QuizViewerScreenState
         padding:
         const EdgeInsets.all(20),
         itemCount:
-        widget.quiz.questions.length,
+        quiz.questions.length,
         itemBuilder:
             (context, index) {
           final question =
-          widget.quiz.questions[index];
+          quiz.questions[index];
 
           return Card(
             margin:
@@ -399,6 +402,7 @@ class _QuizViewerScreenState
             ],
         ),
       ),
+        ),
     );
   }
 
@@ -414,7 +418,7 @@ class _QuizViewerScreenState
           content: Text(
             'You have answered '
                 '$_answeredQuestions of '
-                '${widget.quiz.questions.length} questions.\n\n'
+                '${quiz.questions.length} questions.\n\n'
                 'You can still review your answers after submitting.',
           ),
           actions: [
@@ -457,13 +461,13 @@ class _QuizViewerScreenState
         .read(
       quizAttemptProvider.notifier,
     )
-        .submitAttempt();
+        .startGrading();
 
-    await Navigator.push(
+    await Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => QuizResultScreen(
-          quiz: widget.quiz,
+          quiz: quiz,
           answers: _answers,
         ),
       ),

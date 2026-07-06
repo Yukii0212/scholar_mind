@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../notes/providers/library_provider.dart';
+import '../domain/quiz_folder.dart';
 import '../domain/study_material_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../notes/domain/library_folder.dart';
+import '../widgets/favorite_browser.dart';
 import '../widgets/library_browser.dart';
 import '../domain/material_browser_mode.dart';
-import '../widgets/favorite_browser.dart';
+
 
 class StudyMaterialPickerScreen extends ConsumerStatefulWidget {
   const StudyMaterialPickerScreen({
@@ -236,11 +238,11 @@ class _StudyMaterialPickerScreenState
                             MaterialBrowserMode.library) {
                           _libraryFolderStack.clear();
                           _libraryFolderId =
-                              LibraryFolder.rootId;
+                              QuizFolder.rootId;
                         } else {
                           _favoriteFolderStack.clear();
                           _favoriteFolderId =
-                              LibraryFolder.rootId;
+                              QuizFolder.rootId;
                         }
 
                         _breadcrumbExpanded = false;
@@ -333,7 +335,7 @@ class _StudyMaterialPickerScreenState
                                       .library) {
                                 _libraryFolderId =
                                 folderStack.isEmpty
-                                    ? LibraryFolder
+                                    ? QuizFolder
                                     .rootId
                                     : folderStack
                                     .last
@@ -341,7 +343,7 @@ class _StudyMaterialPickerScreenState
                               } else {
                                 _favoriteFolderId =
                                 folderStack.isEmpty
-                                    ? LibraryFolder
+                                    ? QuizFolder
                                     .rootId
                                     : folderStack
                                     .last

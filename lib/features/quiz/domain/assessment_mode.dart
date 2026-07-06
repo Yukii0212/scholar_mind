@@ -1,0 +1,4 @@
+enum AssessmentMode {
+  informal,
+  formal,
+}

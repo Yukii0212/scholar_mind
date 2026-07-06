@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/common/grade_speed_dial.dart';
-import '../../widgets/home/grade_empty_state.dart';
+import '../../widgets/history/history_section.dart';
+import '../../widgets/semester/current_semester_section.dart';
+import '../../widgets/semester/create_semester_dialog.dart';
 
 class GradeHomeScreen extends StatelessWidget {
   const GradeHomeScreen({super.key});
@@ -9,10 +11,21 @@ class GradeHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: const GradeEmptyState(),
+      body: ListView(
+        padding: EdgeInsets.all(20),
+        children: [
+          CurrentSemesterSection(),
+          SizedBox(height: 32),
+          HistorySection(),
+          SizedBox(height: 100),
+        ],
+      ),
       floatingActionButton: GradeSpeedDial(
         onCreateSemester: () {
-          // We'll hook this up to CreateSemesterDialog next.
+          showDialog(
+            context: context,
+            builder: (_) => const CreateSemesterDialog(),
+          );
         },
       ),
     );

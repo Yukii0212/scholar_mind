@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../data/models/semester_model.dart';
+import '../../providers/semester/semester_provider.dart';
+import '../../providers/semesters/semester_provider.dart';
 import 'month_year_picker.dart';
 
-class CreateSemesterDialog extends StatefulWidget {
+class CreateSemesterDialog extends ConsumerStatefulWidget {
   const CreateSemesterDialog({super.key});
 
   @override
-  State<CreateSemesterDialog> createState() =>
+  ConsumerState<CreateSemesterDialog> createState() =>
       _CreateSemesterDialogState();
 }
 
 class _CreateSemesterDialogState
-    extends State<CreateSemesterDialog> {
+    extends ConsumerState<CreateSemesterDialog> {
   final _nameController = TextEditingController();
 
   final now = DateTime.now();
@@ -31,6 +36,53 @@ class _CreateSemesterDialogState
     super.dispose();
   }
 
+  Future<void> _createSemester() async {
+    final name = _nameController.text.trim();
+
+    if (name.isEmpty) {
+      return;
+    }
+
+    final startDate = DateTime(
+      _startYear,
+      _startMonth,
+      _useExactDates ? _startDay : 1,
+    );
+
+    final endDate = _useExactDates
+        ? DateTime(
+      _endYear,
+      _endMonth,
+      _endDay,
+    )
+        : DateTime(
+      _endYear,
+      _endMonth + 1,
+      0,
+    );
+
+    final semester = SemesterModel(
+      id: '',
+      name: name,
+      startDate: startDate,
+      endDate: endDate,
+      isCurrent: false,
+      isManuallyEdited: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    await ref
+        .read(semesterRepositoryProvider)
+        .createSemester(semester);
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -45,9 +97,20 @@ class _CreateSemesterDialogState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Create Semester',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Create Semester',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Close',
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 24),
@@ -119,9 +182,7 @@ class _CreateSemesterDialogState
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: _createSemester,
                     child: const Text('Create'),
                   ),
                 ),

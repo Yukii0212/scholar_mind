@@ -46,6 +46,10 @@ class _CreateSemesterDialogState
     final name = _nameController.text.trim();
 
     if (name.isEmpty) {
+      setState(() {
+        _errorMessage = 'Semester name is required.';
+      });
+
       return;
     }
 
@@ -140,11 +144,21 @@ class _CreateSemesterDialogState
                 TextField(
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
+                  onChanged: (_) {
+                    if (_errorMessage == 'Semester name is required.') {
+                      setState(() {
+                        _errorMessage = null;
+                      });
+                    }
+                  },
+                  decoration: InputDecoration(
                     hintText: 'Semester 2 2026',
                     helperText: 'Enter a name for this semester',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.edit_outlined),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.edit_outlined),
+                    errorText: _errorMessage == 'Semester name is required.'
+                        ? _errorMessage
+                        : null,
                   ),
                 ),
 

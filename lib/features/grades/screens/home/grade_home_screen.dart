@@ -15,33 +15,39 @@ class GradeHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final semester = ref.watch(currentSemesterProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Grade Tracker'),
-      ),
-      floatingActionButton: GradeSpeedDial(
-        onCreateSemester: () {
-          showDialog(
-            context: context,
-            builder: (_) => const CreateSemesterDialog(),
-          );
-        },
-      ),
-      body: semester.when(
-        loading: () => const Center(
+    return semester.when(
+      loading: () => const Scaffold(
+        body: Center(
           child: CircularProgressIndicator(),
         ),
-        error: (error, stackTrace) => Center(
+      ),
+      error: (error, stackTrace) => Scaffold(
+        body: Center(
           child: Text(error.toString()),
         ),
-        data: (semester) {
-          if (semester == null) {
-            return const SemesterOverviewScreen();
-          }
-
-          return const SemesterDetailScreen();
-        },
       ),
+      data: (semester) {
+        if (semester == null) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Semesters'),
+            ),
+            floatingActionButton: GradeSpeedDial(
+              onCreateSemester: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const CreateSemesterDialog(),
+                );
+              },
+            ),
+            body: const SemesterOverviewScreen(),
+          );
+        }
+
+        return SemesterDetailScreen(
+          semester: semester,
+        );
+      },
     );
   }
 }

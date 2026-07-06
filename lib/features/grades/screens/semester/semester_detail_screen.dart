@@ -1,44 +1,119 @@
 import 'package:flutter/material.dart';
 import 'package:scholar_mind/features/grades/screens/semester/semester_overview_screen.dart';
 
-class SemesterDetailScreen extends StatelessWidget {
-  const SemesterDetailScreen({super.key});
+import 'package:intl/intl.dart';
 
+import '../../data/models/semester_model.dart';
+import 'semester_overview_screen.dart';
+
+class SemesterDetailScreen extends StatelessWidget {
+  const SemesterDetailScreen({
+    super.key,
+    required this.semester,
+  });
+
+  final SemesterModel semester;
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(semester.name),
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: (value) {},
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'rename',
+                  child: Text('Rename Semester'),
+                ),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text('Edit Duration'),
+                ),
+                PopupMenuDivider(),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Delete Semester'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Course creation coming soon.',
+              ),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Current Semester',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            'This is where the semester dashboard will live.',
-            style: Theme.of(context).textTheme.bodyMedium,
+            '${DateFormat('MMM yyyy').format(semester.startDate)} - '
+                '${DateFormat('MMM yyyy').format(semester.endDate)}',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
 
           const SizedBox(height: 24),
 
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) =>
-                  const SemesterOverviewScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.calendar_month),
-            label: const Text('View All Semesters'),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                'Semester statistics placeholder',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          Text(
+            'Courses',
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall,
+          ),
+
+          const SizedBox(height: 16),
+
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.menu_book_outlined,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No courses yet',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Use the + button to add your first course.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
-      ),
+          ),
+        ),
     );
   }
 }

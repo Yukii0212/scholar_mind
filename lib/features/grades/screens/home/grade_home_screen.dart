@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/semester/current_semester_provider.dart';
-import '../semester/current_semester_screen.dart';
+import '../semester/semester_detail_screen.dart';
 import '../semester/semester_overview_screen.dart';
 
 import '../../widgets/common/grade_speed_dial.dart';
-import '../../widgets/history/history_section.dart';
-import '../../widgets/semester/current_semester_section.dart';
 import '../../widgets/semester/create_semester_dialog.dart';
 
 class GradeHomeScreen extends ConsumerWidget {
@@ -41,7 +39,7 @@ class GradeHomeScreen extends ConsumerWidget {
             return const SemesterOverviewScreen();
           }
 
-          return const CurrentSemesterScreen();
+          return const SemesterDetailScreen();
         },
       ),
     );

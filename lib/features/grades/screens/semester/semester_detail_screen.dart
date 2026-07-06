@@ -62,6 +62,27 @@ class SemesterDetailScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
 
+          const SizedBox(height: 4),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SemesterOverviewScreen(),
+                  ),
+                );
+              },
+              child: const Text('View all semesters'),
+            ),
+          ),
+
           const SizedBox(height: 24),
 
           Card(

@@ -228,7 +228,7 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
                         setState(() {
                           if (value ?? false) {
                             _selectedAttachments[item.id] = {
-                              'id': item.id,
+                              'id': item.effectiveId,
                               'title': item.name,
                             };
                           } else {

@@ -74,7 +74,12 @@ class GoogleClassroomService {
             '?q='
             '\'${folderId == 'root' ? 'root' : folderId}\' in parents '
             'and trashed=false'
-            '&fields=files(id,name,mimeType)'
+            '&fields=files('
+            'id,'
+            'name,'
+            'mimeType,'
+            'shortcutDetails(targetId,targetMimeType)'
+            ')'
             '&orderBy=folder,name',
       ),
       headers: {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scholar_mind/features/grades/widgets/semester/semester_card.dart';
 
 import '../../providers/semester/current_semester_provider.dart';
 import '../home/grade_empty_state.dart';
@@ -18,24 +19,12 @@ class CurrentSemesterSection extends ConsumerWidget {
           return const GradeEmptyState();
         }
 
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  semester.name,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${DateFormat('MMM yyyy').format(semester.startDate)} - '
-                      '${DateFormat('MMM yyyy').format(semester.endDate)}',
-                ),
-              ],
-            ),
-          ),
+        return SemesterCard(
+          semester: semester,
+          onOpen: () {},
+          onRename: () {},
+          onEdit: () {},
+          onDelete: () {},
         );
       },
       loading: () => const Center(

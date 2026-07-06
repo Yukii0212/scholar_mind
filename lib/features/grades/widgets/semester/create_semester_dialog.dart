@@ -30,6 +30,8 @@ class _CreateSemesterDialogState
 
   bool _useExactDates = false;
 
+  String? _errorMessage;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -37,6 +39,10 @@ class _CreateSemesterDialogState
   }
 
   Future<void> _createSemester() async {
+    setState(() {
+      _errorMessage = null;
+    });
+
     final name = _nameController.text.trim();
 
     if (name.isEmpty) {
@@ -72,9 +78,25 @@ class _CreateSemesterDialogState
       updatedAt: DateTime.now(),
     );
 
-    await ref
-        .read(semesterRepositoryProvider)
-        .createSemester(semester);
+    final repository =
+    ref.read(semesterRepositoryProvider);
+
+    final hasOverlap =
+    await repository.hasOverlappingSemester(
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    if (hasOverlap) {
+      setState(() {
+        _errorMessage =
+        'Semester dates overlap with an existing semester.';
+      });
+
+      return;
+    }
+
+    await repository.createSemester(semester);
 
     if (!mounted) {
       return;
@@ -176,6 +198,16 @@ class _CreateSemesterDialogState
                     });
                   },
                 ),
+
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 24),
 

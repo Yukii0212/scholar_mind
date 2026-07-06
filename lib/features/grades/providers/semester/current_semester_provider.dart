@@ -12,11 +12,15 @@ Provider<AsyncValue<SemesterModel?>>(
     return semesters.whenData((list) {
       final now = DateTime.now();
 
+      SemesterModel? currentSemester;
+
       for (final semester in list) {
         if (semester.isManuallyEdited) {
           if (semester.isCurrent) {
-            return semester;
+            currentSemester = semester;
+            break;
           }
+
           continue;
         }
 
@@ -25,11 +29,12 @@ Provider<AsyncValue<SemesterModel?>>(
                 !now.isAfter(semester.endDate);
 
         if (isCurrent) {
-          return semester;
+          currentSemester = semester;
+          break;
         }
       }
 
-      return null;
+      return currentSemester;
     });
   },
 );

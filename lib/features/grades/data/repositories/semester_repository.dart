@@ -22,6 +22,34 @@ class SemesterRepository {
     );
   }
 
+  Future<bool> hasOverlappingSemester({
+    required DateTime startDate,
+    required DateTime endDate,
+    String? excludeSemesterId,
+  }) async {
+    final snapshot = await _dataSource.collection.get();
+
+    final semesters = snapshot.docs
+        .map(SemesterModel.fromFirestore);
+
+    for (final semester in semesters) {
+      if (excludeSemesterId != null &&
+          semester.id == excludeSemesterId) {
+        continue;
+      }
+
+      final overlaps =
+          startDate.isBefore(semester.endDate) &&
+              endDate.isAfter(semester.startDate);
+
+      if (overlaps) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   Future<void> createSemester(
       SemesterModel semester,
       ) async {

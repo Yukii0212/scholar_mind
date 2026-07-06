@@ -41,12 +41,26 @@ class _CreateSemesterDialogState
           children: [
             TextField(
               controller: _nameController,
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: 'Semester Name',
                 hintText: 'Semester 2 2026',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.school_outlined),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Duration',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
             MonthYearPicker(
               label: 'Start',
               showDay: _useExactDates,
@@ -64,7 +78,7 @@ class _CreateSemesterDialogState
               },
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             MonthYearPicker(
               label: 'End',
@@ -83,15 +97,15 @@ class _CreateSemesterDialogState
               },
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            CheckboxListTile(
+            SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Specify exact dates'),
               value: _useExactDates,
               onChanged: (value) {
                 setState(() {
-                  _useExactDates = value ?? false;
+                  _useExactDates = value;
                 });
               },
             ),
@@ -99,22 +113,31 @@ class _CreateSemesterDialogState
         ),
       ),
       actions: [
+        const SizedBox(height: 16),
 
-        FilledButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text('Create'),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Create'),
+          ),
         ),
 
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text('Cancel'),
-        ),
+        const SizedBox(height: 8),
 
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+        ),
       ],
+
     );
   }
 }

@@ -183,7 +183,7 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
                                 .add(item);
 
                             _loadFolder(
-                              item.id,
+                              item.effectiveId,
                             );
                           },
                         ),

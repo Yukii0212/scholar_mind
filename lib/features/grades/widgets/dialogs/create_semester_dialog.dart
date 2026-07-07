@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/semester_model.dart';
 import '../../providers/semester/semester_provider.dart';
-import '../../providers/semesters/semester_provider.dart';
 import '../common/month_year_picker.dart';
 
 class CreateSemesterDialog extends ConsumerStatefulWidget {
@@ -30,7 +29,8 @@ class _CreateSemesterDialogState
 
   bool _useExactDates = false;
 
-  String? _errorMessage;
+  String? _nameError;
+  String? _dateError;
 
   @override
   void dispose() {
@@ -40,14 +40,15 @@ class _CreateSemesterDialogState
 
   Future<void> _createSemester() async {
     setState(() {
-      _errorMessage = null;
+      _nameError = null;
+      _dateError = null;
     });
 
     final name = _nameController.text.trim();
 
     if (name.isEmpty) {
       setState(() {
-        _errorMessage = 'Semester name is required.';
+        _nameError = 'Semester name is required.';
       });
 
       return;
@@ -71,6 +72,15 @@ class _CreateSemesterDialogState
       0,
     );
 
+    if (endDate.isBefore(startDate)) {
+      setState(() {
+        _dateError =
+        'End date cannot be earlier than the start date.';
+      });
+
+      return;
+    }
+
     final semester = SemesterModel(
       id: '',
       name: name,
@@ -92,16 +102,49 @@ class _CreateSemesterDialogState
     );
 
     if (hasOverlap) {
-      setState(() {
-        _errorMessage =
-        'Semester dates overlap with an existing semester.';
-      });
+      final shouldContinue =
+          await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) {
+              return AlertDialog(
+                title: const Text(
+                  'Overlapping Semester',
+                ),
+                content: const Text(
+                  'This semester overlaps an existing semester.\n\n'
+                      'Do you want to create it anyway?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        dialogContext,
+                        false,
+                      );
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        dialogContext,
+                        true,
+                      );
+                    },
+                    child: const Text('Create'),
+                  ),
+                ],
+              );
+            },
+          ) ??
+              false;
 
-      return;
+      if (!shouldContinue) {
+        return;
+      }
     }
 
     await repository.createSemester(semester);
-
     if (!mounted) {
       return;
     }
@@ -145,9 +188,9 @@ class _CreateSemesterDialogState
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
                   onChanged: (_) {
-                    if (_errorMessage == 'Semester name is required.') {
+                    if (_nameError != null) {
                       setState(() {
-                        _errorMessage = null;
+                        _nameError = null;
                       });
                     }
                   },
@@ -156,9 +199,7 @@ class _CreateSemesterDialogState
                     helperText: 'Enter a name for this semester',
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.edit_outlined),
-                    errorText: _errorMessage == 'Semester name is required.'
-                        ? _errorMessage
-                        : null,
+                    errorText: _nameError,
                   ),
                 ),
 
@@ -213,10 +254,10 @@ class _CreateSemesterDialogState
                   },
                 ),
 
-                if (_errorMessage != null) ...[
+                if (_dateError != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    _errorMessage!,
+                    _dateError!,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),

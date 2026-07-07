@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/semester_model.dart';
 import '../../screens/semester/semester_detail_screen.dart';
+import '../dialogs/delete_semester_dialog.dart';
 import '../dialogs/rename_semester_dialog.dart';
 
 class SemesterActions {
@@ -42,8 +43,22 @@ class SemesterActions {
       SemesterModel semester,
       ) {}
 
-  static void delete(
+  static Future<void> delete(
       BuildContext context,
       SemesterModel semester,
-      ) {}
+      ) async {
+    final deleted = await showDialog<bool>(
+      context: context,
+      builder: (_) => DeleteSemesterDialog(
+        semester: semester,
+      ),
+    ) ??
+        false;
+
+    if (!deleted || !context.mounted) {
+      return;
+    }
+
+    Navigator.of(context).maybePop();
+  }
 }

@@ -43,7 +43,7 @@ class SemesterCard extends StatelessWidget {
             title: const Text('Edit Semester'),
             onTap: onEdit,
           ),
-          if (!semester.isCurrent)
+          if (onToggleHidden != null)
             ListTile(
               leading: Icon(
                 semester.isHidden

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/semester/semester_provider.dart';
-import '../semester/semester_actions.dart';
-import '../semester/semester_card.dart';
+import '../../../providers/semester/semester_provider.dart';
+import '../../semester/semester_actions.dart';
+import '../../semester/semester_card.dart';
 
 class HistorySection extends ConsumerWidget {
   const HistorySection({super.key});

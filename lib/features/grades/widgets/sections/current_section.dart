@@ -52,6 +52,11 @@ class CurrentSection extends ConsumerWidget {
                     context,
                     semester,
                   ),
+              onToggleHidden: () =>
+                  SemesterActions.toggleHidden(
+                    context,
+                    semester,
+                  ),
             ),
 
             const SizedBox(height: 32),

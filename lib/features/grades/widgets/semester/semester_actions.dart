@@ -37,6 +37,11 @@ class SemesterActions {
       SemesterModel semester,
       ) {}
 
+  static void toggleHidden(
+      BuildContext context,
+      SemesterModel semester,
+      ) {}
+
   static void delete(
       BuildContext context,
       SemesterModel semester,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/common/grade_speed_dial.dart';
 import '../../widgets/sections/current_section.dart';
 import '../../widgets/sections/history_section.dart';
+import '../../widgets/sections/future_section.dart';
 import '../../widgets/dialogs/create_semester_dialog.dart';
 
 class SemesterOverviewScreen extends StatelessWidget {
@@ -28,6 +29,7 @@ class SemesterOverviewScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CurrentSection(),
+            FutureSection(),
             HistorySection(),
           ],
         ),

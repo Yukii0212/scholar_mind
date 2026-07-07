@@ -69,6 +69,11 @@ class HistorySection extends ConsumerWidget {
                           context,
                           semester,
                         ),
+                    onToggleHidden: () =>
+                        SemesterActions.toggleHidden(
+                          context,
+                          semester,
+                        ),
                   ),
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:scholar_mind/features/grades/screens/semester/semester_overview_
 import 'package:intl/intl.dart';
 
 import '../../data/models/semester_model.dart';
+import '../../widgets/semester/rename_semester_dialog.dart';
 import 'semester_overview_screen.dart';
 
 class SemesterDetailScreen extends StatelessWidget {
@@ -20,7 +21,24 @@ class SemesterDetailScreen extends StatelessWidget {
           title: Text(semester.name),
           actions: [
             PopupMenuButton<String>(
-              onSelected: (value) {},
+              onSelected: (value) {
+                switch (value) {
+                  case 'rename':
+                    showDialog(
+                      context: context,
+                      builder: (_) => RenameSemesterDialog(
+                        semester: semester,
+                      ),
+                    );
+                    break;
+
+                  case 'edit':
+                    break;
+
+                  case 'delete':
+                    break;
+                }
+              },
               itemBuilder: (context) => const [
                 PopupMenuItem(
                   value: 'rename',

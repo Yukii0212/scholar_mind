@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scholar_mind/features/grades/screens/semester/semester_detail_screen.dart';
 
 import '../../providers/semester/current_semester_provider.dart';
 import '../../widgets/history/history_section.dart';
+import '../../widgets/semester/rename_semester_dialog.dart';
 import '../../widgets/semester/semester_card.dart';
 
 class SemesterOverviewScreen extends ConsumerWidget {
@@ -37,8 +39,23 @@ class SemesterOverviewScreen extends ConsumerWidget {
 
                   SemesterCard(
                     semester: semester,
-                    onOpen: () {},
-                    onRename: () {},
+                    onOpen: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => SemesterDetailScreen(
+                            semester: semester,
+                          ),
+                        ),
+                      );
+                    },
+                    onRename: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => RenameSemesterDialog(
+                          semester: semester,
+                        ),
+                      );
+                    },
                     onEdit: () {},
                     onDelete: () {},
                   ),

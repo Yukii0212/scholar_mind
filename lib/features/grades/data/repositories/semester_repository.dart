@@ -70,6 +70,18 @@ class SemesterRepository {
         .update(semester.toFirestore());
   }
 
+  Future<void> renameSemester({
+    required String semesterId,
+    required String name,
+  }) async {
+    await _dataSource.collection
+        .doc(semesterId)
+        .update({
+      'name': name,
+      'updatedAt': Timestamp.now(),
+    });
+  }
+
   Future<void> deleteSemester(
       String semesterId,
       ) async {

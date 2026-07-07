@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/semester_model.dart';
 import '../../screens/semester/semester_detail_screen.dart';
 import '../dialogs/delete_semester_dialog.dart';
+import '../dialogs/edit_semester_dialog.dart';
 import '../dialogs/rename_semester_dialog.dart';
 
 class SemesterActions {
@@ -36,7 +37,14 @@ class SemesterActions {
   static void edit(
       BuildContext context,
       SemesterModel semester,
-      ) {}
+      ) {
+    showDialog(
+      context: context,
+      builder: (_) => EditSemesterDialog(
+        semester: semester,
+      ),
+    );
+  }
 
   static void toggleHidden(
       BuildContext context,

@@ -5,9 +5,6 @@ import '../../providers/semester/current_semester_provider.dart';
 import '../semester/semester_detail_screen.dart';
 import '../semester/semester_overview_screen.dart';
 
-import '../../widgets/common/grade_speed_dial.dart';
-import '../../widgets/semester/create_semester_dialog.dart';
-
 class GradeHomeScreen extends ConsumerWidget {
   const GradeHomeScreen({super.key});
 
@@ -28,20 +25,7 @@ class GradeHomeScreen extends ConsumerWidget {
       ),
       data: (semester) {
         if (semester == null) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Semesters'),
-            ),
-            floatingActionButton: GradeSpeedDial(
-              onCreateSemester: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => const CreateSemesterDialog(),
-                );
-              },
-            ),
-            body: const SemesterOverviewScreen(),
-          );
+          return const SemesterOverviewScreen();
         }
 
         return SemesterDetailScreen(

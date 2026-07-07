@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/semester_model.dart';
 import '../../screens/semester/semester_detail_screen.dart';
-import 'rename_semester_dialog.dart';
+import '../dialogs/rename_semester_dialog.dart';
 
 class SemesterActions {
   const SemesterActions._();

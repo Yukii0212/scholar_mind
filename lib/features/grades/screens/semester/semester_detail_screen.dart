@@ -4,7 +4,7 @@ import 'package:scholar_mind/features/grades/screens/semester/semester_overview_
 import 'package:intl/intl.dart';
 
 import '../../data/models/semester_model.dart';
-import '../../widgets/semester/rename_semester_dialog.dart';
+import '../../widgets/dialogs/rename_semester_dialog.dart';
 import 'semester_overview_screen.dart';
 
 class SemesterDetailScreen extends StatelessWidget {

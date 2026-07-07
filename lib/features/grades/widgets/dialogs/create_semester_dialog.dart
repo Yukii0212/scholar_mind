@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/semester_model.dart';
 import '../../providers/semester/semester_provider.dart';
 import '../../providers/semesters/semester_provider.dart';
-import 'month_year_picker.dart';
+import '../common/month_year_picker.dart';
 
 class CreateSemesterDialog extends ConsumerStatefulWidget {
   const CreateSemesterDialog({super.key});

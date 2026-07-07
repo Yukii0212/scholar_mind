@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/common/grade_speed_dial.dart';
-import '../../widgets/current/current_section.dart';
-import '../../widgets/history/history_section.dart';
-import '../../widgets/semester/create_semester_dialog.dart';
+import '../../widgets/sections/current_section.dart';
+import '../../widgets/sections/history_section.dart';
+import '../../widgets/dialogs/create_semester_dialog.dart';
 
 class SemesterOverviewScreen extends StatelessWidget {
   const SemesterOverviewScreen({super.key});

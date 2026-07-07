@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/semester/semester_provider.dart';
-import '../../screens/semester/semester_detail_screen.dart';
-import '../semester/rename_semester_dialog.dart';
+import '../semester/semester_actions.dart';
 import '../semester/semester_card.dart';
 
 class HistorySection extends ConsumerWidget {
@@ -50,25 +49,26 @@ class HistorySection extends ConsumerWidget {
             ...history.map(
                   (semester) => SemesterCard(
                     semester: semester,
-                    onOpen: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => SemesterDetailScreen(
-                            semester: semester,
-                          ),
+                    onOpen: () =>
+                        SemesterActions.open(
+                          context,
+                          semester,
                         ),
-                      );
-                    },
-                    onRename: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => RenameSemesterDialog(
-                          semester: semester,
+                    onRename: () =>
+                        SemesterActions.rename(
+                          context,
+                          semester,
                         ),
-                      );
-                    },
-                    onEdit: () {},
-                    onDelete: () {},
+                    onEdit: () =>
+                        SemesterActions.edit(
+                          context,
+                          semester,
+                        ),
+                    onDelete: () =>
+                        SemesterActions.delete(
+                          context,
+                          semester,
+                        ),
                   ),
             ),
           ],

@@ -226,18 +226,28 @@ class _CreateSemesterDialogState
 
                 MonthYearPicker(
                   label: 'End',
+                  errorText: _dateError,
                   showDay: _useExactDates,
                   day: _endDay,
                   month: _endMonth,
                   year: _endYear,
                   onDayChanged: (value) {
-                    setState(() => _endDay = value);
+                    setState(() {
+                      _endDay = value;
+                      _dateError = null;
+                    });
                   },
                   onMonthChanged: (value) {
-                    setState(() => _endMonth = value);
+                    setState(() {
+                      _endMonth = value;
+                      _dateError = null;
+                    });
                   },
                   onYearChanged: (value) {
-                    setState(() => _endYear = value);
+                    setState(() {
+                      _endYear = value;
+                      _dateError = null;
+                    });
                   },
                 ),
 

@@ -8,6 +8,7 @@ class SemesterModel {
     required this.endDate,
     required this.isCurrent,
     required this.isManuallyEdited,
+    required this.isHidden,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -18,14 +19,12 @@ class SemesterModel {
   final DateTime startDate;
   final DateTime endDate;
 
-  /// Used only when [isManuallyEdited] is true.
-  final bool isCurrent;
-
-  /// Whether the user has manually overridden the current/history status.
-  final bool isManuallyEdited;
-
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  final bool isCurrent;
+  final bool isManuallyEdited;
+  final bool isHidden;
 
   factory SemesterModel.fromFirestore(
       DocumentSnapshot<Map<String, dynamic>> doc,
@@ -40,6 +39,8 @@ class SemesterModel {
       isCurrent: data['isCurrent'] as bool? ?? false,
       isManuallyEdited:
       data['isManuallyEdited'] as bool? ?? false,
+      isHidden:
+      data['isHidden'] as bool? ?? false,
       createdAt:
       (data['createdAt'] as Timestamp).toDate(),
       updatedAt:
@@ -55,6 +56,7 @@ class SemesterModel {
       'endDate': Timestamp.fromDate(endDate),
       'isCurrent': isCurrent,
       'isManuallyEdited': isManuallyEdited,
+      'isHidden': isHidden,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -67,6 +69,7 @@ class SemesterModel {
     DateTime? endDate,
     bool? isCurrent,
     bool? isManuallyEdited,
+    bool? isHidden,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -78,6 +81,8 @@ class SemesterModel {
       isCurrent: isCurrent ?? this.isCurrent,
       isManuallyEdited:
       isManuallyEdited ?? this.isManuallyEdited,
+      isHidden:
+      isHidden ?? this.isHidden,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

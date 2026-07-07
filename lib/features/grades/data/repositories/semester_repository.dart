@@ -70,14 +70,14 @@ class SemesterRepository {
         .update(semester.toFirestore());
   }
 
-  Future<void> renameSemester({
+  Future<void> toggleHidden({
     required String semesterId,
-    required String name,
+    required bool isHidden,
   }) async {
     await _dataSource.collection
         .doc(semesterId)
         .update({
-      'name': name,
+      'isHidden': isHidden,
       'updatedAt': Timestamp.now(),
     });
   }

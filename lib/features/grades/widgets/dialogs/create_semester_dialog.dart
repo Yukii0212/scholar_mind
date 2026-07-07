@@ -87,6 +87,7 @@ class _CreateSemesterDialogState
       startDate: startDate,
       endDate: endDate,
       isCurrent: false,
+      isHidden: false,
       isManuallyEdited: false,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

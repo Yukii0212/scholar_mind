@@ -37,11 +37,6 @@ class CurrentSection extends ConsumerWidget {
                     context,
                     semester,
                   ),
-              onRename: () =>
-                  SemesterActions.rename(
-                    context,
-                    semester,
-                  ),
               onEdit: () =>
                   SemesterActions.edit(
                     context,
@@ -52,11 +47,7 @@ class CurrentSection extends ConsumerWidget {
                     context,
                     semester,
                   ),
-              onToggleHidden: () =>
-                  SemesterActions.toggleHidden(
-                    context,
-                    semester,
-                  ),
+              onToggleHidden: null,
             ),
 
             const SizedBox(height: 32),

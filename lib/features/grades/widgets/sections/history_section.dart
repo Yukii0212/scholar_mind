@@ -27,6 +27,10 @@ class HistorySection extends ConsumerWidget {
         final now = DateTime.now();
 
         final history = list.where((semester) {
+          if (semester.isHidden) {
+            return false;
+          }
+
           if (semester.isManuallyEdited) {
             return !semester.isCurrent;
           }
@@ -54,11 +58,6 @@ class HistorySection extends ConsumerWidget {
                           context,
                           semester,
                         ),
-                    onRename: () =>
-                        SemesterActions.rename(
-                          context,
-                          semester,
-                        ),
                     onEdit: () =>
                         SemesterActions.edit(
                           context,
@@ -76,6 +75,7 @@ class HistorySection extends ConsumerWidget {
                         ),
                   ),
             ),
+            const SizedBox(height: 32),
           ],
         );
       },

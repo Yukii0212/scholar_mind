@@ -8,7 +8,6 @@ class SemesterCard extends StatelessWidget {
     super.key,
     required this.semester,
     required this.onOpen,
-    required this.onRename,
     required this.onEdit,
     required this.onDelete,
     required this.onToggleHidden,
@@ -17,10 +16,9 @@ class SemesterCard extends StatelessWidget {
   final SemesterModel semester;
 
   final VoidCallback onOpen;
-  final VoidCallback onRename;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final VoidCallback onToggleHidden;
+  final VoidCallback? onToggleHidden;
 
   @override
   Widget build(BuildContext context) {
@@ -42,21 +40,23 @@ class SemesterCard extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.edit_calendar_outlined),
-            title: const Text('Edit Duration'),
+            title: const Text('Edit Semester'),
             onTap: onEdit,
           ),
-          ListTile(
-            leading: const Icon(Icons.drive_file_rename_outline),
-            title: const Text('Rename'),
-            onTap: onRename,
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.visibility_off_outlined,
+          if (!semester.isCurrent)
+            ListTile(
+              leading: Icon(
+                semester.isHidden
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+              ),
+              title: Text(
+                semester.isHidden
+                    ? 'Unhide'
+                    : 'Hide',
+              ),
+              onTap: onToggleHidden,
             ),
-            title: const Text('Hide'),
-            onTap: onToggleHidden,
-          ),
           ListTile(
             leading: Icon(
               Icons.delete_outline,

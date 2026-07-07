@@ -16,8 +16,8 @@ class SemesterDetailPopupMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       onSelected: (value) {
         switch (value) {
-          case 'rename':
-            SemesterActions.rename(
+          case 'hide':
+            SemesterActions.toggleHidden(
               context,
               semester,
             );
@@ -38,17 +38,24 @@ class SemesterDetailPopupMenu extends StatelessWidget {
             break;
         }
       },
-      itemBuilder: (_) => const [
-        PopupMenuItem(
-          value: 'rename',
-          child: Text('Rename Semester'),
-        ),
-        PopupMenuItem(
+      itemBuilder: (_) => [
+        const PopupMenuItem(
           value: 'edit',
-          child: Text('Edit Duration'),
+          child: Text('Edit Semester'),
         ),
-        PopupMenuDivider(),
+
         PopupMenuItem(
+          value: 'hide',
+          child: Text(
+            semester.isHidden
+                ? 'Unhide Semester'
+                : 'Hide Semester',
+          ),
+        ),
+
+        const PopupMenuDivider(),
+
+        const PopupMenuItem(
           value: 'delete',
           child: Text('Delete Semester'),
         ),

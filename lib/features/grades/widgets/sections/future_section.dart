@@ -19,6 +19,10 @@ class FutureSection extends ConsumerWidget {
         final now = DateTime.now();
 
         final future = list.where((semester) {
+          if (semester.isHidden) {
+            return false;
+          }
+
           if (semester.isManuallyEdited) {
             return false;
           }
@@ -45,11 +49,6 @@ class FutureSection extends ConsumerWidget {
                 semester: semester,
                 onOpen: () =>
                     SemesterActions.open(
-                      context,
-                      semester,
-                    ),
-                onRename: () =>
-                    SemesterActions.rename(
                       context,
                       semester,
                     ),

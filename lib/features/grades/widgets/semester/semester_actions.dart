@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/semester_model.dart';
+import '../../providers/semester/semester_provider.dart';
 import '../../screens/semester/semester_detail_screen.dart';
 import '../dialogs/delete_semester_dialog.dart';
 import '../dialogs/edit_semester_dialog.dart';
-import '../dialogs/rename_semester_dialog.dart';
 
 class SemesterActions {
   const SemesterActions._();
@@ -22,18 +23,6 @@ class SemesterActions {
     );
   }
 
-  static void rename(
-      BuildContext context,
-      SemesterModel semester,
-      ) {
-    showDialog(
-      context: context,
-      builder: (_) => RenameSemesterDialog(
-        semester: semester,
-      ),
-    );
-  }
-
   static void edit(
       BuildContext context,
       SemesterModel semester,
@@ -46,10 +35,17 @@ class SemesterActions {
     );
   }
 
-  static void toggleHidden(
+  static Future<void> toggleHidden(
       BuildContext context,
       SemesterModel semester,
-      ) {}
+      ) async {
+    await ProviderScope.containerOf(context)
+        .read(semesterRepositoryProvider)
+        .toggleHidden(
+      semesterId: semester.id,
+      isHidden: !semester.isHidden,
+    );
+  }
 
   static Future<void> delete(
       BuildContext context,

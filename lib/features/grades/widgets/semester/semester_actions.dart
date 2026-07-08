@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/semester_model.dart';
 import '../../providers/semester/semester_provider.dart';
 import '../../screens/semester/semester_detail_screen.dart';
-import '../dialogs/delete_semester_dialog.dart';
-import '../dialogs/edit_semester_dialog.dart';
+import '../dialogs/semester/delete_semester_dialog.dart';
+import '../dialogs/semester/edit_semester_dialog.dart';
 
 class SemesterActions {
   const SemesterActions._();

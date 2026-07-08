@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/semester_model.dart';
+import '../../widgets/common/grade_speed_dial.dart';
 import '../../widgets/semester/semester_detail_body.dart';
 import '../../widgets/semester/semester_detail_popup_menu.dart';
+import '../../widgets/dialogs/course/create_course_dialog.dart';
 
 class SemesterDetailScreen extends StatelessWidget {
   const SemesterDetailScreen({
@@ -25,17 +27,18 @@ class SemesterDetailScreen extends StatelessWidget {
       body: SemesterDetailBody(
         semester: semester,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Course creation coming soon.',
-              ),
+      floatingActionButton: GradeSpeedDial(
+        onCreateCourse: () {
+          showDialog(
+            context: context,
+            builder: (_) => CreateCourseDialog(
+              semesterId: semester.id,
             ),
           );
         },
-        child: const Icon(Icons.add),
+        onImportCourse: () {
+          // TODO: Import Course
+        },
       ),
     );
   }

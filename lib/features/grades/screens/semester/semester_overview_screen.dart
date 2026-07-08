@@ -5,7 +5,7 @@ import '../../widgets/sections/semester/current_section.dart';
 import '../../widgets/sections/semester/hidden_section.dart';
 import '../../widgets/sections/semester/history_section.dart';
 import '../../widgets/sections/semester/future_section.dart';
-import '../../widgets/dialogs/create_semester_dialog.dart';
+import '../../widgets/dialogs/semester/create_semester_dialog.dart';
 
 class SemesterOverviewScreen extends StatelessWidget {
   const SemesterOverviewScreen({super.key});

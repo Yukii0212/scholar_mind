@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/course/semester_course_provider.dart';
+import '../course/course_list.dart';
+import '../course/empty_course_state.dart';
 import '../../data/models/semester_model.dart';
 import '../../screens/semester/semester_overview_screen.dart';
-import '../course/empty_course_state.dart';
 import '../statistics/semester_statistics_card.dart';
 
-class SemesterDetailBody extends StatelessWidget {
+class SemesterDetailBody extends ConsumerWidget {
   const SemesterDetailBody({
     super.key,
     required this.semester,
@@ -15,7 +18,11 @@ class SemesterDetailBody extends StatelessWidget {
   final SemesterModel semester;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref,) {
+    final courses = ref.watch(
+      semesterCourseProvider(semester.id),
+    );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -66,7 +73,24 @@ class SemesterDetailBody extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          const EmptyCourseState(),
+          courses.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            error: (error, stackTrace) => Center(
+              child: Text(error.toString()),
+            ),
+            data: (courses) {
+              if (courses.isEmpty) {
+                return const EmptyCourseState();
+              }
+
+              return CourseList(
+                courses: courses,
+              );
+            },
+          ),
+
         ],
       ),
     );

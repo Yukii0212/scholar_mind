@@ -36,6 +36,14 @@ class CourseList extends StatelessWidget {
             context,
             course,
           ),
+          onEdit: () => CourseActions.edit(
+              context,
+              course,
+          ),
+          onDelete: () => CourseActions.delete(
+              context,
+              course,
+          ),
         );
       },
     );

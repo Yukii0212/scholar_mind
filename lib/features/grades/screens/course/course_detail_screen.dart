@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
-import '../../widgets/grading/grading_structure_editor.dart';
+import '../../widgets/course/course_detail_body.dart';
 
-class CourseDetailScreen extends StatelessWidget {
+class CourseDetailScreen extends ConsumerStatefulWidget {
   const CourseDetailScreen({
     super.key,
     required this.course,
@@ -12,44 +13,35 @@ class CourseDetailScreen extends StatelessWidget {
   final CourseModel course;
 
   @override
+  ConsumerState<CourseDetailScreen> createState() =>
+      _CourseDetailScreenState();
+}
+
+class _CourseDetailScreenState
+    extends ConsumerState<CourseDetailScreen> {
+  final GlobalKey<CourseDetailBodyState>
+  _bodyKey =
+  GlobalKey<CourseDetailBodyState>();
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(course.name),
+        title: Text(widget.course.name),
+        actions: [
+          IconButton(
+            onPressed: () {
+              _bodyKey.currentState?.save();
+            },
+            icon: const Icon(
+              Icons.save_outlined,
+            ),
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: ListTile(
-                title: Text(course.name),
-                subtitle: Text(
-                  course.targetGrade == null
-                      ? 'No target grade'
-                      : 'Target Grade: ${course.targetGrade}',
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Text(
-              'Grading Structure',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
-            ),
-
-            const SizedBox(height: 12),
-
-            const Expanded(
-              child: GradingStructureEditor(),
-            ),
-          ],
-        ),
+      body: CourseDetailBody(
+        key: _bodyKey,
+        course: widget.course,
       ),
     );
   }

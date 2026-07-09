@@ -96,7 +96,7 @@ class ImportCourseDialog extends ConsumerWidget {
                                   }
 
                                   return ExpansionTile(
-                                    initiallyExpanded: true,
+                                    initiallyExpanded: false,
                                     title: Text(
                                       semester.name,
                                       style: Theme.of(context)
@@ -133,7 +133,7 @@ class ImportCourseDialog extends ConsumerWidget {
 
                             if (personalCourses.isNotEmpty)
                               ExpansionTile(
-                                initiallyExpanded: true,
+                                initiallyExpanded: false,
                                 title: const Text(
                                   'Personal Courses',
                                 ),

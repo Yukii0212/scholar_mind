@@ -97,4 +97,25 @@ class GradingComponentRepository {
 
     await batch.commit();
   }
+
+  Future<List<GradingComponentModel>>
+  getCourseComponents(
+      String courseId,
+      ) async {
+    final snapshot =
+    await _dataSource.collection
+        .where(
+      'courseId',
+      isEqualTo: courseId,
+    )
+        .orderBy('order')
+        .get();
+
+    return snapshot.docs
+        .map(
+      GradingComponentModel
+          .fromFirestore,
+    )
+        .toList();
+  }
 }

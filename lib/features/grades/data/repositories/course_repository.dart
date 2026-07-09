@@ -82,4 +82,24 @@ class CourseRepository {
         .doc(courseId)
         .delete();
   }
+
+  Future<CourseModel> importCourse({
+    required CourseModel source,
+    required String? semesterId,
+  }) async {
+    final now = DateTime.now();
+
+    final imported = CourseModel(
+      id: _dataSource.collection.doc().id,
+      semesterId: semesterId,
+      name: source.name,
+      targetGrade: source.targetGrade,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await createCourse(imported);
+
+    return imported;
+  }
 }

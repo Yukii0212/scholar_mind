@@ -8,9 +8,15 @@ class EditCourseDialog extends ConsumerStatefulWidget {
   const EditCourseDialog({
     super.key,
     required this.course,
+    this.deleteOnCancel = false,
+    this.title = 'Edit Course',
+    this.isImport = false,
   });
 
   final CourseModel course;
+  final bool deleteOnCancel;
+  final String title;
+  final bool isImport;
 
   @override
   ConsumerState<EditCourseDialog> createState() =>
@@ -62,9 +68,18 @@ class _EditCourseDialogState
           : _targetGradeController.text.trim(),
     );
 
-    await ref
-        .read(courseRepositoryProvider)
-        .updateCourse(updated);
+    if (widget.isImport) {
+      await ref
+          .read(courseRepositoryProvider)
+          .importCourse(
+        source: updated,
+        semesterId: updated.semesterId,
+      );
+    } else {
+      await ref
+          .read(courseRepositoryProvider)
+          .updateCourse(updated);
+    }
 
     if (!mounted) return;
 
@@ -86,7 +101,7 @@ class _EditCourseDialogState
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Edit Course',
+                  widget.title,
                   style: Theme.of(context)
                       .textTheme
                       .headlineSmall,
@@ -130,8 +145,21 @@ class _EditCourseDialogState
                 ),
 
                 TextButton(
-                  onPressed:
-                  _isSaving ? null : () {
+                  onPressed: _isSaving
+                      ? null
+                      : () async {
+                    if (widget.deleteOnCancel) {
+                      await ref
+                          .read(courseRepositoryProvider)
+                          .deleteCourse(
+                        widget.course.id,
+                      );
+                    }
+
+                    if (!mounted) {
+                      return;
+                    }
+
                     Navigator.pop(context);
                   },
                   child: const Text('Cancel'),

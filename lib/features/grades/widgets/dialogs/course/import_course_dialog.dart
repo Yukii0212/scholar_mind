@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../providers/course/course_provider.dart';
 import '../../../data/models/course_model.dart';
+import '../../../providers/course/course_provider.dart';
+import '../../../providers/semester/semester_provider.dart';
 
 class ImportCourseDialog extends ConsumerWidget {
   const ImportCourseDialog({
@@ -12,6 +13,7 @@ class ImportCourseDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final courses = ref.watch(courseStreamProvider);
+    final semesters = ref.watch(semesterStreamProvider);
 
     return Dialog(
       child: ConstrainedBox(
@@ -54,42 +56,112 @@ class ImportCourseDialog extends ConsumerWidget {
                         ),
                       ),
                   data: (courses) {
-                    if (courses.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No courses available to import.',
-                        ),
-                      );
-                    }
+                    return semesters.when(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (error, stackTrace) => Center(
+                        child: Text(error.toString()),
+                      ),
+                      data: (semesters) {
+                        if (courses.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'No courses available to import.',
+                            ),
+                          );
+                        }
 
-                    return ListView.separated(
-                      itemCount: courses.length,
-                      separatorBuilder: (_, __) =>
-                      const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final course =
-                        courses[index];
+                        final personalCourses = courses
+                            .where(
+                              (course) => course.semesterId == null,
+                        )
+                            .toList();
 
-                        return ListTile(
-                          leading: const Icon(
-                            Icons.menu_book_outlined,
-                          ),
-                          title: Text(
-                            course.name,
-                          ),
-                          subtitle:
-                          course.targetGrade ==
-                              null
-                              ? null
-                              : Text(
-                            'Target Grade: ${course.targetGrade}',
-                          ),
-                          onTap: () {
-                            Navigator.pop(
-                              context,
-                              course,
-                            );
-                          },
+                        return ListView(
+                          children: [
+                            for (final semester in semesters) ...[
+                              Builder(
+                                builder: (_) {
+                                  final semesterCourses = courses
+                                      .where(
+                                        (course) =>
+                                    course.semesterId ==
+                                        semester.id,
+                                  )
+                                      .toList();
+
+                                  if (semesterCourses.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  return ExpansionTile(
+                                    initiallyExpanded: true,
+                                    title: Text(
+                                      semester.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                    ),
+                                    children: [
+                                      for (final course
+                                      in semesterCourses)
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons.menu_book_outlined,
+                                          ),
+                                          title: Text(course.name),
+                                          subtitle:
+                                          course.targetGrade ==
+                                              null
+                                              ? null
+                                              : Text(
+                                            'Target Grade: ${course.targetGrade}',
+                                          ),
+                                          onTap: () {
+                                            Navigator.pop(
+                                              context,
+                                              course,
+                                            );
+                                          },
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+
+                            if (personalCourses.isNotEmpty)
+                              ExpansionTile(
+                                initiallyExpanded: true,
+                                title: const Text(
+                                  'Personal Courses',
+                                ),
+                                children: [
+                                  for (final course
+                                  in personalCourses)
+                                    ListTile(
+                                      leading: const Icon(
+                                        Icons.menu_book_outlined,
+                                      ),
+                                      title: Text(course.name),
+                                      subtitle:
+                                      course.targetGrade ==
+                                          null
+                                          ? null
+                                          : Text(
+                                        'Target Grade: ${course.targetGrade}',
+                                      ),
+                                      onTap: () {
+                                        Navigator.pop(
+                                          context,
+                                          course,
+                                        );
+                                      },
+                                    ),
+                                ],
+                              ),
+                          ],
                         );
                       },
                     );

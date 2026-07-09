@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scholar_mind/features/grades/widgets/dialogs/course/import_course_dialog.dart';
 
 import '../../data/models/course_model.dart';
+import '../../providers/course/course_provider.dart';
 import '../../screens/course/course_detail_screen.dart';
 import '../../widgets/dialogs/course/delete_course_dialog.dart';
 import '../../widgets/dialogs/course/edit_course_dialog.dart';
@@ -46,14 +48,34 @@ class CourseActions {
     );
   }
 
-  static void import(
+  static Future<void> import(
       BuildContext context,
-      CourseModel course,
-      ) {
-    showDialog(
+      WidgetRef ref,
+      String? semesterId,
+      ) async {
+    final selected =
+    await showDialog<CourseModel>(
       context: context,
-      builder: (_) => ImportCourseDialog(
-    ),
+      builder: (_) => const ImportCourseDialog(),
+    );
+
+    if (selected == null) {
+      return;
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (_) => EditCourseDialog(
+        course: selected.copyWith(
+          semesterId: semesterId,
+        ),
+        isImport: true,
+        title: 'Review Imported Course',
+      ),
     );
   }
 }

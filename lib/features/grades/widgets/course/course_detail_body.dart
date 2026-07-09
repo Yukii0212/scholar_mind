@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
 import '../../providers/grading/grading_structure_controller.dart';
-import '../grading/grading_structure_editor.dart';
 import 'course_information_card.dart';
 
 class CourseDetailBody extends ConsumerStatefulWidget {
@@ -45,26 +44,6 @@ class CourseDetailBodyState
     });
   }
 
-  Future<void> save() async {
-    await ref
-        .read(
-      gradingStructureControllerProvider,
-    )
-        .saveCourse(widget.course.id);
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Grading structure saved.',
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -85,19 +64,61 @@ class CourseDetailBodyState
 
           const SizedBox(height: 24),
 
-          Text(
-            'Grading Structure',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge,
-          ),
-
-          const SizedBox(height: 12),
+          const SizedBox(height: 32),
 
           const Expanded(
-            child: GradingStructureEditor(),
+            child: _EmptyGradingStructure(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EmptyGradingStructure
+    extends StatelessWidget {
+  const _EmptyGradingStructure();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 420,
+        ),
+        child: Column(
+          mainAxisAlignment:
+          MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.account_tree_outlined,
+              size: 72,
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary,
+            ),
+
+            const SizedBox(height: 24),
+
+            Text(
+              'No grading structure yet',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              'Create a grading structure or use one of your saved templates to begin tracking this course.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium,
+            ),
+          ],
+        ),
       ),
     );
   }

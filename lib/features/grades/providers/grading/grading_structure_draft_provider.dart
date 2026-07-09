@@ -26,10 +26,15 @@ class GradingStructureDraftNotifier
     state = draft;
   }
 
-  void addComponent() {
-    state = GradingStructureService.addComponent(
-      state,
-    );
+  void addComponent({
+    required String name,
+  }) {
+    state =
+        GradingStructureService
+            .addComponent(
+          state,
+          name: name,
+        );
   }
 
   void removeComponent(

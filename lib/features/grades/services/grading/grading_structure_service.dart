@@ -7,15 +7,16 @@ class GradingStructureService {
   const GradingStructureService._();
 
   static GradingStructureDraft addComponent(
-      GradingStructureDraft draft,
-      ) {
+      GradingStructureDraft draft, {
+        required String name,
+      }) {
     final components = List<GradingComponentDraft>.from(
       draft.components,
     );
 
     components.add(
       GradingComponentDraft(
-        name: 'New Component',
+        name: name,
         weight: 0,
       ),
     );

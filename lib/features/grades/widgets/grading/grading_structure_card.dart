@@ -42,31 +42,6 @@ class GradingStructureCard extends ConsumerWidget {
                   .bodyMedium,
             ),
 
-            const SizedBox(height: 20),
-
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Auto Balance',
-              ),
-              subtitle: Text(
-                draft.autoBalance
-                    ? 'Weights automatically stay at 100%.'
-                    : 'Edit weights manually and balance them later.',
-              ),
-              value: draft.autoBalance,
-              onChanged: (value) {
-                ref
-                    .read(
-                  gradingStructureDraftProvider
-                      .notifier,
-                )
-                    .setAutoBalance(value);
-              },
-            ),
-
-            const SizedBox(height: 24),
-
             if (draft.components.isEmpty)
               Container(
                 padding:
@@ -195,9 +170,145 @@ class GradingStructureCard extends ConsumerWidget {
                   ),
                 ],
               ),
-          ],
-        ),
+
+            const SizedBox(height: 24),
+
+            Text(
+              'Advanced',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium,
+            ),
+
+            const SizedBox(height: 12),
+
+            Card(
+              elevation: 0,
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SwitchListTile(
+                            contentPadding:
+                            EdgeInsets.zero,
+                            title: const Text(
+                              'Auto Balance',
+                            ),
+                            value: draft.autoBalance,
+                            onChanged: (value) {
+                              ref
+                                  .read(
+                                gradingStructureDraftProvider
+                                    .notifier,
+                              )
+                                  .setAutoBalance(value);
+                            },
+                          ),
+                        ),
+
+                        IconButton(
+                          icon: const Icon(
+                            Icons.info_outline,
+                          ),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) =>
+                              const _AutoBalanceInfoDialog(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
+                    if (!draft.autoBalance) ...[
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                ref
+                                    .read(
+                                  gradingStructureDraftProvider
+                                      .notifier,
+                                )
+                                    .resetDistribution();
+                              },
+                              icon: const Icon(
+                                Icons.refresh,
+                              ),
+                              label: const Text(
+                                'Reset Weights',
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                ref
+                                    .read(
+                                  gradingStructureDraftProvider
+                                      .notifier,
+                                )
+                                    .balanceDistribution();
+                              },
+                              icon: const Icon(
+                                Icons.balance,
+                              ),
+                              label: const Text(
+                                'Balance Weights',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+                ],
+              ),
       ),
+    );
+  }
+}
+
+class _AutoBalanceInfoDialog
+    extends StatelessWidget {
+  const _AutoBalanceInfoDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+        'Auto Balance',
+      ),
+      content: const Text(
+        'When enabled, ScholarMind automatically adjusts the remaining grading components so the total always equals 100%.\n\n'
+            'Disable this if you want complete manual control over the weight distribution.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text(
+            'Close',
+          ),
+        ),
+      ],
     );
   }
 }

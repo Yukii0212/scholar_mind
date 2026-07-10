@@ -32,6 +32,10 @@ class GradingStructureDraftNotifier
     state = state.copyWith(
       autoBalance: enabled,
     );
+
+    if (enabled) {
+      balanceDistribution();
+    }
   }
 
   void toggleAutoBalance() {

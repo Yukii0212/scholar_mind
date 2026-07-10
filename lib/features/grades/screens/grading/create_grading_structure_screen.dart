@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/course_model.dart';
+import '../../widgets/course/course_information_card.dart';
 import '../../widgets/grading/grading_structure_actions.dart';
 import '../../widgets/grading/grading_structure_card.dart';
 
@@ -28,6 +29,12 @@ class CreateGradingStructureScreen
             crossAxisAlignment:
             CrossAxisAlignment.stretch,
             children: [
+              CourseInformationCard(
+                course: course,
+              ),
+
+              const SizedBox(height: 16),
+
               const GradingStructureCard(),
 
               const SizedBox(height: 24),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/grading/grading_component_draft.dart';
+import '../../../providers/grading/grading_structure_draft_provider.dart';
 
 class GradingSubcomponentRow
     extends ConsumerWidget {
@@ -30,6 +31,16 @@ class GradingSubcomponentRow
               hintText: 'Subcomponent Name',
               isDense: true,
             ),
+            onChanged: (value) {
+              ref
+                  .read(
+                gradingStructureDraftProvider.notifier,
+              )
+                  .renameSubcomponent(
+                componentId: component.id,
+                name: value,
+              );
+            },
           ),
 
           Row(
@@ -42,9 +53,26 @@ class GradingSubcomponentRow
                   textAlign: TextAlign.center,
                   decoration: const InputDecoration(
                     suffixText: '%',
-                    isDense: true,
                     border: OutlineInputBorder(),
+                    isDense: true,
                   ),
+                  onFieldSubmitted: (value) {
+                    final weight =
+                        double.tryParse(value) ??
+                            component.weight;
+
+                    ref
+                        .read(
+                      gradingStructureDraftProvider.notifier,
+                    )
+                        .updateSubcomponentWeight(
+                      componentId: component.id,
+                      weight: weight.clamp(
+                        0,
+                        100,
+                      ),
+                    );
+                  },
                 ),
               ),
 
@@ -56,7 +84,16 @@ class GradingSubcomponentRow
                   min: 0,
                   max: 100,
                   divisions: 100,
-                  onChanged: (_) {},
+                  onChanged: (value) {
+                    ref
+                        .read(
+                      gradingStructureDraftProvider.notifier,
+                    )
+                        .updateSubcomponentWeight(
+                      componentId: component.id,
+                      weight: value,
+                    );
+                  },
                 ),
               ),
             ],

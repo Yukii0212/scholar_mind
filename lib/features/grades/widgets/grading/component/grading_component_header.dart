@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/grading/grading_component_draft.dart';
+import '../../../providers/grading/grading_structure_draft_provider.dart';
 
 class GradingComponentHeader
     extends ConsumerWidget {
@@ -19,6 +20,16 @@ class GradingComponentHeader
       children: [
         Expanded(
           child: TextFormField(
+            onChanged: (value) {
+              ref
+                  .read(
+                gradingStructureDraftProvider.notifier,
+              )
+                  .renameComponent(
+                componentId: component.id,
+                name: value,
+              );
+            },
             initialValue: component.name,
             decoration: const InputDecoration(
               border: InputBorder.none,
@@ -29,7 +40,23 @@ class GradingComponentHeader
           ),
         ),
 
-        PopupMenuButton(
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            final notifier = ref.read(
+              gradingStructureDraftProvider.notifier,
+            );
+
+            switch (value) {
+              case 'rename':
+                break;
+
+              case 'delete':
+                notifier.removeComponent(
+                  component.id,
+                );
+                break;
+            }
+          },
           itemBuilder: (context) => const [
             PopupMenuItem(
               value: 'rename',
@@ -48,7 +75,7 @@ class GradingComponentHeader
               ),
             ),
           ],
-        ),
+        )
       ],
     );
   }

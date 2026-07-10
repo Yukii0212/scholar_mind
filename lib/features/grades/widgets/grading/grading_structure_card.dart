@@ -94,7 +94,7 @@ class GradingStructureCard extends ConsumerWidget {
 
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
+              child: OutlinedButton.icon(
                 onPressed: () async {
                   final name =
                   await showDialog<String>(

@@ -172,7 +172,7 @@ class _GradingComponentCardState
 
             Align(
               alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
+              child: TextButton.icon(
                 onPressed: _showAddSubcomponentDialog,
                 icon: const Icon(
                   Icons.add,

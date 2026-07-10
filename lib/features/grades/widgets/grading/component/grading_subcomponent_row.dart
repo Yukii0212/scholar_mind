@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/grading/grading_component_draft.dart';
 import '../../../providers/grading/grading_structure_draft_provider.dart';
+import 'grading_subcomponent_row.dart';
 
 class GradingSubcomponentRow
-    extends ConsumerWidget {
+    extends ConsumerStatefulWidget {
+
   const GradingSubcomponentRow({
     super.key,
     required this.component,
@@ -14,7 +16,50 @@ class GradingSubcomponentRow
   final GradingComponentDraft component;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GradingSubcomponentRow>
+  createState() =>
+      _GradingSubcomponentRowState();
+}
+
+class _GradingSubcomponentRowState
+    extends ConsumerState<
+        GradingSubcomponentRow> {
+
+  late final TextEditingController
+  _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = TextEditingController(
+      text:
+      widget.component.weight.toStringAsFixed(0),
+    );
+  }
+
+  @override
+  void didUpdateWidget(
+      covariant GradingSubcomponentRow
+      oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final value =
+    widget.component.weight.toStringAsFixed(0);
+
+    if (_controller.text != value) {
+      _controller.text = value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
         left: 20,
@@ -25,7 +70,7 @@ class GradingSubcomponentRow
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
-            initialValue: component.name,
+            initialValue: widget.component.name,
             decoration: const InputDecoration(
               border: InputBorder.none,
               hintText: 'Subcomponent Name',
@@ -37,7 +82,7 @@ class GradingSubcomponentRow
                 gradingStructureDraftProvider.notifier,
               )
                   .renameSubcomponent(
-                componentId: component.id,
+                componentId: widget.component.id,
                 name: value,
               );
             },
@@ -48,8 +93,11 @@ class GradingSubcomponentRow
               SizedBox(
                 width: 70,
                 child: TextFormField(
-                  initialValue:
-                  component.weight.toStringAsFixed(0),
+                  controller: _controller,
+                  keyboardType:
+                  const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   textAlign: TextAlign.center,
                   decoration: const InputDecoration(
                     suffixText: '%',
@@ -59,14 +107,14 @@ class GradingSubcomponentRow
                   onFieldSubmitted: (value) {
                     final weight =
                         double.tryParse(value) ??
-                            component.weight;
+                            widget.component.weight;
 
                     ref
                         .read(
                       gradingStructureDraftProvider.notifier,
                     )
                         .updateSubcomponentWeight(
-                      componentId: component.id,
+                      componentId: widget.component.id,
                       weight: weight.clamp(
                         0,
                         100,
@@ -80,7 +128,7 @@ class GradingSubcomponentRow
 
               Expanded(
                 child: Slider(
-                  value: component.weight,
+                  value: widget.component.weight,
                   min: 0,
                   max: 100,
                   divisions: 100,
@@ -90,7 +138,7 @@ class GradingSubcomponentRow
                       gradingStructureDraftProvider.notifier,
                     )
                         .updateSubcomponentWeight(
-                      componentId: component.id,
+                      componentId: widget.component.id,
                       weight: value,
                     );
                   },

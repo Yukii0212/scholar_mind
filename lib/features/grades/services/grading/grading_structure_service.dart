@@ -127,18 +127,68 @@ class GradingStructureService {
     );
   }
 
-  static GradingStructureDraft
-  resetDistribution(
+  static GradingStructureDraft resetDistribution(
       GradingStructureDraft draft,
       ) {
-    return draft;
+    if (draft.components.isEmpty) {
+      return draft;
+    }
+
+    final balanced =
+    DistributionBalancer.equalise(
+      itemCount: draft.components.length,
+    );
+
+    return draft.copyWith(
+      components: [
+        for (var i = 0;
+        i < draft.components.length;
+        i++)
+          draft.components[i].copyWith(
+            weight: balanced[i],
+          ),
+      ],
+    );
   }
 
-  static GradingStructureDraft
-  balanceDistribution(
+  static GradingStructureDraft balanceDistribution(
       GradingStructureDraft draft,
       ) {
-    return draft;
+    if (draft.components.isEmpty) {
+      return draft;
+    }
+
+    final largestIndex = draft.components
+        .asMap()
+        .entries
+        .reduce(
+          (a, b) =>
+      a.value.weight >= b.value.weight
+          ? a
+          : b,
+    )
+        .key;
+
+    final values = draft.components
+        .map((e) => e.weight)
+        .toList();
+
+    final balanced =
+    DistributionBalancer.rebalanceAfterEdit(
+      values: values,
+      editedIndex: largestIndex,
+    );
+
+    return draft.copyWith(
+      components: [
+        for (var i = 0;
+        i < draft.components.length;
+        i++)
+          draft.components[i].copyWith(
+            weight: balanced[i],
+          ),
+      ],
+    );
   }
 
   static GradingStructureDraft renameComponent(

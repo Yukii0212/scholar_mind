@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/grading/grading_component_draft.dart';
 import '../../../providers/grading/grading_structure_draft_provider.dart';
+import 'grading_component_weight_editor.dart';
 
 class GradingComponentWeightEditor
-    extends ConsumerWidget {
+    extends ConsumerStatefulWidget {
+
   const GradingComponentWeightEditor({
     super.key,
     required this.component,
@@ -14,7 +16,50 @@ class GradingComponentWeightEditor
   final GradingComponentDraft component;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GradingComponentWeightEditor>
+  createState() =>
+      _GradingComponentWeightEditorState();
+}
+
+class _GradingComponentWeightEditorState
+    extends ConsumerState<
+        GradingComponentWeightEditor> {
+
+  late final TextEditingController
+  _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = TextEditingController(
+      text:
+      widget.component.weight.toStringAsFixed(0),
+    );
+  }
+
+  @override
+  void didUpdateWidget(
+      covariant GradingComponentWeightEditor
+      oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final value =
+    widget.component.weight.toStringAsFixed(0);
+
+    if (_controller.text != value) {
+      _controller.text = value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -30,7 +75,7 @@ class GradingComponentWeightEditor
             SizedBox(
               width: 80,
               child: TextFormField(
-                initialValue: component.weight.toStringAsFixed(0),
+                controller: _controller,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
@@ -43,14 +88,14 @@ class GradingComponentWeightEditor
                 onFieldSubmitted: (value) {
                   final weight =
                       double.tryParse(value) ??
-                          component.weight;
+                          widget.component.weight;
 
                   ref
                       .read(
                     gradingStructureDraftProvider.notifier,
                   )
                       .updateWeight(
-                    componentId: component.id,
+                    componentId: widget.component.id,
                     weight: weight.clamp(
                       0,
                       100,
@@ -64,19 +109,19 @@ class GradingComponentWeightEditor
 
             Expanded(
               child: Slider(
-                value: component.weight,
+                value: widget.component.weight,
                 min: 0,
                 max: 100,
                 divisions: 100,
                 label:
-                '${component.weight.toStringAsFixed(0)}%',
+                '${widget.component.weight.toStringAsFixed(0)}%',
                 onChanged: (value) {
                   ref
                       .read(
                     gradingStructureDraftProvider.notifier,
                   )
                       .updateWeight(
-                    componentId: component.id,
+                    componentId: widget.component.id,
                     weight: value,
                   );
                 },

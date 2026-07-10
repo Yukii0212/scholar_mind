@@ -170,6 +170,43 @@ class _GradingComponentCardState
 
             const SizedBox(height: 16),
 
+            if (widget.component.children.isNotEmpty) ...[
+              Builder(
+                builder: (_) {
+                  final total = widget.component.children.fold<double>(
+                    0,
+                        (sum, child) => sum + child.weight,
+                  );
+
+                  final parentWeight =
+                      widget.component.weight;
+
+                  final valid =
+                      total == 100 ||
+                          total == parentWeight;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(
+                      top: 8,
+                      bottom: 12,
+                    ),
+                    child: Text(
+                      valid
+                          ? 'Interpreted as ${total == 100 ? "Relative to Component" : "Relative to Final Grade"}'
+                          : 'Subcomponents must total either 100% or ${parentWeight.toStringAsFixed(0)}%',
+                      style: TextStyle(
+                        color: valid
+                            ? Colors.green
+                            : Theme.of(context)
+                            .colorScheme
+                            .error,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(

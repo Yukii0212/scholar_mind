@@ -123,54 +123,6 @@ class GradingStructureCard extends ConsumerWidget {
               ),
             ),
 
-            if (!draft.autoBalance)
-              const SizedBox(height: 16),
-
-            if (!draft.autoBalance)
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ref
-                            .read(
-                          gradingStructureDraftProvider
-                              .notifier,
-                        )
-                            .resetDistribution();
-                      },
-                      icon: const Icon(
-                        Icons.refresh,
-                      ),
-                      label: const Text(
-                        'Reset Weights',
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ref
-                            .read(
-                          gradingStructureDraftProvider
-                              .notifier,
-                        )
-                            .balanceDistribution();
-                      },
-                      icon: const Icon(
-                        Icons.balance,
-                      ),
-                      label: const Text(
-                        'Balance Weights',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
             const SizedBox(height: 24),
 
             Text(

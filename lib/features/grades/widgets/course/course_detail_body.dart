@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/course_model.dart';
 import '../../providers/grading/grading_structure_controller.dart';
 import 'course_information_card.dart';
+import '../../providers/grading/grading_provider.dart';
+import '../grading/grading_component_summary_list.dart';
 
 class CourseDetailBody extends ConsumerStatefulWidget {
   const CourseDetailBody({
@@ -66,8 +68,51 @@ class CourseDetailBodyState
 
           const SizedBox(height: 32),
 
-          const Expanded(
-            child: _EmptyGradingStructure(),
+          Expanded(
+            child: Consumer(
+              builder: (
+                  context,
+                  ref,
+                  _,
+                  ) {
+                final components =
+                ref.watch(
+                  gradingComponentRepositoryProvider,
+                );
+
+                return StreamBuilder(
+                  stream: components
+                      .watchCourseComponents(
+                    widget.course.id,
+                  ),
+                  builder: (
+                      context,
+                      snapshot,
+                      ) {
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child:
+                        CircularProgressIndicator(),
+                      );
+                    }
+
+                    final data =
+                    snapshot.data!;
+
+                    if (data.isEmpty) {
+                      return const _EmptyGradingStructure();
+                    }
+
+                    return SingleChildScrollView(
+                      child:
+                      GradingComponentSummaryList(
+                        components: data,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

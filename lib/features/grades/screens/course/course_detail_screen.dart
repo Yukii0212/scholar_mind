@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
+import '../../providers/grading/grading_provider.dart';
 import '../../widgets/common/grade_speed_dial.dart';
 import '../../widgets/course/course_detail_body.dart';
 import '../grading/create_grading_structure_screen.dart';
@@ -27,6 +28,13 @@ class _CourseDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final hasGradingStructure =
+    ref.watch(
+      hasGradingStructureProvider(
+        widget.course.id,
+      ),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.course.name),
@@ -37,22 +45,33 @@ class _CourseDetailScreenState
         course: widget.course,
       ),
 
-        floatingActionButton: GradeSpeedDial(
-          onCreateGradingStructure: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    CreateGradingStructureScreen(
-                      course: widget.course,
-                    ),
-              ),
-            );
-          },
-          onImportGradingTemplate: () {
-            // TODO
-          },
-        ),
+      floatingActionButton:
+      hasGradingStructure.when(
+        data: (exists) {
+          if (exists) {
+            return null;
+          }
+
+          return GradeSpeedDial(
+            onCreateGradingStructure: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CreateGradingStructureScreen(
+                        course: widget.course,
+                      ),
+                ),
+              );
+            },
+            onImportGradingTemplate: () {
+              // TODO
+            },
+          );
+        },
+        loading: () => null,
+        error: (_, __) => null,
+      ),
     );
   }
 }

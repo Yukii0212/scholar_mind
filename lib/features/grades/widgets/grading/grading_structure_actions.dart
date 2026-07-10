@@ -58,7 +58,7 @@ class GradingStructureActions
             Navigator.pop(context);
           },
           child: const Text(
-            'Save',
+            'Create Grading Structure',
           ),
         ),
 

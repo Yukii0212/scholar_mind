@@ -16,3 +16,21 @@ Provider<GradingComponentRepository>(
     ),
   ),
 );
+
+final hasGradingStructureProvider =
+StreamProvider.family<bool, String>(
+      (
+      ref,
+      courseId,
+      ) {
+    return ref
+        .watch(
+      gradingComponentRepositoryProvider,
+    )
+        .watchCourseComponents(courseId)
+        .map(
+          (components) =>
+      components.isNotEmpty,
+    );
+  },
+);

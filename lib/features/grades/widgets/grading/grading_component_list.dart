@@ -23,15 +23,15 @@ class GradingComponentList
       );
     }
 
-    return ListView.separated(
-      itemCount: components.length,
-      separatorBuilder: (_, __) =>
-      const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        return GradingComponentCard(
-          component: components[index],
-        );
-      },
+    return Column(
+      children: [
+        for (final component in components) ...[
+          GradingComponentCard(
+            component: component,
+          ),
+          const SizedBox(height: 12),
+        ],
+      ],
     );
   }
 }

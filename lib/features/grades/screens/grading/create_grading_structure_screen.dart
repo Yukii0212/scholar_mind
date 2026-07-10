@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/course_model.dart';
+import '../../widgets/grading/grading_structure_actions.dart';
 import '../../widgets/grading/grading_structure_card.dart';
 
 class CreateGradingStructureScreen
@@ -31,30 +32,8 @@ class CreateGradingStructureScreen
 
               const SizedBox(height: 24),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO
-                  },
-                  child: const Text(
-                    'Save',
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Cancel',
-                  ),
-                ),
+              GradingStructureActions(
+                courseId: course.id,
               ),
             ],
           ),

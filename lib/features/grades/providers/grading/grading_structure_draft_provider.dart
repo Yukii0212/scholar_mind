@@ -59,6 +59,16 @@ class GradingStructureDraftNotifier
         );
   }
 
+  void resetDistribution() {
+    state = GradingStructureService
+        .resetDistribution(state);
+  }
+
+  void balanceDistribution() {
+    state = GradingStructureService
+        .balanceDistribution(state);
+  }
+
   void updateWeight({
     required String componentId,
     required double weight,

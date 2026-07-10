@@ -5,7 +5,7 @@ import '../../domain/grading/grading_component_draft.dart';
 import '../../providers/grading/grading_structure_draft_provider.dart';
 
 class GradingComponentCard
-    extends ConsumerWidget {
+    extends ConsumerStatefulWidget {
   const GradingComponentCard({
     super.key,
     required this.component,
@@ -15,9 +15,51 @@ class GradingComponentCard
   component;
 
   @override
+  ConsumerState<GradingComponentCard>
+  createState() =>
+      _GradingComponentCardState();
+}
+
+class _GradingComponentCardState
+    extends ConsumerState<
+        GradingComponentCard> {
+
+  late final TextEditingController
+  _weightController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _weightController =
+        TextEditingController(
+          text: widget.component.weight
+              .toStringAsFixed(0),
+        );
+  }
+
+  @override
+  void didUpdateWidget(
+      covariant GradingComponentCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final value = widget.component.weight
+        .toStringAsFixed(0);
+
+    if (_weightController.text != value) {
+      _weightController.text = value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(
       BuildContext context,
-      WidgetRef ref,
       ) {
     return Card(
       child: Padding(
@@ -27,7 +69,7 @@ class GradingComponentCard
           children: [
             TextFormField(
               initialValue:
-              component.name,
+              widget.component.name,
               decoration:
               const InputDecoration(
                 labelText:
@@ -41,7 +83,7 @@ class GradingComponentCard
                 )
                     .renameComponent(
                   componentId:
-                  component.id,
+                  widget.component.id,
                   name: value,
                 );
               },
@@ -67,8 +109,7 @@ class GradingComponentCard
                     SizedBox(
                       width: 90,
                       child: TextFormField(
-                        initialValue: component.weight
-                            .toStringAsFixed(0),
+                        controller: _weightController,
                         keyboardType:
                         const TextInputType.numberWithOptions(
                           decimal: true,
@@ -88,7 +129,7 @@ class GradingComponentCard
                               double.tryParse(
                                 value,
                               ) ??
-                                  component.weight;
+                                  widget.component.weight;
 
                           ref
                               .read(
@@ -97,7 +138,7 @@ class GradingComponentCard
                           )
                               .updateWeight(
                             componentId:
-                            component.id,
+                            widget.component.id,
                             weight: weight.clamp(
                               0,
                               100,
@@ -111,12 +152,12 @@ class GradingComponentCard
 
                     Expanded(
                       child: Slider(
-                        value: component.weight,
+                        value: widget.component.weight,
                         min: 0,
                         max: 100,
                         divisions: 100,
                         label:
-                        '${component.weight.toStringAsFixed(0)}%',
+                        '${widget.component.weight.toStringAsFixed(0)}%',
                         onChanged: (value) {
                           ref
                               .read(
@@ -125,7 +166,7 @@ class GradingComponentCard
                           )
                               .updateWeight(
                             componentId:
-                            component.id,
+                            widget.component.id,
                             weight: value,
                           );
                         },
@@ -150,7 +191,7 @@ class GradingComponentCard
                         .notifier,
                   )
                       .removeComponent(
-                    component.id,
+                    widget.component.id,
                   );
                 },
               ),

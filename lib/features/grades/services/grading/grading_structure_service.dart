@@ -77,6 +77,20 @@ class GradingStructureService {
     );
   }
 
+  static GradingStructureDraft
+  resetDistribution(
+      GradingStructureDraft draft,
+      ) {
+    return draft;
+  }
+
+  static GradingStructureDraft
+  balanceDistribution(
+      GradingStructureDraft draft,
+      ) {
+    return draft;
+  }
+
   static GradingStructureDraft renameComponent(
       GradingStructureDraft draft,
       String componentId,

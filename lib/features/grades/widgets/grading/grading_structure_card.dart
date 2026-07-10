@@ -88,42 +88,87 @@ class GradingStructureCard extends ConsumerWidget {
                 ),
               )
             else
-              SizedBox(
-                height: 400,
-                child: GradingComponentList(
-                  components:
-                  draft.components,
-                ),
+              GradingComponentList(
+                components: draft.components,
               ),
 
             const SizedBox(height: 24),
 
-            OutlinedButton.icon(
-              onPressed: () async {
-                final name =
-                await showDialog<String>(
-                  context: context,
-                  builder: (_) =>
-                  const GradingComponentDialog(),
-                );
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  final name =
+                  await showDialog<String>(
+                    context: context,
+                    builder: (_) =>
+                    const GradingComponentDialog(),
+                  );
 
-                if (name == null) {
-                  return;
-                }
+                  if (name == null) {
+                    return;
+                  }
 
-                ref
-                    .read(
-                  gradingStructureDraftProvider
-                      .notifier,
-                )
-                    .addComponent(
-                  name: name,
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text(
-                'Add Component',
+                  ref
+                      .read(
+                    gradingStructureDraftProvider
+                        .notifier,
+                  )
+                      .addComponent(
+                    name: name,
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text(
+                  'Add Component',
+                ),
               ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ref
+                          .read(
+                        gradingStructureDraftProvider
+                            .notifier,
+                      )
+                          .resetDistribution();
+                    },
+                    icon: const Icon(
+                      Icons.refresh,
+                    ),
+                    label: const Text(
+                      'Reset Weights',
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ref
+                          .read(
+                        gradingStructureDraftProvider
+                            .notifier,
+                      )
+                          .balanceDistribution();
+                    },
+                    icon: const Icon(
+                      Icons.balance,
+                    ),
+                    label: const Text(
+                      'Balance Weights',
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

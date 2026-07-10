@@ -49,42 +49,89 @@ class GradingComponentCard
 
             const SizedBox(height: 16),
 
-            Row(
+            Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Slider(
-                    value:
-                    component.weight,
-                    min: 0,
-                    max: 100,
-                    divisions: 100,
-                    label:
-                    '${component.weight.toStringAsFixed(0)}%',
-                    onChanged:
-                        (value) {
-                      ref
-                          .read(
-                        gradingStructureDraftProvider
-                            .notifier,
-                      )
-                          .updateWeight(
-                        componentId:
-                        component
-                            .id,
-                        weight:
-                        value,
-                      );
-                    },
-                  ),
+                Text(
+                  'Weight',
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge,
                 ),
 
-                SizedBox(
-                  width: 48,
-                  child: Text(
-                    '${component.weight.toStringAsFixed(0)}%',
-                    textAlign:
-                    TextAlign.center,
-                  ),
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 90,
+                      child: TextFormField(
+                        initialValue: component.weight
+                            .toStringAsFixed(0),
+                        keyboardType:
+                        const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textAlign: TextAlign.center,
+                        decoration:
+                        const InputDecoration(
+                          suffixText: '%',
+                          border:
+                          OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        onFieldSubmitted: (
+                            value,
+                            ) {
+                          final weight =
+                              double.tryParse(
+                                value,
+                              ) ??
+                                  component.weight;
+
+                          ref
+                              .read(
+                            gradingStructureDraftProvider
+                                .notifier,
+                          )
+                              .updateWeight(
+                            componentId:
+                            component.id,
+                            weight: weight.clamp(
+                              0,
+                              100,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Slider(
+                        value: component.weight,
+                        min: 0,
+                        max: 100,
+                        divisions: 100,
+                        label:
+                        '${component.weight.toStringAsFixed(0)}%',
+                        onChanged: (value) {
+                          ref
+                              .read(
+                            gradingStructureDraftProvider
+                                .notifier,
+                          )
+                              .updateWeight(
+                            componentId:
+                            component.id,
+                            weight: value,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

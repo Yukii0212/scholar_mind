@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/course_model.dart';
 import '../../widgets/common/grade_speed_dial.dart';
 import '../../widgets/course/course_detail_body.dart';
-import '../../widgets/dialogs/grading/create_grading_structure_dialog.dart';
-import '../../widgets/grading/grading_structure_editor.dart';
+import '../grading/create_grading_structure_screen.dart';
 
 class CourseDetailScreen extends ConsumerStatefulWidget {
   const CourseDetailScreen({
@@ -40,12 +39,14 @@ class _CourseDetailScreenState
 
         floatingActionButton: GradeSpeedDial(
           onCreateGradingStructure: () {
-            showDialog(
-              context: context,
-              builder: (_) =>
-                  CreateGradingStructureDialog(
-                    courseId: widget.course.id,
-                  ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    CreateGradingStructureScreen(
+                      course: widget.course,
+                    ),
+              ),
             );
           },
           onImportGradingTemplate: () {

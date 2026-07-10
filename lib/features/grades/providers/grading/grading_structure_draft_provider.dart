@@ -16,6 +16,11 @@ class GradingStructureDraftNotifier
     GradingStructureDraft(),
   );
 
+  bool get isValid =>
+      GradingStructureService.validate(
+        state,
+      );
+
   void reset() {
     state = GradingStructureDraft();
   }

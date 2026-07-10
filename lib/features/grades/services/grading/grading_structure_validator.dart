@@ -37,13 +37,59 @@ class GradingStructureValidator {
       );
     }
 
-    for (final component
-    in draft.components) {
+    for (final component in draft.components) {
       if (component.name.trim().isEmpty) {
         errors.add(
           'All grading components must have a name.',
         );
         break;
+      }
+
+      if (component.weight <= 0) {
+        errors.add(
+          '"${component.name}" must have a weight greater than 0%.',
+        );
+      }
+
+      if (component.children.isEmpty) {
+        continue;
+      }
+
+      final subcomponentTotal =
+      component.children.fold<double>(
+        0,
+            (sum, child) => sum + child.weight,
+      );
+
+      for (final child in component.children) {
+        if (child.name.trim().isEmpty) {
+          errors.add(
+            'Every subcomponent must have a name.',
+          );
+          break;
+        }
+
+        if (child.weight <= 0) {
+          errors.add(
+            '"${child.name}" must have a weight greater than 0%.',
+          );
+        }
+      }
+
+      final validRelative =
+          (subcomponentTotal - 100).abs() < 0.001;
+
+      final validFinal =
+          (subcomponentTotal - component.weight)
+              .abs() <
+              0.001;
+
+      if (!validRelative && !validFinal) {
+        errors.add(
+          '"${component.name}" subcomponents must total either '
+              '100% or '
+              '${component.weight.toStringAsFixed(0)}%.',
+        );
       }
     }
 

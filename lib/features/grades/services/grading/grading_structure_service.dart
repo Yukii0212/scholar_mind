@@ -323,4 +323,40 @@ class GradingStructureService {
       }).toList(),
     );
   }
+
+  static bool validate(
+      GradingStructureDraft draft,
+      ) {
+    for (final component in draft.components) {
+      if (component.weight <= 0) {
+        return false;
+      }
+
+      if (component.children.isEmpty) {
+        continue;
+      }
+
+      final total =
+      component.children.fold<double>(
+        0,
+            (sum, child) => sum + child.weight,
+      );
+
+      final hasZeroWeight =
+      component.children.any(
+            (child) => child.weight <= 0,
+      );
+
+      if (hasZeroWeight) {
+        return false;
+      }
+
+      if (total != 100 &&
+          total != component.weight) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }

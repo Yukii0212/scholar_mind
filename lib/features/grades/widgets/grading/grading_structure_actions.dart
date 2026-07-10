@@ -93,7 +93,7 @@ class _ValidationDialog
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text(
-        'Invalid Grading Structure',
+        'Please review your grading structure',
       ),
       content: Column(
         mainAxisSize:
@@ -120,7 +120,7 @@ class _ValidationDialog
             Navigator.pop(context);
           },
           child: const Text(
-            'Go Back',
+            'Continue Editing',
           ),
         ),
       ],

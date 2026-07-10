@@ -178,12 +178,45 @@ class _GradingComponentCardState
                         (sum, child) => sum + child.weight,
                   );
 
-                  final parentWeight =
-                      widget.component.weight;
+                  final parentWeight = widget.component.weight;
+
+                  final hasIncompleteWeights =
+                  widget.component.children.any(
+                        (child) =>
+                    child.weight <= 0 ||
+                        child.name.trim().isEmpty,
+                  );
 
                   final valid =
                       total == 100 ||
                           total == parentWeight;
+
+                  String message;
+
+                  Color color;
+
+                  if (hasIncompleteWeights) {
+                    message =
+                    'Finish setting up your subcomponents to continue.';
+                    color = Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant;
+                  } else if (valid) {
+                    message = total == 100
+                        ? '✓ Using "${widget.component.name}" relative weighting.'
+                        : '✓ Using final course weighting.';
+
+                    color = Colors.green;
+                  } else {
+                    message =
+                    'Subcomponents must total either '
+                        '100% or '
+                        '${parentWeight.toStringAsFixed(0)}%.';
+
+                    color = Theme.of(context)
+                        .colorScheme
+                        .error;
+                  }
 
                   return Padding(
                     padding: const EdgeInsets.only(
@@ -191,15 +224,9 @@ class _GradingComponentCardState
                       bottom: 12,
                     ),
                     child: Text(
-                      valid
-                          ? 'Interpreted as ${total == 100 ? "Relative to Component" : "Relative to Final Grade"}'
-                          : 'Subcomponents must total either 100% or ${parentWeight.toStringAsFixed(0)}%',
+                      message,
                       style: TextStyle(
-                        color: valid
-                            ? Colors.green
-                            : Theme.of(context)
-                            .colorScheme
-                            .error,
+                        color: color,
                       ),
                     ),
                   );

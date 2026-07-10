@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/grading/grading_component_draft.dart';
-import '../../../domain/grading/grading_component_type.dart';
 import '../../../providers/grading/grading_structure_draft_provider.dart';
-
-enum _ComponentAction {
-  rename,
-  addSubcomponent,
-  delete,
-}
+import 'grading_component_header.dart';
+import 'grading_component_weight_editor.dart';
+import 'grading_subcomponent_row.dart';
 
 class GradingComponentCard
     extends ConsumerStatefulWidget {
@@ -33,8 +29,6 @@ class _GradingComponentCardState
 
   late final TextEditingController
   _weightController;
-
-  bool _expanded = true;
 
   Future<void> _showAddSubcomponentDialog() async {
     final controller =
@@ -135,249 +129,62 @@ class _GradingComponentCardState
   }
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    return AnimatedSize(
-        duration: const Duration(
-          milliseconds: 200,
-        ),
-        curve: Curves.easeInOut,
-        child: Card(
+  Widget build(BuildContext context) {
+    return Card(
       child: Padding(
-        padding:
-        const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-        Row(
-        children: [
-        if (widget.component.children.isNotEmpty)
-          IconButton(
-          onPressed: () {
-        setState(() {
-        _expanded = !_expanded;
-        });
-        },
-          icon: Icon(
-            _expanded
-                ? Icons.expand_more
-                : Icons.chevron_right,
-          ),
-        )
-        else
-        const SizedBox(width: 48),
-
-    Expanded(
-    child: TextFormField(
-              initialValue:
-              widget.component.name,
-              decoration:
-              const InputDecoration(
-                labelText:
-                'Component Name',
-              ),
-      onChanged: (value) {
-        final notifier = ref.read(
-          gradingStructureDraftProvider.notifier,
-        );
-
-        if (widget.component.type ==
-            GradingComponentType.component) {
-          notifier.renameComponent(
-            componentId: widget.component.id,
-            name: value,
-          );
-        } else {
-          notifier.renameSubcomponent(
-            componentId: widget.component.id,
-            name: value,
-          );
-        }
-      },
-    ),
-    ),
-        ],
-        ),
+            GradingComponentHeader(
+              component: widget.component,
+            ),
 
             const SizedBox(height: 16),
 
-    if (_expanded) ...[
-            Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Weight',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge,
-                ),
-
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 90,
-                      child: TextFormField(
-                        controller: _weightController,
-                        keyboardType:
-                        const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        textAlign: TextAlign.center,
-                        decoration:
-                        const InputDecoration(
-                          suffixText: '%',
-                          border:
-                          OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                        onFieldSubmitted: (
-                            value,
-                            ) {
-                          final weight =
-                              double.tryParse(
-                                value,
-                              ) ??
-                                  widget.component.weight;
-
-                          final notifier = ref.read(
-                            gradingStructureDraftProvider.notifier,
-                          );
-
-                          if (widget.component.type ==
-                              GradingComponentType.component) {
-                            notifier.updateWeight(
-                              componentId: widget.component.id,
-                              weight: weight.clamp(0, 100),
-                            );
-                          } else {
-                            notifier.updateSubcomponentWeight(
-                              componentId: widget.component.id,
-                              weight: weight.clamp(0, 100),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: Slider(
-                        value: widget.component.weight,
-                        min: 0,
-                        max: 100,
-                        divisions: 100,
-                        label:
-                        '${widget.component.weight.toStringAsFixed(0)}%',
-                        onChanged: (value) {
-                          final notifier = ref.read(
-                            gradingStructureDraftProvider.notifier,
-                          );
-
-                          if (widget.component.type ==
-                              GradingComponentType.component) {
-                            notifier.updateWeight(
-                              componentId: widget.component.id,
-                              weight: value,
-                            );
-                          } else {
-                            notifier.updateSubcomponentWeight(
-                              componentId: widget.component.id,
-                              weight: value,
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            GradingComponentWeightEditor(
+              component: widget.component,
             ),
 
-            Align(
-              alignment: Alignment.centerRight,
-              child: PopupMenuButton<_ComponentAction>(
-                onSelected: (action) {
-                  switch (action) {
-                    case _ComponentAction.rename:
-                      break;
+            if (widget.component.children.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 8),
 
-                    case _ComponentAction.addSubcomponent:
-                      _showAddSubcomponentDialog();
-                      break;
-
-                    case _ComponentAction.delete:
-                      final notifier = ref.read(
-                        gradingStructureDraftProvider.notifier,
-                      );
-
-                      if (widget.component.type ==
-                          GradingComponentType.component) {
-                        notifier.removeComponent(
-                          widget.component.id,
-                        );
-                      } else {
-                        notifier.removeSubcomponent(
-                          widget.component.id,
-                        );
-                      }
-                      break;
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: _ComponentAction.rename,
-                    child: ListTile(
-                      leading: Icon(Icons.edit_outlined),
-                      title: Text('Rename'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-
-                  if (widget.component.type ==
-                      GradingComponentType.component)
-                    const PopupMenuItem(
-                      value: _ComponentAction.addSubcomponent,
-                      child: ListTile(
-                        leading: Icon(Icons.account_tree_outlined),
-                        title: Text('Add Subcomponent'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-
-                  const PopupMenuItem(
-                    value: _ComponentAction.delete,
-                    child: ListTile(
-                      leading: Icon(Icons.delete_outline),
-                      title: Text('Delete'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
+              Text(
+                'Subcomponents',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall,
               ),
-            ),
 
-      if (_expanded)
-        ...widget.component.children.map(
-              (child) => Padding(
-            padding: const EdgeInsets.only(
-              left: 32,
-              top: 12,
-            ),
-                child: GradingComponentCard(
+              const SizedBox(height: 12),
+
+              ...widget.component.children.map(
+                    (child) => GradingSubcomponentRow(
                   key: ValueKey(child.id),
                   component: child,
                 ),
-          ),
-        ),
-    ],
+              ),
+            ],
+
+            const SizedBox(height: 16),
+
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: _showAddSubcomponentDialog,
+                icon: const Icon(
+                  Icons.add,
+                ),
+                label: const Text(
+                  'Add Subcomponent',
+                ),
+              ),
+            ),
           ],
         ),
       ),
-        ),
     );
   }
 }

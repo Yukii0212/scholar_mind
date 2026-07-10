@@ -38,7 +38,36 @@ class _CourseDetailScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.course.name),
-        actions: const [],
+        actions: [
+          hasGradingStructure.when(
+            data: (exists) {
+              if (!exists) {
+                return const SizedBox.shrink();
+              }
+
+              return IconButton(
+                icon: const Icon(
+                  Icons.edit_outlined,
+                ),
+                tooltip: 'Edit Grading Structure',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          CreateGradingStructureScreen(
+                            course: widget.course,
+                            isEditing: true,
+                          ),
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: CourseDetailBody(
         key: _bodyKey,
@@ -60,6 +89,7 @@ class _CourseDetailScreenState
                   builder: (_) =>
                       CreateGradingStructureScreen(
                         course: widget.course,
+                        isEditing: false,
                       ),
                 ),
               );

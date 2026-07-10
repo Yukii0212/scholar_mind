@@ -10,9 +10,11 @@ class GradingStructureActions
   const GradingStructureActions({
     super.key,
     required this.courseId,
+    required this.isEditing,
   });
 
   final String courseId;
+  final bool isEditing;
 
   @override
   Widget build(
@@ -57,8 +59,10 @@ class GradingStructureActions
 
             Navigator.pop(context);
           },
-          child: const Text(
-            'Create Grading Structure',
+          child: Text(
+            isEditing
+                ? 'Save Changes'
+                : 'Create Grading Structure',
           ),
         ),
 

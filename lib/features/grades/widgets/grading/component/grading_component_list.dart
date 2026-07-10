@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/grading/grading_component_draft.dart';
+import '../../../domain/grading/grading_component_draft.dart';
 import 'grading_component_card.dart';
 
 class GradingComponentList
@@ -27,6 +27,7 @@ class GradingComponentList
       children: [
         for (final component in components) ...[
           GradingComponentCard(
+            key: ValueKey(component.id),
             component: component,
           ),
           const SizedBox(height: 12),

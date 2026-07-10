@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/grading/grading_component_draft.dart';
-import '../../providers/grading/grading_structure_draft_provider.dart';
+import '../../../domain/grading/grading_component_draft.dart';
+import '../../../domain/grading/grading_component_type.dart';
+import '../../../providers/grading/grading_structure_draft_provider.dart';
 
 enum _ComponentAction {
   rename,
@@ -175,18 +176,24 @@ class _GradingComponentCardState
                 labelText:
                 'Component Name',
               ),
-              onChanged: (value) {
-                ref
-                    .read(
-                  gradingStructureDraftProvider
-                      .notifier,
-                )
-                    .renameComponent(
-                  componentId:
-                  widget.component.id,
-                  name: value,
-                );
-              },
+      onChanged: (value) {
+        final notifier = ref.read(
+          gradingStructureDraftProvider.notifier,
+        );
+
+        if (widget.component.type ==
+            GradingComponentType.component) {
+          notifier.renameComponent(
+            componentId: widget.component.id,
+            name: value,
+          );
+        } else {
+          notifier.renameSubcomponent(
+            componentId: widget.component.id,
+            name: value,
+          );
+        }
+      },
     ),
     ),
         ],
@@ -235,19 +242,22 @@ class _GradingComponentCardState
                               ) ??
                                   widget.component.weight;
 
-                          ref
-                              .read(
-                            gradingStructureDraftProvider
-                                .notifier,
-                          )
-                              .updateWeight(
-                            componentId:
-                            widget.component.id,
-                            weight: weight.clamp(
-                              0,
-                              100,
-                            ),
+                          final notifier = ref.read(
+                            gradingStructureDraftProvider.notifier,
                           );
+
+                          if (widget.component.type ==
+                              GradingComponentType.component) {
+                            notifier.updateWeight(
+                              componentId: widget.component.id,
+                              weight: weight.clamp(0, 100),
+                            );
+                          } else {
+                            notifier.updateSubcomponentWeight(
+                              componentId: widget.component.id,
+                              weight: weight.clamp(0, 100),
+                            );
+                          }
                         },
                       ),
                     ),
@@ -263,16 +273,22 @@ class _GradingComponentCardState
                         label:
                         '${widget.component.weight.toStringAsFixed(0)}%',
                         onChanged: (value) {
-                          ref
-                              .read(
-                            gradingStructureDraftProvider
-                                .notifier,
-                          )
-                              .updateWeight(
-                            componentId:
-                            widget.component.id,
-                            weight: value,
+                          final notifier = ref.read(
+                            gradingStructureDraftProvider.notifier,
                           );
+
+                          if (widget.component.type ==
+                              GradingComponentType.component) {
+                            notifier.updateWeight(
+                              componentId: widget.component.id,
+                              weight: value,
+                            );
+                          } else {
+                            notifier.updateSubcomponentWeight(
+                              componentId: widget.component.id,
+                              weight: value,
+                            );
+                          }
                         },
                       ),
                     ),
@@ -294,19 +310,25 @@ class _GradingComponentCardState
                       break;
 
                     case _ComponentAction.delete:
-                      ref
-                          .read(
-                        gradingStructureDraftProvider
-                            .notifier,
-                      )
-                          .removeComponent(
-                        widget.component.id,
+                      final notifier = ref.read(
+                        gradingStructureDraftProvider.notifier,
                       );
+
+                      if (widget.component.type ==
+                          GradingComponentType.component) {
+                        notifier.removeComponent(
+                          widget.component.id,
+                        );
+                      } else {
+                        notifier.removeSubcomponent(
+                          widget.component.id,
+                        );
+                      }
                       break;
                   }
                 },
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
                     value: _ComponentAction.rename,
                     child: ListTile(
                       leading: Icon(Icons.edit_outlined),
@@ -314,16 +336,19 @@ class _GradingComponentCardState
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                  PopupMenuItem(
-                    value:
-                    _ComponentAction.addSubcomponent,
-                    child: ListTile(
-                      leading: Icon(Icons.account_tree_outlined),
-                      title: Text('Add Subcomponent'),
-                      contentPadding: EdgeInsets.zero,
+
+                  if (widget.component.type ==
+                      GradingComponentType.component)
+                    const PopupMenuItem(
+                      value: _ComponentAction.addSubcomponent,
+                      child: ListTile(
+                        leading: Icon(Icons.account_tree_outlined),
+                        title: Text('Add Subcomponent'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
                     ),
-                  ),
-                  PopupMenuItem(
+
+                  const PopupMenuItem(
                     value: _ComponentAction.delete,
                     child: ListTile(
                       leading: Icon(Icons.delete_outline),
@@ -342,9 +367,10 @@ class _GradingComponentCardState
               left: 32,
               top: 12,
             ),
-            child: GradingComponentCard(
-              component: child,
-            ),
+                child: GradingComponentCard(
+                  key: ValueKey(child.id),
+                  component: child,
+                ),
           ),
         ),
     ],

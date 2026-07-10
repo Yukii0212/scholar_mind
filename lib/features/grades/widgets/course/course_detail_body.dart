@@ -5,7 +5,7 @@ import '../../data/models/course_model.dart';
 import '../../providers/grading/grading_structure_controller.dart';
 import 'course_information_card.dart';
 import '../../providers/grading/grading_provider.dart';
-import '../grading/grading_component_summary_list.dart';
+import '../grading/component/grading_component_summary_list.dart';
 
 class CourseDetailBody extends ConsumerStatefulWidget {
   const CourseDetailBody({

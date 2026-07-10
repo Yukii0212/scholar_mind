@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/models/grading_component_model.dart';
+import '../../../data/models/grading_component_model.dart';
 
 class GradingComponentSummaryCard
     extends StatelessWidget {

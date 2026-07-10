@@ -26,6 +26,20 @@ class GradingStructureDraftNotifier
     state = draft;
   }
 
+  void setAutoBalance(
+      bool enabled,
+      ) {
+    state = state.copyWith(
+      autoBalance: enabled,
+    );
+  }
+
+  void toggleAutoBalance() {
+    setAutoBalance(
+      !state.autoBalance,
+    );
+  }
+
   void addComponent({
     required String name,
   }) {

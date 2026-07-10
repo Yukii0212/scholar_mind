@@ -42,6 +42,29 @@ class GradingStructureCard extends ConsumerWidget {
                   .bodyMedium,
             ),
 
+            const SizedBox(height: 20),
+
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'Auto Balance',
+              ),
+              subtitle: Text(
+                draft.autoBalance
+                    ? 'Weights automatically stay at 100%.'
+                    : 'Edit weights manually and balance them later.',
+              ),
+              value: draft.autoBalance,
+              onChanged: (value) {
+                ref
+                    .read(
+                  gradingStructureDraftProvider
+                      .notifier,
+                )
+                    .setAutoBalance(value);
+              },
+            ),
+
             const SizedBox(height: 24),
 
             if (draft.components.isEmpty)
@@ -125,51 +148,53 @@ class GradingStructureCard extends ConsumerWidget {
               ),
             ),
 
-            const SizedBox(height: 16),
+            if (!draft.autoBalance)
+              const SizedBox(height: 16),
 
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      ref
-                          .read(
-                        gradingStructureDraftProvider
-                            .notifier,
-                      )
-                          .resetDistribution();
-                    },
-                    icon: const Icon(
-                      Icons.refresh,
-                    ),
-                    label: const Text(
-                      'Reset Weights',
+            if (!draft.autoBalance)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(
+                          gradingStructureDraftProvider
+                              .notifier,
+                        )
+                            .resetDistribution();
+                      },
+                      icon: const Icon(
+                        Icons.refresh,
+                      ),
+                      label: const Text(
+                        'Reset Weights',
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(width: 12),
+                  const SizedBox(width: 12),
 
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      ref
-                          .read(
-                        gradingStructureDraftProvider
-                            .notifier,
-                      )
-                          .balanceDistribution();
-                    },
-                    icon: const Icon(
-                      Icons.balance,
-                    ),
-                    label: const Text(
-                      'Balance Weights',
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(
+                          gradingStructureDraftProvider
+                              .notifier,
+                        )
+                            .balanceDistribution();
+                      },
+                      icon: const Icon(
+                        Icons.balance,
+                      ),
+                      label: const Text(
+                        'Balance Weights',
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

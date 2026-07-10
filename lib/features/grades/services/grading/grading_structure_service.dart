@@ -137,6 +137,24 @@ class GradingStructureService {
 
     values[index] = weight;
 
+    if (!draft.autoBalance) {
+      final updated = <GradingComponentDraft>[];
+
+      for (var i = 0;
+      i < draft.components.length;
+      i++) {
+        updated.add(
+          draft.components[i].copyWith(
+            weight: values[i],
+          ),
+        );
+      }
+
+      return draft.copyWith(
+        components: updated,
+      );
+    }
+
     final balanced =
     DistributionBalancer
         .rebalanceAfterEdit(

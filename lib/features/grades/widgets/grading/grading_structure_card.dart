@@ -181,46 +181,43 @@ class GradingStructureCard extends ConsumerWidget {
 
                     if (!draft.autoBalance) ...[
                       const SizedBox(height: 12),
-
-                      Row(
+                      Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                ref
-                                    .read(
-                                  gradingStructureDraftProvider
-                                      .notifier,
-                                )
-                                    .resetDistribution();
-                              },
-                              icon: const Icon(
-                                Icons.refresh,
-                              ),
-                              label: const Text(
-                                'Reset Weights',
-                              ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ref
+                                  .read(
+                                gradingStructureDraftProvider
+                                    .notifier,
+                              )
+                                  .balanceDistribution();
+                            },
+                            icon: const Icon(
+                              Icons.balance,
+                            ),
+                            label: const Text(
+                              'Rebalance',
                             ),
                           ),
 
-                          const SizedBox(width: 12),
+                          const SizedBox(height: 12),
 
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                ref
-                                    .read(
-                                  gradingStructureDraftProvider
-                                      .notifier,
-                                )
-                                    .balanceDistribution();
-                              },
-                              icon: const Icon(
-                                Icons.balance,
-                              ),
-                              label: const Text(
-                                'Balance Weights',
-                              ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ref
+                                  .read(
+                                gradingStructureDraftProvider
+                                    .notifier,
+                              )
+                                  .resetDistribution();
+                            },
+                            icon: const Icon(
+                              Icons.refresh,
+                            ),
+                            label: const Text(
+                              'Reset',
                             ),
                           ),
                         ],
@@ -248,8 +245,13 @@ class _AutoBalanceInfoDialog
         'Auto Balance',
       ),
       content: const Text(
-        'When enabled, ScholarMind automatically adjusts the remaining grading components so the total always equals 100%.\n\n'
-            'Disable this if you want complete manual control over the weight distribution.',
+        'Auto Balance automatically redistributes the remaining grading weights whenever you edit a component so the total always equals 100%.\n\n'
+
+            'If Auto Balance is disabled:\n\n'
+
+            '• The "Rebalance" button will redistribute the remaining weights while keeping the most recently edited component unchanged.\n\n'
+
+            '• The "Reset" button will evenly redistribute the weight across all grading components.',
       ),
       actions: [
         TextButton(

@@ -1,4 +1,5 @@
 import '../../domain/grading/grading_component_draft.dart';
+import '../../domain/grading/grading_component_type.dart';
 import '../../domain/grading/grading_structure_draft.dart';
 
 import '../../../../core/algorithms/distribution_balancer.dart';
@@ -41,6 +42,37 @@ class GradingStructureService {
     );
   }
 
+  static GradingStructureDraft addSubcomponent(
+      GradingStructureDraft draft, {
+        required String parentId,
+        required String name,
+      }) {
+    return draft.copyWith(
+      components: draft.components.map((component) {
+        if (component.id != parentId) {
+          return component;
+        }
+
+        final children =
+        List<GradingComponentDraft>.from(
+          component.children,
+        );
+
+        children.add(
+          GradingComponentDraft(
+            name: name,
+            weight: 0,
+            type: GradingComponentType.subcomponent,
+          ),
+        );
+
+        return component.copyWith(
+          children: children,
+        );
+      }).toList(),
+    );
+  }
+
   static GradingStructureDraft removeComponent(
       GradingStructureDraft draft,
       String componentId,
@@ -77,6 +109,24 @@ class GradingStructureService {
     );
   }
 
+  static GradingStructureDraft removeSubcomponent(
+      GradingStructureDraft draft,
+      String componentId,
+      ) {
+    return draft.copyWith(
+      components: draft.components.map((component) {
+        return component.copyWith(
+          children: component.children
+              .where(
+                (child) =>
+            child.id != componentId,
+          )
+              .toList(),
+        );
+      }).toList(),
+    );
+  }
+
   static GradingStructureDraft
   resetDistribution(
       GradingStructureDraft draft,
@@ -110,6 +160,28 @@ class GradingStructureService {
         },
       )
           .toList(),
+    );
+  }
+
+  static GradingStructureDraft renameSubcomponent(
+      GradingStructureDraft draft,
+      String componentId,
+      String name,
+      ) {
+    return draft.copyWith(
+      components: draft.components.map((component) {
+        return component.copyWith(
+          children: component.children.map((child) {
+            if (child.id != componentId) {
+              return child;
+            }
+
+            return child.copyWith(
+              name: name,
+            );
+          }).toList(),
+        );
+      }).toList(),
     );
   }
 
@@ -176,6 +248,29 @@ class GradingStructureService {
 
     return draft.copyWith(
       components: updated,
+    );
+  }
+
+  static GradingStructureDraft
+  updateSubcomponentWeight(
+      GradingStructureDraft draft, {
+        required String componentId,
+        required double weight,
+      }) {
+    return draft.copyWith(
+      components: draft.components.map((component) {
+        return component.copyWith(
+          children: component.children.map((child) {
+            if (child.id != componentId) {
+              return child;
+            }
+
+            return child.copyWith(
+              weight: weight,
+            );
+          }).toList(),
+        );
+      }).toList(),
     );
   }
 }

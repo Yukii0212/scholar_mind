@@ -47,34 +47,61 @@ class GradingStructureDraftNotifier
   void addComponent({
     required String name,
   }) {
-    state =
-        GradingStructureService
-            .addComponent(
-          state,
-          name: name,
-        );
+    state = GradingStructureService.addComponent(
+      state,
+      name: name,
+    );
+  }
+
+  void addSubcomponent({
+    required String parentId,
+    required String name,
+  }) {
+    state = GradingStructureService.addSubcomponent(
+      state,
+      parentId: parentId,
+      name: name,
+    );
   }
 
   void removeComponent(
       String componentId,
       ) {
-    state =
-        GradingStructureService.removeComponent(
-          state,
-          componentId,
-        );
+    state = GradingStructureService.removeComponent(
+      state,
+      componentId,
+    );
+  }
+
+  void removeSubcomponent(
+      String componentId,
+      ) {
+    state = GradingStructureService.removeSubcomponent(
+      state,
+      componentId,
+    );
   }
 
   void renameComponent({
     required String componentId,
     required String name,
   }) {
-    state =
-        GradingStructureService.renameComponent(
-          state,
-          componentId,
-          name,
-        );
+    state = GradingStructureService.renameComponent(
+      state,
+      componentId,
+      name,
+    );
+  }
+
+  void renameSubcomponent({
+    required String componentId,
+    required String name,
+  }) {
+    state = GradingStructureService.renameSubcomponent(
+      state,
+      componentId,
+      name,
+    );
   }
 
   void resetDistribution() {
@@ -91,8 +118,20 @@ class GradingStructureDraftNotifier
     required String componentId,
     required double weight,
   }) {
+    state = GradingStructureService.updateWeight(
+      state,
+      componentId: componentId,
+      weight: weight,
+    );
+  }
+
+  void updateSubcomponentWeight({
+    required String componentId,
+    required double weight,
+  }) {
     state =
-        GradingStructureService.updateWeight(
+        GradingStructureService
+            .updateSubcomponentWeight(
           state,
           componentId: componentId,
           weight: weight,

@@ -4,6 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/grading/grading_component_draft.dart';
 import '../../providers/grading/grading_structure_draft_provider.dart';
 
+enum _ComponentAction {
+  rename,
+  addSubcomponent,
+  delete,
+}
+
 class GradingComponentCard
     extends ConsumerStatefulWidget {
   const GradingComponentCard({
@@ -26,6 +32,76 @@ class _GradingComponentCardState
 
   late final TextEditingController
   _weightController;
+
+  bool _expanded = true;
+
+  Future<void> _showAddSubcomponentDialog() async {
+    final controller =
+    TextEditingController();
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Add Subcomponent',
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration:
+            const InputDecoration(
+              labelText:
+              'Subcomponent Name',
+            ),
+            onSubmitted: (_) {
+              Navigator.pop(
+                context,
+                controller.text.trim(),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                'Cancel',
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  controller.text.trim(),
+                );
+              },
+              child: const Text(
+                'Add',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted ||
+        name == null ||
+        name.isEmpty) {
+      return;
+    }
+
+    ref
+        .read(
+      gradingStructureDraftProvider
+          .notifier,
+    )
+        .addSubcomponent(
+      parentId: widget.component.id,
+      name: name,
+    );
+  }
 
   @override
   void initState() {
@@ -61,13 +137,37 @@ class _GradingComponentCardState
   Widget build(
       BuildContext context,
       ) {
-    return Card(
+    return AnimatedSize(
+        duration: const Duration(
+          milliseconds: 200,
+        ),
+        curve: Curves.easeInOut,
+        child: Card(
       child: Padding(
         padding:
         const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextFormField(
+        Row(
+        children: [
+        if (widget.component.children.isNotEmpty)
+          IconButton(
+          onPressed: () {
+        setState(() {
+        _expanded = !_expanded;
+        });
+        },
+          icon: Icon(
+            _expanded
+                ? Icons.expand_more
+                : Icons.chevron_right,
+          ),
+        )
+        else
+        const SizedBox(width: 48),
+
+    Expanded(
+    child: TextFormField(
               initialValue:
               widget.component.name,
               decoration:
@@ -87,10 +187,14 @@ class _GradingComponentCardState
                   name: value,
                 );
               },
-            ),
+    ),
+    ),
+        ],
+        ),
 
             const SizedBox(height: 16),
 
+    if (_expanded) ...[
             Column(
               crossAxisAlignment:
               CrossAxisAlignment.start,
@@ -178,27 +282,76 @@ class _GradingComponentCardState
             ),
 
             Align(
-              alignment:
-              Alignment.centerRight,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.delete_outline,
-                ),
-                onPressed: () {
-                  ref
-                      .read(
-                    gradingStructureDraftProvider
-                        .notifier,
-                  )
-                      .removeComponent(
-                    widget.component.id,
-                  );
+              alignment: Alignment.centerRight,
+              child: PopupMenuButton<_ComponentAction>(
+                onSelected: (action) {
+                  switch (action) {
+                    case _ComponentAction.rename:
+                      break;
+
+                    case _ComponentAction.addSubcomponent:
+                      _showAddSubcomponentDialog();
+                      break;
+
+                    case _ComponentAction.delete:
+                      ref
+                          .read(
+                        gradingStructureDraftProvider
+                            .notifier,
+                      )
+                          .removeComponent(
+                        widget.component.id,
+                      );
+                      break;
+                  }
                 },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: _ComponentAction.rename,
+                    child: ListTile(
+                      leading: Icon(Icons.edit_outlined),
+                      title: Text('Rename'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value:
+                    _ComponentAction.addSubcomponent,
+                    child: ListTile(
+                      leading: Icon(Icons.account_tree_outlined),
+                      title: Text('Add Subcomponent'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _ComponentAction.delete,
+                    child: ListTile(
+                      leading: Icon(Icons.delete_outline),
+                      title: Text('Delete'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
               ),
             ),
+
+      if (_expanded)
+        ...widget.component.children.map(
+              (child) => Padding(
+            padding: const EdgeInsets.only(
+              left: 32,
+              top: 12,
+            ),
+            child: GradingComponentCard(
+              component: child,
+            ),
+          ),
+        ),
+    ],
           ],
         ),
       ),
+        ),
     );
   }
 }

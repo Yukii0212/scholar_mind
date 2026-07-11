@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/grading/grading_structure_draft_provider.dart';
-import '../../providers/grading/grading_structure_controller.dart';
-import '../../services/grading/grading_structure_validator.dart';
+import '../../../providers/grading/grading_structure_draft_provider.dart';
+import '../../../providers/grading/grading_structure_controller.dart';
+import '../../../services/grading/grading_structure_validator.dart';
 
 class GradingStructureActions
     extends ConsumerWidget {

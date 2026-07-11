@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/grading/grading_structure_controller.dart';
+import '../../../providers/grading/grading_structure_controller.dart';
 import 'grading_structure_actions.dart';
 import 'grading_structure_card.dart';
 

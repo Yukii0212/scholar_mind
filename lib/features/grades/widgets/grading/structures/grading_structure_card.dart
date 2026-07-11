@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/grading/grading_structure_draft_provider.dart';
-import '../dialogs/grading/grading_component_dialog.dart';
-import 'component/grading_component_list.dart';
+import '../../../providers/grading/grading_structure_draft_provider.dart';
+import '../../dialogs/grading/grading_component_dialog.dart';
+import '../component/grading_component_list.dart';
 
 class GradingStructureCard extends ConsumerWidget {
   const GradingStructureCard({

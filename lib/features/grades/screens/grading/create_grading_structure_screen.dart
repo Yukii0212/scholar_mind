@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/course_model.dart';
 import '../../widgets/course/course_information_card.dart';
-import '../../widgets/grading/grading_structure_actions.dart';
-import '../../widgets/grading/grading_structure_card.dart';
-import '../../widgets/grading/grading_structure_editor.dart';
+import '../../widgets/grading/structures/grading_structure_editor.dart';
 
 class CreateGradingStructureScreen
     extends StatelessWidget {

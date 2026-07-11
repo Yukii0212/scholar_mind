@@ -15,12 +15,25 @@ class GradingComponentSummaryList
 
   @override
   Widget build(BuildContext context) {
+    final parents = components
+        .where(
+          (component) =>
+      component.parentId == null,
+    )
+        .toList();
+
     return Column(
       children: [
-        for (final component
-        in components) ...[
+        for (final parent in parents) ...[
           GradingComponentSummaryCard(
-            component: component,
+            component: parent,
+            children: components
+                .where(
+                  (child) =>
+              child.parentId ==
+                  parent.id,
+            )
+                .toList(),
           ),
           const SizedBox(height: 12),
         ],

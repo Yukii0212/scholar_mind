@@ -1,33 +1,43 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/assessment/score_interpretation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../data/models/assessment_entry_model.dart';
+import '../../../domain/assessment/assessment_type.dart';
+import '../../../providers/assessment/assessment_provider.dart';
 import '../../../domain/assessment/score_interpreter.dart';
 
 class AssessmentEntryDialog
-    extends StatefulWidget {
+    extends ConsumerStatefulWidget {
   const AssessmentEntryDialog({
     super.key,
     required this.title,
+    required this.courseId,
+    required this.componentId,
     required this.componentWeight,
     required this.overallWeight,
     required this.isPrediction,
   });
 
   final String title;
+  final String courseId;
+  final String componentId;
 
   final double componentWeight;
-
   final double overallWeight;
 
   final bool isPrediction;
 
   @override
-  State<AssessmentEntryDialog> createState() =>
+  ConsumerState<
+      AssessmentEntryDialog> createState() =>
       _AssessmentEntryDialogState();
 }
 
 class _AssessmentEntryDialogState
-    extends State<AssessmentEntryDialog> {
+    extends ConsumerState<
+        AssessmentEntryDialog> {
 
   final _scoreController =
   TextEditingController();
@@ -39,6 +49,9 @@ class _AssessmentEntryDialogState
 
   ScoreInterpretationResult?
   _interpretation;
+
+  ScoreInterpretation?
+  _selectedInterpretation;
 
   @override
   void dispose() {
@@ -76,6 +89,13 @@ class _AssessmentEntryDialogState
             overallWeight:
             widget.overallWeight,
           );
+
+      if (!_interpretation!
+          .requiresConfirmation) {
+        _selectedInterpretation =
+            _interpretation!
+                .interpretation;
+      }
     });
   }
 
@@ -156,66 +176,130 @@ class _AssessmentEntryDialogState
                     .colorScheme
                     .surfaceContainerHighest,
                 child: Padding(
-                  padding:
-                  const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment:
                     CrossAxisAlignment.start,
                     children: [
 
-                      Text(
-                        'ScholarMind recognised this as',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge,
+                      Row(
+                        children: [
+
+                          Icon(
+                            _interpretation!.isValid
+                                ? Icons.info_outline
+                                : Icons.error_outline,
+                            color: _interpretation!.isValid
+                                ? Theme.of(context)
+                                .colorScheme
+                                .primary
+                                : Theme.of(context)
+                                .colorScheme
+                                .error,
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Expanded(
+                            child: Text(
+                              _interpretation!.title,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall,
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 8),
 
-                      Builder(
-                        builder: (_) {
-                          switch (_interpretation!
-                              .interpretation) {
-
-                            case ScoreInterpretation
-                                .percentage:
-                              return const Text(
-                                'Percentage (x / 100)',
-                              );
-
-                            case ScoreInterpretation
-                                .componentWeight:
-                              return Text(
-                                'Component weighting (x / ${widget.componentWeight.toStringAsFixed(0)})',
-                              );
-
-                            case ScoreInterpretation
-                                .overallWeight:
-                              return Text(
-                                'Overall weighting (x / ${widget.overallWeight.toStringAsFixed(0)})',
-                              );
-
-                            case ScoreInterpretation
-                                .custom:
-                              return const Text(
-                                'Custom marks',
-                              );
-
-                            case ScoreInterpretation
-                                .ambiguous:
-                              return const Text(
-                                'Ambiguous',
-                              );
-                          }
-                        },
+                      Text(
+                        _interpretation!.description,
                       ),
 
                       const SizedBox(height: 12),
 
-                      Text(
-                        'Normalised score: '
-                            '${_interpretation!.percentage.toStringAsFixed(1)}%',
-                      ),
+                      if (_interpretation!.isValid)
+                        Text(
+                          'Equivalent percentage: '
+                              '${_interpretation!.percentage.toStringAsFixed(1)}%',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                            fontWeight:
+                            FontWeight.w600,
+                          ),
+                        ),
+
+                      if (_interpretation!
+                          .requiresConfirmation) ...[
+
+                        const SizedBox(height: 16),
+
+                        Text(
+                          'Help ScholarMind understand your score',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall,
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        RadioListTile<ScoreInterpretation>(
+                          value:
+                          ScoreInterpretation.componentWeight,
+                          groupValue:
+                          _selectedInterpretation,
+                          contentPadding:
+                          EdgeInsets.zero,
+                          title: const Text(
+                            'Coursework weighting',
+                          ),
+                          subtitle: Text(
+                            'Treat this as a score out of '
+                                '${widget.componentWeight.toStringAsFixed(0)}.',
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedInterpretation =
+                                  value;
+                            });
+                          },
+                        ),
+
+                        RadioListTile<ScoreInterpretation>(
+                          value:
+                          ScoreInterpretation.overallWeight,
+                          groupValue:
+                          _selectedInterpretation,
+                          contentPadding:
+                          EdgeInsets.zero,
+                          title: const Text(
+                            'Final grade weighting',
+                          ),
+                          subtitle: Text(
+                            'Treat this as a score out of '
+                                '${widget.overallWeight.toStringAsFixed(0)}.',
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedInterpretation =
+                                  value;
+                            });
+                          },
+                        ),
+                      ],
+
+                      if (!_interpretation!.isValid)
+                        Text(
+                          _interpretation!.validationMessage!,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .error,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -224,7 +308,7 @@ class _AssessmentEntryDialogState
             const SizedBox(height: 24),
 
             Text(
-              'ScholarMind will automatically recognise whether this is entered as a percentage, coursework weighting, overall weighting or custom marks.',
+              'Enter the score exactly as your lecturer provided it. ScholarMind will recognise the format automatically.',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall,
@@ -246,20 +330,61 @@ class _AssessmentEntryDialogState
 
         FilledButton(
           onPressed:
-          _interpretation == null
+          _interpretation == null ||
+              !_interpretation!.isValid ||
+              (_interpretation!
+                  .requiresConfirmation &&
+                  _selectedInterpretation ==
+                      null)
               ? null
-              : () {
+              : () async {
 
-            if (_interpretation!
-                .requiresConfirmation) {
+            final now =
+            DateTime.now();
 
-              // Sprint 12
-              return;
-            }
-
-            Navigator.pop(
-              context,
+            final repository = ref.read(
+              assessmentRepositoryProvider,
             );
+
+            final model =
+            AssessmentEntryModel(
+              id:
+              '${widget.componentId}_${widget.isPrediction ? 'expected' : 'actual'}',
+              courseId:
+              widget.courseId,
+              componentId:
+              widget.componentId,
+              type:
+              widget.isPrediction
+                  ? AssessmentType.expected
+                  : AssessmentType.actual,
+              score: double.parse(
+                _scoreController.text,
+              ),
+              denominator:
+              double.parse(
+                _denominatorController.text,
+              ),
+              percentage:
+              _interpretation!
+                  .percentage,
+              interpretation:
+              _selectedInterpretation ??
+                  _interpretation!
+                      .interpretation,
+              createdAt: now,
+              updatedAt: now,
+            );
+
+            await repository.saveEntry(
+              model,
+            );
+
+            if (context.mounted) {
+              Navigator.pop(
+                context,
+              );
+            }
           },
           child: const Text(
             'Save',

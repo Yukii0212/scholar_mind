@@ -1,0 +1,4 @@
+enum AssessmentType {
+  actual,
+  expected,
+}

@@ -103,6 +103,10 @@ class GradingComponentSummaryCard
                                 builder: (_) =>
                                     AssessmentEntryDialog(
                                       title: child.name,
+                                      courseId:
+                                      component.courseId,
+                                      componentId:
+                                      child.id,
                                       componentWeight:
                                       weights.componentWeight,
                                       overallWeight:
@@ -126,6 +130,10 @@ class GradingComponentSummaryCard
                                 builder: (_) =>
                                     AssessmentEntryDialog(
                                       title: child.name,
+                                      courseId:
+                                      component.courseId,
+                                      componentId:
+                                      child.id,
                                       componentWeight:
                                       weights.componentWeight,
                                       overallWeight:

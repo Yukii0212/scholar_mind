@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/models/grading_component_model.dart';
+import 'assessment_entry_tile.dart';
+import 'grading_weight_information.dart';
+import '../../../domain/grading/weight_interpreter.dart';
 
 class GradingComponentSummaryCard
     extends StatelessWidget {
@@ -19,7 +22,7 @@ class GradingComponentSummaryCard
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment:
           CrossAxisAlignment.start,
@@ -48,46 +51,85 @@ class GradingComponentSummaryCard
               const Divider(),
               const SizedBox(height: 8),
 
-              for (final child
-              in children)
-                Padding(
-                  padding:
-                  const EdgeInsets.only(
-                    left: 16,
-                    bottom: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          child.name,
-                        ),
-                      ),
+              for (var i = 0; i < children.length; i++) ...[
+                Builder(
+                  builder: (_) {
+                    final child = children[i];
 
-                      const Text(
-                        '—',
-                      ),
+                    final weights =
+                    WeightInterpreter.interpret(
+                      parent: component,
+                      siblings: children,
+                      child: child,
+                    );
 
-                      const SizedBox(
-                        width: 12,
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        bottom: 20,
                       ),
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            child.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall,
+                          ),
 
-                      Text(
-                        '${child.weight.toStringAsFixed(0)}%',
-                        style: Theme.of(
-                          context,
-                        )
-                            .textTheme
-                            .bodyMedium,
+                          const SizedBox(height: 8),
+
+                          GradingWeightInformation(
+                            parentName: component.name,
+                            componentWeight:
+                            weights.componentWeight,
+                            overallWeight:
+                            weights.overallWeight,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          AssessmentEntryTile(
+                            title: 'Actual Score',
+                            placeholder:
+                            'Tap to enter your actual score',
+                            icon: Icons.fact_check_outlined,
+                            onTap: () {
+                              // TODO Assessment Sprint
+                            },
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          AssessmentEntryTile(
+                            title: 'Expected Score',
+                            placeholder:
+                            'Tap to enter your expected score',
+                            icon: Icons.auto_graph_outlined,
+                            onTap: () {
+                              // TODO Prediction Sprint
+                            },
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
+
+                if (i != children.length - 1)
+                  const Divider(
+                    height: 32,
+                  ),
+              ],
             ] else ...[
               const SizedBox(height: 12),
 
               Text(
-                'No assessments yet',
+                'No subcomponents yet.\n'
+                    'Scores can be entered once '
+                    'assessments are created.',
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall,

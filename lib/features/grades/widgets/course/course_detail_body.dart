@@ -61,13 +61,11 @@ class CourseDetailBodyState
         crossAxisAlignment:
         CrossAxisAlignment.stretch,
         children: [
-          CourseInformationCard(
-            course: widget.course,
-          ),
+// TODO Grade Summary Card
+// This section will become the
+// student's semester dashboard.
 
-          const SizedBox(height: 24),
-
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
 
           Expanded(
             child: Consumer(

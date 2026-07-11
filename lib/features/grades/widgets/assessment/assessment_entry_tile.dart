@@ -6,12 +6,21 @@ class AssessmentEntryTile extends StatelessWidget {
     required this.title,
     required this.placeholder,
     required this.icon,
+    this.savedScore,
+    this.savedPercentage,
     this.onTap,
   });
 
   final String title;
+
   final String placeholder;
+
   final IconData icon;
+
+  final String? savedScore;
+
+  final String? savedPercentage;
+
   final Future<void> Function()? onTap;
 
   @override
@@ -59,7 +68,8 @@ class AssessmentEntryTile extends StatelessWidget {
                 const SizedBox(width: 12),
 
                 Expanded(
-                  child: Text(
+                  child: savedScore == null
+                      ? Text(
                     placeholder,
                     maxLines: 1,
                     overflow:
@@ -74,6 +84,39 @@ class AssessmentEntryTile extends StatelessWidget {
                           .colorScheme
                           .onSurfaceVariant,
                     ),
+                  )
+                      : Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+
+                      Text(
+                        savedScore!,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyLarge
+                            ?.copyWith(
+                          fontWeight:
+                          FontWeight.w600,
+                        ),
+                      ),
+
+                      if (savedPercentage !=
+                          null)
+                        Text(
+                          savedPercentage!,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                            color: Theme.of(
+                              context,
+                            )
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
 

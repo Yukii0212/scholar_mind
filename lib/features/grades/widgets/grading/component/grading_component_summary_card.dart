@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/models/assessment_entry_model.dart';
 import '../../../data/models/grading_component_model.dart';
+import '../../../domain/assessment/assessment_type.dart';
+import '../../../providers/assessment/assessment_provider.dart';
 import '../../assessment/assessment_entry_tile.dart';
 import '../../dialogs/assessment/assessment_entry_dialog.dart';
 import 'grading_weight_information.dart';
 import '../../../domain/grading/weight_interpreter.dart';
 
 class GradingComponentSummaryCard
-    extends StatelessWidget {
+    extends ConsumerWidget {
   const GradingComponentSummaryCard({
     super.key,
     required this.component,
@@ -20,7 +24,10 @@ class GradingComponentSummaryCard
   children;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -56,6 +63,51 @@ class GradingComponentSummaryCard
                 Builder(
                   builder: (_) {
                     final child = children[i];
+
+                    final assessmentEntries =
+                    ref.watch(
+                      assessmentEntriesProvider(
+                        component.courseId,
+                      ),
+                    );
+
+                    final actualEntry =
+                    assessmentEntries.when(
+                      data: (entries) {
+                        final matches = entries.where(
+                              (entry) =>
+                          entry.componentId ==
+                              child.id &&
+                              entry.type ==
+                                  AssessmentType.actual,
+                        );
+
+                        return matches.isEmpty
+                            ? null
+                            : matches.first;
+                      },
+                      loading: () => null,
+                      error: (_, __) => null,
+                    );
+
+                    final expectedEntry =
+                    assessmentEntries.when(
+                      data: (entries) {
+                        final matches = entries.where(
+                              (entry) =>
+                          entry.componentId ==
+                              child.id &&
+                              entry.type ==
+                                  AssessmentType.expected,
+                        );
+
+                        return matches.isEmpty
+                            ? null
+                            : matches.first;
+                      },
+                      loading: () => null,
+                      error: (_, __) => null,
+                    );
 
                     final weights =
                     WeightInterpreter.interpret(
@@ -96,7 +148,18 @@ class GradingComponentSummaryCard
                             title: 'Actual Score',
                             placeholder:
                             'Tap to enter your actual score',
-                            icon: Icons.fact_check_outlined,
+                            savedScore:
+                            actualEntry == null
+                                ? null
+                                : '${actualEntry.score.toStringAsFixed(0)} / '
+                                '${actualEntry.denominator.toStringAsFixed(0)}',
+                            savedPercentage:
+                            actualEntry == null
+                                ? null
+                                : 'Equivalent to '
+                                '${actualEntry.percentage.toStringAsFixed(0)}%',
+                            icon:
+                            Icons.fact_check_outlined,
                             onTap: () async {
                               await showDialog(
                                 context: context,
@@ -123,7 +186,18 @@ class GradingComponentSummaryCard
                             title: 'Expected Score',
                             placeholder:
                             'Tap to enter your expected score',
-                            icon: Icons.auto_graph_outlined,
+                            savedScore:
+                            expectedEntry == null
+                                ? null
+                                : '${expectedEntry.score.toStringAsFixed(0)} / '
+                                '${expectedEntry.denominator.toStringAsFixed(0)}',
+                            savedPercentage:
+                            expectedEntry == null
+                                ? null
+                                : 'Equivalent to '
+                                '${expectedEntry.percentage.toStringAsFixed(0)}%',
+                            icon:
+                            Icons.auto_graph_outlined,
                             onTap: () async {
                               await showDialog(
                                 context: context,

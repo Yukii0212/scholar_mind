@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/course_model.dart';
 import '../../providers/grading/grading_structure_controller.dart';
 import '../../screens/grading/create_grading_structure_screen.dart';
-import 'course_information_card.dart';
 import '../../providers/grading/grading_provider.dart';
 import '../grading/component/grading_component_summary_list.dart';
+import 'course_standing_card.dart';
 
 class CourseDetailBody extends ConsumerStatefulWidget {
   const CourseDetailBody({
@@ -61,11 +61,9 @@ class CourseDetailBodyState
         crossAxisAlignment:
         CrossAxisAlignment.stretch,
         children: [
-// TODO Grade Summary Card
-// This section will become the
-// student's semester dashboard.
+          CurrentStandingCard(),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           Expanded(
             child: Consumer(

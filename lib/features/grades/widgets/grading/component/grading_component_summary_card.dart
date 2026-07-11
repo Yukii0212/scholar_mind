@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/models/grading_component_model.dart';
-import 'assessment_entry_tile.dart';
+import '../../assessment/assessment_entry_tile.dart';
+import '../../dialogs/assessment/assessment_entry_dialog.dart';
 import 'grading_weight_information.dart';
 import '../../../domain/grading/weight_interpreter.dart';
 
@@ -96,8 +97,19 @@ class GradingComponentSummaryCard
                             placeholder:
                             'Tap to enter your actual score',
                             icon: Icons.fact_check_outlined,
-                            onTap: () {
-                              // TODO Assessment Sprint
+                            onTap: () async {
+                              await showDialog(
+                                context: context,
+                                builder: (_) =>
+                                    AssessmentEntryDialog(
+                                      title: child.name,
+                                      componentWeight:
+                                      weights.componentWeight,
+                                      overallWeight:
+                                      weights.overallWeight,
+                                      isPrediction: false,
+                                    ),
+                              );
                             },
                           ),
 
@@ -108,8 +120,19 @@ class GradingComponentSummaryCard
                             placeholder:
                             'Tap to enter your expected score',
                             icon: Icons.auto_graph_outlined,
-                            onTap: () {
-                              // TODO Prediction Sprint
+                            onTap: () async {
+                              await showDialog(
+                                context: context,
+                                builder: (_) =>
+                                    AssessmentEntryDialog(
+                                      title: child.name,
+                                      componentWeight:
+                                      weights.componentWeight,
+                                      overallWeight:
+                                      weights.overallWeight,
+                                      isPrediction: true,
+                                    ),
+                              );
                             },
                           ),
                         ],

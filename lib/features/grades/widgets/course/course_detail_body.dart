@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
 import '../../providers/grading/grading_structure_controller.dart';
+import '../../screens/grading/create_grading_structure_screen.dart';
 import 'course_information_card.dart';
 import '../../providers/grading/grading_provider.dart';
 import '../grading/component/grading_component_summary_list.dart';
@@ -75,14 +76,12 @@ class CourseDetailBodyState
                   ref,
                   _,
                   ) {
-                final components =
-                ref.watch(
+                final repository = ref.watch(
                   gradingComponentRepositoryProvider,
                 );
 
                 return StreamBuilder(
-                  stream: components
-                      .watchCourseComponents(
+                  stream: repository.watchCourseComponents(
                     widget.course.id,
                   ),
                   builder: (
@@ -91,22 +90,60 @@ class CourseDetailBodyState
                       ) {
                     if (!snapshot.hasData) {
                       return const Center(
-                        child:
-                        CircularProgressIndicator(),
+                        child: CircularProgressIndicator(),
                       );
                     }
 
-                    final data =
-                    snapshot.data!;
+                    final data = snapshot.data!;
 
                     if (data.isEmpty) {
                       return const _EmptyGradingStructure();
                     }
 
                     return SingleChildScrollView(
-                      child:
-                      GradingComponentSummaryList(
-                        components: data,
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Grading Structure',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge,
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          CreateGradingStructureScreen(
+                                            course: widget.course,
+                                            isEditing: true,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                ),
+                                label: const Text(
+                                  'Edit Structure',
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          GradingComponentSummaryList(
+                            components: data,
+                          ),
+                        ],
                       ),
                     );
                   },

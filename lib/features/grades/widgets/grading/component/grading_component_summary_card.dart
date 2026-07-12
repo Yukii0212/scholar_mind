@@ -192,10 +192,11 @@ class GradingComponentSummaryCard
                                       child.id,
                                       componentWeight:
                                       componentWeight,
-
                                       overallWeight:
                                       overallWeight,
                                       isPrediction: false,
+                                      existingEntry:
+                                      actualEntry,
                                     ),
                               );
                             },
@@ -234,10 +235,11 @@ class GradingComponentSummaryCard
                                       child.id,
                                       componentWeight:
                                       componentWeight,
-
                                       overallWeight:
                                       overallWeight,
                                       isPrediction: true,
+                                      existingEntry:
+                                      expectedEntry,
                                     ),
                               );
                             },

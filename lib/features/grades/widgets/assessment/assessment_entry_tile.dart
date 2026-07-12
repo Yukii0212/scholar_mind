@@ -121,7 +121,9 @@ class AssessmentEntryTile extends StatelessWidget {
                 ),
 
                 Icon(
-                  Icons.chevron_right,
+                  savedScore == null
+                      ? Icons.add
+                      : Icons.edit_outlined,
                   color: Theme.of(context)
                       .colorScheme
                       .onSurfaceVariant,

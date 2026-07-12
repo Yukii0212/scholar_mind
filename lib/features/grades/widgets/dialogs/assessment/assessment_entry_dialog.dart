@@ -18,6 +18,7 @@ class AssessmentEntryDialog
     required this.componentWeight,
     required this.overallWeight,
     required this.isPrediction,
+    this.existingEntry,
   });
 
   final String title;
@@ -28,6 +29,8 @@ class AssessmentEntryDialog
   final double overallWeight;
 
   final bool isPrediction;
+
+  final AssessmentEntryModel? existingEntry;
 
   @override
   ConsumerState<
@@ -52,6 +55,30 @@ class _AssessmentEntryDialogState
 
   ScoreInterpretation?
   _selectedInterpretation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.existingEntry != null) {
+      _scoreController.text =
+          widget.existingEntry!.score
+              .toStringAsFixed(0);
+
+      _denominatorController.text =
+          widget.existingEntry!.denominator
+              .toStringAsFixed(0);
+
+      _selectedInterpretation =
+          widget.existingEntry!
+              .interpretation;
+
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) {
+        _updateInterpretation();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -116,9 +143,13 @@ class _AssessmentEntryDialogState
           children: [
 
             Text(
-              widget.isPrediction
+              widget.existingEntry == null
+                  ? widget.isPrediction
                   ? 'How much do you expect to score?'
-                  : 'How much did you score?',
+                  : 'How much did you score?'
+                  : widget.isPrediction
+                  ? 'Update your expected score.'
+                  : 'Update your score.',
               style: Theme.of(context)
                   .textTheme
                   .titleMedium,
@@ -319,14 +350,82 @@ class _AssessmentEntryDialogState
 
       actions: [
 
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text(
-            'Cancel',
+        if (widget.existingEntry != null)
+          TextButton(
+            onPressed: () async {
+
+              final confirmed =
+              await showDialog<bool>(
+                context: context,
+                builder: (context) =>
+                    AlertDialog(
+                      title:
+                      const Text(
+                        'Delete Score?',
+                      ),
+                      content:
+                      const Text(
+                        'This score will be removed from this assessment.',
+                      ),
+                      actions: [
+
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(
+                              context,
+                              false,
+                            );
+                          },
+                          child: const Text(
+                            'Cancel',
+                          ),
+                        ),
+
+                        FilledButton(
+                          onPressed: () {
+                            Navigator.pop(
+                              context,
+                              true,
+                            );
+                          },
+                          child: const Text(
+                            'Delete',
+                          ),
+                        ),
+                      ],
+                    ),
+              );
+
+              if (confirmed != true) {
+                return;
+              }
+
+              await ref
+                  .read(
+                assessmentRepositoryProvider,
+              )
+                  .deleteEntry(
+                widget.courseId,
+                widget.existingEntry!.id,
+              );
+
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text(
+              'Delete',
+            ),
+          )
+        else
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Cancel',
+            ),
           ),
-        ),
 
         FilledButton(
           onPressed:

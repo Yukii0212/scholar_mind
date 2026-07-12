@@ -1,12 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scholar_mind/features/grades/services/calculation/course_calculation_service.dart';
 
-class CurrentStandingCard extends StatelessWidget {
+import '../../data/models/grading_component_model.dart';
+import '../../providers/assessment/assessment_provider.dart';
+
+class CurrentStandingCard
+    extends ConsumerWidget {
   const CurrentStandingCard({
     super.key,
+    required this.courseId,
+    required this.components,
   });
 
+  final String courseId;
+
+  final List<GradingComponentModel>
+  components;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+
+    final assessments =
+        ref.watch(
+          assessmentEntriesProvider(
+            courseId,
+          ),
+        );
+    return assessments.when(
+      loading: () =>
+          const Card(
+            child: Padding(
+              padding:
+                EdgeInsets.all(20),
+              child:
+                CircularProgressIndicator(),
+            ),
+          ),
+      error: (_, __) =>
+          const SizedBox(),
+
+      data: (entries) {
+        final summary = CourseCalculationService.calculate(
+          components: components,
+          assessments: entries,
+        );
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -37,7 +79,11 @@ class CurrentStandingCard extends StatelessWidget {
             const SizedBox(height: 20),
 
             Text(
-              'No assessment scores have been entered yet.',
+              summary.hasScores
+                  ? 'You have currently secured '
+                  '${summary.guaranteedPercentage.toStringAsFixed(1)}% '
+                  'of your final course grade.'
+                  : 'No assessment scores have been entered yet.',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium,
@@ -46,7 +92,16 @@ class CurrentStandingCard extends StatelessWidget {
             const SizedBox(height: 8),
 
             Text(
-              'Once you begin entering your actual or expected scores, ScholarMind will automatically calculate your current standing, projected final grade and the scores you still need to reach your target.',
+              summary.hasScores
+                  ? 'You have completed '
+                  '${summary.completedWeight.toStringAsFixed(0)}% '
+                  'of the course assessment.\n\n'
+                  'If you obtain full marks for every remaining assessment, '
+                  'your highest possible final score will be '
+                  '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%.'
+                  : 'Once you begin entering your actual scores, '
+                  'ScholarMind will automatically analyse your progress and '
+                  'calculate your highest possible final score.',
               style: Theme.of(context)
                   .textTheme
                   .bodySmall,
@@ -54,6 +109,8 @@ class CurrentStandingCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

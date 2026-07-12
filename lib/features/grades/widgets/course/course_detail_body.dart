@@ -61,46 +61,64 @@ class CourseDetailBodyState
         crossAxisAlignment:
         CrossAxisAlignment.stretch,
         children: [
-          CurrentStandingCard(),
-
-          const SizedBox(height: 24),
-
           Expanded(
             child: Consumer(
-              builder: (
+              builder:
+                  (
                   context,
                   ref,
                   _,
                   ) {
-                final repository = ref.watch(
+
+                final repository =
+                ref.watch(
                   gradingComponentRepositoryProvider,
                 );
 
                 return StreamBuilder(
-                  stream: repository.watchCourseComponents(
+                  stream:
+                  repository
+                      .watchCourseComponents(
                     widget.course.id,
                   ),
-                  builder: (
+                  builder:
+                      (
                       context,
                       snapshot,
                       ) {
+
                     if (!snapshot.hasData) {
                       return const Center(
-                        child: CircularProgressIndicator(),
+                        child:
+                        CircularProgressIndicator(),
                       );
                     }
 
-                    final data = snapshot.data!;
-
-                    if (data.isEmpty) {
-                      return const _EmptyGradingStructure();
-                    }
+                    final data =
+                    snapshot.data!;
 
                     return SingleChildScrollView(
+                      padding:
+                      const EdgeInsets.only(
+                        bottom: 24,
+                      ),
                       child: Column(
                         crossAxisAlignment:
-                        CrossAxisAlignment.stretch,
+                        CrossAxisAlignment
+                            .stretch,
                         children: [
+
+                          CurrentStandingCard(
+                            courseId:
+                            widget.course.id,
+                            components:
+                            data,
+                          ),
+
+                          const SizedBox(
+                            height: 24,
+                          ),
+
                           Row(
                             children: [
                               Expanded(
@@ -111,6 +129,7 @@ class CourseDetailBodyState
                                       .titleLarge,
                                 ),
                               ),
+
                               TextButton.icon(
                                 onPressed: () {
                                   Navigator.push(
@@ -134,7 +153,9 @@ class CourseDetailBodyState
                             ],
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(
+                            height: 16,
+                          ),
 
                           GradingComponentSummaryList(
                             components: data,

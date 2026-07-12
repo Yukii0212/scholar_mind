@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/models/assessment_entry_model.dart';
 import '../../../data/models/grading_component_model.dart';
 import '../../../domain/assessment/assessment_type.dart';
 import '../../../providers/assessment/assessment_provider.dart';
@@ -28,6 +27,12 @@ class GradingComponentSummaryCard
       BuildContext context,
       WidgetRef ref,
       ) {
+    final assessmentTargets =
+    children.isEmpty
+        ? <GradingComponentModel>[
+      component,
+    ]
+        : children;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -54,15 +59,15 @@ class GradingComponentSummaryCard
               ],
             ),
 
-            if (children.isNotEmpty) ...[
+            if (assessmentTargets.isNotEmpty) ...[
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 8),
 
-              for (var i = 0; i < children.length; i++) ...[
+              for (var i = 0; i < assessmentTargets.length; i++) ...[
                 Builder(
                   builder: (_) {
-                    final child = children[i];
+                    final child = assessmentTargets[i];
 
                     final assessmentEntries =
                     ref.watch(
@@ -108,13 +113,27 @@ class GradingComponentSummaryCard
                       loading: () => null,
                       error: (_, __) => null,
                     );
-
-                    final weights =
-                    WeightInterpreter.interpret(
+                    final componentWeight =
+                    children.isEmpty
+                        ? component.weight
+                        : WeightInterpreter
+                        .interpret(
                       parent: component,
                       siblings: children,
                       child: child,
-                    );
+                    )
+                        .componentWeight;
+
+                    final overallWeight =
+                    children.isEmpty
+                        ? component.weight
+                        : WeightInterpreter
+                        .interpret(
+                      parent: component,
+                      siblings: children,
+                      child: child,
+                    )
+                        .overallWeight;
 
                     return Padding(
                       padding: const EdgeInsets.only(
@@ -125,24 +144,26 @@ class GradingComponentSummaryCard
                         crossAxisAlignment:
                         CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            child.name,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall,
-                          ),
+                          if (children.isNotEmpty) ...[
+                            Text(
+                              child.name,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall,
+                            ),
 
-                          const SizedBox(height: 8),
+                            const SizedBox(height: 8),
+                          ],
 
                           GradingWeightInformation(
                             parentName: component.name,
                             componentWeight:
-                            weights.componentWeight,
+                            componentWeight,
                             overallWeight:
-                            weights.overallWeight,
+                            overallWeight,
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
 
                           AssessmentEntryTile(
                             title: 'Actual Score',
@@ -156,8 +177,7 @@ class GradingComponentSummaryCard
                             savedPercentage:
                             actualEntry == null
                                 ? null
-                                : 'Equivalent to '
-                                '${actualEntry.percentage.toStringAsFixed(0)}%',
+                                : '${actualEntry.percentage.toStringAsFixed(0)}%',
                             icon:
                             Icons.fact_check_outlined,
                             onTap: () async {
@@ -171,21 +191,25 @@ class GradingComponentSummaryCard
                                       componentId:
                                       child.id,
                                       componentWeight:
-                                      weights.componentWeight,
+                                      componentWeight,
+
                                       overallWeight:
-                                      weights.overallWeight,
+                                      overallWeight,
                                       isPrediction: false,
                                     ),
                               );
                             },
                           ),
 
-                          const SizedBox(height: 12),
+                    if (actualEntry == null ||
+                    expectedEntry != null) ...[
 
-                          AssessmentEntryTile(
-                            title: 'Expected Score',
-                            placeholder:
-                            'Tap to enter your expected score',
+                    const SizedBox(height: 12),
+
+                    AssessmentEntryTile(
+                    title: 'Expected Score',
+                    placeholder:
+                    'Tap to enter your expected score',
                             savedScore:
                             expectedEntry == null
                                 ? null
@@ -209,14 +233,16 @@ class GradingComponentSummaryCard
                                       componentId:
                                       child.id,
                                       componentWeight:
-                                      weights.componentWeight,
+                                      componentWeight,
+
                                       overallWeight:
-                                      weights.overallWeight,
+                                      overallWeight,
                                       isPrediction: true,
                                     ),
                               );
                             },
-                          ),
+                    ),
+                    ],
                         ],
                       ),
                     );
@@ -228,17 +254,6 @@ class GradingComponentSummaryCard
                     height: 32,
                   ),
               ],
-            ] else ...[
-              const SizedBox(height: 12),
-
-              Text(
-                'No subcomponents yet.\n'
-                    'Scores can be entered once '
-                    'assessments are created.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall,
-              ),
             ],
           ],
         ),

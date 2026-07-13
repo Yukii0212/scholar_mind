@@ -9,6 +9,7 @@ class CourseCalculationSummary {
     required this.guaranteedPercentage,
     required this.projectedPercentage,
     required this.maximumPossiblePercentage,
+    required this.remainingOpportunity,
     required this.actualEntries,
     required this.expectedEntries,
     required this.completedComponents,
@@ -22,6 +23,7 @@ class CourseCalculationSummary {
   final double guaranteedPercentage;
   final double projectedPercentage;
   final double maximumPossiblePercentage;
+  final double remainingOpportunity;
 
   final List<AssessmentEntryModel> actualEntries;
 

@@ -93,7 +93,14 @@ class CourseRepository {
       id: _dataSource.collection.doc().id,
       semesterId: semesterId,
       name: source.name,
-      targetGrade: source.targetGrade,
+      targetScore:
+      source.targetScore,
+
+      minimumAcceptableScore:
+      source.minimumAcceptableScore,
+
+      passingScore:
+      source.passingScore,
       createdAt: now,
       updatedAt: now,
     );

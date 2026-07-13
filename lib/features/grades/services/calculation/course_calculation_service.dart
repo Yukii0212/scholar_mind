@@ -165,6 +165,9 @@ class CourseCalculationService {
         totalWeight -
             completedWeight;
 
+    final remainingOpportunity =
+        remainingWeight;
+
     return CourseCalculationSummary(
       totalWeight: totalWeight,
       completedWeight:
@@ -177,7 +180,10 @@ class CourseCalculationService {
       projectedPercentage,
       maximumPossiblePercentage:
       projectedPercentage +
-          remainingWeight,
+          remainingOpportunity,
+
+      remainingOpportunity:
+      remainingOpportunity,
 
       actualEntries:
       actualEntries,

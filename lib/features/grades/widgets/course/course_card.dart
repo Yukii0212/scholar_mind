@@ -26,9 +26,10 @@ class CourseCard extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         subtitle: Text(
-          course.targetGrade == null
-              ? 'No target grade'
-              : 'Target Grade: ${course.targetGrade}',
+          course.targetScore == null
+              ? 'No target score'
+              : 'Target Score: '
+              '${course.targetScore!.toStringAsFixed(0)}%',
         ),
         children: [
           ListTile(

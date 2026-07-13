@@ -16,9 +16,9 @@ class CourseInformationCard extends StatelessWidget {
       child: ListTile(
         title: Text(course.name),
         subtitle: Text(
-          course.targetGrade == null
-              ? 'No target grade'
-              : 'Target Grade: ${course.targetGrade}',
+          course.targetScore == null
+              ? 'No target score'
+              : 'Target Score: ${course.targetScore}',
         ),
       ),
     );

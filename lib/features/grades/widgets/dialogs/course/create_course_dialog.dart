@@ -21,7 +21,7 @@ class CreateCourseDialog extends ConsumerStatefulWidget {
 class _CreateCourseDialogState
     extends ConsumerState<CreateCourseDialog> {
   final _nameController = TextEditingController();
-  final _targetGradeController =
+  final _targetScoreController =
   TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
@@ -31,7 +31,7 @@ class _CreateCourseDialogState
   @override
   void dispose() {
     _nameController.dispose();
-    _targetGradeController.dispose();
+    _targetScoreController.dispose();
     super.dispose();
   }
 
@@ -50,11 +50,16 @@ class _CreateCourseDialogState
       id: const Uuid().v4(),
       semesterId: widget.semesterId,
       name: _nameController.text.trim(),
-      targetGrade: _targetGradeController.text
+      targetScore:
+      _targetScoreController
+          .text
           .trim()
           .isEmpty
           ? null
-          : _targetGradeController.text.trim(),
+          : double.tryParse(
+        _targetScoreController.text
+            .trim(),
+      ),
       createdAt: now,
       updatedAt: now,
     );
@@ -128,13 +133,19 @@ class _CreateCourseDialogState
 
                 TextFormField(
                   controller:
-                  _targetGradeController,
+                  _targetScoreController,
                   decoration: const InputDecoration(
                     labelText:
-                    'Target Grade (Optional)',
+                    'Target Score (Optional)',
                     hintText:
-                    'Example: A, A+, Distinction',
+                    'Example: 80',
+                    suffixText: '%',
                     border: OutlineInputBorder(),
+                  ),
+                  keyboardType:
+                  const TextInputType
+                      .numberWithOptions(
+                    decimal: true,
                   ),
                 ),
 

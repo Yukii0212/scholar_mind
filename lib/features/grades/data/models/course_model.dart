@@ -5,7 +5,9 @@ class CourseModel {
     required this.id,
     required this.semesterId,
     required this.name,
-    this.targetGrade,
+    this.targetScore,
+    this.minimumAcceptableScore,
+    this.passingScore = 50,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -17,8 +19,15 @@ class CourseModel {
 
   final String name;
 
-  /// Student's personal target.
-  final String? targetGrade;
+  /// Student's desired final percentage.
+  final double? targetScore;
+
+  /// Lowest percentage the student would personally
+  /// be satisfied with.
+  final double? minimumAcceptableScore;
+
+  /// Lowest percentage required to pass.
+  final double passingScore;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -32,7 +41,20 @@ class CourseModel {
       id: doc.id,
       semesterId: data['semesterId'] as String?,
       name: data['name'] as String,
-      targetGrade: data['targetGrade'] as String?,
+      targetScore:
+      (data['targetScore'] as num?)
+          ?.toDouble(),
+
+      minimumAcceptableScore:
+      (data[
+      'minimumAcceptableScore'
+      ] as num?)
+          ?.toDouble(),
+
+      passingScore:
+      (data['passingScore'] as num?)
+          ?.toDouble() ??
+          50,
       createdAt:
       (data['createdAt'] as Timestamp).toDate(),
       updatedAt:
@@ -44,7 +66,10 @@ class CourseModel {
     return {
       'semesterId': semesterId,
       'name': name,
-      'targetGrade': targetGrade,
+      'targetScore': targetScore,
+      'minimumAcceptableScore':
+      minimumAcceptableScore,
+      'passingScore': passingScore,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -55,8 +80,14 @@ class CourseModel {
     String? semesterId,
     bool clearSemesterId = false,
     String? name,
-    String? targetGrade,
-    bool clearTargetGrade = false,
+    double? targetScore,
+    bool clearTargetScore = false,
+
+    double? minimumAcceptableScore,
+    bool clearMinimumAcceptableScore =
+    false,
+
+    double? passingScore,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -66,9 +97,22 @@ class CourseModel {
           ? null
           : semesterId ?? this.semesterId,
       name: name ?? this.name,
-      targetGrade: clearTargetGrade
+      targetScore:
+      clearTargetScore
           ? null
-          : targetGrade ?? this.targetGrade,
+          : targetScore ??
+          this.targetScore,
+
+      minimumAcceptableScore:
+      clearMinimumAcceptableScore
+          ? null
+          : minimumAcceptableScore ??
+          this
+              .minimumAcceptableScore,
+
+      passingScore:
+      passingScore ??
+          this.passingScore,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

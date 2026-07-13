@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/models/course_model.dart';
 import '../../../providers/course/course_provider.dart';
 import '../../../providers/semester/semester_provider.dart';
 
@@ -112,11 +111,11 @@ class ImportCourseDialog extends ConsumerWidget {
                                           ),
                                           title: Text(course.name),
                                           subtitle:
-                                          course.targetGrade ==
-                                              null
+                                          course.targetScore == null
                                               ? null
                                               : Text(
-                                            'Target Grade: ${course.targetGrade}',
+                                            'Target Score: '
+                                                '${course.targetScore!.toStringAsFixed(0)}%',
                                           ),
                                           onTap: () {
                                             Navigator.pop(
@@ -146,11 +145,11 @@ class ImportCourseDialog extends ConsumerWidget {
                                       ),
                                       title: Text(course.name),
                                       subtitle:
-                                      course.targetGrade ==
-                                          null
+                                      course.targetScore == null
                                           ? null
                                           : Text(
-                                        'Target Grade: ${course.targetGrade}',
+                                        'Target Score: '
+                                            '${course.targetScore!.toStringAsFixed(0)}%',
                                       ),
                                       onTap: () {
                                         Navigator.pop(

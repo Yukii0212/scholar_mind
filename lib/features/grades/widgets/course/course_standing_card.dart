@@ -80,15 +80,45 @@ class CurrentStandingCard
 
             const SizedBox(height: 20),
 
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Target Score',
-                suffixText: '%',
-              ),
-              keyboardType:
-              TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+            Row(
+              children: [
+
+                Expanded(
+                  child: TextFormField(
+                    initialValue: '80',
+                    decoration:
+                    const InputDecoration(
+                      labelText:
+                      'Target Score',
+                      suffixText: '%',
+                    ),
+                    keyboardType:
+                    const TextInputType
+                        .numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: TextFormField(
+                    decoration:
+                    const InputDecoration(
+                      labelText:
+                      'Minimum Acceptable',
+                      suffixText: '%',
+                      hintText: 'Optional',
+                    ),
+                    keyboardType:
+                    const TextInputType
+                        .numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -163,17 +193,34 @@ class CurrentStandingCard
             const SizedBox(height: 12),
 
             Text(
-              'Highest Possible Score',
+              'Maximum Achievable Score',
               style: Theme.of(context)
                   .textTheme
                   .labelMedium,
             ),
 
-            Text(
-              '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall,
+            Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall,
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  'Remaining Opportunity: '
+                      '${summary.remainingOpportunity.toStringAsFixed(1)}%',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall,
+                ),
+              ],
             ),
 
             const SizedBox(height: 20),
@@ -246,49 +293,74 @@ class CurrentStandingCard
                     },
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                  Text(
-                    'If your expected scores are accurate, '
-                        'your final course score will be approximately '
-                        '${summary.projectedPercentage.toStringAsFixed(1)}%.',
+                  Card(
+                    elevation: 0,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest,
+                    child: Padding(
+                      padding:
+                      const EdgeInsets.all(16),
+                      child: Text(
+                        'If your expected scores are accurate, '
+                            'your final course score will be approximately '
+                            '${summary.projectedPercentage.toStringAsFixed(1)}%.',
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 20),
                 ],
 
                 if (summary.remainingComponents
-                    .isNotEmpty) ...[
+                .isNotEmpty) ...[
 
-                  Text(
-                    "You haven't received results for:",
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall,
+              Text(
+                "You haven't received results for:",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall,
+              ),
+
+              const SizedBox(height: 8),
+
+              ...summary.remainingComponents.map(
+                    (component) => Padding(
+                  padding:
+                  const EdgeInsets.only(
+                    bottom: 4,
                   ),
-
-                  const SizedBox(height: 8),
-
-                  ...summary.remainingComponents.map(
-                        (component) => Padding(
-                      padding:
-                      const EdgeInsets.only(
-                        bottom: 4,
-                      ),
-                      child: Text(
-                        '• ${component.name}',
-                      ),
-                    ),
+                  child: Text(
+                    '• ${component.name}',
                   ),
+                ),
+              ),
 
-                  const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-                  Text(
-                    'If you receive full marks for every remaining assessment, '
-                        'your highest possible final score will be '
+              Card(
+                elevation: 0,
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest,
+                child: Padding(
+                  padding:
+                  const EdgeInsets.all(16),
+                  child: Text(
+                    'You can still earn up to '
+                        '${summary.remainingOpportunity.toStringAsFixed(1)}% '
+                        'from your remaining assessments.\n\n'
+                        'Scoring full marks for all remaining assessments '
+                        'would give you a final course score of '
                         '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%.',
                   ),
-                ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
 
                 if (!summary.hasScores &&
                     summary.remainingComponents

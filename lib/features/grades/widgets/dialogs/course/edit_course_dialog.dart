@@ -26,7 +26,7 @@ class EditCourseDialog extends ConsumerStatefulWidget {
 class _EditCourseDialogState
     extends ConsumerState<EditCourseDialog> {
   late final TextEditingController _nameController;
-  late final TextEditingController _targetGradeController;
+  late final TextEditingController _targetScoreController;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -40,15 +40,17 @@ class _EditCourseDialogState
       text: widget.course.name,
     );
 
-    _targetGradeController = TextEditingController(
-      text: widget.course.targetGrade ?? '',
+    _targetScoreController = TextEditingController(
+      text: widget.course.targetScore
+          ?.toStringAsFixed(0) ??
+          '',
     );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _targetGradeController.dispose();
+    _targetScoreController.dispose();
     super.dispose();
   }
 
@@ -63,9 +65,16 @@ class _EditCourseDialogState
 
     final updated = widget.course.copyWith(
       name: _nameController.text.trim(),
-      targetGrade: _targetGradeController.text.trim().isEmpty
+      targetScore:
+      _targetScoreController
+          .text
+          .trim()
+          .isEmpty
           ? null
-          : _targetGradeController.text.trim(),
+          : double.tryParse(
+        _targetScoreController.text
+            .trim(),
+      ),
     );
 
     if (widget.isImport) {
@@ -128,11 +137,17 @@ class _EditCourseDialogState
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller: _targetGradeController,
+                  controller: _targetScoreController,
                   decoration: const InputDecoration(
                     labelText:
-                    'Target Grade (Optional)',
+                    'Target Score (Optional)',
+                    suffixText: '%',
                     border: OutlineInputBorder(),
+                  ),
+                  keyboardType:
+                  const TextInputType
+                      .numberWithOptions(
+                    decimal: true,
                   ),
                 ),
 

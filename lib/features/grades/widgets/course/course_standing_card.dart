@@ -67,44 +67,237 @@ class CurrentStandingCard
 
                 const SizedBox(width: 12),
 
-                Text(
-                  'Current Standing',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge,
+                Expanded(
+                  child: Text(
+                    'Current Standing',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge,
+                  ),
                 ),
               ],
             ),
 
             const SizedBox(height: 20),
 
+            const TextField(
+              decoration: InputDecoration(
+                labelText: 'Target Score',
+                suffixText: '%',
+              ),
+              keyboardType:
+              TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             Text(
               summary.hasScores
                   ? 'You have currently secured '
                   '${summary.guaranteedPercentage.toStringAsFixed(1)}% '
-                  'of your final course grade.'
-                  : 'No assessment scores have been entered yet.',
+                  'towards your final course score.'
+                  : 'No assessment results have been entered yet.',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium,
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 28),
+
+            LinearProgressIndicator(
+              value:
+              summary.guaranteedPercentage /
+                  100,
+            ),
+
+            const SizedBox(height: 12),
 
             Text(
-              summary.hasScores
-                  ? 'You have completed '
-                  '${summary.completedWeight.toStringAsFixed(0)}% '
-                  'of the course assessment.\n\n'
-                  'If you obtain full marks for every remaining assessment, '
-                  'your highest possible final score will be '
-                  '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%.'
-                  : 'Once you begin entering your actual scores, '
-                  'ScholarMind will automatically analyse your progress and '
-                  'calculate your highest possible final score.',
+              'Current Score',
               style: Theme.of(context)
                   .textTheme
-                  .bodySmall,
+                  .labelMedium,
+            ),
+
+            Text(
+              '${summary.guaranteedPercentage.toStringAsFixed(1)}%',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall,
+            ),
+
+            const SizedBox(height: 32),
+
+            LinearProgressIndicator(
+              value:
+              summary.projectedPercentage /
+                  100,
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              'Projected Score',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium,
+            ),
+
+            Text(
+              '${summary.projectedPercentage.toStringAsFixed(1)}%',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall,
+            ),
+
+            const SizedBox(height: 32),
+
+            LinearProgressIndicator(
+              value:
+              summary.maximumPossiblePercentage /
+                  100,
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              'Highest Possible Score',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium,
+            ),
+
+            Text(
+              '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall,
+            ),
+
+            const SizedBox(height: 20),
+
+            Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+
+                if (summary.completedComponents
+                    .isNotEmpty) ...[
+
+                  Text(
+                    "You've already received results for:",
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  ...summary.completedComponents.map(
+                        (component) => Padding(
+                      padding:
+                      const EdgeInsets.only(
+                        bottom: 4,
+                      ),
+                      child: Text(
+                        '✓ ${component.name}',
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
+
+                if (summary.expectedComponents
+                    .isNotEmpty) ...[
+
+                  Text(
+                    "You're expecting:",
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  ...summary.expectedComponents.map(
+                        (component) {
+
+                      final entry =
+                      summary.expectedEntries
+                          .firstWhere(
+                            (e) =>
+                        e.componentId ==
+                            component.id,
+                      );
+
+                      return Padding(
+                        padding:
+                        const EdgeInsets.only(
+                          bottom: 4,
+                        ),
+                        child: Text(
+                          '🟣 ${component.name} '
+                              '(${entry.percentage.toStringAsFixed(0)}%)',
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'If your expected scores are accurate, '
+                        'your final course score will be approximately '
+                        '${summary.projectedPercentage.toStringAsFixed(1)}%.',
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
+
+                if (summary.remainingComponents
+                    .isNotEmpty) ...[
+
+                  Text(
+                    "You haven't received results for:",
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  ...summary.remainingComponents.map(
+                        (component) => Padding(
+                      padding:
+                      const EdgeInsets.only(
+                        bottom: 4,
+                      ),
+                      child: Text(
+                        '• ${component.name}',
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'If you receive full marks for every remaining assessment, '
+                        'your highest possible final score will be '
+                        '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%.',
+                  ),
+                ],
+
+                if (!summary.hasScores &&
+                    summary.remainingComponents
+                        .isEmpty)
+
+                  Text(
+                    'Start by entering the marks you have already received.',
+                  ),
+              ],
             ),
           ],
         ),

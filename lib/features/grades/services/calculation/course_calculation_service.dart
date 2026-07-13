@@ -19,12 +19,32 @@ class CourseCalculationService {
 
     double guaranteedPercentage = 0;
 
+    double projectedPercentage = 0;
+
+    final completedComponents =
+    <GradingComponentModel>[];
+
+    final expectedComponents =
+    <GradingComponentModel>[];
+
+    final remainingComponents =
+    <GradingComponentModel>[];
+
     final actualEntries =
     assessments
         .where(
           (entry) =>
       entry.type ==
           AssessmentType.actual,
+    )
+        .toList();
+
+    final expectedEntries =
+    assessments
+        .where(
+          (entry) =>
+      entry.type ==
+          AssessmentType.expected,
     )
         .toList();
 
@@ -51,24 +71,47 @@ class CourseCalculationService {
       for (final target
       in targets) {
 
-        final assessment =
-            actualEntries
-                .where(
-                  (entry) =>
-              entry.componentId ==
-                  target.id,
-            )
-                .isEmpty
-                ? null
-                : actualEntries
-                .where(
-                  (entry) =>
-              entry.componentId ==
-                  target.id,
-            )
-                .first;
+        final actualAssessment =
+        actualEntries
+            .where(
+              (entry) =>
+          entry.componentId ==
+              target.id,
+        )
+            .isEmpty
+            ? null
+            : actualEntries
+            .where(
+              (entry) =>
+          entry.componentId ==
+              target.id,
+        )
+            .first;
 
-        if (assessment == null) {
+        final expectedAssessment =
+        expectedEntries
+            .where(
+              (entry) =>
+          entry.componentId ==
+              target.id,
+        )
+            .isEmpty
+            ? null
+            : expectedEntries
+            .where(
+              (entry) =>
+          entry.componentId ==
+              target.id,
+        )
+            .first;
+
+        if (actualAssessment == null &&
+            expectedAssessment == null) {
+
+          remainingComponents.add(
+            target,
+          );
+
           continue;
         }
 
@@ -86,10 +129,35 @@ class CourseCalculationService {
         completedWeight +=
             overallWeight;
 
-        guaranteedPercentage +=
-            overallWeight *
-                assessment.percentage /
-                100;
+        if (actualAssessment != null) {
+
+          completedComponents.add(
+            target,
+          );
+
+          guaranteedPercentage +=
+              overallWeight *
+                  actualAssessment
+                      .percentage /
+                  100;
+
+          projectedPercentage +=
+              overallWeight *
+                  actualAssessment
+                      .percentage /
+                  100;
+        } else {
+
+          expectedComponents.add(
+            target,
+          );
+
+          projectedPercentage +=
+              overallWeight *
+                  expectedAssessment!
+                      .percentage /
+                  100;
+        }
       }
     }
 
@@ -105,11 +173,26 @@ class CourseCalculationService {
       remainingWeight,
       guaranteedPercentage:
       guaranteedPercentage,
+      projectedPercentage:
+      projectedPercentage,
       maximumPossiblePercentage:
-      guaranteedPercentage +
+      projectedPercentage +
           remainingWeight,
+
       actualEntries:
       actualEntries,
+
+      expectedEntries:
+      expectedEntries,
+
+      completedComponents:
+      completedComponents,
+
+      expectedComponents:
+      expectedComponents,
+
+      remainingComponents:
+      remainingComponents,
     );
   }
 }

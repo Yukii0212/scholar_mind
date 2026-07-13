@@ -51,36 +51,6 @@ class _CurrentStandingCardState
   }
 
   @override
-  void didUpdateWidget(
-      covariant CurrentStandingCard
-      oldWidget,
-      ) {
-    super.didUpdateWidget(
-      oldWidget,
-    );
-
-    if (widget.course.targetScore !=
-        oldWidget.course.targetScore) {
-      _targetController.text =
-          widget.course.targetScore
-              ?.toStringAsFixed(0) ??
-              '';
-    }
-
-    if (widget
-        .course
-        .minimumAcceptableScore !=
-        oldWidget.course
-            .minimumAcceptableScore) {
-      _minimumController.text =
-          widget.course
-              .minimumAcceptableScore
-              ?.toStringAsFixed(0) ??
-              '';
-    }
-  }
-
-  @override
   void dispose() {
     _targetController.dispose();
     _minimumController.dispose();
@@ -141,6 +111,28 @@ return assessments.when(
           assessments: entries,
         );
 
+        final targetText =
+            course.targetScore
+                ?.toStringAsFixed(0) ??
+                '';
+
+        if (_targetController.text !=
+            targetText) {
+          _targetController.text =
+              targetText;
+        }
+
+        final minimumText =
+            course.minimumAcceptableScore
+                ?.toStringAsFixed(0) ??
+                '';
+
+        if (_minimumController.text !=
+            minimumText) {
+          _minimumController.text =
+              minimumText;
+        }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -193,12 +185,37 @@ return assessments.when(
                       courseRepositoryProvider,
                     );
 
+                    final value =
+                    double.tryParse(
+                      _targetController.text,
+                    );
+
+                    if (value != null &&
+                        value >
+                            summary.totalWeight) {
+
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Target Score cannot exceed the maximum course score '
+                                '(${summary.totalWeight.toStringAsFixed(0)}%).',
+                          ),
+                        ),
+                      );
+
+                      _targetController.text =
+                          course.targetScore
+                              ?.toStringAsFixed(0) ??
+                              '';
+
+                      return;
+                    }
+
                     await repository.updateCourse(
                       course.copyWith(
-                        targetScore:
-                        double.tryParse(
-                          _targetController.text,
-                        ),
+                        targetScore: value,
                       ),
                     );
                   },
@@ -226,18 +243,43 @@ return assessments.when(
                       courseRepositoryProvider,
                     );
 
+                    final value =
+                    _minimumController.text
+                        .trim()
+                        .isEmpty
+                        ? null
+                        : double.tryParse(
+                      _minimumController
+                          .text,
+                    );
+
+                    if (value != null &&
+                        value >
+                            summary.totalWeight) {
+
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Minimum Acceptable cannot exceed the maximum course score '
+                                '(${summary.totalWeight.toStringAsFixed(0)}%).',
+                          ),
+                        ),
+                      );
+
+                      _minimumController.text =
+                          course.minimumAcceptableScore
+                              ?.toStringAsFixed(0) ??
+                              '';
+
+                      return;
+                    }
+
                     await repository.updateCourse(
                       course.copyWith(
                         minimumAcceptableScore:
-                        _minimumController
-                            .text
-                            .trim()
-                            .isEmpty
-                            ? null
-                            : double.tryParse(
-                          _minimumController
-                              .text,
-                        ),
+                        value,
                       ),
                     );
                   },

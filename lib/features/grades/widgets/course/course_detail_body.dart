@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
+import '../../providers/course/course_provider.dart';
 import '../../providers/grading/grading_structure_controller.dart';
 import '../../screens/grading/create_grading_structure_screen.dart';
 import '../../providers/grading/grading_provider.dart';
@@ -108,10 +109,41 @@ class CourseDetailBodyState
                             .stretch,
                         children: [
 
-                          CurrentStandingCard(
-                            course: widget.course,
-                            courseId: widget.course.id,
-                            components: data,
+                          Consumer(
+                            builder: (
+                                context,
+                                ref,
+                                _,
+                                ) {
+                              final course =
+                              ref.watch(
+                                courseProvider(
+                                  widget.course.id,
+                                ),
+                              );
+
+                              return course.when(
+                                loading: () =>
+                                const Card(
+                                  child: Padding(
+                                    padding:
+                                    EdgeInsets.all(24),
+                                    child:
+                                    CircularProgressIndicator(),
+                                  ),
+                                ),
+
+                                error: (_, __) =>
+                                const SizedBox(),
+
+                                data: (course) =>
+                                    CurrentStandingCard(
+                                      course: course,
+                                      courseId: course.id,
+                                      components: data,
+                                    ),
+                              );
+                            },
                           ),
 
                           const SizedBox(

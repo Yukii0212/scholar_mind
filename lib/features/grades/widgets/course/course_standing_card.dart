@@ -396,46 +396,118 @@ return assessments.when(
               final isConfigured =
                   target != null;
 
-              final canReachTarget =
+              final hasExpectedScores =
+                  summary.expectedEntries
+                      .isNotEmpty;
+
+              final targetAchieved =
+                  isConfigured &&
+                      summary.guaranteedPercentage >=
+                          target;
+
+              final projectedOnTrack =
+                  isConfigured &&
+                      summary.projectedPercentage >=
+                          target;
+
+              final targetStillPossible =
                   isConfigured &&
                       summary.maximumPossiblePercentage >=
                           target;
 
-              final exactlyTarget =
-                  isConfigured &&
-                      (summary.maximumPossiblePercentage -
-                          target)
-                          .abs() <
-                          0.01;
+              late final Color borderColor;
 
-              final borderColor =
-              !isConfigured
-                  ? Theme.of(context)
-                  .colorScheme
-                  .outline
-                  : exactlyTarget
-                  ? Colors.amber
-                  : canReachTarget
-                  ? Colors.green
-                  : Colors.red;
+              late final IconData icon;
 
-              final icon =
-              !isConfigured
-                  ? Icons.info_outline
-                  : exactlyTarget
-                  ? Icons.flag
-                  : canReachTarget
-                  ? Icons.check_circle
-                  : Icons.warning;
+              late final String message;
 
-              final message =
-              !isConfigured
-                  ? 'Set a Target Score to begin tracking your progress.'
-                  : exactlyTarget
-                  ? 'You are exactly on track to achieve your target.'
-                  : canReachTarget
-                  ? 'Your target score is still achievable.'
-                  : 'Your target score is no longer achievable.';
+              if (!isConfigured) {
+
+                borderColor =
+                    Theme.of(context)
+                        .colorScheme
+                        .outline;
+
+                icon =
+                    Icons.info_outline;
+
+                message =
+                'Set a Target Score to begin tracking your progress.';
+
+              } else if (targetAchieved) {
+
+                borderColor =
+                    Colors.green;
+
+                icon =
+                    Icons.verified;
+
+                message =
+                'Congratulations! You have already achieved your target score.';
+
+              } else if (hasExpectedScores) {
+
+                if (projectedOnTrack) {
+
+                  borderColor =
+                      Colors.green;
+
+                  icon =
+                      Icons.check_circle;
+
+                  message =
+                  'Based on your expected scores, you are currently on track to achieve your target score.';
+
+                } else if (targetStillPossible) {
+
+                  borderColor =
+                      Colors.amber;
+
+                  icon =
+                      Icons.warning_amber_rounded;
+
+                  message =
+                  'Based on your expected scores, you are currently below your target score.\n\n'
+                      'You will need to outperform your expected scores to reach your goal.';
+
+                } else {
+
+                  borderColor =
+                      Colors.red;
+
+                  icon =
+                      Icons.cancel_outlined;
+
+                  message =
+                  'Even with perfect scores from the remaining assessments, '
+                      'your target score is no longer achievable.';
+                }
+
+              } else {
+
+                if (targetStillPossible) {
+
+                  borderColor =
+                      Colors.green;
+
+                  icon =
+                      Icons.check_circle;
+
+                  message =
+                  'Your target score is still achievable.';
+
+                } else {
+
+                  borderColor =
+                      Colors.red;
+
+                  icon =
+                      Icons.cancel_outlined;
+
+                  message =
+                  'Your target score is no longer achievable.';
+                }
+              }
 
               return Card(
                 elevation: 0,
@@ -480,12 +552,71 @@ return assessments.when(
 
                             Text(message),
 
-                            const SizedBox(height: 12),
+                            if (!targetAchieved) ...[
 
-                            Text(
-                              'Remaining Opportunity: '
-                                  '${summary.remainingOpportunity.toStringAsFixed(1)}%',
-                            ),
+                              const SizedBox(height: 16),
+
+                              Row(
+                                children: [
+
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+
+                                        Text(
+                                          hasExpectedScores
+                                              ? 'Projected Final Score'
+                                              : 'Maximum Achievable',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium,
+                                        ),
+
+                                        const SizedBox(height: 4),
+
+                                        Text(
+                                          hasExpectedScores
+                                              ? '${summary.projectedPercentage.toStringAsFixed(1)}%'
+                                              : '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 24),
+
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+
+                                        Text(
+                                          'Target Score',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium,
+                                        ),
+
+                                        const SizedBox(height: 4),
+
+                                        Text(
+                                          '${target!.toStringAsFixed(1)}%',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

@@ -53,6 +53,20 @@ class CourseRepository {
     );
   }
 
+  Stream<CourseModel> watchCourse(
+      String courseId,
+      ) {
+    return _dataSource.collection
+        .doc(courseId)
+        .snapshots()
+        .map(
+          (snapshot) =>
+          CourseModel.fromFirestore(
+            snapshot,
+          ),
+    );
+  }
+
   Future<void> createCourse(
       CourseModel course,
       ) async {

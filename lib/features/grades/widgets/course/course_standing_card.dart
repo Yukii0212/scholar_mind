@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scholar_mind/features/grades/services/calculation/course_calculation_service.dart';
 
+import '../../data/models/course_model.dart';
 import '../../data/models/grading_component_model.dart';
 import '../../providers/assessment/assessment_provider.dart';
+import '../../providers/course/course_provider.dart';
 
 class CurrentStandingCard
-    extends ConsumerWidget {
+    extends ConsumerStatefulWidget {
   const CurrentStandingCard({
     super.key,
+    required this.course,
     required this.courseId,
     required this.components,
   });
+
+  final CourseModel course;
 
   final String courseId;
 
@@ -19,18 +24,105 @@ class CurrentStandingCard
   components;
 
   @override
+  ConsumerState<CurrentStandingCard>
+  createState() =>
+      _CurrentStandingCardState();
+}
+
+class _CurrentStandingCardState
+    extends ConsumerState<
+        CurrentStandingCard> {
+
+  late final TextEditingController
+  _targetController;
+
+  late final TextEditingController
+  _minimumController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _targetController =
+        TextEditingController();
+
+    _minimumController =
+        TextEditingController();
+  }
+
+  @override
+  void didUpdateWidget(
+      covariant CurrentStandingCard
+      oldWidget,
+      ) {
+    super.didUpdateWidget(
+      oldWidget,
+    );
+
+    if (widget.course.targetScore !=
+        oldWidget.course.targetScore) {
+      _targetController.text =
+          widget.course.targetScore
+              ?.toStringAsFixed(0) ??
+              '';
+    }
+
+    if (widget
+        .course
+        .minimumAcceptableScore !=
+        oldWidget.course
+            .minimumAcceptableScore) {
+      _minimumController.text =
+          widget.course
+              .minimumAcceptableScore
+              ?.toStringAsFixed(0) ??
+              '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _targetController.dispose();
+    _minimumController.dispose();
+    super.dispose();
+  }
+
   Widget build(
       BuildContext context,
-      WidgetRef ref,
       ) {
 
     final assessments =
         ref.watch(
           assessmentEntriesProvider(
-            courseId,
+            widget.courseId,
           ),
         );
-    return assessments.when(
+
+    final liveCourse =
+    ref.watch(
+      courseProvider(
+        widget.courseId,
+      ),
+    );
+
+return liveCourse.when(
+
+loading: () =>
+const Card(
+child: Padding(
+padding:
+EdgeInsets.all(20),
+child:
+CircularProgressIndicator(),
+),
+),
+
+error: (_, __) =>
+const SizedBox(),
+
+data: (course) {
+
+return assessments.when(
       loading: () =>
           const Card(
             child: Padding(
@@ -45,7 +137,7 @@ class CurrentStandingCard
 
       data: (entries) {
         final summary = CourseCalculationService.calculate(
-          components: components,
+          components: widget.components,
           assessments: entries,
         );
 
@@ -80,48 +172,90 @@ class CurrentStandingCard
 
             const SizedBox(height: 20),
 
-            Row(
+            Column(
               children: [
 
-                Expanded(
-                  child: TextFormField(
-                    initialValue: '80',
-                    decoration:
-                    const InputDecoration(
-                      labelText:
-                      'Target Score',
-                      suffixText: '%',
-                    ),
-                    keyboardType:
-                    const TextInputType
-                        .numberWithOptions(
-                      decimal: true,
-                    ),
+                TextFormField(
+                  controller: _targetController,
+                  decoration: const InputDecoration(
+                    labelText: 'Target Score',
+                    suffixText: '%',
                   ),
+                  keyboardType:
+                  const TextInputType
+                      .numberWithOptions(
+                    decimal: true,
+                  ),
+                  onFieldSubmitted: (_) async {
+
+                    final repository =
+                    ref.read(
+                      courseRepositoryProvider,
+                    );
+
+                    await repository.updateCourse(
+                      course.copyWith(
+                        targetScore:
+                        double.tryParse(
+                          _targetController.text,
+                        ),
+                      ),
+                    );
+                  },
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(height: 16),
 
-                Expanded(
-                  child: TextFormField(
-                    decoration:
-                    const InputDecoration(
-                      labelText:
-                      'Minimum Acceptable',
-                      suffixText: '%',
-                      hintText: 'Optional',
-                    ),
-                    keyboardType:
-                    const TextInputType
-                        .numberWithOptions(
-                      decimal: true,
-                    ),
+                TextFormField(
+                  controller: _minimumController,
+                  decoration: const InputDecoration(
+                    labelText:
+                    'Minimum Acceptable',
+                    hintText: 'Optional',
+                    suffixText: '%',
                   ),
+                  keyboardType:
+                  const TextInputType
+                      .numberWithOptions(
+                    decimal: true,
+                  ),
+                  onFieldSubmitted: (_) async {
+
+                    final repository =
+                    ref.read(
+                      courseRepositoryProvider,
+                    );
+
+                    await repository.updateCourse(
+                      course.copyWith(
+                        minimumAcceptableScore:
+                        _minimumController
+                            .text
+                            .trim()
+                            .isEmpty
+                            ? null
+                            : double.tryParse(
+                          _minimumController
+                              .text,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
 
             const SizedBox(height: 24),
+
+        if (widget.components.isEmpty) ...[
+
+        const SizedBox(height: 12),
+
+        const Text(
+        'Create a grading structure to begin tracking your progress.',
+        ),
+
+        ] else ...[
 
             Text(
               summary.hasScores
@@ -160,6 +294,8 @@ class CurrentStandingCard
 
             const SizedBox(height: 32),
 
+          if (summary.expectedEntries.isNotEmpty) ...[
+
             LinearProgressIndicator(
               value:
               summary.projectedPercentage /
@@ -183,47 +319,142 @@ class CurrentStandingCard
             ),
 
             const SizedBox(height: 32),
+          ],
 
-            LinearProgressIndicator(
-              value:
-              summary.maximumPossiblePercentage /
-                  100,
-            ),
+          LinearProgressIndicator(
+            value:
+            summary.maximumPossiblePercentage /
+                100,
+          ),
 
-            const SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-            Text(
-              'Maximum Achievable Score',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium,
-            ),
+          Text(
+            'Maximum Achievable Score',
+            style: Theme.of(context)
+                .textTheme
+                .labelMedium,
+          ),
 
-            Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
+          Text(
+            '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall,
+          ),
 
-                Text(
-                  '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall,
+          const SizedBox(height: 16),
+
+          Builder(
+            builder: (context) {
+
+              final target =
+                  course.targetScore;
+
+              final isConfigured =
+                  target != null;
+
+              final canReachTarget =
+                  isConfigured &&
+                      summary.maximumPossiblePercentage >=
+                          target;
+
+              final exactlyTarget =
+                  isConfigured &&
+                      (summary.maximumPossiblePercentage -
+                          target)
+                          .abs() <
+                          0.01;
+
+              final borderColor =
+              !isConfigured
+                  ? Theme.of(context)
+                  .colorScheme
+                  .outline
+                  : exactlyTarget
+                  ? Colors.amber
+                  : canReachTarget
+                  ? Colors.green
+                  : Colors.red;
+
+              final icon =
+              !isConfigured
+                  ? Icons.info_outline
+                  : exactlyTarget
+                  ? Icons.flag
+                  : canReachTarget
+                  ? Icons.check_circle
+                  : Icons.warning;
+
+              final message =
+              !isConfigured
+                  ? 'Set a Target Score to begin tracking your progress.'
+                  : exactlyTarget
+                  ? 'You are exactly on track to achieve your target.'
+                  : canReachTarget
+                  ? 'Your target score is still achievable.'
+                  : 'Your target score is no longer achievable.';
+
+              return Card(
+                elevation: 0,
+                color: Theme.of(context)
+                    .colorScheme
+                    .surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: borderColor,
+                    width: 1.5,
+                  ),
                 ),
+                child: Padding(
+                  padding:
+                  const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
 
-                const SizedBox(height: 4),
+                      Icon(icon),
 
-                Text(
-                  'Remaining Opportunity: '
-                      '${summary.remainingOpportunity.toStringAsFixed(1)}%',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall,
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment
+                              .start,
+                          children: [
+
+                            Text(
+                              'Progress Towards Goal',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall,
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            Text(message),
+
+                            const SizedBox(height: 12),
+
+                            Text(
+                              'Remaining Opportunity: '
+                                  '${summary.remainingOpportunity.toStringAsFixed(1)}%',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              );
+            },
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
             Column(
               crossAxisAlignment:
@@ -297,9 +528,6 @@ class CurrentStandingCard
 
                   Card(
                     elevation: 0,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest,
                     child: Padding(
                       padding:
                       const EdgeInsets.all(16),
@@ -372,10 +600,13 @@ class CurrentStandingCard
               ],
             ),
           ],
+        ],
         ),
       ),
     );
       },
-    );
+);
+},
+);
   }
 }

@@ -168,6 +168,10 @@ class CourseCalculationService {
     final remainingOpportunity =
         remainingWeight;
 
+    final maximumPossiblePercentage =
+        guaranteedPercentage +
+            remainingOpportunity;
+
     return CourseCalculationSummary(
       totalWeight: totalWeight,
       completedWeight:
@@ -179,24 +183,17 @@ class CourseCalculationService {
       projectedPercentage:
       projectedPercentage,
       maximumPossiblePercentage:
-      projectedPercentage +
-          remainingOpportunity,
-
+      maximumPossiblePercentage,
       remainingOpportunity:
       remainingOpportunity,
-
       actualEntries:
       actualEntries,
-
       expectedEntries:
       expectedEntries,
-
       completedComponents:
       completedComponents,
-
       expectedComponents:
       expectedComponents,
-
       remainingComponents:
       remainingComponents,
     );

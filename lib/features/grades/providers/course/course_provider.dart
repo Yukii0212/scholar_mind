@@ -33,3 +33,18 @@ StreamProvider<List<CourseModel>>(
         .watchPersonalCourses();
   },
 );
+
+final courseProvider =
+StreamProvider.family<
+    CourseModel,
+    String>(
+      (ref, courseId) {
+    return ref
+        .watch(
+      courseRepositoryProvider,
+    )
+        .watchCourse(
+      courseId,
+    );
+  },
+);

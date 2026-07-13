@@ -109,10 +109,9 @@ class CourseDetailBodyState
                         children: [
 
                           CurrentStandingCard(
-                            courseId:
-                            widget.course.id,
-                            components:
-                            data,
+                            course: widget.course,
+                            courseId: widget.course.id,
+                            components: data,
                           ),
 
                           const SizedBox(
@@ -138,16 +137,20 @@ class CourseDetailBodyState
                                       builder: (_) =>
                                           CreateGradingStructureScreen(
                                             course: widget.course,
-                                            isEditing: true,
+                                            isEditing: data.isNotEmpty,
                                           ),
                                     ),
                                   );
                                 },
-                                icon: const Icon(
-                                  Icons.edit_outlined,
+                                icon: Icon(
+                                  data.isNotEmpty
+                                      ? Icons.edit_outlined
+                                      : Icons.add_outlined,
                                 ),
-                                label: const Text(
-                                  'Edit Structure',
+                                label: Text(
+                                  data.isNotEmpty
+                                      ? 'Edit Structure'
+                                      : 'Create Structure',
                                 ),
                               ),
                             ],

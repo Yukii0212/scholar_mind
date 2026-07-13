@@ -17,6 +17,8 @@ class CourseCalculationService {
 
     double completedWeight = 0;
 
+    double expectedWeight = 0;
+
     double guaranteedPercentage = 0;
 
     double projectedPercentage = 0;
@@ -126,10 +128,10 @@ class CourseCalculationService {
         )
             .overallWeight;
 
-        completedWeight +=
-            overallWeight;
-
         if (actualAssessment != null) {
+
+          completedWeight +=
+              overallWeight;
 
           completedComponents.add(
             target,
@@ -146,7 +148,11 @@ class CourseCalculationService {
                   actualAssessment
                       .percentage /
                   100;
+
         } else {
+
+          expectedWeight +=
+              overallWeight;
 
           expectedComponents.add(
             target,
@@ -163,7 +169,7 @@ class CourseCalculationService {
 
     final remainingWeight =
         totalWeight -
-            completedWeight;
+        completedWeight;
 
     final remainingOpportunity =
         remainingWeight;

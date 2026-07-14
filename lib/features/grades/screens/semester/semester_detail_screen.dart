@@ -63,7 +63,7 @@ class SemesterDetailScreen extends ConsumerWidget {
           );
         },
         onImportCourse: () {
-          CourseActions.import(
+          CourseActions.copyFromExistingCourse(
             context,
             ref,
             semester.id,

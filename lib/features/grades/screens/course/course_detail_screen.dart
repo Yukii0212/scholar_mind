@@ -43,35 +43,6 @@ class _CourseDetailScreenState
         key: _bodyKey,
         course: widget.course,
       ),
-
-      floatingActionButton:
-      hasGradingStructure.when(
-        data: (exists) {
-          if (exists) {
-            return null;
-          }
-
-          return GradeSpeedDial(
-            onCreateGradingStructure: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      CreateGradingStructureScreen(
-                        course: widget.course,
-                        isEditing: false,
-                      ),
-                ),
-              );
-            },
-            onImportGradingTemplate: () {
-              // TODO
-            },
-          );
-        },
-        loading: () => null,
-        error: (_, __) => null,
-      ),
     );
   }
 }

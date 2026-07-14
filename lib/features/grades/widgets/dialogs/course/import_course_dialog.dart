@@ -26,7 +26,7 @@ class ImportCourseDialog extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Import Course',
+                'Copy from Existing Course',
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall,
@@ -35,7 +35,7 @@ class ImportCourseDialog extends ConsumerWidget {
               const SizedBox(height: 8),
 
               Text(
-                'Select a course to import.',
+                'Select a course to copy.',
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium,
@@ -66,7 +66,7 @@ class ImportCourseDialog extends ConsumerWidget {
                         if (courses.isEmpty) {
                           return const Center(
                             child: Text(
-                              'No courses available to import.',
+                              'No courses available to copy.',
                             ),
                           );
                         }

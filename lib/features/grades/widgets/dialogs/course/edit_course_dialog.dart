@@ -77,18 +77,9 @@ class _EditCourseDialogState
       ),
     );
 
-    if (widget.isImport) {
-      await ref
-          .read(courseRepositoryProvider)
-          .importCourse(
-        source: updated,
-        semesterId: updated.semesterId,
-      );
-    } else {
-      await ref
-          .read(courseRepositoryProvider)
-          .updateCourse(updated);
-    }
+    await ref
+        .read(courseRepositoryProvider)
+        .updateCourse(updated);
 
     if (!mounted) return;
 

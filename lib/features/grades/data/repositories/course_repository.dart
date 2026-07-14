@@ -97,16 +97,18 @@ class CourseRepository {
         .delete();
   }
 
-  Future<CourseModel> importCourse({
+  Future<CourseModel> copyCourse({
     required CourseModel source,
     required String? semesterId,
   }) async {
     final now = DateTime.now();
 
-    final imported = CourseModel(
+    final copiedCourse = CourseModel(
       id: _dataSource.collection.doc().id,
       semesterId: semesterId,
+
       name: source.name,
+
       targetScore:
       source.targetScore,
 
@@ -115,12 +117,15 @@ class CourseRepository {
 
       passingScore:
       source.passingScore,
+
       createdAt: now,
       updatedAt: now,
     );
 
-    await createCourse(imported);
+    await createCourse(
+      copiedCourse,
+    );
 
-    return imported;
+    return copiedCourse;
   }
 }

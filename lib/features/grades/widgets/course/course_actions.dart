@@ -87,21 +87,36 @@ class CourseActions {
       selected.id,
     );
 
+    final idMap = <String, String>{};
+
+    for (final component in components) {
+      idMap[component.id] =
+          const Uuid().v4();
+    }
+
     final copiedComponents =
-    components
-        .map(
-          (component) =>
-          component.copyWith(
-            id: const Uuid().v4(),
-            courseId:
-            copiedCourse.id,
-            createdAt:
-            DateTime.now(),
-            updatedAt:
-            DateTime.now(),
-          ),
-    )
-        .toList();
+    components.map(
+          (component) {
+
+        final newId =
+        idMap[component.id]!;
+
+        final newParentId =
+        component.parentId == null
+            ? null
+            : idMap[
+        component.parentId!
+        ];
+
+        return component.copyWith(
+          id: newId,
+          courseId: copiedCourse.id,
+          parentId: newParentId,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      },
+    ).toList();
 
     await ref
         .read(
@@ -127,6 +142,28 @@ class CourseActions {
             title:
             'Review Copied Course',
           ),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content: Text(
+          '${copiedCourse.name} copied successfully.',
+        ),
+        action: SnackBarAction(
+          label: 'OPEN',
+          onPressed: () {
+            CourseActions.open(
+              context,
+              copiedCourse,
+            );
+          },
+        ),
+      ),
     );
   }
 }

@@ -39,7 +39,15 @@ class _SwipeCardsState
 
   bool _expanded = false;
 
-  Future<void> _showExpandedCard() async {
+  Future<void> _showExpandedCard(
+      int initialVirtualIndex,
+      ) async {
+
+    _virtualIndex = initialVirtualIndex;
+
+    _pageController.jumpToPage(
+      initialVirtualIndex,
+    );
 
     setState(() {
       _expanded = true;
@@ -47,30 +55,46 @@ class _SwipeCardsState
 
     await showGeneralDialog(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
-      barrierColor: Colors.black54,
+      barrierColor: Colors.black,
       transitionDuration:
       const Duration(
-        milliseconds: 300,
+        milliseconds: 250,
       ),
       pageBuilder:
           (_, __, ___) {
 
-        return SafeArea(
-          child: Center(
-            child: FractionallySizedBox(
-              widthFactor: 0.95,
-              heightFactor: 0.90,
-              child: Material(
-                elevation: 12,
-                borderRadius:
-                BorderRadius.circular(
-                  24,
+        return Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+            behavior:
+            HitTestBehavior.opaque,
+            onTap: () {
+              Navigator.of(context).pop();
+            },
+            child: SafeArea(
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {},
+                  child:
+                  FractionallySizedBox(
+                    widthFactor: 0.92,
+                    heightFactor: 0.92,
+                    child: Material(
+                      elevation: 16,
+                      borderRadius:
+                      BorderRadius.circular(
+                        24,
+                      ),
+                      clipBehavior:
+                      Clip.antiAlias,
+                      child:
+                      _buildExpandedPager(),
+                    ),
+                  ),
                 ),
-                clipBehavior:
-                Clip.antiAlias,
-                child: _buildExpandedPager(),
               ),
             ),
           ),
@@ -88,15 +112,10 @@ class _SwipeCardsState
           opacity: animation,
           child: ScaleTransition(
             scale:
-            Tween<double>(
-              begin: 0.95,
-              end: 1,
-            ).animate(
-              CurvedAnimation(
-                parent: animation,
-                curve:
-                Curves.easeOut,
-              ),
+            CurvedAnimation(
+              parent: animation,
+              curve:
+              Curves.easeOutCubic,
             ),
             child: child,
           ),
@@ -169,6 +188,7 @@ class _SwipeCardsState
 
     return PageView.builder(
       controller: _pageController,
+      padEnds: false,
 
       onPageChanged:
           (virtualIndex) {
@@ -200,19 +220,24 @@ class _SwipeCardsState
                 widget.items.length;
 
         return Padding(
-          padding:
-          const EdgeInsets.all(
-            20,
-          ),
-          child:
-          SingleChildScrollView(
-            physics:
-            const BouncingScrollPhysics(),
+            padding:
+            const EdgeInsets.all(
+              20,
+            ),
+            child:
+            NotificationListener<
+                ScrollNotification>(
+              onNotification: (_) => true,
+              child:
+              SingleChildScrollView(
+                physics:
+                const ClampingScrollPhysics(),
             child:
             widget
                 .items[index]
                 .child,
-          ),
+              ),
+            ),
         );
       },
     );
@@ -364,8 +389,9 @@ class _SwipeCardsState
           ),
         ),
 
-        SizedBox(
-          height: 420,
+    ClipRect(
+    child: SizedBox(
+    height: 420,
           child: PageView.builder(
             controller:
             _pageController,
@@ -432,7 +458,9 @@ class _SwipeCardsState
                     widget
                         .items[index]
                         .expandable
-                        ? _showExpandedCard
+                        ? () => _showExpandedCard(
+                      virtualIndex,
+                    )
                         : null,
                     child: Hero(
                       tag: 'swipe-card-$index',
@@ -520,7 +548,8 @@ class _SwipeCardsState
               );
             },
           ),
-        ),
+    ),
+    ),
       ],
     );
   }

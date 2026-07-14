@@ -134,13 +134,16 @@ return assessments.when(
         }
 
         return Card(
-          clipBehavior: Clip.antiAlias,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-          children: [
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                physics:
+                const NeverScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
             Row(
               children: [
                 Icon(
@@ -774,10 +777,11 @@ return assessments.when(
               ],
             ),
           ],
-        ],
-        ),
-      ),
-    );
+                  ],
+                ),
+              ),
+            ),
+        );
       },
 );
 },

@@ -180,6 +180,36 @@ class _SwipeCardsState
   }
 
   @override
+  void didUpdateWidget(
+      covariant SwipeCards oldWidget,
+      ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.items != widget.items ||
+        oldWidget.initialIndex !=
+            widget.initialIndex) {
+
+      _virtualIndex =
+          _virtualMiddle +
+              widget.initialIndex;
+
+      _currentIndex =
+          widget.initialIndex;
+
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        _pageController.jumpToPage(
+          _virtualIndex,
+        );
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
@@ -520,24 +550,29 @@ class _SwipeCardsState
                             ),
 
                             if (!_expanded)
-                              Positioned.fill(
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                height: 160,
                                 child: IgnorePointer(
                                   child: DecoratedBox(
                                     decoration:
-                                    const BoxDecoration(
+                                    BoxDecoration(
                                       gradient:
                                       LinearGradient(
                                         begin:
-                                        Alignment
-                                            .topCenter,
+                                        Alignment.topCenter,
                                         end:
-                                        Alignment
-                                            .bottomCenter,
+                                        Alignment.bottomCenter,
                                         colors: [
                                           Colors.transparent,
-                                          Color(
-                                            0xAA000000,
-                                          ),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .surface,
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .surface,
                                         ],
                                       ),
                                     ),
@@ -546,42 +581,50 @@ class _SwipeCardsState
                               ),
 
                             if (!_expanded)
-                              const Positioned(
+                              Positioned(
                                 left: 0,
                                 right: 0,
-                                bottom: 16,
+                                bottom: 48,
                                 child: IgnorePointer(
-                                  child: Center(
-                                    child: Row(
-                                      mainAxisSize:
-                                      MainAxisSize
-                                          .min,
-                                      children: [
+                                  child: Column(
+                                    mainAxisSize:
+                                    MainAxisSize.min,
+                                    children: [
 
-                                        Icon(
-                                          Icons.open_in_full,
-                                          size: 18,
-                                          color:
-                                          Colors.white,
-                                        ),
+                                      Icon(
+                                        Icons.open_in_full,
+                                        size: 28,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
 
-                                        SizedBox(
-                                          width: 8,
-                                        ),
+                                      const SizedBox(
+                                        height: 12,
+                                      ),
 
-                                        Text(
-                                          'Tap to expand',
-                                          style:
-                                          TextStyle(
-                                            color:
-                                            Colors.white,
-                                            fontWeight:
-                                            FontWeight
-                                                .w600,
-                                          ),
+                                      Text(
+                                        'Tap to expand',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                          fontWeight:
+                                          FontWeight.bold,
                                         ),
-                                      ],
-                                    ),
+                                      ),
+
+                                      const SizedBox(
+                                        height: 4,
+                                      ),
+
+                                      Text(
+                                        'View full analytics',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),

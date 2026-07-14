@@ -28,7 +28,7 @@ class _SwipeCardsState
 
   static const int _virtualMiddle = 1000000;
 
-  late final PageController
+  late PageController
   _pageController;
 
   PageController?

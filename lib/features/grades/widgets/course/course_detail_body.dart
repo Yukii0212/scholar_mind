@@ -222,6 +222,9 @@ class CourseDetailBodyState
                             data: (course) {
 
                               return SwipeCards(
+                                key: ValueKey(
+                                  '${widget.course.id}-${_showAnalytics}',
+                                ),
                                 items: [
 
                                   SwipeCardItem(

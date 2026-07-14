@@ -31,6 +31,9 @@ class _SwipeCardsState
   late final PageController
   _pageController;
 
+  PageController?
+  _expandedPageController;
+
   late int _virtualIndex;
 
   late int _currentIndex;
@@ -43,11 +46,12 @@ class _SwipeCardsState
       int initialVirtualIndex,
       ) async {
 
-    _virtualIndex = initialVirtualIndex;
-
-    _pageController.jumpToPage(
-      initialVirtualIndex,
-    );
+    _expandedPageController =
+        PageController(
+          initialPage:
+          initialVirtualIndex,
+          viewportFraction: 1,
+        );
 
     setState(() {
       _expanded = true;
@@ -72,7 +76,7 @@ class _SwipeCardsState
             behavior:
             HitTestBehavior.opaque,
             onTap: () {
-              Navigator.of(context).pop();
+              Navigator.of(_).pop();
             },
             child: SafeArea(
               child: Center(
@@ -91,7 +95,9 @@ class _SwipeCardsState
                       clipBehavior:
                       Clip.antiAlias,
                       child:
-                      _buildExpandedPager(),
+                      _buildExpandedPager(
+                        _expandedPageController!,
+                      ),
                     ),
                   ),
                 ),
@@ -122,6 +128,12 @@ class _SwipeCardsState
         );
       },
     );
+
+    _expandedPageController
+        ?.dispose();
+
+    _expandedPageController =
+    null;
 
     if (mounted) {
       setState(() {
@@ -184,10 +196,12 @@ class _SwipeCardsState
     );
   }
 
-  Widget _buildExpandedPager() {
+  Widget _buildExpandedPager(
+      PageController controller,
+      ) {
 
     return PageView.builder(
-      controller: _pageController,
+      controller: controller,
       padEnds: false,
 
       onPageChanged:
@@ -231,7 +245,10 @@ class _SwipeCardsState
               child:
               SingleChildScrollView(
                 physics:
-                const ClampingScrollPhysics(),
+                const BouncingScrollPhysics(
+                  parent:
+                  AlwaysScrollableScrollPhysics(),
+                ),
             child:
             widget
                 .items[index]
@@ -389,15 +406,20 @@ class _SwipeCardsState
           ),
         ),
 
-    ClipRect(
-    child: SizedBox(
+    SizedBox(
     height: 420,
-          child: PageView.builder(
+    child: ClipRect(
+    child: IgnorePointer(
+    ignoring: _expanded,
+    child: PageView.builder(
             controller:
             _pageController,
 
-            onPageChanged:
-                (virtualIndex) {
+      onPageChanged:
+          (virtualIndex) {
+
+        _virtualIndex =
+            virtualIndex;
 
               setState(() {
 
@@ -467,11 +489,16 @@ class _SwipeCardsState
                       child: Material(
                         color: Colors.transparent,
                         child: Stack(
+                          fit: StackFit.expand,
                           children: [
 
-                            widget
-                                .items[index]
-                                .child,
+                            ClipRect(
+                              child: AbsorbPointer(
+                                child: widget
+                                    .items[index]
+                                    .child,
+                              ),
+                            ),
 
                             if (!_expanded)
                               Positioned.fill(
@@ -547,7 +574,8 @@ class _SwipeCardsState
                 ),
               );
             },
-          ),
+    ),
+    ),
     ),
     ),
       ],

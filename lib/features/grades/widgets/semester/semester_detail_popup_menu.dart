@@ -16,12 +16,6 @@ class SemesterDetailPopupMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       onSelected: (value) {
         switch (value) {
-          case 'hide':
-            SemesterActions.toggleHidden(
-              context,
-              semester,
-            );
-            break;
 
           case 'edit':
             SemesterActions.edit(
@@ -42,15 +36,6 @@ class SemesterDetailPopupMenu extends StatelessWidget {
         const PopupMenuItem(
           value: 'edit',
           child: Text('Edit Semester'),
-        ),
-
-        PopupMenuItem(
-          value: 'hide',
-          child: Text(
-            semester.isHidden
-                ? 'Unhide Semester'
-                : 'Hide Semester',
-          ),
         ),
 
         const PopupMenuDivider(),

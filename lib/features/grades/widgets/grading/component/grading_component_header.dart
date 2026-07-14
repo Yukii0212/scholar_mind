@@ -31,47 +31,49 @@ class GradingComponentHeader
               );
             },
             initialValue: component.name,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               border: InputBorder.none,
               hintText: 'Component Name',
               isDense: true,
+              suffixIcon: Icon(
+                Icons.edit_outlined,
+                size: 18,
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary,
+              ),
             ),
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium,
           ),
         ),
 
         PopupMenuButton<String>(
+          tooltip: 'More actions',
           onSelected: (value) {
-            final notifier = ref.read(
-              gradingStructureDraftProvider.notifier,
-            );
-
-            switch (value) {
-              case 'rename':
-                break;
-
-              case 'delete':
-                notifier.removeComponent(
-                  component.id,
-                );
-                break;
+            if (value == 'delete') {
+              ref
+                  .read(
+                gradingStructureDraftProvider.notifier,
+              )
+                  .removeComponent(
+                component.id,
+              );
             }
           },
           itemBuilder: (context) => const [
             PopupMenuItem(
-              value: 'rename',
-              child: ListTile(
-                leading: Icon(Icons.edit_outlined),
-                title: Text('Rename'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            PopupMenuItem(
               value: 'delete',
               child: ListTile(
-                leading: Icon(Icons.delete_outline),
-                title: Text('Delete'),
-                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  Icons.delete_outline,
+                ),
+                title: Text(
+                  'Delete',
+                ),
+                contentPadding:
+                EdgeInsets.zero,
               ),
             ),
           ],

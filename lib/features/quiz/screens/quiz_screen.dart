@@ -349,7 +349,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                   subtitle: Text(quiz.status.name),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    //TODO
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => QuizViewerScreen(
+                          attempt: quiz,
+                        ),
+                      ),
+                    );
                   },
                 ),
               );

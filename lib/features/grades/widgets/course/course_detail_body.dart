@@ -227,30 +227,25 @@ class CourseDetailBodyState
                                   SwipeCardItem(
                                     title: 'Overview',
                                     icon: Icons.analytics_outlined,
-                                    child:
-                                    CurrentStandingCard(
+                                    height: 310,
+                                    child: CurrentStandingCard(
                                       course: course,
-                                      courseId:
-                                      course.id,
-                                      components:
-                                      components,
+                                      courseId: course.id,
+                                      components: components,
                                     ),
                                   ),
 
                                   SwipeCardItem(
                                     title: 'Targets',
                                     icon: Icons.flag_outlined,
+                                    height: 260,
                                     child: Card(
                                       child: Padding(
-                                        padding:
-                                        const EdgeInsets.all(
-                                          24,
-                                        ),
+                                        padding: const EdgeInsets.all(24),
                                         child: Center(
                                           child: Text(
                                             'Coming Soon',
-                                            style: Theme.of(
-                                                context)
+                                            style: Theme.of(context)
                                                 .textTheme
                                                 .titleMedium,
                                           ),
@@ -261,19 +256,15 @@ class CourseDetailBodyState
 
                                   SwipeCardItem(
                                     title: 'Charts',
-                                    icon:
-                                    Icons.bar_chart,
+                                    icon: Icons.bar_chart,
+                                    height: 260,
                                     child: Card(
                                       child: Padding(
-                                        padding:
-                                        const EdgeInsets.all(
-                                          24,
-                                        ),
+                                        padding: const EdgeInsets.all(24),
                                         child: Center(
                                           child: Text(
                                             'Coming Soon',
-                                            style: Theme.of(
-                                                context)
+                                            style: Theme.of(context)
                                                 .textTheme
                                                 .titleMedium,
                                           ),

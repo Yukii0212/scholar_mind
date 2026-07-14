@@ -23,24 +23,35 @@ class SwipeCards extends StatefulWidget {
 }
 
 class _SwipeCardsState
-    extends State<SwipeCards> {
+    extends State<SwipeCards>
+    with TickerProviderStateMixin {
+
+  static const int _virtualMiddle = 1000000;
 
   late final PageController
   _pageController;
 
+  late int _virtualIndex;
+
   late int _currentIndex;
+
+  bool _showSwipeHint = true;
 
   @override
   void initState() {
     super.initState();
+
+    _virtualIndex =
+        _virtualMiddle +
+            widget.initialIndex;
 
     _currentIndex =
         widget.initialIndex;
 
     _pageController =
         PageController(
-          initialPage:
-          widget.initialIndex,
+          initialPage: _virtualIndex,
+          viewportFraction: 0.90,
         );
   }
 
@@ -59,17 +70,68 @@ class _SwipeCardsState
           items: widget.items,
           currentIndex: _currentIndex,
           onSelected: (index) {
+
+            final target =
+                _virtualIndex -
+                    _currentIndex +
+                    index;
+
             _pageController.animateToPage(
-              index,
+              target,
               duration:
               const Duration(
                 milliseconds: 300,
               ),
-              curve: Curves.easeInOut,
+              curve:
+              Curves.easeInOut,
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildIndicator(
+      BuildContext context) {
+    return Row(
+      mainAxisAlignment:
+      MainAxisAlignment.center,
+      children: List.generate(
+        widget.items.length,
+            (index) {
+          final selected =
+              index == _currentIndex;
+
+          return AnimatedContainer(
+            duration:
+            const Duration(
+              milliseconds: 250,
+            ),
+            margin:
+            const EdgeInsets
+                .symmetric(
+              horizontal: 4,
+            ),
+            width:
+            selected ? 18 : 8,
+            height: 8,
+            decoration:
+            BoxDecoration(
+              color: selected
+                  ? Theme.of(
+                  context)
+                  .colorScheme
+                  .primary
+                  : Theme.of(
+                  context)
+                  .dividerColor,
+              borderRadius:
+              BorderRadius
+                  .circular(99),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -80,7 +142,8 @@ class _SwipeCardsState
 
     return Column(
       crossAxisAlignment:
-      CrossAxisAlignment.stretch,
+      CrossAxisAlignment
+          .stretch,
       children: [
 
         Row(
@@ -88,15 +151,25 @@ class _SwipeCardsState
 
             Icon(current.icon),
 
-            const SizedBox(width: 12),
+            const SizedBox(
+                width: 12),
 
             Expanded(
               child: Text(
                 current.title,
-                style: Theme.of(context)
+                style: Theme.of(
+                    context)
                     .textTheme
                     .titleLarge,
               ),
+            ),
+
+            Text(
+              '${_currentIndex + 1} / ${widget.items.length}',
+              style: Theme.of(
+                  context)
+                  .textTheme
+                  .bodyMedium,
             ),
 
             IconButton(
@@ -111,53 +184,106 @@ class _SwipeCardsState
           ],
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(
+            height: 8),
 
-        SizedBox(
-          height: 420,
-          child: PageView.builder(
+        _buildIndicator(context),
+
+        const SizedBox(
+            height: 8),
+
+        AnimatedOpacity(
+          opacity:
+          _showSwipeHint
+              ? 1
+              : 0,
+          duration:
+          const Duration(
+            milliseconds: 350,
+          ),
+          child: const Padding(
+            padding:
+            EdgeInsets.only(
+              bottom: 12,
+            ),
+            child: Text(
+              '← Swipe for more analytics →',
+              textAlign:
+              TextAlign.center,
+            ),
+          ),
+        ),
+
+        AnimatedContainer(
+          duration:
+          const Duration(
+            milliseconds: 250,
+          ),
+          curve:
+          Curves.easeInOut,
+          height: current.height,
+          child:
+          PageView.builder(
             controller:
             _pageController,
 
             onPageChanged:
-                (index) {
+                (virtualIndex) {
 
               setState(() {
+
+                _virtualIndex =
+                    virtualIndex;
+
                 _currentIndex =
-                    index;
+                    virtualIndex %
+                        widget.items.length;
+
+                _showSwipeHint =
+                false;
               });
 
               widget.onPageChanged
-                  ?.call(index);
+                  ?.call(
+                _currentIndex,
+              );
             },
-
-            itemCount:
-            widget.items.length,
 
             itemBuilder:
                 (
                 context,
-                index,
+                virtualIndex,
                 ) {
 
-              return AnimatedPadding(
-                duration:
-                const Duration(
-                  milliseconds: 250,
-                ),
+              final index =
+                  virtualIndex %
+                      widget.items.length;
 
-                curve:
-                Curves.easeOut,
-
+              return Padding(
                 padding:
                 const EdgeInsets.symmetric(
-                  horizontal: 4,
+                  horizontal: 6,
                 ),
-
                 child:
-                widget
-                    .items[index]
-                    .child,
+                AnimatedScale(
+                  duration:
+                  const Duration(
+                    milliseconds:
+                    250,
+                  ),
+                  curve:
+                  Curves.easeOut,
+                  scale:
+                  index ==
+                      _currentIndex
+                      ? 1
+                      : 0.96,
+                  child:
+                  widget
+                      .items[
+                  index]
+                      .child,
+                ),
               );
             },
           ),

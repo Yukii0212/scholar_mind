@@ -133,9 +133,10 @@ return assessments.when(
               minimumText;
         }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment:
           CrossAxisAlignment.start,
@@ -162,7 +163,7 @@ return assessments.when(
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             Column(
               children: [
@@ -287,7 +288,7 @@ return assessments.when(
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
         if (widget.components.isEmpty) ...[
 
@@ -310,7 +311,7 @@ return assessments.when(
                   .bodyMedium,
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
 
             LinearProgressIndicator(
               value:
@@ -334,7 +335,7 @@ return assessments.when(
                   .headlineSmall,
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
 
           if (summary.expectedEntries.isNotEmpty) ...[
 
@@ -360,7 +361,7 @@ return assessments.when(
                   .headlineSmall,
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
           ],
 
           LinearProgressIndicator(
@@ -627,7 +628,7 @@ return assessments.when(
             },
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
             Column(
               crossAxisAlignment:
@@ -658,7 +659,7 @@ return assessments.when(
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                 ],
 
                 if (summary.expectedComponents
@@ -712,7 +713,7 @@ return assessments.when(
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                 ],
 
                 if (summary.remainingComponents
@@ -760,7 +761,7 @@ return assessments.when(
                 ),
               ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 16),
             ],
 
                 if (!summary.hasScores &&

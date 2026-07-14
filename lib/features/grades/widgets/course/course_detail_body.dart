@@ -161,32 +161,54 @@ class CourseDetailBodyState
                                 ),
                               ),
 
-                              TextButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          CreateGradingStructureScreen(
-                                            course: widget.course,
-                                            isEditing: data.isNotEmpty,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(
-                                  data.isNotEmpty
-                                      ? Icons.edit_outlined
-                                      : Icons.add_outlined,
+                              if (data.isNotEmpty)
+                                TextButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            CreateGradingStructureScreen(
+                                              course: widget.course,
+                                              isEditing: true,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                  ),
+                                  label: const Text(
+                                    'Edit Structure',
+                                  ),
                                 ),
-                                label: Text(
-                                  data.isNotEmpty
-                                      ? 'Edit Structure'
-                                      : 'Create Structure',
-                                ),
-                              ),
                             ],
                           ),
+
+                          if (data.isEmpty) ...[
+                            const SizedBox(height: 16),
+
+                            FilledButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        CreateGradingStructureScreen(
+                                          course: widget.course,
+                                          isEditing: false,
+                                        ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.add,
+                              ),
+                              label: const Text(
+                                'Create Structure',
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(
                             height: 16,

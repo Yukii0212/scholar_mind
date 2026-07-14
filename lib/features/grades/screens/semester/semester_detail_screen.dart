@@ -7,6 +7,8 @@ import '../../widgets/course/course_actions.dart';
 import '../../widgets/semester/semester_detail_body.dart';
 import '../../widgets/semester/semester_detail_popup_menu.dart';
 import '../../widgets/dialogs/course/create_course_dialog.dart';
+import '../grading/create_grading_structure_screen.dart';
+import '../../data/models/course_model.dart';
 
 class SemesterDetailScreen extends ConsumerWidget {
   const SemesterDetailScreen({
@@ -34,11 +36,29 @@ class SemesterDetailScreen extends ConsumerWidget {
         semester: semester,
       ),
       floatingActionButton: GradeSpeedDial(
-        onCreateCourse: () {
-          showDialog(
+        onCreateCourse: () async {
+          final createdCourse =
+          await showDialog<CourseModel>(
             context: context,
-            builder: (_) => CreateCourseDialog(
-              semesterId: semester.id,
+            builder: (_) =>
+                CreateCourseDialog(
+                  semesterId: semester.id,
+                ),
+          );
+
+          if (!context.mounted ||
+              createdCourse == null) {
+            return;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  CreateGradingStructureScreen(
+                    course: createdCourse,
+                    isEditing: false,
+                  ),
             ),
           );
         },

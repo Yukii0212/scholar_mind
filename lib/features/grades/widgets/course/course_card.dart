@@ -9,6 +9,8 @@ class CourseCard extends StatelessWidget {
     required this.onOpen,
     required this.onEdit,
     required this.onDelete,
+    required this.expanded,
+    required this.onExpansionChanged,
   });
 
   final CourseModel course;
@@ -17,13 +19,27 @@ class CourseCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  final bool expanded;
+
+  final ValueChanged<bool>
+  onExpansionChanged;
+
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ExpansionTile(
+        key: PageStorageKey(
+          course.id,
+        ),
+        initiallyExpanded:
+        expanded,
+        onExpansionChanged:
+        onExpansionChanged,
         title: Text(
           course.name,
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium,
         ),
         subtitle: Text(
           course.targetScore == null
@@ -33,8 +49,12 @@ class CourseCard extends StatelessWidget {
         ),
         children: [
           ListTile(
-            leading: const Icon(Icons.open_in_new),
-            title: const Text('Open'),
+            leading: const Icon(
+              Icons.open_in_new,
+            ),
+            title: const Text(
+              'Open',
+            ),
             onTap: onOpen,
           ),
           ListTile(

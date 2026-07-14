@@ -72,7 +72,10 @@ class _CreateCourseDialogState
       return;
     }
 
-    Navigator.pop(context);
+    Navigator.pop(
+      context,
+      course,
+    );
   }
 
   @override

@@ -136,8 +136,28 @@ class _GradingComponentCardState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            GradingComponentHeader(
-              component: widget.component,
+            Stack(
+              children: [
+
+                GradingComponentHeader(
+                  component: widget.component,
+                ),
+
+                Positioned(
+                  right: 0,
+                  child: Tooltip(
+                    message:
+                    'Click the component name to rename it.',
+                    child: Icon(
+                      Icons.edit,
+                      size: 18,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),

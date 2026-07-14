@@ -293,9 +293,9 @@ return assessments.when(
 
         const SizedBox(height: 12),
 
-        const Text(
-        'Create a grading structure to begin tracking your progress.',
-        ),
+          const Text(
+            'Create a grading structure to unlock course analytics.',
+          ),
 
         ] else ...[
 

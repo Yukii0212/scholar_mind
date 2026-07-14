@@ -227,7 +227,6 @@ class CourseDetailBodyState
                                   SwipeCardItem(
                                     title: 'Overview',
                                     icon: Icons.analytics_outlined,
-                                    height: 310,
                                     child: CurrentStandingCard(
                                       course: course,
                                       courseId: course.id,
@@ -238,7 +237,6 @@ class CourseDetailBodyState
                                   SwipeCardItem(
                                     title: 'Targets',
                                     icon: Icons.flag_outlined,
-                                    height: 260,
                                     child: Card(
                                       child: Padding(
                                         padding: const EdgeInsets.all(24),
@@ -257,7 +255,6 @@ class CourseDetailBodyState
                                   SwipeCardItem(
                                     title: 'Charts',
                                     icon: Icons.bar_chart,
-                                    height: 260,
                                     child: Card(
                                       child: Padding(
                                         padding: const EdgeInsets.all(24),

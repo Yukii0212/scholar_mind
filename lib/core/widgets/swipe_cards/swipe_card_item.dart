@@ -1,18 +1,18 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class SwipeCardItem {
   const SwipeCardItem({
     required this.title,
     required this.icon,
-    required this.height,
     required this.child,
+    this.expandable = true,
   });
 
   final String title;
 
   final IconData icon;
 
-  final double height;
-
   final Widget child;
+
+  final bool expandable;
 }

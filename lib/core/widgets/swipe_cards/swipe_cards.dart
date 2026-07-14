@@ -37,6 +37,80 @@ class _SwipeCardsState
 
   bool _showSwipeHint = true;
 
+  bool _expanded = false;
+
+  Future<void> _showExpandedCard() async {
+
+    setState(() {
+      _expanded = true;
+    });
+
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black54,
+      transitionDuration:
+      const Duration(
+        milliseconds: 300,
+      ),
+      pageBuilder:
+          (_, __, ___) {
+
+        return SafeArea(
+          child: Center(
+            child: FractionallySizedBox(
+              widthFactor: 0.95,
+              heightFactor: 0.90,
+              child: Material(
+                elevation: 12,
+                borderRadius:
+                BorderRadius.circular(
+                  24,
+                ),
+                clipBehavior:
+                Clip.antiAlias,
+                child: _buildExpandedPager(),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder:
+          (
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+          ) {
+
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale:
+            Tween<double>(
+              begin: 0.95,
+              end: 1,
+            ).animate(
+              CurvedAnimation(
+                parent: animation,
+                curve:
+                Curves.easeOut,
+              ),
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _expanded = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -86,6 +160,59 @@ class _SwipeCardsState
               Curves.easeInOut,
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildExpandedPager() {
+
+    return PageView.builder(
+      controller: _pageController,
+
+      onPageChanged:
+          (virtualIndex) {
+
+        setState(() {
+
+          _virtualIndex =
+              virtualIndex;
+
+          _currentIndex =
+              virtualIndex %
+                  widget.items.length;
+        });
+
+        widget.onPageChanged
+            ?.call(
+          _currentIndex,
+        );
+      },
+
+      itemBuilder:
+          (
+          context,
+          virtualIndex,
+          ) {
+
+        final index =
+            virtualIndex %
+                widget.items.length;
+
+        return Padding(
+          padding:
+          const EdgeInsets.all(
+            20,
+          ),
+          child:
+          SingleChildScrollView(
+            physics:
+            const BouncingScrollPhysics(),
+            child:
+            widget
+                .items[index]
+                .child,
+          ),
         );
       },
     );
@@ -164,12 +291,21 @@ class _SwipeCardsState
               ),
             ),
 
-            Text(
-              '${_currentIndex + 1} / ${widget.items.length}',
-              style: Theme.of(
-                  context)
-                  .textTheme
-                  .bodyMedium,
+            AnimatedOpacity(
+              opacity:
+              _expanded
+                  ? 0
+                  : 1,
+              duration:
+              const Duration(
+                milliseconds: 200,
+              ),
+              child: Text(
+                '${_currentIndex + 1} / ${widget.items.length}',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium,
+              ),
             ),
 
             IconButton(
@@ -187,14 +323,28 @@ class _SwipeCardsState
         const SizedBox(
             height: 8),
 
-        _buildIndicator(context),
+        AnimatedOpacity(
+          opacity:
+          _expanded
+              ? 0
+              : 1,
+          duration:
+          const Duration(
+            milliseconds: 200,
+          ),
+          child:
+          _buildIndicator(
+            context,
+          ),
+        ),
 
         const SizedBox(
             height: 8),
 
         AnimatedOpacity(
           opacity:
-          _showSwipeHint
+          !_expanded &&
+              _showSwipeHint
               ? 1
               : 0,
           duration:
@@ -214,16 +364,9 @@ class _SwipeCardsState
           ),
         ),
 
-        AnimatedContainer(
-          duration:
-          const Duration(
-            milliseconds: 250,
-          ),
-          curve:
-          Curves.easeInOut,
-          height: current.height,
-          child:
-          PageView.builder(
+        SizedBox(
+          height: 420,
+          child: PageView.builder(
             controller:
             _pageController,
 
@@ -261,8 +404,11 @@ class _SwipeCardsState
 
               return Padding(
                 padding:
-                const EdgeInsets.symmetric(
-                  horizontal: 6,
+                EdgeInsets.symmetric(
+                  horizontal:
+                  _expanded
+                      ? 0
+                      : 6,
                 ),
                 child:
                 AnimatedScale(
@@ -274,30 +420,101 @@ class _SwipeCardsState
                   curve:
                   Curves.easeOut,
                   scale:
-                  index ==
-                      _currentIndex
+                  !_expanded &&
+                      index ==
+                          _currentIndex
                       ? 1
                       : 0.96,
-                  child: LayoutBuilder(
-                    builder: (
-                        context,
-                        constraints,
-                        ) {
-                      return SingleChildScrollView(
-                        physics:
-                        const BouncingScrollPhysics(),
-                        child: ConstrainedBox(
-                          constraints:
-                          BoxConstraints(
-                            minHeight:
-                            constraints.maxHeight,
-                          ),
-                          child: widget
-                              .items[index]
-                              .child,
+                  child: GestureDetector(
+                    behavior:
+                    HitTestBehavior.opaque,
+                    onTap:
+                    widget
+                        .items[index]
+                        .expandable
+                        ? _showExpandedCard
+                        : null,
+                    child: Hero(
+                      tag: 'swipe-card-$index',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Stack(
+                          children: [
+
+                            widget
+                                .items[index]
+                                .child,
+
+                            if (!_expanded)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    decoration:
+                                    const BoxDecoration(
+                                      gradient:
+                                      LinearGradient(
+                                        begin:
+                                        Alignment
+                                            .topCenter,
+                                        end:
+                                        Alignment
+                                            .bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Color(
+                                            0xAA000000,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            if (!_expanded)
+                              const Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 16,
+                                child: IgnorePointer(
+                                  child: Center(
+                                    child: Row(
+                                      mainAxisSize:
+                                      MainAxisSize
+                                          .min,
+                                      children: [
+
+                                        Icon(
+                                          Icons.open_in_full,
+                                          size: 18,
+                                          color:
+                                          Colors.white,
+                                        ),
+
+                                        SizedBox(
+                                          width: 8,
+                                        ),
+
+                                        Text(
+                                          'Tap to expand',
+                                          style:
+                                          TextStyle(
+                                            color:
+                                            Colors.white,
+                                            fontWeight:
+                                            FontWeight
+                                                .w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               );

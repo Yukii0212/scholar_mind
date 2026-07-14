@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
+import '../../domain/assessment/assessment_type.dart';
+import '../../providers/assessment/assessment_provider.dart';
 import '../../providers/course/course_provider.dart';
 import '../../providers/grading/grading_structure_controller.dart';
 import '../../screens/grading/create_grading_structure_screen.dart';
@@ -24,7 +26,10 @@ class CourseDetailBody extends ConsumerStatefulWidget {
 
 class CourseDetailBodyState
     extends ConsumerState<CourseDetailBody> {
+
   bool _isLoading = true;
+
+  bool _showAnalytics = false;
 
   @override
   void initState() {
@@ -39,193 +44,298 @@ class CourseDetailBodyState
     )
         .loadCourse(widget.course.id);
 
+    final components =
+    await ref
+        .read(
+      gradingComponentRepositoryProvider,
+    )
+        .watchCourseComponents(
+      widget.course.id,
+    )
+        .first;
+
+    final entries =
+    await ref.read(
+      assessmentEntriesProvider(
+        widget.course.id,
+      ).future,
+    );
+
+    final hasScores = entries.any(
+          (entry) =>
+      entry.type ==
+          AssessmentType.actual ||
+          entry.type ==
+              AssessmentType.expected,
+    );
+
     if (!mounted) {
       return;
     }
 
     setState(() {
+      _showAnalytics =
+          components.isNotEmpty &&
+              hasScores;
+
       _isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child:
+        CircularProgressIndicator(),
       );
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: Consumer(
-              builder:
-                  (
-                  context,
-                  ref,
-                  _,
-                  ) {
+      padding:
+      const EdgeInsets.all(16),
+      child: Consumer(
+        builder:
+            (
+            context,
+            ref,
+            _,
+            ) {
 
-                final repository =
-                ref.watch(
-                  gradingComponentRepositoryProvider,
+          final repository =
+          ref.watch(
+            gradingComponentRepositoryProvider,
+          );
+
+          return StreamBuilder(
+            stream: repository
+                .watchCourseComponents(
+              widget.course.id,
+            ),
+            builder:
+                (
+                context,
+                snapshot,
+                ) {
+
+              if (!snapshot.hasData) {
+                return const Center(
+                  child:
+                  CircularProgressIndicator(),
                 );
+              }
 
-                return StreamBuilder(
-                  stream:
-                  repository
-                      .watchCourseComponents(
-                    widget.course.id,
-                  ),
-                  builder:
-                      (
-                      context,
-                      snapshot,
-                      ) {
+              final components =
+              snapshot.data!;
 
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child:
-                        CircularProgressIndicator(),
-                      );
-                    }
+              return SingleChildScrollView(
+                padding:
+                const EdgeInsets.only(
+                  bottom: 24,
+                ),
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment
+                      .stretch,
+                  children: [
 
-                    final data =
-                    snapshot.data!;
+                    SegmentedButton<bool>(
+                      segments: const [
 
-                    return SingleChildScrollView(
-                      padding:
-                      const EdgeInsets.only(
-                        bottom: 24,
-                      ),
-                      child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment
-                            .stretch,
+                        ButtonSegment(
+                          value: true,
+                          icon: Icon(
+                            Icons.analytics_outlined,
+                          ),
+                          label: Text(
+                            'Analytics',
+                          ),
+                        ),
+
+                        ButtonSegment(
+                          value: false,
+                          icon: Icon(
+                            Icons.assignment_outlined,
+                          ),
+                          label: Text(
+                            'Assessment',
+                          ),
+                        ),
+                      ],
+
+                      selected: {
+                        _showAnalytics,
+                      },
+
+                      onSelectionChanged:
+                          (selection) {
+
+                        setState(() {
+                          _showAnalytics =
+                              selection.first;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(
+                      height: 24,
+                    ),
+
+                    if (_showAnalytics)
+
+                      Consumer(
+                        builder:
+                            (
+                            context,
+                            ref,
+                            _,
+                            ) {
+
+                          final course =
+                          ref.watch(
+                            courseProvider(
+                              widget.course.id,
+                            ),
+                          );
+
+                          return course.when(
+                            loading: () =>
+                            const Card(
+                              child:
+                              Padding(
+                                padding:
+                                EdgeInsets.all(
+                                  24,
+                                ),
+                                child:
+                                CircularProgressIndicator(),
+                              ),
+                            ),
+
+                            error:
+                                (
+                                _,
+                                __,
+                                ) =>
+                            const SizedBox(),
+
+                            data:
+                                (
+                                course,
+                                ) =>
+                                CurrentStandingCard(
+                                  course:
+                                  course,
+                                  courseId:
+                                  course.id,
+                                  components:
+                                  components,
+                                ),
+                          );
+                        },
+                      )
+
+                    else ...[
+
+                      Row(
                         children: [
 
-                          Consumer(
-                            builder: (
-                                context,
-                                ref,
-                                _,
-                                ) {
-                              final course =
-                              ref.watch(
-                                courseProvider(
-                                  widget.course.id,
-                                ),
-                              );
-
-                              return course.when(
-                                loading: () =>
-                                const Card(
-                                  child: Padding(
-                                    padding:
-                                    EdgeInsets.all(24),
-                                    child:
-                                    CircularProgressIndicator(),
-                                  ),
-                                ),
-
-                                error: (_, __) =>
-                                const SizedBox(),
-
-                                data: (course) =>
-                                    CurrentStandingCard(
-                                      course: course,
-                                      courseId: course.id,
-                                      components: data,
-                                    ),
-                              );
-                            },
+                          Expanded(
+                            child: Text(
+                              'Assessment',
+                              style: Theme.of(
+                                  context)
+                                  .textTheme
+                                  .titleLarge,
+                            ),
                           ),
 
-                          const SizedBox(
-                            height: 24,
-                          ),
+                          if (components
+                              .isNotEmpty)
 
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Grading Structure',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge,
-                                ),
-                              ),
-
-                              if (data.isNotEmpty)
-                                TextButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            CreateGradingStructureScreen(
-                                              course: widget.course,
-                                              isEditing: true,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.edit_outlined,
-                                  ),
-                                  label: const Text(
-                                    'Edit Structure',
-                                  ),
-                                ),
-                            ],
-                          ),
-
-                          if (data.isEmpty) ...[
-                            const SizedBox(height: 16),
-
-                            FilledButton.icon(
-                              onPressed: () {
+                            TextButton.icon(
+                              onPressed:
+                                  () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
+                                    builder:
+                                        (_) =>
                                         CreateGradingStructureScreen(
-                                          course: widget.course,
-                                          isEditing: false,
+                                          course:
+                                          widget
+                                              .course,
+                                          isEditing:
+                                          true,
                                         ),
                                   ),
                                 );
                               },
-                              icon: const Icon(
-                                Icons.add,
+                              icon:
+                              const Icon(
+                                Icons
+                                    .edit_outlined,
                               ),
-                              label: const Text(
-                                'Create Structure',
+                              label:
+                              const Text(
+                                'Edit Assessment',
                               ),
                             ),
-                          ],
-
-                          const SizedBox(
-                            height: 16,
-                          ),
-
-                          GradingComponentSummaryList(
-                            components: data,
-                          ),
                         ],
                       ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+
+                      if (components
+                          .isEmpty) ...[
+
+                        const SizedBox(
+                          height: 16,
+                        ),
+
+                        FilledButton.icon(
+                          onPressed:
+                              () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) =>
+                                    CreateGradingStructureScreen(
+                                      course:
+                                      widget
+                                          .course,
+                                      isEditing:
+                                      false,
+                                    ),
+                              ),
+                            );
+                          },
+                          icon:
+                          const Icon(
+                            Icons.add,
+                          ),
+                          label:
+                          const Text(
+                            'Create Assessment',
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(
+                        height: 16,
+                      ),
+
+                      GradingComponentSummaryList(
+                        components:
+                        components,
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

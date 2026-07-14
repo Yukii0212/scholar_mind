@@ -129,11 +129,30 @@ class _SwipeCardsState
       },
     );
 
-    _expandedPageController
-        ?.dispose();
+    if (_expandedPageController != null) {
 
-    _expandedPageController =
-    null;
+      final page =
+          _expandedPageController!
+              .page
+              ?.round() ??
+              _virtualIndex;
+
+      _virtualIndex = page;
+
+      _currentIndex =
+          page %
+              widget.items.length;
+
+      _pageController.jumpToPage(
+        page,
+      );
+
+      _expandedPageController!
+          .dispose();
+
+      _expandedPageController =
+      null;
+    }
 
     if (mounted) {
       setState(() {

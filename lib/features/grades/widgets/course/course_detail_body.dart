@@ -9,6 +9,8 @@ import '../../providers/grading/grading_structure_controller.dart';
 import '../../screens/grading/create_grading_structure_screen.dart';
 import '../../providers/grading/grading_provider.dart';
 import '../grading/component/grading_component_summary_list.dart';
+import '../../../../core/widgets/swipe_cards/swipe_cards.dart';
+import '../../../../core/widgets/swipe_cards/swipe_card_item.dart';
 import 'course_standing_card.dart';
 
 class CourseDetailBody extends ConsumerStatefulWidget {
@@ -185,25 +187,23 @@ class CourseDetailBodyState
                     if (_showAnalytics)
 
                       Consumer(
-                        builder:
-                            (
+                        builder: (
                             context,
                             ref,
                             _,
                             ) {
 
-                          final course =
+                          final liveCourse =
                           ref.watch(
                             courseProvider(
                               widget.course.id,
                             ),
                           );
 
-                          return course.when(
+                          return liveCourse.when(
                             loading: () =>
                             const Card(
-                              child:
-                              Padding(
+                              child: Padding(
                                 padding:
                                 EdgeInsets.all(
                                   24,
@@ -213,25 +213,77 @@ class CourseDetailBodyState
                               ),
                             ),
 
-                            error:
-                                (
+                            error: (
                                 _,
                                 __,
                                 ) =>
                             const SizedBox(),
 
-                            data:
-                                (
-                                course,
-                                ) =>
-                                CurrentStandingCard(
-                                  course:
-                                  course,
-                                  courseId:
-                                  course.id,
-                                  components:
-                                  components,
-                                ),
+                            data: (course) {
+
+                              return SwipeCards(
+                                items: [
+
+                                  SwipeCardItem(
+                                    title: 'Overview',
+                                    icon: Icons.analytics_outlined,
+                                    child:
+                                    CurrentStandingCard(
+                                      course: course,
+                                      courseId:
+                                      course.id,
+                                      components:
+                                      components,
+                                    ),
+                                  ),
+
+                                  SwipeCardItem(
+                                    title: 'Targets',
+                                    icon: Icons.flag_outlined,
+                                    child: Card(
+                                      child: Padding(
+                                        padding:
+                                        const EdgeInsets.all(
+                                          24,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            'Coming Soon',
+                                            style: Theme.of(
+                                                context)
+                                                .textTheme
+                                                .titleMedium,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  SwipeCardItem(
+                                    title: 'Charts',
+                                    icon:
+                                    Icons.bar_chart,
+                                    child: Card(
+                                      child: Padding(
+                                        padding:
+                                        const EdgeInsets.all(
+                                          24,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            'Coming Soon',
+                                            style: Theme.of(
+                                                context)
+                                                .textTheme
+                                                .titleMedium,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           );
                         },
                       )

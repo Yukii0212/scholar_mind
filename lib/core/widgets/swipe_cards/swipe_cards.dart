@@ -278,11 +278,27 @@ class _SwipeCardsState
                       _currentIndex
                       ? 1
                       : 0.96,
-                  child:
-                  widget
-                      .items[
-                  index]
-                      .child,
+                  child: LayoutBuilder(
+                    builder: (
+                        context,
+                        constraints,
+                        ) {
+                      return SingleChildScrollView(
+                        physics:
+                        const BouncingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints:
+                          BoxConstraints(
+                            minHeight:
+                            constraints.maxHeight,
+                          ),
+                          child: widget
+                              .items[index]
+                              .child,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               );
             },

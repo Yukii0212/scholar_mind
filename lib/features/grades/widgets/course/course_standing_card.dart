@@ -552,7 +552,7 @@ return assessments.when(
 
                             Text(message),
 
-                            if (!targetAchieved) ...[
+                            if (isConfigured && !targetAchieved) ...[
 
                               const SizedBox(height: 16),
 

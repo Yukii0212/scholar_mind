@@ -4,6 +4,7 @@ import '../../notes/providers/google_classroom_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter/foundation.dart';
 
 part 'auth_provider.g.dart';
 
@@ -52,7 +53,11 @@ class AuthController extends _$AuthController {
 
       await ref.read(firebaseAuthProvider).signInWithCredential(credential);
       state = const AsyncValue.data(null);
-    } catch (e, st) {
+    }
+    catch (e, st) {
+      debugPrint("GOOGLE SIGN IN ERROR: $e");
+      debugPrintStack(stackTrace: st);
+
       state = AsyncValue.error(e, st);
     }
   }

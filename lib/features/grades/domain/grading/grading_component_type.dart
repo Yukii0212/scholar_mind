@@ -1,0 +1,4 @@
+enum GradingComponentType {
+  component,
+  subcomponent,
+}

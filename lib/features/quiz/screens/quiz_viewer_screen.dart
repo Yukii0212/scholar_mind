@@ -33,15 +33,9 @@ class _QuizViewerScreenState
   QuizResponse get quiz =>
       attempt.quiz;
 
-  late Map<int, QuizAnswer> _answers;
-
   @override
   void initState() {
     super.initState();
-
-    _answers = Map<int, QuizAnswer>.from(
-      widget.attempt.answers,
-    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
@@ -64,7 +58,12 @@ class _QuizViewerScreenState
     for (var i = 0;
     i < quiz.questions.length;
     i++) {
-      final answer = _answers[i];
+      final answer =
+      ref
+          .read(
+        quizAttemptProvider,
+      )
+          ?.answers[i];
 
       if (answer == null) {
         continue;
@@ -96,6 +95,24 @@ class _QuizViewerScreenState
 
   @override
   Widget build(BuildContext context) {
+    final currentAttempt =
+    ref.watch(
+      quizAttemptProvider,
+    );
+
+    if (currentAttempt == null) {
+
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+    }
+
+    final answers =
+        currentAttempt.answers;
+
     return PopScope(
         onPopInvokedWithResult: (_, __) async {
           await ref
@@ -173,7 +190,7 @@ class _QuizViewerScreenState
                             value:
                             optionIndex,
                             groupValue:
-                            _answers[index]
+                            answers[index]
                                 ?.selectedOptionIndex,
                             title: Text(
                               question.options[
@@ -181,13 +198,13 @@ class _QuizViewerScreenState
                             ),
                             onChanged: (value) {
                               final updated =
-                              (_answers[index] ??
+                              (answers[index] ??
                                   const QuizAnswer())
                                   .copyWith(
                                 selectedOptionIndex: value!,
                               );
 
-                              _answers[index] = updated;
+                              
 
                               ref
                                   .read(
@@ -210,20 +227,18 @@ class _QuizViewerScreenState
                       RadioListTile<int>(
                         value: 0,
                         groupValue:
-                        _answers[index]
+                        answers[index]
                             ?.selectedOptionIndex,
                         title: const Text(
                           'True',
                         ),
                         onChanged: (value) {
                           final updated =
-                          (_answers[index] ??
+                          (answers[index] ??
                               const QuizAnswer())
                               .copyWith(
                             selectedOptionIndex: value!,
                           );
-
-                          _answers[index] = updated;
 
                           ref
                               .read(
@@ -240,20 +255,20 @@ class _QuizViewerScreenState
                       RadioListTile<int>(
                         value: 1,
                         groupValue:
-                        _answers[index]
+                        answers[index]
                             ?.selectedOptionIndex,
                         title: const Text(
                           'False',
                         ),
                         onChanged: (value) {
                           final updated =
-                          (_answers[index] ??
+                          (answers[index] ??
                               const QuizAnswer())
                               .copyWith(
                             selectedOptionIndex: value!,
                           );
 
-                          _answers[index] = updated;
+                          
 
                           ref
                               .read(
@@ -276,7 +291,7 @@ class _QuizViewerScreenState
                       controller:
                       TextEditingController(
                         text:
-                        _answers[index]
+                        answers[index]
                             ?.openEndedAnswer ??
                             '',
                       ),
@@ -289,13 +304,13 @@ class _QuizViewerScreenState
                       ),
                       onChanged: (value) {
                         final updated =
-                        (_answers[index] ??
+                        (answers[index] ??
                             const QuizAnswer())
                             .copyWith(
                           openEndedAnswer: value,
                         );
 
-                        _answers[index] = updated;
+                        
 
                         ref
                             .read(
@@ -316,18 +331,18 @@ class _QuizViewerScreenState
                     contentPadding:
                     EdgeInsets.zero,
                     value:
-                    _answers[index]
+                    answers[index]
                         ?.markedForReview ??
                         false,
                     onChanged: (value) {
                       final updated =
-                      (_answers[index] ??
+                      (answers[index] ??
                           const QuizAnswer())
                           .copyWith(
                         markedForReview: value!,
                       );
 
-                      _answers[index] = updated;
+                      
 
                       ref
                           .read(
@@ -349,18 +364,18 @@ class _QuizViewerScreenState
                     contentPadding:
                     EdgeInsets.zero,
                     value:
-                    _answers[index]
+                    answers[index]
                         ?.guessed ??
                         false,
                     onChanged: (value) {
                       final updated =
-                      (_answers[index] ??
+                      (answers[index] ??
                           const QuizAnswer())
                           .copyWith(
                         guessed: value!,
                       );
 
-                      _answers[index] = updated;
+                      
 
                       ref
                           .read(
@@ -468,7 +483,9 @@ class _QuizViewerScreenState
       MaterialPageRoute(
         builder: (_) => QuizResultScreen(
           quiz: quiz,
-          answers: _answers,
+          answers: ref.read(
+            quizAttemptProvider,
+          )!.answers,
         ),
       ),
     );

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/services/background_sync_service.dart';
 import '../../notes/providers/library_provider.dart';
-import 'package:scholar_mind/debug/openai_stub.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final Widget child;
@@ -100,13 +99,6 @@ class _HomeScreenState
           title: const Text('ScholarMind'),
           actions: [
             IconButton(
-              icon: const Icon(Icons.science),
-              tooltip: 'Test Gemini',
-              onPressed: () async {
-                await OpenAIStub.runTest();
-              },
-            ),
-            IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () =>
                   ref.read(authControllerProvider.notifier).signOut(),
@@ -142,13 +134,6 @@ class _HomeScreenState
       appBar: AppBar(
         title: const Text('ScholarMind'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.science),
-            tooltip: 'Test Gemini',
-            onPressed: () async {
-              await OpenAIStub.runTest();
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () =>

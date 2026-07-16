@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/notes/screens/notes_screen.dart';
 import '../../features/quiz/screens/quiz_library_screen.dart';
@@ -51,7 +52,7 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/grades',
-            builder: (context, state) => const Placeholder(),
+            builder: (context, state) => const GradeHomeScreen(),
           ),
         ],
       ),

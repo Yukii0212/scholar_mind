@@ -1,6 +1,20 @@
 import '../../data/models/assessment_entry_model.dart';
 import '../../data/models/grading_component_model.dart';
 
+class CourseCalculationPrediction {
+  const CourseCalculationPrediction({
+    required this.assessmentPercentage,
+    required this.finalPercentage,
+    this.isHighlighted = false,
+  });
+
+  final double assessmentPercentage;
+
+  final double finalPercentage;
+
+  final bool isHighlighted;
+}
+
 class CourseCalculationTarget {
   const CourseCalculationTarget({
     required this.component,
@@ -111,5 +125,102 @@ class CourseCalculationSummary {
       ) {
     return maximumPossiblePercentage >=
         targetPercentage;
+  }
+
+  List<CourseCalculationPrediction>
+  predictionTableFor(
+      double targetPercentage,
+      ) {
+
+    if (!canCalculateRequiredScore) {
+      return [];
+    }
+
+    final required =
+    requiredPercentageFor(
+      targetPercentage,
+    );
+
+    if (required == null) {
+      return [];
+    }
+
+    final remaining =
+    remainingTarget!;
+
+    int step = 5;
+
+    while (step > 1) {
+
+      final minimum =
+          required - step * 4;
+
+      final maximum =
+          required + step * 4;
+
+      if (minimum >= 0 &&
+          maximum <= 100) {
+        break;
+      }
+
+      step--;
+    }
+
+    final predictions =
+    <CourseCalculationPrediction>[];
+
+    double start =
+        required - step * 4;
+
+    if (start < 0) {
+      start = 0;
+    }
+
+    if (start + step * 8 >
+        100) {
+      start =
+          100 - step * 8;
+    }
+
+    start = start.clamp(
+      0,
+      100,
+    );
+
+    final highlighted =
+    ((required - start) /
+        step)
+        .round();
+
+    for (
+    int i = 0;
+    i < 9;
+    i++
+    ) {
+
+      final assessment =
+          start + step * i;
+
+      final finalGrade =
+          projectedPercentage +
+              assessment /
+                  100 *
+                  remaining
+                      .overallWeight;
+
+      predictions.add(
+        CourseCalculationPrediction(
+          assessmentPercentage:
+          assessment,
+          finalPercentage:
+          finalGrade,
+          isHighlighted:
+          i ==
+              highlighted,
+        ),
+      );
+    }
+
+    return predictions;
   }
 }

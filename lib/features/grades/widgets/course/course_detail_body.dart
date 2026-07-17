@@ -11,6 +11,7 @@ import '../../providers/grading/grading_provider.dart';
 import '../grading/component/grading_component_summary_list.dart';
 import '../../../../core/widgets/swipe_cards/swipe_cards.dart';
 import '../../../../core/widgets/swipe_cards/swipe_card_item.dart';
+import 'course_prediction_card.dart';
 import 'course_standing_card.dart';
 import 'course_targets_card.dart';
 
@@ -247,20 +248,10 @@ class CourseDetailBodyState
                                   ),
 
                                   SwipeCardItem(
-                                    title: 'Charts',
-                                    icon: Icons.bar_chart,
-                                    child: Card(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(24),
-                                        child: Center(
-                                          child: Text(
-                                            'Coming Soon',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium,
-                                          ),
-                                        ),
-                                      ),
+                                    title: 'Predictions',
+                                    icon: Icons.insights_outlined,
+                                    child: CoursePredictionCard(
+                                      course: course,
                                     ),
                                   ),
                                 ],

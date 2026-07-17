@@ -81,7 +81,7 @@ class CoursePredictionCard extends ConsumerWidget {
                   children: [
 
                     Text(
-                      'Outcome Predictions',
+                      'Overall Mark Predictions',
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge,
@@ -90,27 +90,26 @@ class CoursePredictionCard extends ConsumerWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      'See how different scores in ${summary.remainingTarget!.component.name} affect your final course grade.',
+                      'See how different scores in ${summary.remainingTarget!.component.name} affect your overall course mark.',
                     ),
 
                     const SizedBox(height: 24),
 
                     Row(
-                      children: const [
+                      children: [
 
                         Expanded(
                           child: Text(
-                            'Assessment',
-                            style: TextStyle(
-                              fontWeight:
-                              FontWeight.bold,
+                            summary.remainingTarget!.component.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
 
                         Expanded(
-                          child: Text(
-                            'Final Grade',
+                          child: const Text(
+                            'Overall Mark',
                             textAlign:
                             TextAlign.end,
                             style: TextStyle(

@@ -129,57 +129,62 @@ class CourseCalculationSummary {
 
   List<CourseCalculationPrediction>
   predictionTableFor(
-      double targetPercentage,
-      ) {
+      double targetPercentage, {
+        int preferredRows = 9,
+        double step = 5,
+      }) {
 
     if (!canCalculateRequiredScore) {
       return [];
     }
 
     final required =
-    requiredPercentageFor(
-      targetPercentage,
-    );
+    requiredPercentageFor(targetPercentage);
 
     if (required == null) {
       return [];
     }
 
-    final remaining =
-    remainingTarget!;
+    final remaining = remainingTarget!;
 
-    int step = 5;
+    int rows = preferredRows;
 
-    while (step > 1) {
+    while (rows > 3) {
 
-      final minimum =
-          required - step * 4;
+      final half =
+          (rows - 1) ~/ 2;
 
-      final maximum =
-          required + step * 4;
+      final start =
+          required - half * step;
 
-      if (minimum >= 0 &&
-          maximum <= 100) {
+      final end =
+          required + half * step;
+
+      if (start >= 0 &&
+          end <= 100) {
         break;
       }
 
-      step--;
+      rows -= 2;
     }
 
-    final predictions =
-    <CourseCalculationPrediction>[];
+    rows = rows.clamp(3, preferredRows);
+
+    final half =
+        (rows - 1) ~/ 2;
 
     double start =
-        required - step * 4;
+        required - half * step;
 
     if (start < 0) {
       start = 0;
     }
 
-    if (start + step * 8 >
-        100) {
-      start =
-          100 - step * 8;
+    final maxStart =
+        100 - (rows - 1) * step;
+
+    if (start > maxStart) {
+      start = maxStart;
     }
 
     start = start.clamp(
@@ -188,35 +193,31 @@ class CourseCalculationSummary {
     );
 
     final highlighted =
-    ((required - start) /
-        step)
+    ((required - start) / step)
         .round();
 
-    for (
-    int i = 0;
-    i < 9;
-    i++
-    ) {
+    final predictions =
+    <CourseCalculationPrediction>[];
+
+    for (int i = 0; i < rows; i++) {
 
       final assessment =
           start + step * i;
 
-      final finalGrade =
+      final overall =
           projectedPercentage +
               assessment /
                   100 *
-                  remaining
-                      .overallWeight;
+                  remaining.overallWeight;
 
       predictions.add(
         CourseCalculationPrediction(
           assessmentPercentage:
           assessment,
           finalPercentage:
-          finalGrade,
+          overall,
           isHighlighted:
-          i ==
-              highlighted,
+          i == highlighted,
         ),
       );
     }

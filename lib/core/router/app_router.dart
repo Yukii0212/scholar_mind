@@ -7,26 +7,49 @@ import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/notes/screens/notes_screen.dart';
 import '../../features/quiz/screens/quiz_library_screen.dart';
+import '../../features/splash/screens/splash_screen.dart';
 
 part 'app_router.g.dart';
 
 @riverpod
 GoRouter appRouter(AppRouterRef ref) {
   final router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/splash',
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
 
-      if (authState.isLoading) return null;
+      if (authState.isLoading) {
+        return null;
+      }
 
       final isLoggedIn = authState.valueOrNull != null;
-      final isOnLogin = state.matchedLocation == '/login';
+      final location = state.matchedLocation;
 
-      if (!isLoggedIn && !isOnLogin) return '/login';
-      if (isLoggedIn && isOnLogin) return '/home';
+      final isOnSplash = location == '/splash';
+      final isOnLogin = location == '/login';
+
+      // Always allow the splash screen to display.
+      if (isOnSplash) {
+        return null;
+      }
+
+      // Guests may only access the login screen.
+      if (!isLoggedIn && !isOnLogin) {
+        return '/login';
+      }
+
+      // Logged-in users should not return to the login screen.
+      if (isLoggedIn && isOnLogin) {
+        return '/home';
+      }
+
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),

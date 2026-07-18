@@ -48,7 +48,7 @@ final authStateProvider = AutoDisposeStreamProvider<User?>.internal(
 );
 
 typedef AuthStateRef = AutoDisposeStreamProviderRef<User?>;
-String _$authControllerHash() => r'a7e383d1f01451cb7b27e07a8fdaf92794daf24b';
+String _$authControllerHash() => r'6a8fe02cec19433c71198af5f5f3269bdc23acb9';
 
 /// See also [AuthController].
 @ProviderFor(AuthController)

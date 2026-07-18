@@ -5,7 +5,7 @@ class AppTheme {
   static const _primaryColor = Color(0xFF6C63FF);
   static const _secondaryColor = Color(0xFF03DAC6);
 
-  static ThemeData get light => ThemeData(
+  static ThemeData get scholarBlueLight => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: _primaryColor,
@@ -40,7 +40,7 @@ class AppTheme {
         ),
       );
 
-  static ThemeData get dark => ThemeData(
+  static ThemeData get scholarBlueDark => ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: _primaryColor,
@@ -74,4 +74,8 @@ class AppTheme {
           ),
         ),
       );
+
+  static ThemeData get sakuraPinkDark => scholarBlueDark;
+
+  static ThemeData get midnight => scholarBlueDark;
 }

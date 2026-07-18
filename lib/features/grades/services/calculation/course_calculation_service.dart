@@ -12,7 +12,6 @@ class CourseCalculationService {
     required List<GradingComponentModel> components,
     required List<AssessmentEntryModel> assessments,
   }) {
-
     double totalWeight = 0;
 
     double completedWeight = 0;
@@ -31,6 +30,9 @@ class CourseCalculationService {
 
     final remainingComponents =
     <GradingComponentModel>[];
+
+    final remainingTargets =
+    <CourseCalculationTarget>[];
 
     final actualEntries =
     assessments
@@ -72,50 +74,39 @@ class CourseCalculationService {
 
       for (final target
       in targets) {
-
         final actualAssessment =
         actualEntries
             .where(
               (entry) =>
-          entry.componentId ==
+          entry
+              .componentId ==
               target.id,
         )
             .isEmpty
             ? null
             : actualEntries
-            .where(
-              (entry) =>
-          entry.componentId ==
-              target.id,
-        )
-            .first;
+            .firstWhere(
+                (entry) =>
+            entry
+                .componentId ==
+                target.id);
 
         final expectedAssessment =
         expectedEntries
             .where(
               (entry) =>
-          entry.componentId ==
+          entry
+              .componentId ==
               target.id,
         )
             .isEmpty
             ? null
             : expectedEntries
-            .where(
-              (entry) =>
-          entry.componentId ==
-              target.id,
-        )
-            .first;
-
-        if (actualAssessment == null &&
-            expectedAssessment == null) {
-
-          remainingComponents.add(
-            target,
-          );
-
-          continue;
-        }
+            .firstWhere(
+                (entry) =>
+            entry
+                .componentId ==
+                target.id);
 
         final overallWeight =
         children.isEmpty
@@ -128,14 +119,32 @@ class CourseCalculationService {
         )
             .overallWeight;
 
-        if (actualAssessment != null) {
+        if (actualAssessment ==
+            null &&
+            expectedAssessment ==
+                null) {
+          remainingComponents.add(
+            target,
+          );
 
+          remainingTargets.add(
+            CourseCalculationTarget(
+              component: target,
+              overallWeight:
+              overallWeight,
+            ),
+          );
+
+          continue;
+        }
+
+        if (actualAssessment !=
+            null) {
           completedWeight +=
               overallWeight;
 
-          completedComponents.add(
-            target,
-          );
+          completedComponents
+              .add(target);
 
           guaranteedPercentage +=
               overallWeight *
@@ -149,27 +158,26 @@ class CourseCalculationService {
                       .percentage /
                   100;
 
-        } else {
-
-          expectedWeight +=
-              overallWeight;
-
-          expectedComponents.add(
-            target,
-          );
-
-          projectedPercentage +=
-              overallWeight *
-                  expectedAssessment!
-                      .percentage /
-                  100;
+          continue;
         }
+
+        expectedWeight +=
+            overallWeight;
+
+        expectedComponents
+            .add(target);
+
+        projectedPercentage +=
+            overallWeight *
+                expectedAssessment!
+                    .percentage /
+                100;
       }
     }
 
     final remainingWeight =
         totalWeight -
-        completedWeight;
+            completedWeight;
 
     final remainingOpportunity =
         remainingWeight;
@@ -202,6 +210,8 @@ class CourseCalculationService {
       expectedComponents,
       remainingComponents:
       remainingComponents,
+      remainingTargets:
+      remainingTargets,
     );
   }
 }

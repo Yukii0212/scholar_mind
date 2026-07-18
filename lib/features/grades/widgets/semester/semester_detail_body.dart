@@ -60,7 +60,9 @@ class SemesterDetailBody extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          const SemesterStatisticsCard(),
+          SemesterStatisticsCard(
+            semesterId: semester.id,
+          ),
 
           const SizedBox(height: 24),
 

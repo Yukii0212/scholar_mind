@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
+import '../../../core/theme/app_design.dart';
 import '../domain/quiz_folder.dart';
 import '../providers/quiz_library_provider.dart'
 as quiz_library;
@@ -58,6 +59,7 @@ class _QuizLibraryScreenState
       BuildContext context,
       ) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       floatingActionButton: SpeedDial(
 
         icon: Icons.add,
@@ -140,18 +142,16 @@ class _QuizLibraryScreenState
       ),
       body: ListView(
         padding:
-        const EdgeInsets.all(20),
+        const EdgeInsets.fromLTRB(20, 12, 20, 20),
         children: [
 
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              Text(
-                'Quiz Library',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall,
+              const ScholarSectionHeader(
+                title: 'Quiz Library',
+                subtitle: 'Organize and access all your quizzes',
               ),
 
               const SizedBox(height: 12),

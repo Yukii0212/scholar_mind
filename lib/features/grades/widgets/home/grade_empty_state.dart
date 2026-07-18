@@ -1,5 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
+
+import '../../../../core/theme/app_design.dart';
 
 class GradeEmptyState extends StatelessWidget {
   const GradeEmptyState({super.key});
@@ -9,29 +11,35 @@ class GradeEmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.bar_chart_rounded,
-              size: 72,
-              color: Theme.of(context).colorScheme.primary,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: ScholarPanel(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const ScholarIconBadge(
+                  icon: Icons.bar_chart_rounded,
+                  size: 58,
+                ),
+                const Gap(18),
+                Text(
+                  'No semester found',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const Gap(8),
+                Text(
+                  'Create your first semester from the + menu to start tracking your grades.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.scholarPalette.textMuted,
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'No semester found',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Create your first semester from the + menu to start tracking your grades.',
-              textAlign: TextAlign.center,
-            ),
-          ],
+          ),
         ),
       ),
     );

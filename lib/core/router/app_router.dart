@@ -87,12 +87,3 @@ GoRouter appRouter(AppRouterRef ref) {
 
   return router;
 }
-
-// Temporary dashboard placeholder
-class DashboardView extends StatelessWidget {
-  const DashboardView({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Dashboard coming next'));
-  }
-}

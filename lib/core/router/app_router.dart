@@ -5,6 +5,8 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/home/screens/profile_screen.dart';
+import '../../features/home/screens/settings_screen.dart';
 import '../../features/notes/screens/notes_screen.dart';
 import '../../features/quiz/screens/quiz_library_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
@@ -76,6 +78,14 @@ GoRouter appRouter(AppRouterRef ref) {
           GoRoute(
             path: '/grades',
             builder: (context, state) => const GradeHomeScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsScreen(),
           ),
         ],
       ),

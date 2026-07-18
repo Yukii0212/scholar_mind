@@ -35,6 +35,13 @@ service cloud.firestore {
         allow create: if isOwner(userId)
           && validNote(request.resource.data);
       }
+
+      match /settings/{settingsId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && settingsId == 'app'
+          && validAppSettings(request.resource.data);
+      }
     }
 
     function validFolder(data) {
@@ -105,6 +112,23 @@ service cloud.firestore {
         && data.source in ['manual', 'classroom']
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
+    }
+
+    function validAppSettings(data) {
+      return data.keys().hasAll([
+          'selected_theme',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'selected_theme',
+          'updated_at'
+        ])
+        && data.selected_theme in [
+          'scholar_blue',
+          'sakura_pink',
+          'midnight'
+        ]
+        && data.updated_at is timestamp;
     }
   }
 }

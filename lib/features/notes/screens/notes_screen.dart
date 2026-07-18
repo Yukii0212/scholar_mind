@@ -96,9 +96,33 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 Icons.upload_file,
               ),
 
-              label: 'Upload Files',
+              label: 'Upload from Device',
 
-              onTap: _uploadNotes,
+              onTap: _uploadFromDevice,
+
+            ),
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.school,
+              ),
+
+              label: 'Google Classroom',
+
+              onTap: _importFromClassroom,
+
+            ),
+
+            SpeedDialChild(
+
+              child: const Icon(
+                Icons.cloud,
+              ),
+
+              label: 'Google Drive',
+
+              onTap: _importFromDrive,
 
             ),
 
@@ -1223,28 +1247,36 @@ return [
         break;
 
       case _ImportSource.classroom:
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                GoogleClassroomImportScreen(
-                  defaultFolderId: _folderId,
-                ),
-          ),
-        );
+        await _importFromClassroom();
         break;
 
       case _ImportSource.drive:
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => GoogleDriveImportScreen(
-              defaultFolderId: _folderId,
-            ),
-          ),
-        );
+        await _importFromDrive();
         break;
     }
+  }
+
+  Future<void> _importFromClassroom() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            GoogleClassroomImportScreen(
+              defaultFolderId: _folderId,
+            ),
+      ),
+    );
+  }
+
+  Future<void> _importFromDrive() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GoogleDriveImportScreen(
+          defaultFolderId: _folderId,
+        ),
+      ),
+    );
   }
 
   Future<void> _uploadFromDevice() async {

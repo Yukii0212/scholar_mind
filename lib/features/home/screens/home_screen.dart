@@ -19,7 +19,6 @@ const _navRoutes = [
   '/home',
   '/notes',
   '/quiz',
-  '/grades',
   '/flashcards',
 ];
 
@@ -27,7 +26,6 @@ const _navItems = [
   _NavItem(Icons.home_rounded, Icons.home_outlined, 'Home'),
   _NavItem(Icons.description_rounded, Icons.description_outlined, 'Notes'),
   _NavItem(Icons.quiz_rounded, Icons.quiz_outlined, 'Quiz'),
-  _NavItem(Icons.bar_chart_rounded, Icons.bar_chart_outlined, 'Grades'),
   _NavItem(Icons.style_rounded, Icons.style_outlined, 'Cards'),
 ];
 
@@ -45,12 +43,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late final BackgroundSyncService _backgroundSync;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _locationToIndex(String location) {
     for (var i = 0; i < _navRoutes.length; i++) {
       if (location.startsWith(_navRoutes[i])) return i;
     }
-    return 0;
+    return -1;
   }
 
   @override
@@ -76,7 +75,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final user = ref.watch(firebaseAuthProvider).currentUser;
 
     return Scaffold(
-      extendBody: true,
+      key: _scaffoldKey,
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: isWide ? 24 : 8,
@@ -84,17 +83,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ? null
             : IconButton(
                 icon: const Icon(Icons.menu_rounded),
-                onPressed: () {},
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                 tooltip: 'Menu',
               ),
         title: const ScholarBrand(compact: true),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () {},
-            tooltip: 'Notifications',
+          _UserAvatar(
+            user: user,
+            onTap: () => context.go('/profile'),
           ),
-          _UserAvatar(user: user),
           const Gap(6),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -105,6 +102,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const Gap(8),
         ],
       ),
+      drawer: const _AppMenu(),
       body: ScholarScaffoldBackground(
         child: Row(
           children: [
@@ -433,6 +431,7 @@ class _QuickAccessGrid extends StatelessWidget {
     ];
 
     return ScholarPanel(
+      onTap: () => context.go('/grades'),
       child: Column(
         children: [
           const ScholarSectionHeader(title: 'Quick Access'),
@@ -499,6 +498,7 @@ class _TodayPanel extends StatelessWidget {
             title: 'Study materials ready',
             subtitle: '$noteCount notes available for review',
             priority: 'Library',
+            onTap: () => context.go('/notes'),
           ),
           const Gap(10),
           _TaskRow(
@@ -506,6 +506,7 @@ class _TodayPanel extends StatelessWidget {
             title: 'Quiz practice',
             subtitle: '$quizCount generated quizzes in progress',
             priority: 'AI',
+            onTap: () => context.go('/quiz'),
           ),
           const Gap(10),
           _TaskRow(
@@ -513,6 +514,7 @@ class _TodayPanel extends StatelessWidget {
             title: 'Grade check-in',
             subtitle: 'Review your current course targets',
             priority: 'Grades',
+            onTap: () => context.go('/grades'),
           ),
         ],
       ),
@@ -526,52 +528,61 @@ class _TaskRow extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.priority,
+    required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final String priority;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.scholarPalette;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.panelStrong.withValues(alpha: 0.52),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: palette.stroke.withValues(alpha: 0.72)),
-      ),
-      child: Row(
-        children: [
-          ScholarIconBadge(icon: icon, size: 34),
-          const Gap(12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const Gap(3),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: palette.textMuted,
-                      ),
-                ),
-              ],
-            ),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: palette.panelStrong.withValues(alpha: 0.52),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: palette.stroke.withValues(alpha: 0.72)),
           ),
-          _Tag(label: priority),
-        ],
+          child: Row(
+            children: [
+              ScholarIconBadge(icon: icon, size: 34),
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const Gap(3),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: palette.textMuted,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              _Tag(label: priority),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -650,8 +661,13 @@ class _SemesterPanel extends StatelessWidget {
                 child: _MiniStat(label: 'Courses', value: '$courseCount'),
               ),
               const Gap(8),
-              const Expanded(
-                child: _MiniStat(label: 'Avg Score', value: '%'),
+              Expanded(
+                child: _MiniStat(
+                  label: 'Avg Score',
+                  value: averageScore == null
+                      ? '--'
+                      : '${averageScore!.toStringAsFixed(0)}%',
+                ),
               ),
             ],
           ),
@@ -916,26 +932,159 @@ class _ThemeChooser extends ConsumerWidget {
 class _UserAvatar extends StatelessWidget {
   const _UserAvatar({
     required this.user,
+    required this.onTap,
   });
 
   final User? user;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final url = user?.photoURL;
 
-    return CircleAvatar(
-      radius: 15,
-      backgroundColor: context.scholarPalette.brandStart,
-      backgroundImage: url == null ? null : NetworkImage(url),
-      child: url == null
-          ? Text(
-              (user?.displayName?.trim().isNotEmpty ?? false)
-                  ? user!.displayName!.trim()[0].toUpperCase()
-                  : 'S',
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            )
-          : null,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: CircleAvatar(
+        radius: 15,
+        backgroundColor: context.scholarPalette.brandStart,
+        backgroundImage: url == null ? null : NetworkImage(url),
+        child: url == null
+            ? Text(
+                (user?.displayName?.trim().isNotEmpty ?? false)
+                    ? user!.displayName!.trim()[0].toUpperCase()
+                    : 'S',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              )
+            : null,
+      ),
+    );
+  }
+}
+
+class _AppMenu extends ConsumerWidget {
+  const _AppMenu();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(firebaseAuthProvider).currentUser;
+    final palette = context.scholarPalette;
+
+    return Drawer(
+      backgroundColor: palette.panel,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  _UserAvatar(
+                    user: user,
+                    onTap: () => _go(context, '/profile'),
+                  ),
+                  const Gap(12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.displayName ?? 'ScholarMind User',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                        ),
+                        Text(
+                          user?.email ?? 'Signed in',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: palette.textMuted,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            _MenuTile(
+              icon: Icons.home_outlined,
+              title: 'Dashboard',
+              onTap: () => _go(context, '/home'),
+            ),
+            _MenuTile(
+              icon: Icons.person_outline_rounded,
+              title: 'Profile',
+              onTap: () => _go(context, '/profile'),
+            ),
+            _MenuTile(
+              icon: Icons.settings_outlined,
+              title: 'Settings',
+              onTap: () => _go(context, '/settings'),
+            ),
+            const Divider(height: 1),
+            _MenuTile(
+              icon: Icons.description_outlined,
+              title: 'Notes',
+              onTap: () => _go(context, '/notes'),
+            ),
+            _MenuTile(
+              icon: Icons.quiz_outlined,
+              title: 'Quiz',
+              onTap: () => _go(context, '/quiz'),
+            ),
+            _MenuTile(
+              icon: Icons.bar_chart_outlined,
+              title: 'Grades',
+              onTap: () => _go(context, '/grades'),
+            ),
+            const Spacer(),
+            const Divider(height: 1),
+            _MenuTile(
+              icon: Icons.logout_rounded,
+              title: 'Sign out',
+              onTap: () {
+                Navigator.of(context).pop();
+                ref.read(authControllerProvider.notifier).signOut();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _go(BuildContext context, String route) {
+    final router = GoRouter.of(context);
+    Navigator.of(context).pop();
+    router.go(route);
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+      onTap: onTap,
     );
   }
 }

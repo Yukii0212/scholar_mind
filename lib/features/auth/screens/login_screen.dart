@@ -16,16 +16,20 @@ class LoginScreen extends ConsumerWidget {
     return Scaffold(
       body: ScholarScaffoldBackground(
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 430),
-                child: Column(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compactHeight = constraints.maxHeight < 660;
+
+              return Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: Column(
                   children: [
                     Container(
-                      width: 138,
-                      height: 138,
+                      width: compactHeight ? 104 : 138,
+                      height: compactHeight ? 104 : 138,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(34),
                         border: Border.all(
@@ -46,7 +50,7 @@ class LoginScreen extends ConsumerWidget {
                       ),
                     ),
                     const Gap(24),
-                    const ScholarBrand(logoSize: 34),
+                    const ScholarBrand(compact: true, logoSize: 34),
                     const Gap(8),
                     Text(
                       'Organize. Understand. Succeed.',
@@ -106,12 +110,16 @@ class LoginScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const Gap(18),
-                    const ScholarIllustration(size: 156),
+                    if (!compactHeight) ...[
+                      const Gap(18),
+                      const ScholarIllustration(size: 156),
+                    ],
                   ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),

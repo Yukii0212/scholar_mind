@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 
+import '../../../../../core/theme/app_design.dart';
 import '../../../domain/assessment/score_interpretation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -128,14 +130,18 @@ class _AssessmentEntryDialogState
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.scholarPalette;
+
     return AlertDialog(
+      scrollable: true,
       title: Text(
         widget.isPrediction
             ? 'Expected Score'
             : 'Actual Score',
       ),
 
-      content: SingleChildScrollView(
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment:
@@ -155,60 +161,16 @@ class _AssessmentEntryDialogState
                   .titleMedium,
             ),
 
-            const SizedBox(height: 20),
+            const Gap(20),
 
-            Row(
-              children: [
+            _buildScoreFields(),
 
-                Expanded(
-                  child: TextField(
-                    controller:
-                    _scoreController,
-                    onChanged: (_) =>
-                        _updateInterpretation(),
-                    keyboardType:
-                    const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration:
-                    const InputDecoration(
-                      labelText: 'Score',
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
-                Expanded(
-                  child: TextField(
-                    controller:
-                    _denominatorController,
-                    onChanged: (_) =>
-                        _updateInterpretation(),
-                    keyboardType:
-                    const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration:
-                    const InputDecoration(
-                      labelText: 'Out of',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
+            const Gap(20),
 
             if (_interpretation != null)
-              Card(
-                elevation: 0,
-                color: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+              ScholarPanel(
+                padding: const EdgeInsets.all(14),
+                child: Column(
                     crossAxisAlignment:
                     CrossAxisAlignment.start,
                     children: [
@@ -229,7 +191,7 @@ class _AssessmentEntryDialogState
                                 .error,
                           ),
 
-                          const SizedBox(width: 8),
+                      const Gap(8),
 
                           Expanded(
                             child: Text(
@@ -242,13 +204,14 @@ class _AssessmentEntryDialogState
                         ],
                       ),
 
-                      const SizedBox(height: 8),
+                      const Gap(8),
 
                       Text(
                         _interpretation!.description,
+                        style: TextStyle(color: palette.textMuted),
                       ),
 
-                      const SizedBox(height: 12),
+                      const Gap(12),
 
                       if (_interpretation!.isValid)
                         Text(
@@ -266,7 +229,7 @@ class _AssessmentEntryDialogState
                       if (_interpretation!
                           .requiresConfirmation) ...[
 
-                        const SizedBox(height: 16),
+                        const Gap(16),
 
                         Text(
                           'Help ScholarMind understand your score',
@@ -275,7 +238,7 @@ class _AssessmentEntryDialogState
                               .titleSmall,
                         ),
 
-                        const SizedBox(height: 8),
+                        const Gap(8),
 
                         RadioListTile<ScoreInterpretation>(
                           value:
@@ -333,16 +296,16 @@ class _AssessmentEntryDialogState
                         ),
                     ],
                   ),
-                ),
               ),
 
-            const SizedBox(height: 24),
+            const Gap(24),
 
             Text(
               'Enter the score exactly as your lecturer provided it. ScholarMind will recognise the format automatically.',
               style: Theme.of(context)
                   .textTheme
-                  .bodySmall,
+                  .bodySmall
+                  ?.copyWith(color: palette.textMuted),
             ),
           ],
         ),
@@ -490,6 +453,60 @@ class _AssessmentEntryDialogState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildScoreFields() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
+        final fields = [
+          _scoreField(
+            controller: _scoreController,
+            label: widget.isPrediction ? 'Expected score' : 'Actual score',
+            icon: Icons.edit_note_rounded,
+          ),
+          _scoreField(
+            controller: _denominatorController,
+            label: 'Out of',
+            icon: Icons.percent_rounded,
+          ),
+        ];
+
+        if (isNarrow) {
+          return Column(
+            children: [
+              fields[0],
+              const Gap(12),
+              fields[1],
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: fields[0]),
+            const Gap(12),
+            Expanded(child: fields[1]),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _scoreField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+  }) {
+    return TextField(
+      controller: controller,
+      onChanged: (_) => _updateInterpretation(),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+      ),
     );
   }
 }

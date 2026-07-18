@@ -55,6 +55,18 @@ service cloud.firestore {
         allow create, update: if isOwner(userId)
           && validCountdown(request.resource.data);
       }
+
+      match /flashcard_decks/{deckId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validFlashcardDeck(request.resource.data);
+
+        match /cards/{cardId} {
+          allow read, delete: if isOwner(userId);
+          allow create, update: if isOwner(userId)
+            && validFlashcard(request.resource.data);
+        }
+      }
     }
 
     function validFolder(data) {
@@ -216,6 +228,83 @@ service cloud.firestore {
         && (data.description == null || data.description is string)
         && data.deadlineExtendable is bool
         && data.isCompleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validFlashcardDeck(data) {
+      return data.keys().hasAll([
+          'name',
+          'tags',
+          'generationMethod',
+          'sourceReference',
+          'description',
+          'cardCount',
+          'sessionsCompleted',
+          'cardsReviewed',
+          'knownCards',
+          'needsReviewCards',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'tags',
+          'generationMethod',
+          'sourceReference',
+          'description',
+          'cardCount',
+          'sessionsCompleted',
+          'cardsReviewed',
+          'knownCards',
+          'needsReviewCards',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 120
+        && data.tags is list
+        && data.generationMethod in ['manual', 'aiGenerated']
+        && (data.sourceReference == null || data.sourceReference is string)
+        && (data.description == null || data.description is string)
+        && data.cardCount is int
+        && data.sessionsCompleted is int
+        && data.cardsReviewed is int
+        && data.knownCards is int
+        && data.needsReviewCards is int
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validFlashcard(data) {
+      return data.keys().hasAll([
+          'front',
+          'back',
+          'tags',
+          'frontImageUrl',
+          'backImageUrl',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'front',
+          'back',
+          'tags',
+          'frontImageUrl',
+          'backImageUrl',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.front is string
+        && data.front.size() > 0
+        && data.front.size() <= 5000
+        && data.back is string
+        && data.back.size() > 0
+        && data.back.size() <= 10000
+        && data.tags is list
+        && (data.frontImageUrl == null || data.frontImageUrl is string)
+        && (data.backImageUrl == null || data.backImageUrl is string)
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }

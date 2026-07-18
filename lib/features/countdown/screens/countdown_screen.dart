@@ -6,6 +6,7 @@ import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/countdown_item.dart';
 import '../providers/countdown_provider.dart';
+import 'countdown_crud_screen.dart';
 
 class CountdownScreen extends ConsumerWidget {
   const CountdownScreen({super.key});
@@ -18,9 +19,7 @@ class CountdownScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: userId == null
-            ? null
-            : () => _openCountdownDialog(context, ref, userId),
+        onPressed: userId == null ? null : () => _openCountdownCrud(context),
         icon: const Icon(Icons.add_rounded),
         label: const Text('New Countdown'),
       ),
@@ -66,11 +65,9 @@ class CountdownScreen extends ConsumerWidget {
                                       ),
                               onEdit: userId == null
                                   ? null
-                                  : () => _openCountdownDialog(
+                                  : () => _openCountdownCrud(
                                         context,
-                                        ref,
-                                        userId,
-                                        existing: item,
+                                        initial: item,
                                       ),
                               onDelete: userId == null
                                   ? null
@@ -384,246 +381,13 @@ class _EmptyCountdowns extends StatelessWidget {
   }
 }
 
-class _CountdownDialog extends StatefulWidget {
-  const _CountdownDialog({
-    required this.initial,
-    required this.onSave,
-  });
-
-  final CountdownItem? initial;
-  final Future<void> Function({
-    required String title,
-    required CountdownType type,
-    required int priority,
-    required DateTime dueDate,
-    required String? description,
-    required bool deadlineExtendable,
-  }) onSave;
-
-  @override
-  State<_CountdownDialog> createState() => _CountdownDialogState();
-}
-
-class _CountdownDialogState extends State<_CountdownDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _titleController;
-  late final TextEditingController _priorityController;
-  late final TextEditingController _descriptionController;
-  late CountdownType _type;
-  late DateTime _dueDate;
-  late bool _deadlineExtendable;
-  var _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final initial = widget.initial;
-    _titleController = TextEditingController(text: initial?.title ?? '');
-    _priorityController = TextEditingController(
-      text: '${initial?.priority ?? 100}',
-    );
-    _descriptionController = TextEditingController(
-      text: initial?.description ?? '',
-    );
-    _type = initial?.type ?? CountdownType.finalExamination;
-    _dueDate = initial?.dueDate ?? DateTime.now().add(const Duration(days: 7));
-    _deadlineExtendable = initial?.deadlineExtendable ?? false;
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _priorityController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.scholarPalette;
-
-    return AlertDialog(
-      title: Text(widget.initial == null ? 'New Countdown' : 'Edit Countdown'),
-      content: SizedBox(
-        width: 520,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    prefixIcon: Icon(Icons.event_note_outlined),
-                  ),
-                  validator: (value) {
-                    if ((value ?? '').trim().isEmpty) {
-                      return 'Enter a countdown title';
-                    }
-                    return null;
-                  },
-                ),
-                const Gap(12),
-                DropdownButtonFormField<CountdownType>(
-                  initialValue: _type,
-                  decoration: const InputDecoration(
-                    labelText: 'Type',
-                    prefixIcon: Icon(Icons.category_outlined),
-                  ),
-                  items: [
-                    for (final type in CountdownType.values)
-                      DropdownMenuItem(
-                        value: type,
-                        child: Text(type.label),
-                      ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) setState(() => _type = value);
-                  },
-                ),
-                const Gap(12),
-                TextFormField(
-                  controller: _priorityController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Priority',
-                    helperText: 'Higher priority appears first',
-                    prefixIcon: Icon(Icons.priority_high_rounded),
-                  ),
-                  validator: (value) {
-                    final parsed = int.tryParse((value ?? '').trim());
-                    if (parsed == null || parsed < 0 || parsed > 999) {
-                      return 'Enter a number from 0 to 999';
-                    }
-                    return null;
-                  },
-                ),
-                const Gap(12),
-                InkWell(
-                  onTap: _pickDate,
-                  borderRadius: BorderRadius.circular(8),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Due Date',
-                      prefixIcon: Icon(Icons.calendar_today_outlined),
-                    ),
-                    child: Text(_formatDate(_dueDate)),
-                  ),
-                ),
-                const Gap(12),
-                TextFormField(
-                  controller: _descriptionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    prefixIcon: Icon(Icons.notes_outlined),
-                  ),
-                ),
-                const Gap(12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: palette.panelStrong.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: palette.stroke),
-                  ),
-                  child: SwitchListTile(
-                    value: _deadlineExtendable,
-                    onChanged: (value) =>
-                        setState(() => _deadlineExtendable = value),
-                    title: const Text('Deadline can be extended'),
-                    subtitle: const Text(
-                      'Past due items stay active until you complete them.',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton.icon(
-          onPressed: _saving ? null : _save,
-          icon: _saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.check_rounded),
-          label: const Text('Save'),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dueDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) setState(() => _dueDate = picked);
-  }
-
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _saving = true);
-    try {
-      final description = _descriptionController.text.trim();
-      await widget.onSave(
-        title: _titleController.text.trim(),
-        type: _type,
-        priority: int.parse(_priorityController.text.trim()),
-        dueDate: _dueDate,
-        description: description.isEmpty ? null : description,
-        deadlineExtendable: _deadlineExtendable,
-      );
-      if (!mounted) return;
-      Navigator.of(context).pop();
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-}
-
-Future<void> _openCountdownDialog(
-  BuildContext context,
-  WidgetRef ref,
-  String userId, {
-  CountdownItem? existing,
+Future<void> _openCountdownCrud(
+  BuildContext context, {
+  CountdownItem? initial,
 }) {
-  return showDialog<void>(
-    context: context,
-    builder: (context) => _CountdownDialog(
-      initial: existing,
-      onSave: ({
-        required title,
-        required type,
-        required priority,
-        required dueDate,
-        required description,
-        required deadlineExtendable,
-      }) {
-        return ref.read(countdownRepositoryProvider).saveCountdown(
-              userId: userId,
-              countdownId: existing?.id,
-              title: title,
-              type: type,
-              priority: priority,
-              dueDate: dueDate,
-              description: description,
-              deadlineExtendable: deadlineExtendable,
-            );
-      },
+  return Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => CountdownCrudScreen(initial: initial),
     ),
   );
 }
@@ -658,13 +422,6 @@ Future<void> _deleteCountdown(
         userId: userId,
         countdownId: item.id,
       );
-}
-
-String _formatDate(DateTime date) {
-  final year = date.year.toString().padLeft(4, '0');
-  final month = date.month.toString().padLeft(2, '0');
-  final day = date.day.toString().padLeft(2, '0');
-  return '$year-$month-$day';
 }
 
 String _daysText(int days) {

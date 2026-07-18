@@ -958,6 +958,11 @@ class _AppMenu extends ConsumerWidget {
               onTap: () => _go(context, '/quiz'),
             ),
             _MenuTile(
+              icon: Icons.style_outlined,
+              title: 'Flashcards',
+              onTap: () => _go(context, '/flashcards'),
+            ),
+            _MenuTile(
               icon: Icons.bar_chart_outlined,
               title: 'Grades',
               onTap: () => _go(context, '/grades'),

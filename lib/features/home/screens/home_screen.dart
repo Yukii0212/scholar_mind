@@ -341,7 +341,7 @@ class _QuickAccessGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actions = [
+    const actions = [
       _QuickAction('Notes', Icons.description_rounded, '/notes'),
       _QuickAction('Quiz', Icons.bolt_rounded, '/quiz'),
       _QuickAction('Grades', Icons.bar_chart_rounded, '/grades'),

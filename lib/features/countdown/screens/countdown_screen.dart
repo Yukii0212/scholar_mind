@@ -236,9 +236,8 @@ class _CountdownCard extends StatelessWidget {
         children: [
           Checkbox(
             value: item.isCompleted,
-            onChanged: onToggle == null
-                ? null
-                : (value) => onToggle!(value ?? false),
+            onChanged:
+                onToggle == null ? null : (value) => onToggle!(value ?? false),
           ),
           const Gap(8),
           Expanded(
@@ -468,7 +467,7 @@ class _CountdownDialogState extends State<_CountdownDialog> {
                 ),
                 const Gap(12),
                 DropdownButtonFormField<CountdownType>(
-                  value: _type,
+                  initialValue: _type,
                   decoration: const InputDecoration(
                     labelText: 'Type',
                     prefixIcon: Icon(Icons.category_outlined),

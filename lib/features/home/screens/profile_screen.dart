@@ -70,8 +70,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 right: 0,
                                 bottom: 0,
                                 child: IconButton.filled(
-                                  onPressed:
-                                      _savingPhoto ? null : _changePhoto,
+                                  onPressed: _savingPhoto ? null : _changePhoto,
                                   icon: _savingPhoto
                                       ? const SizedBox(
                                           width: 16,
@@ -247,8 +246,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required Uint8List bytes,
     required String extension,
   }) async {
-    final reference = FirebaseStorage.instance
-        .ref('users/$userId/profile/avatar.$extension');
+    final reference =
+        FirebaseStorage.instance.ref('users/$userId/profile/avatar.$extension');
     final metadata = SettableMetadata(
       contentType: extension == 'png' ? 'image/png' : 'image/jpeg',
     );

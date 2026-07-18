@@ -112,8 +112,9 @@ class LibraryHeader extends StatelessWidget {
               ),
             ],
             selected: {section},
-            onSelectionChanged:
-                isBusy ? null : (selection) => onSectionChanged(selection.first),
+            onSelectionChanged: isBusy
+                ? null
+                : (selection) => onSectionChanged(selection.first),
           ),
         ),
       ],
@@ -121,9 +122,8 @@ class LibraryHeader extends StatelessWidget {
   }
 
   String get _title => switch (section) {
-        LibrarySection.browse => folderStack.isEmpty
-            ? 'Notes'
-            : folderStack.last.name,
+        LibrarySection.browse =>
+          folderStack.isEmpty ? 'Notes' : folderStack.last.name,
         LibrarySection.favorites => 'Favorites',
         LibrarySection.archived => 'Archived',
         LibrarySection.trash => 'Deleted',

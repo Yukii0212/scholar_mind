@@ -20,109 +20,69 @@ class CourseCalculationService {
 
     double projectedPercentage = 0;
 
-    final completedComponents =
-    <GradingComponentModel>[];
+    final completedComponents = <GradingComponentModel>[];
 
-    final expectedComponents =
-    <GradingComponentModel>[];
+    final expectedComponents = <GradingComponentModel>[];
 
-    final remainingComponents =
-    <GradingComponentModel>[];
+    final remainingComponents = <GradingComponentModel>[];
 
-    final remainingTargets =
-    <CourseCalculationTarget>[];
+    final remainingTargets = <CourseCalculationTarget>[];
 
     double maximumAttainableWeight = 0;
 
-    final actualEntries =
-    assessments
+    final actualEntries = assessments
         .where(
-          (entry) =>
-      entry.type ==
-          AssessmentType.actual,
-    )
+          (entry) => entry.type == AssessmentType.actual,
+        )
         .toList();
 
-    final expectedEntries =
-    assessments
+    final expectedEntries = assessments
         .where(
-          (entry) =>
-      entry.type ==
-          AssessmentType.expected,
-    )
+          (entry) => entry.type == AssessmentType.expected,
+        )
         .toList();
 
-    for (final component
-    in components.where(
-          (e) => e.parentId == null,
+    for (final component in components.where(
+      (e) => e.parentId == null,
     )) {
       totalWeight += component.weight;
 
-      final children =
-      components
+      final children = components
           .where(
-            (e) =>
-        e.parentId ==
-            component.id,
-      )
+            (e) => e.parentId == component.id,
+          )
           .toList();
 
-      final targets =
-      children.isEmpty
-          ? [component]
-          : children;
+      final targets = children.isEmpty ? [component] : children;
 
-      for (final target
-      in targets) {
-        final actualAssessment =
-        actualEntries
-            .where(
-              (entry) =>
-          entry
-              .componentId ==
-              target.id,
-        )
-            .isEmpty
+      for (final target in targets) {
+        final actualAssessment = actualEntries
+                .where(
+                  (entry) => entry.componentId == target.id,
+                )
+                .isEmpty
             ? null
             : actualEntries
-            .firstWhere(
-                (entry) =>
-            entry
-                .componentId ==
-                target.id);
+                .firstWhere((entry) => entry.componentId == target.id);
 
-        final expectedAssessment =
-        expectedEntries
-            .where(
-              (entry) =>
-          entry
-              .componentId ==
-              target.id,
-        )
-            .isEmpty
+        final expectedAssessment = expectedEntries
+                .where(
+                  (entry) => entry.componentId == target.id,
+                )
+                .isEmpty
             ? null
             : expectedEntries
-            .firstWhere(
-                (entry) =>
-            entry
-                .componentId ==
-                target.id);
+                .firstWhere((entry) => entry.componentId == target.id);
 
-        final overallWeight =
-        children.isEmpty
+        final overallWeight = children.isEmpty
             ? component.weight
-            : WeightInterpreter
-            .interpret(
-          parent: component,
-          siblings: children,
-          child: target,
-        )
-            .overallWeight;
+            : WeightInterpreter.interpret(
+                parent: component,
+                siblings: children,
+                child: target,
+              ).overallWeight;
 
-        if (actualAssessment ==
-            null &&
-            expectedAssessment ==
-                null) {
+        if (actualAssessment == null && expectedAssessment == null) {
           remainingComponents.add(
             target,
           );
@@ -130,94 +90,61 @@ class CourseCalculationService {
           remainingTargets.add(
             CourseCalculationTarget(
               component: target,
-              overallWeight:
-              overallWeight,
+              overallWeight: overallWeight,
             ),
           );
 
           continue;
         }
 
-        if (actualAssessment !=
-            null) {
-          completedWeight +=
-              overallWeight;
+        if (actualAssessment != null) {
+          completedWeight += overallWeight;
 
-          completedComponents
-              .add(target);
+          completedComponents.add(target);
 
           guaranteedPercentage +=
-              overallWeight *
-                  actualAssessment
-                      .percentage /
-                  100;
+              overallWeight * actualAssessment.percentage / 100;
 
           projectedPercentage +=
-              overallWeight *
-                  actualAssessment
-                      .percentage /
-                  100;
+              overallWeight * actualAssessment.percentage / 100;
 
           continue;
         }
 
-        maximumAttainableWeight +=
-            overallWeight;
+        maximumAttainableWeight += overallWeight;
 
-        expectedComponents
-            .add(target);
+        expectedComponents.add(target);
 
         projectedPercentage +=
-            overallWeight *
-                expectedAssessment!
-                    .percentage /
-                100;
+            overallWeight * expectedAssessment!.percentage / 100;
       }
     }
 
-    final remainingWeight =
-        totalWeight -
-            completedWeight;
+    final remainingWeight = totalWeight - completedWeight;
 
-    final remainingOpportunity =
-        maximumAttainableWeight +
-            remainingTargets.fold<double>(
-              0,
-                  (sum, target) =>
-              sum +
-                  target.overallWeight,
-            );
+    final remainingOpportunity = maximumAttainableWeight +
+        remainingTargets.fold<double>(
+          0,
+          (sum, target) => sum + target.overallWeight,
+        );
 
     final maximumPossiblePercentage =
-        guaranteedPercentage +
-            remainingOpportunity;
+        guaranteedPercentage + remainingOpportunity;
 
     return CourseCalculationSummary(
       totalWeight: totalWeight,
-      completedWeight:
-      completedWeight,
-      remainingWeight:
-      remainingWeight,
-      guaranteedPercentage:
-      guaranteedPercentage,
-      projectedPercentage:
-      projectedPercentage,
-      maximumPossiblePercentage:
-      maximumPossiblePercentage,
-      remainingOpportunity:
-      remainingOpportunity,
-      actualEntries:
-      actualEntries,
-      expectedEntries:
-      expectedEntries,
-      completedComponents:
-      completedComponents,
-      expectedComponents:
-      expectedComponents,
-      remainingComponents:
-      remainingComponents,
-      remainingTargets:
-      remainingTargets,
+      completedWeight: completedWeight,
+      remainingWeight: remainingWeight,
+      guaranteedPercentage: guaranteedPercentage,
+      projectedPercentage: projectedPercentage,
+      maximumPossiblePercentage: maximumPossiblePercentage,
+      remainingOpportunity: remainingOpportunity,
+      actualEntries: actualEntries,
+      expectedEntries: expectedEntries,
+      completedComponents: completedComponents,
+      expectedComponents: expectedComponents,
+      remainingComponents: remainingComponents,
+      remainingTargets: remainingTargets,
     );
   }
 }

@@ -81,14 +81,18 @@ class SemesterStatisticsCard extends ConsumerWidget {
                   }
 
                   final achievable = course.summary.isAchievable(target);
-                  final required =
-                      course.summary.requiredPercentageFor(target);
+                  final required = course.summary.requiredPercentageFor(target);
+                  final remainingTarget = course.summary.remainingTarget;
 
                   return _CourseNeedRow(
                     name: course.course.name,
-                    subtitle: achievable
-                        ? 'Need ${required!.toStringAsFixed(1)}% in ${course.summary.remainingTarget!.component.name}'
-                        : 'Target is no longer achievable.',
+                    subtitle: achievable &&
+                            required != null &&
+                            remainingTarget != null
+                        ? 'Need ${required.toStringAsFixed(1)}% in ${remainingTarget.component.name}'
+                        : achievable
+                            ? 'Target is still achievable.'
+                            : 'Target is no longer achievable.',
                     progress: course.summary.completedProgress / 100,
                     warning: !achievable,
                   );

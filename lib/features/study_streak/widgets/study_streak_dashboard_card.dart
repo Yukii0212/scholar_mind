@@ -12,8 +12,7 @@ class StudyStreakDashboardCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.scholarPalette;
-    final summary =
-        ref.watch(studyStreakSummaryProvider).valueOrNull;
+    final summary = ref.watch(studyStreakSummaryProvider).valueOrNull;
 
     return ScholarPanel(
       onTap: () => context.go('/study-streak'),

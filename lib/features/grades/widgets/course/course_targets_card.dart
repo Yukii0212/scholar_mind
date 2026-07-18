@@ -48,18 +48,15 @@ class CourseTargetsCard extends ConsumerWidget {
                     subtitle: 'One remaining assessment prediction',
                   ),
                   const Gap(18),
-                  if (summary.remainingComponents.length > 1)
+                  if (!summary.canCalculateRequiredScore)
                     _InformationCard(
                       icon: Icons.auto_awesome_outlined,
-                      title: 'More information required',
-                      message:
-                          'Add Expected scores for all but one remaining assessment to unlock personalized predictions.',
-                    )
-                  else if (summary.remainingComponents.isEmpty)
-                    const _InformationCard(
-                      icon: Icons.check_circle_outline,
-                      title: 'Everything has been graded',
-                      message: 'There are no remaining assessments to calculate.',
+                      title: summary.remainingTargets.isEmpty
+                          ? 'No open assessment to calculate'
+                          : 'More information required',
+                      message: summary.remainingTargets.isEmpty
+                          ? 'Leave one assessment without an Actual or Expected score to calculate what you need there.'
+                          : 'Add Expected scores for all but one remaining assessment to unlock personalized predictions.',
                     )
                   else ...[
                     if (course.targetScore != null)
@@ -70,7 +67,8 @@ class CourseTargetsCard extends ConsumerWidget {
                         requiredScore: summary.requiredPercentageFor(
                           course.targetScore!,
                         )!,
-                        component: summary.remainingTarget!.component.name,
+                        component:
+                            summary.remainingTarget?.component.name ?? '',
                         achievable: summary.isAchievable(course.targetScore!),
                         maximumPossible: summary.maximumPossiblePercentage,
                       ),
@@ -83,7 +81,8 @@ class CourseTargetsCard extends ConsumerWidget {
                         requiredScore: summary.requiredPercentageFor(
                           course.minimumAcceptableScore!,
                         )!,
-                        component: summary.remainingTarget!.component.name,
+                        component:
+                            summary.remainingTarget?.component.name ?? '',
                         achievable: summary.isAchievable(
                           course.minimumAcceptableScore!,
                         ),
@@ -96,7 +95,7 @@ class CourseTargetsCard extends ConsumerWidget {
                       target: course.passingScore,
                       requiredScore:
                           summary.requiredPercentageFor(course.passingScore)!,
-                      component: summary.remainingTarget!.component.name,
+                      component: summary.remainingTarget?.component.name ?? '',
                       achievable: summary.isAchievable(course.passingScore),
                       maximumPossible: summary.maximumPossiblePercentage,
                     ),

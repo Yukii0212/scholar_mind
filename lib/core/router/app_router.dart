@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/countdown/screens/countdown_screen.dart';
 import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/home/screens/profile_screen.dart';
@@ -10,6 +11,7 @@ import '../../features/home/screens/settings_screen.dart';
 import '../../features/notes/screens/notes_screen.dart';
 import '../../features/quiz/screens/quiz_library_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
+import '../../features/study_streak/screens/study_streak_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -78,6 +80,14 @@ GoRouter appRouter(AppRouterRef ref) {
           GoRoute(
             path: '/grades',
             builder: (context, state) => const GradeHomeScreen(),
+          ),
+          GoRoute(
+            path: '/study-streak',
+            builder: (context, state) => const StudyStreakScreen(),
+          ),
+          GoRoute(
+            path: '/countdown',
+            builder: (context, state) => const CountdownScreen(),
           ),
           GoRoute(
             path: '/profile',

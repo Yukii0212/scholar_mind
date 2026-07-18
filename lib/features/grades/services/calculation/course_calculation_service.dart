@@ -16,8 +16,6 @@ class CourseCalculationService {
 
     double completedWeight = 0;
 
-    double expectedWeight = 0;
-
     double guaranteedPercentage = 0;
 
     double projectedPercentage = 0;
@@ -33,6 +31,8 @@ class CourseCalculationService {
 
     final remainingTargets =
     <CourseCalculationTarget>[];
+
+    double maximumAttainableWeight = 0;
 
     final actualEntries =
     assessments
@@ -161,7 +161,7 @@ class CourseCalculationService {
           continue;
         }
 
-        expectedWeight +=
+        maximumAttainableWeight +=
             overallWeight;
 
         expectedComponents
@@ -180,7 +180,13 @@ class CourseCalculationService {
             completedWeight;
 
     final remainingOpportunity =
-        remainingWeight;
+        maximumAttainableWeight +
+            remainingTargets.fold<double>(
+              0,
+                  (sum, target) =>
+              sum +
+                  target.overallWeight,
+            );
 
     final maximumPossiblePercentage =
         guaranteedPercentage +

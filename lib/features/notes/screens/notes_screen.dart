@@ -93,36 +93,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             SpeedDialChild(
 
               child: const Icon(
-                Icons.upload_file,
+                Icons.file_upload_outlined,
               ),
 
-              label: 'Upload from Device',
+              label: 'Import File',
 
-              onTap: _uploadFromDevice,
+              onTap: _uploadNotes,
 
-            ),
-
-            SpeedDialChild(
-
-              child: const Icon(
-                Icons.school,
-              ),
-
-              label: 'Google Classroom',
-
-              onTap: _importFromClassroom,
-
-            ),
-
-            SpeedDialChild(
-
-              child: const Icon(
-                Icons.cloud,
-              ),
-
-              label: 'Google Drive',
-
-              onTap: _importFromDrive,
 
             ),
 

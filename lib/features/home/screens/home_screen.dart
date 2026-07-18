@@ -10,10 +10,13 @@ import '../../../core/providers/theme_provider.dart';
 import '../../../core/services/background_sync_service.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../countdown/widgets/countdown_dashboard_card.dart';
 import '../../grades/providers/semester/current_semester_provider.dart';
 import '../../grades/providers/semester/semester_statistics_provider.dart';
 import '../../notes/providers/library_provider.dart';
 import '../../quiz/providers/quiz_library_provider.dart' as quiz_library;
+import '../../study_streak/providers/study_streak_provider.dart';
+import '../../study_streak/widgets/study_streak_dashboard_card.dart';
 
 const _navRoutes = [
   '/home',
@@ -156,6 +159,7 @@ class DashboardView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(studyStreakRecorderProvider);
     final notes = ref.watch(allUploadedNotesProvider).valueOrNull ?? const [];
     final quizzes =
         ref.watch(quiz_library.activeQuizzesProvider).valueOrNull ?? const [];
@@ -180,10 +184,7 @@ class DashboardView extends ConsumerWidget {
               children: [
                 _DashboardHero(
                   name: user?.displayName,
-                  noteCount: notes.length,
-                  quizCount: quizzes.length,
-                  semesterName: semester?.name,
-                  averageScore: averageScore,
+                  isWide: isWide,
                 ),
                 const Gap(16),
                 _QuickAccessGrid(isWide: isWide),
@@ -249,17 +250,11 @@ class DashboardView extends ConsumerWidget {
 class _DashboardHero extends StatelessWidget {
   const _DashboardHero({
     required this.name,
-    required this.noteCount,
-    required this.quizCount,
-    required this.semesterName,
-    required this.averageScore,
+    required this.isWide,
   });
 
   final String? name;
-  final int noteCount;
-  final int quizCount;
-  final String? semesterName;
-  final double? averageScore;
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
@@ -271,12 +266,10 @@ class _DashboardHero extends StatelessWidget {
             ? 'Good afternoon,'
             : 'Good evening,';
 
-    return ScholarPanel(
-      padding: const EdgeInsets.fromLTRB(18, 18, 14, 18),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 650;
-          final copy = Column(
+    final header = Row(
+      children: [
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -289,72 +282,46 @@ class _DashboardHero extends StatelessWidget {
               Text(
                 _firstName(name),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                     ),
               ),
               const Gap(8),
               Text(
-                'Keep going, your study space is ready.',
+                'Keep your streak alive and your next deadline visible.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: palette.textMuted,
                     ),
               ),
-              const Gap(18),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _HeroMetric(
-                    icon: Icons.description_outlined,
-                    label: 'Notes',
-                    value: '$noteCount',
-                  ),
-                  _HeroMetric(
-                    icon: Icons.quiz_outlined,
-                    label: 'Quizzes',
-                    value: '$quizCount',
-                  ),
-                  _HeroMetric(
-                    icon: Icons.bar_chart_outlined,
-                    label: semesterName ?? 'Semester',
-                    value: averageScore == null
-                        ? '--'
-                        : averageScore!.toStringAsFixed(1),
-                  ),
-                ],
-              ),
             ],
-          );
+          ),
+        ),
+        if (isWide) const ScholarIllustration(size: 118),
+      ],
+    );
 
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                copy,
-                const Gap(10),
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: ScholarIllustration(size: 156),
-                ),
-              ],
-            );
-          }
-
-          return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        header,
+        const Gap(16),
+        if (isWide)
+          const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 5, child: copy),
-              const Expanded(
-                flex: 3,
-                child: Align(
-                  alignment: Alignment.center,
-                  child: ScholarIllustration(size: 156),
-                ),
-              ),
+              Expanded(child: StudyStreakDashboardCard()),
+              Gap(16),
+              Expanded(child: CountdownDashboardCard()),
             ],
-          );
-        },
-      ),
+          )
+        else
+          const Column(
+            children: [
+              StudyStreakDashboardCard(),
+              Gap(16),
+              CountdownDashboardCard(),
+            ],
+          ),
+      ],
     );
   }
 
@@ -362,55 +329,6 @@ class _DashboardHero extends StatelessWidget {
     final trimmed = name?.trim();
     if (trimmed == null || trimmed.isEmpty) return 'Scholar';
     return trimmed.split(RegExp(r'\s+')).first;
-  }
-}
-
-class _HeroMetric extends StatelessWidget {
-  const _HeroMetric({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.scholarPalette;
-
-    return Container(
-      width: 112,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: palette.panelStrong.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: palette.stroke),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: palette.brandEnd, size: 18),
-          const Gap(8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: palette.textMuted,
-                  fontSize: 10,
-                ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -1043,6 +961,16 @@ class _AppMenu extends ConsumerWidget {
               icon: Icons.bar_chart_outlined,
               title: 'Grades',
               onTap: () => _go(context, '/grades'),
+            ),
+            _MenuTile(
+              icon: Icons.local_fire_department_outlined,
+              title: 'Study Streak',
+              onTap: () => _go(context, '/study-streak'),
+            ),
+            _MenuTile(
+              icon: Icons.event_note_outlined,
+              title: 'Countdown',
+              onTap: () => _go(context, '/countdown'),
             ),
             const Spacer(),
             const Divider(height: 1),

@@ -93,22 +93,22 @@ class LibraryHeader extends StatelessWidget {
               ButtonSegment(
                 value: LibrarySection.browse,
                 icon: Icon(Icons.folder_outlined),
-                label: Text('Library'),
+                tooltip: 'Library',
               ),
               ButtonSegment(
                 value: LibrarySection.favorites,
                 icon: Icon(Icons.star_outline),
-                label: Text('Favorites'),
+                tooltip: 'Favorites',
               ),
               ButtonSegment(
                 value: LibrarySection.archived,
                 icon: Icon(Icons.archive_outlined),
-                label: Text('Archived'),
+                tooltip: 'Archived',
               ),
               ButtonSegment(
                 value: LibrarySection.trash,
                 icon: Icon(Icons.delete_outline),
-                label: Text('Trash'),
+                tooltip: 'Trash',
               ),
             ],
             selected: {section},

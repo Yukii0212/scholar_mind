@@ -123,6 +123,10 @@ class CourseCalculationSummary {
   bool isAchievable(
       double targetPercentage,
       ) {
+    if (totalWeight == 0) {
+      return true;
+    }
+
     return maximumPossiblePercentage >=
         targetPercentage;
   }

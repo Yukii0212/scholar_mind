@@ -7,8 +7,8 @@ import '../assessment/assessment_provider.dart';
 import '../course/semester_course_provider.dart';
 import '../grading/grading_provider.dart';
 
-class SemesterCourseStatistics {
-  const SemesterCourseStatistics({
+class SemesterCoursePriority {
+  const SemesterCoursePriority({
     required this.course,
     required this.summary,
   });
@@ -18,10 +18,11 @@ class SemesterCourseStatistics {
 }
 
 final semesterStatisticsProvider =
-FutureProvider.family<List<SemesterCourseStatistics>, String>(
+FutureProvider.family<List<SemesterCoursePriority>, String>(
       (ref, semesterId) async {
-    final repository =
-    ref.read(gradingComponentRepositoryProvider);
+    final repository = ref.read(
+      gradingComponentRepositoryProvider,
+    );
 
     final courses = await ref.watch(
       semesterCourseProvider(
@@ -29,12 +30,13 @@ FutureProvider.family<List<SemesterCourseStatistics>, String>(
       ).future,
     );
 
-    final statistics =
-    <SemesterCourseStatistics>[];
+    final priorities =
+    <SemesterCoursePriority>[];
 
     for (final course in courses) {
       final gradingComponents =
-      await repository.getCourseComponents(
+      await repository
+          .getCourseComponents(
         course.id,
       );
 
@@ -46,73 +48,86 @@ FutureProvider.family<List<SemesterCourseStatistics>, String>(
       );
 
       final summary =
-      CourseCalculationService.calculate(
-        components: gradingComponents,
-        assessments: assessments,
+      CourseCalculationService
+          .calculate(
+        components:
+        gradingComponents,
+        assessments:
+        assessments,
       );
 
-      statistics.add(
-        SemesterCourseStatistics(
+      priorities.add(
+        SemesterCoursePriority(
           course: course,
           summary: summary,
         ),
       );
     }
 
-    statistics.sort((a, b) {
-      final aTarget =
-          a.course.targetScore;
+    priorities.sort(
+          (a, b) {
+        final aTarget =
+            a.course.targetScore;
+        final bTarget =
+            b.course.targetScore;
 
-      final bTarget =
-          b.course.targetScore;
+        // No targets -> alphabetical.
+        if (aTarget == null &&
+            bTarget == null) {
+          return a.course.name
+              .compareTo(
+            b.course.name,
+          );
+        }
 
-      if (aTarget == null &&
-          bTarget == null) {
-        return a.course.name.compareTo(
-          b.course.name,
+        // Courses with targets come first.
+        if (aTarget == null) {
+          return 1;
+        }
+
+        if (bTarget == null) {
+          return -1;
+        }
+
+        final aAchievable =
+        a.summary.isAchievable(
+          aTarget,
         );
-      }
 
-      if (aTarget == null) {
-        return 1;
-      }
+        final bAchievable =
+        b.summary.isAchievable(
+          bTarget,
+        );
 
-      if (bTarget == null) {
-        return -1;
-      }
+        // Impossible targets first.
+        if (aAchievable !=
+            bAchievable) {
+          return aAchievable
+              ? 1
+              : -1;
+        }
 
-      final aAchievable =
-      a.summary.isAchievable(
-        aTarget,
-      );
+        final aRequired =
+            a.summary
+                .requiredPercentageFor(
+              aTarget,
+            ) ??
+                0.0;
 
-      final bAchievable =
-      b.summary.isAchievable(
-        bTarget,
-      );
+        final bRequired =
+            b.summary
+                .requiredPercentageFor(
+              bTarget,
+            ) ??
+                0.0;
 
-      if (aAchievable !=
-          bAchievable) {
-        return aAchievable ? 1 : -1;
-      }
+        // Higher required percentage first.
+        return bRequired.compareTo(
+          aRequired,
+        );
+      },
+    );
 
-      final aRequired =
-          a.summary.requiredPercentageFor(
-            aTarget,
-          ) ??
-              0;
-
-      final bRequired =
-          b.summary.requiredPercentageFor(
-            bTarget,
-          ) ??
-              0;
-
-      return bRequired.compareTo(
-        aRequired,
-      );
-    });
-
-    return statistics;
+    return priorities;
   },
 );

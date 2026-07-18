@@ -27,8 +27,7 @@ class SemesterStatisticsCard extends ConsumerWidget {
         child: Padding(
           padding: EdgeInsets.all(32),
           child: Center(
-            child:
-            CircularProgressIndicator(),
+            child: CircularProgressIndicator(),
           ),
         ),
       ),
@@ -41,86 +40,38 @@ class SemesterStatisticsCard extends ConsumerWidget {
         ),
       ),
       data: (courses) {
-        final coursesWithResults = courses
-            .where(
-              (course) =>
-          course.summary.hasScores,
-        )
-            .toList();
-
-        final averageCurrentScore =
-        coursesWithResults.isEmpty
-            ? 0.0
-            : coursesWithResults
-            .map(
-              (course) => course
-              .summary
-              .projectedPercentage,
-        )
-            .reduce(
-              (a, b) => a + b,
-        ) /
-            coursesWithResults.length;
-
         return Card(
           child: Padding(
-            padding:
-            const EdgeInsets.all(
+            padding: const EdgeInsets.all(
               20,
             ),
             child: Column(
               crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+              CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Semester Snapshot',
+                  'Course Overview',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge,
                 ),
+
                 const SizedBox(
                   height: 20,
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatisticTile(
-                        title: 'Courses',
-                        value:
-                        '${courses.length}',
-                      ),
-                    ),
-                    Expanded(
-                      child: _StatisticTile(
-                        title:
-                        'With Results',
-                        value:
-                        '${coursesWithResults.length}',
-                      ),
-                    ),
-                    Expanded(
-                      child: _StatisticTile(
-                        title:
-                        'Average',
-                        value:
-                        '${averageCurrentScore.toStringAsFixed(1)}%',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(
-                  height: 28,
-                ),
+
+
                 Text(
-                  'Needs Attention',
+                  'Marks Needed',
                   style: Theme.of(
                     context,
                   ).textTheme.titleMedium,
                 ),
+
                 const SizedBox(
-                  height: 16,
+                  height: 5,
                 ),
+
                 if (courses.isEmpty)
                   const Text(
                     'No courses available.',
@@ -129,18 +80,23 @@ class SemesterStatisticsCard extends ConsumerWidget {
                   ...courses.map(
                         (course) {
                       final target =
-                          course
-                              .course
-                              .targetScore;
+                          course.course.targetScore;
 
                       if (target == null) {
-                        return const SizedBox
-                            .shrink();
+                        return ListTile(
+                          contentPadding:
+                          EdgeInsets.zero,
+                          title: Text(
+                            course.course.name,
+                          ),
+                          subtitle: const Text(
+                            'No target grade set.',
+                          ),
+                        );
                       }
 
                       final achievable =
-                      course.summary
-                          .isAchievable(
+                      course.summary.isAchievable(
                         target,
                       );
 
@@ -153,22 +109,12 @@ class SemesterStatisticsCard extends ConsumerWidget {
                       return ListTile(
                         contentPadding:
                         EdgeInsets.zero,
-                        leading: Icon(
-                          achievable
-                              ? Icons
-                              .warning_amber_rounded
-                              : Icons
-                              .cancel_outlined,
-                          color: achievable
-                              ? Colors.orange
-                              : Colors.red,
-                        ),
                         title: Text(
                           course.course.name,
                         ),
                         subtitle: Text(
                           achievable
-                              ? 'Need ${required!.toStringAsFixed(1)}% in ${course.summary.remainingTarget!.component.name} to achieve your target.'
+                              ? 'Need ${required!.toStringAsFixed(1)}% in ${course.summary.remainingTarget!.component.name}'
                               : 'Target is no longer achievable.',
                         ),
                       );
@@ -179,44 +125,6 @@ class SemesterStatisticsCard extends ConsumerWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _StatisticTile
-    extends StatelessWidget {
-  const _StatisticTile({
-    required this.title,
-    required this.value,
-  });
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall,
-        ),
-        const SizedBox(
-          height: 6,
-        ),
-        Text(
-          title,
-          textAlign:
-          TextAlign.center,
-          style: Theme.of(context)
-              .textTheme
-              .labelMedium,
-        ),
-      ],
     );
   }
 }

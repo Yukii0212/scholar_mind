@@ -250,7 +250,7 @@ final deletedFoldersProvider =
 );
 
 typedef DeletedFoldersRef = AutoDisposeStreamProviderRef<List<QuizFolder>>;
-String _$deletedQuizzesHash() => r'0f807b4456ec22570f3a0c4fb2e579e52fc4046f';
+String _$deletedQuizzesHash() => r'531794ad2c468417a88553bb1e27738c494e06ac';
 
 /// See also [deletedQuizzes].
 @ProviderFor(deletedQuizzes)

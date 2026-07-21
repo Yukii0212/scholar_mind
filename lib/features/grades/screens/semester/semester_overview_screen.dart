@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_design.dart';
 import '../../widgets/common/grade_speed_dial.dart';
 import '../../widgets/sections/semester/current_section.dart';
 import '../../widgets/sections/semester/hidden_section.dart';
@@ -13,9 +14,7 @@ class SemesterOverviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Semesters'),
-      ),
+      backgroundColor: Colors.transparent,
       floatingActionButton: GradeSpeedDial(
         onCreateSemester: () {
           showDialog(
@@ -25,10 +24,15 @@ class SemesterOverviewScreen extends StatelessWidget {
         },
       ),
       body: const SingleChildScrollView(
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 96),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            ScholarSectionHeader(
+              title: 'Semesters',
+              subtitle: 'Track current, upcoming, and completed terms',
+            ),
+            SizedBox(height: 20),
             CurrentSection(),
             FutureSection(),
             HistorySection(),

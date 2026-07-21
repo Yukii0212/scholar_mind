@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scholar_mind/core/theme/app_design.dart';
 import 'package:scholar_mind/features/quiz/widgets/quiz_folder_picker_dialog.dart';
 
 import '../domain/quiz_attempt.dart';
@@ -28,11 +29,8 @@ class QuizLibrarySectionWidget
       WidgetRef ref,
       ) {
 
-    return Card(
-      child: Padding(
-        padding:
-        const EdgeInsets.all(20),
-        child: Column(
+    return ScholarPanel(
+      child: Column(
           crossAxisAlignment:
           CrossAxisAlignment.start,
           children: [
@@ -852,7 +850,6 @@ class QuizLibrarySectionWidget
             ),
           ],
         ),
-      ),
     );
   }
 }

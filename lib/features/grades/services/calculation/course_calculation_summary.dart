@@ -61,58 +61,43 @@ class CourseCalculationSummary {
 
   final List<AssessmentEntryModel> expectedEntries;
 
-  final List<GradingComponentModel>
-  completedComponents;
+  final List<GradingComponentModel> completedComponents;
 
-  final List<GradingComponentModel>
-  expectedComponents;
+  final List<GradingComponentModel> expectedComponents;
 
-  final List<GradingComponentModel>
-  remainingComponents;
+  final List<GradingComponentModel> remainingComponents;
 
-  final List<CourseCalculationTarget>
-  remainingTargets;
+  final List<CourseCalculationTarget> remainingTargets;
 
-  bool get hasScores =>
-      actualEntries.isNotEmpty;
+  bool get hasScores => actualEntries.isNotEmpty;
 
-  bool get hasExpectedScores =>
-      expectedEntries.isNotEmpty;
+  bool get hasExpectedScores => expectedEntries.isNotEmpty;
 
-  bool get canCalculateRequiredScore =>
-      remainingTargets.length == 1;
+  bool get canCalculateRequiredScore => remainingTargets.length == 1;
 
-  CourseCalculationTarget?
-  get remainingTarget =>
-      canCalculateRequiredScore
-          ? remainingTargets.first
-          : null;
+  CourseCalculationTarget? get remainingTarget =>
+      canCalculateRequiredScore ? remainingTargets.first : null;
 
   double get completedProgress {
     if (totalWeight == 0) {
       return 0;
     }
 
-    return completedWeight /
-        totalWeight *
-        100;
+    return completedWeight / totalWeight * 100;
   }
 
   double? requiredPercentageFor(
-      double targetPercentage,
-      ) {
+    double targetPercentage,
+  ) {
     if (!canCalculateRequiredScore) {
       return null;
     }
 
-    final remaining =
-    remainingTarget!;
+    final remaining = remainingTarget!;
 
-    final needed =
-        (targetPercentage -
-            projectedPercentage) /
-            remaining.overallWeight *
-            100;
+    final needed = (targetPercentage - projectedPercentage) /
+        remaining.overallWeight *
+        100;
 
     return needed.clamp(
       0,
@@ -121,22 +106,23 @@ class CourseCalculationSummary {
   }
 
   bool isAchievable(
-      double targetPercentage,
-      ) {
-    return maximumPossiblePercentage >=
-        targetPercentage;
+    double targetPercentage,
+  ) {
+    if (totalWeight == 0) {
+      return true;
+    }
+
+    return maximumPossiblePercentage >= targetPercentage;
   }
 
-  List<CourseCalculationPrediction>
-  predictionTableFor(
-      double targetPercentage,
-      ) {
+  List<CourseCalculationPrediction> predictionTableFor(
+    double targetPercentage,
+  ) {
     if (!canCalculateRequiredScore) {
       return [];
     }
 
-    final required =
-    requiredPercentageFor(
+    final required = requiredPercentageFor(
       targetPercentage,
     );
 
@@ -144,68 +130,44 @@ class CourseCalculationSummary {
       return [];
     }
 
-    final remaining =
-    remainingTarget!;
+    final remaining = remainingTarget!;
 
     const step = 5.0;
 
-    final predictions =
-    <CourseCalculationPrediction>[];
+    final predictions = <CourseCalculationPrediction>[];
 
-    double closestDistance =
-        double.infinity;
+    double closestDistance = double.infinity;
 
     int highlightedIndex = 0;
 
-    for (
-    double assessment = 0;
-    assessment <= 100;
-    assessment += step
-    ) {
+    for (double assessment = 0; assessment <= 100; assessment += step) {
       final overall =
-          projectedPercentage +
-              assessment /
-                  100 *
-                  remaining.overallWeight;
+          projectedPercentage + assessment / 100 * remaining.overallWeight;
 
       predictions.add(
         CourseCalculationPrediction(
-          assessmentPercentage:
-          assessment,
-          finalPercentage:
-          overall,
+          assessmentPercentage: assessment,
+          finalPercentage: overall,
         ),
       );
 
-      final distance =
-      (assessment - required)
-          .abs();
+      final distance = (assessment - required).abs();
 
-      if (distance <
-          closestDistance) {
-        closestDistance =
-            distance;
-        highlightedIndex =
-            predictions.length - 1;
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        highlightedIndex = predictions.length - 1;
       }
     }
 
     return List.generate(
       predictions.length,
-          (index) {
-        final prediction =
-        predictions[index];
+      (index) {
+        final prediction = predictions[index];
 
         return CourseCalculationPrediction(
-          assessmentPercentage:
-          prediction
-              .assessmentPercentage,
-          finalPercentage:
-          prediction
-              .finalPercentage,
-          isHighlighted:
-          index ==
-              highlightedIndex,
+          assessmentPercentage: prediction.assessmentPercentage,
+          finalPercentage: prediction.finalPercentage,
+          isHighlighted: index == highlightedIndex,
         );
       },
     );

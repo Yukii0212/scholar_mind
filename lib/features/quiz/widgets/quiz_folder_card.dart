@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
+import '../../../core/theme/app_design.dart';
 import '../domain/quiz_enums.dart';
 import '../domain/quiz_folder.dart';
 
@@ -34,114 +35,115 @@ class QuizFolderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isArchivedSection || isTrashSection ? null : onOpen,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 14),
-          child: Row(
-            children: [
-              Icon(
-                isArchivedSection ? Icons.folder_off_outlined : Icons.folder,
-                size: 34,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const Gap(12),
-              Expanded(
-                child: Text(
+    final palette = context.scholarPalette;
+
+    return ScholarPanel(
+      padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+      onTap: isArchivedSection || isTrashSection ? null : onOpen,
+      child: Row(
+        children: [
+          ScholarIconBadge(
+            icon: isArchivedSection
+                ? Icons.folder_off_outlined
+                : Icons.folder_rounded,
+          ),
+          const Gap(12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   folder.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-              ),
-              if (folder.isFavorite)
-                Icon(
-                  Icons.star,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.tertiary,
+                const Gap(4),
+                Text(
+                  isArchivedSection ? 'Archived quiz folder' : 'Quiz folder',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: palette.textMuted,
+                      ),
                 ),
-              PopupMenuButton<QuizItemAction>(
-                onSelected: (action) {
-                  switch (action) {
-                    case QuizItemAction.rename:
-                      onRename();
-                      return;
-
-                    case QuizItemAction.move:
-                      onMove();
-                      return;
-
-                    case QuizItemAction.favorite:
-                      onToggleFavorite();
-                      return;
-
-                    case QuizItemAction.archive:
-                      onToggleArchived();
-                      return;
-
-                    case QuizItemAction.trash:
-                      onDelete();
-                      return;
-
-                    case QuizItemAction.restore:
-                      onRestore();
-                      return;
-
-                    case QuizItemAction.permanentDelete:
-                      onPermanentDelete();
-                      return;
-                  }
-                },
-                itemBuilder: (context) {
-                  if (isTrashSection) {
-                    return const [
-                      PopupMenuItem(
-                        value: QuizItemAction.restore,
-                        child: Text('Restore'),
-                      ),
-                      PopupMenuItem(
-                        value: QuizItemAction.permanentDelete,
-                        child: Text('Delete Permanently'),
-                      ),
-                    ];
-                  }
-
-                  return [
-                    const PopupMenuItem(
-                      value: QuizItemAction.rename,
-                      child: Text('Rename'),
-                    ),
-                    if (!isArchivedSection)
-                      const PopupMenuItem(
-                        value: QuizItemAction.move,
-                        child: Text('Move'),
-                      ),
-                    PopupMenuItem(
-                      value: QuizItemAction.favorite,
-                      child: Text(
-                        folder.isFavorite
-                            ? 'Remove favourite'
-                            : 'Add to favourites',
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: QuizItemAction.archive,
-                      child: Text(
-                        isArchivedSection ? 'Restore' : 'Archive',
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: QuizItemAction.trash,
-                      child: Text('Move to Trash'),
-                    ),
-                  ];
-                },
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          if (folder.isFavorite)
+            Icon(
+              Icons.star_rounded,
+              size: 18,
+              color: palette.accent,
+            ),
+          PopupMenuButton<QuizItemAction>(
+            onSelected: (action) {
+              switch (action) {
+                case QuizItemAction.rename:
+                  onRename();
+                  return;
+                case QuizItemAction.move:
+                  onMove();
+                  return;
+                case QuizItemAction.favorite:
+                  onToggleFavorite();
+                  return;
+                case QuizItemAction.archive:
+                  onToggleArchived();
+                  return;
+                case QuizItemAction.trash:
+                  onDelete();
+                  return;
+                case QuizItemAction.restore:
+                  onRestore();
+                  return;
+                case QuizItemAction.permanentDelete:
+                  onPermanentDelete();
+                  return;
+              }
+            },
+            itemBuilder: (context) {
+              if (isTrashSection) {
+                return const [
+                  PopupMenuItem(
+                    value: QuizItemAction.restore,
+                    child: Text('Restore'),
+                  ),
+                  PopupMenuItem(
+                    value: QuizItemAction.permanentDelete,
+                    child: Text('Delete Permanently'),
+                  ),
+                ];
+              }
+
+              return [
+                const PopupMenuItem(
+                  value: QuizItemAction.rename,
+                  child: Text('Rename'),
+                ),
+                if (!isArchivedSection)
+                  const PopupMenuItem(
+                    value: QuizItemAction.move,
+                    child: Text('Move'),
+                  ),
+                PopupMenuItem(
+                  value: QuizItemAction.favorite,
+                  child: Text(
+                    folder.isFavorite
+                        ? 'Remove favourite'
+                        : 'Add to favourites',
+                  ),
+                ),
+                PopupMenuItem(
+                  value: QuizItemAction.archive,
+                  child: Text(isArchivedSection ? 'Restore' : 'Archive'),
+                ),
+                const PopupMenuItem(
+                  value: QuizItemAction.trash,
+                  child: Text('Move to Trash'),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
     );
   }

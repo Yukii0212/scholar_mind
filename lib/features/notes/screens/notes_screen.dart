@@ -61,210 +61,138 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       LibrarySection.trash => ref.watch(deletedFoldersProvider),
     };
     final notes = switch (_section) {
-      LibrarySection.browse =>
-          ref.watch(notesInFolderProvider(_folderId)),
-
-      LibrarySection.favorites =>
-          ref.watch(favoriteNotesProvider),
-
-      LibrarySection.trash =>
-          ref.watch(deletedNotesProvider),
-
-      _ =>
-      const AsyncValue<List<NoteItem>>.data([]),
+      LibrarySection.browse => ref.watch(notesInFolderProvider(_folderId)),
+      LibrarySection.favorites => ref.watch(favoriteNotesProvider),
+      LibrarySection.trash => ref.watch(deletedNotesProvider),
+      _ => const AsyncValue<List<NoteItem>>.data([]),
     };
 
     return Scaffold(
-
-        floatingActionButton:
-
-        _section == LibrarySection.browse
-
-            ? SpeedDial(
-
-          icon: Icons.add,
-
-          activeIcon: Icons.close,
-
-          spacing: 12,
-
-          children: [
-
-            SpeedDialChild(
-
-              child: const Icon(
-                Icons.upload_file,
-              ),
-
-              label: 'Upload Files',
-
-              onTap: _uploadNotes,
-
-            ),
-
-            SpeedDialChild(
-
-              child: const Icon(
-                Icons.note_add_outlined,
-              ),
-
-              label: 'New Note',
-
-              onTap: _createNote,
-
-            ),
-
-            SpeedDialChild(
-
-              child: const Icon(
-                Icons.create_new_folder,
-              ),
-
-              label: 'New Folder',
-
-              onTap: _createFolder,
-
-            ),
-
-          ],
-
-        )
-
-            : null,
-
-        body: Stack(
-      children: [
-        CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-              sliver: SliverToBoxAdapter(
-                child: LibraryHeader(
-                  section: _section,
-                  folderStack: _folderStack,
-                  isBusy: actionState.isLoading,
-                  onSectionChanged: _changeSection,
-                  onBreadcrumbPressed: _openBreadcrumb,
-                  onCreateFolder: _createFolder,
-                  onCreateNote: _createNote,
-                  onUpload: _uploadNotes,
-                  onRestoreAll: _restoreAll,
-                  onDeleteAll: _permanentlyDeleteAll,
+      floatingActionButton: _section == LibrarySection.browse
+          ? SpeedDial(
+              icon: Icons.add,
+              activeIcon: Icons.close,
+              spacing: 12,
+              children: [
+                SpeedDialChild(
+                  child: const Icon(
+                    Icons.file_upload_outlined,
+                  ),
+                  label: 'Import File',
+                  onTap: _uploadNotes,
                 ),
-              ),
-            ),
-            if (_section == LibrarySection.trash)
+                SpeedDialChild(
+                  child: const Icon(
+                    Icons.note_add_outlined,
+                  ),
+                  label: 'New Note',
+                  onTap: _createNote,
+                ),
+                SpeedDialChild(
+                  child: const Icon(
+                    Icons.create_new_folder,
+                  ),
+                  label: 'New Folder',
+                  onTap: _createFolder,
+                ),
+              ],
+            )
+          : null,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  12,
-                  20,
-                  12,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                 sliver: SliverToBoxAdapter(
-                  child: TrashSection(
-
+                  child: LibraryHeader(
+                    section: _section,
+                    folderStack: _folderStack,
+                    isBusy: actionState.isLoading,
+                    onSectionChanged: _changeSection,
+                    onBreadcrumbPressed: _openBreadcrumb,
+                    onCreateFolder: _createFolder,
+                    onCreateNote: _createNote,
+                    onUpload: _uploadNotes,
                     onRestoreAll: _restoreAll,
-
                     onDeleteAll: _permanentlyDeleteAll,
-
-                    folders: folders.valueOrNull?.map((folder) {
-
-                      return FolderCard(
-
-                        folder: folder,
-
-                        isTrashSection: true,
-
-                        isArchivedSection: false,
-
-                        onOpen: () => _openFolder(folder),
-
-                        onDelete: () => _moveFolderToTrash(folder),
-
-                        onMove: () => _moveFolder(folder),
-
-                        onRestore: () => _restoreFolder(folder),
-
-                        onRename: () => _renameFolder(folder),
-
-                        onPermanentDelete: () =>
-                            _permanentlyDeleteFolder(folder),
-
-                        onToggleFavorite: () =>
-                            _toggleFavorite(folder),
-
-                        onToggleArchived: () =>
-                            _toggleArchived(folder),
-
-                      );
-
-                    }).toList() ?? const [],
-
-                    files: notes.valueOrNull?.map((note) {
-
-                      return NoteCard(
-
-                        note: note,
-
-                        onTap: () => _openNote(note),
-
-                        onRename: () => _renameNote(note),
-
-                        onMove: () => _moveNote(note),
-
-                        onCopy: () => _copyNote(note),
-
-                        onToggleFavorite: () =>
-                            _toggleNoteFavorite(note),
-
-                        onDelete: () =>
-                            _deleteNote(note),
-
-                        isTrashSection: true,
-
-                        onRestore: () =>
-                            _restoreNote(note),
-
-                        onPermanentDelete: () =>
-                            _permanentlyDeleteNote(note),
-
-                      );
-
-                    }).toList() ?? const [],
-
                   ),
                 ),
               ),
-
-            ..._buildFolderSlivers(
-              folders,
-              notes.hasValue
-                  ? notes.valueOrNull?.isNotEmpty ?? false
-                  : false,
-            ),
-            if (_section == LibrarySection.browse ||
-                _section == LibrarySection.favorites ||
-                _section == LibrarySection.trash) ..._buildNoteSlivers(
-              notes,
-              folders.hasValue
-                  ? folders.valueOrNull?.isNotEmpty ?? false
-                  : false,
-            ),
-            const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
-          ],
-        ),
-        if (actionState.isLoading)
-          const Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            child: LinearProgressIndicator(),
+              if (_section == LibrarySection.trash)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    20,
+                    12,
+                    20,
+                    12,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: TrashSection(
+                      onRestoreAll: _restoreAll,
+                      onDeleteAll: _permanentlyDeleteAll,
+                      folders: folders.valueOrNull?.map((folder) {
+                            return FolderCard(
+                              folder: folder,
+                              isTrashSection: true,
+                              isArchivedSection: false,
+                              onOpen: () => _openFolder(folder),
+                              onDelete: () => _moveFolderToTrash(folder),
+                              onMove: () => _moveFolder(folder),
+                              onRestore: () => _restoreFolder(folder),
+                              onRename: () => _renameFolder(folder),
+                              onPermanentDelete: () =>
+                                  _permanentlyDeleteFolder(folder),
+                              onToggleFavorite: () => _toggleFavorite(folder),
+                              onToggleArchived: () => _toggleArchived(folder),
+                            );
+                          }).toList() ??
+                          const [],
+                      files: notes.valueOrNull?.map((note) {
+                            return NoteCard(
+                              note: note,
+                              onTap: () => _openNote(note),
+                              onRename: () => _renameNote(note),
+                              onMove: () => _moveNote(note),
+                              onCopy: () => _copyNote(note),
+                              onToggleFavorite: () => _toggleNoteFavorite(note),
+                              onDelete: () => _deleteNote(note),
+                              isTrashSection: true,
+                              onRestore: () => _restoreNote(note),
+                              onPermanentDelete: () =>
+                                  _permanentlyDeleteNote(note),
+                            );
+                          }).toList() ??
+                          const [],
+                    ),
+                  ),
+                ),
+              ..._buildFolderSlivers(
+                folders,
+                notes.hasValue ? notes.valueOrNull?.isNotEmpty ?? false : false,
+              ),
+              if (_section == LibrarySection.browse ||
+                  _section == LibrarySection.favorites ||
+                  _section == LibrarySection.trash)
+                ..._buildNoteSlivers(
+                  notes,
+                  folders.hasValue
+                      ? folders.valueOrNull?.isNotEmpty ?? false
+                      : false,
+                ),
+              const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
+            ],
           ),
-         ],
-        ),
+          if (actionState.isLoading)
+            const Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: LinearProgressIndicator(),
+            ),
+        ],
+      ),
     );
-
   }
 
   Future<void> _restoreAll() async {
@@ -274,17 +202,15 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         title: const Text('Restore everything?'),
         content: const Text(
           'All folders and notes currently in the Trash will be restored.\n\n'
-              'Do you want to continue?',
+          'Do you want to continue?',
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Restore All'),
           ),
         ],
@@ -295,8 +221,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .restoreAll();
 
     if (!mounted) return;
@@ -314,17 +240,15 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         title: const Text('Delete everything?'),
         content: const Text(
           'Everything in the Trash will be permanently deleted.\n\n'
-              'This action cannot be undone.',
+          'This action cannot be undone.',
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Delete All'),
           ),
         ],
@@ -335,8 +259,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .permanentlyDeleteAll();
 
     if (!mounted) return;
@@ -348,9 +272,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   List<Widget> _buildFolderSlivers(
-      AsyncValue<List<LibraryFolder>> folders,
-      bool hasNotes,
-      ) {
+    AsyncValue<List<LibraryFolder>> folders,
+    bool hasNotes,
+  ) {
     return folders.when(
       loading: () => const [
         SliverFillRemaining(
@@ -364,121 +288,84 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           child: ErrorState(message: _friendlyError(error)),
         ),
       ],
-data: (items) {
+      data: (items) {
+        if (_section == LibrarySection.trash) {
+          return const <Widget>[];
+        }
 
-if (_section == LibrarySection.trash) {
-return const <Widget>[];
-}
-
-return [
-        if (items.isNotEmpty)
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                'Folders',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        return [
+          if (items.isNotEmpty)
+            const SliverPadding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  'Folders',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
-          ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-          ),
-          sliver: SliverList.separated(
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+            ),
+            sliver: SliverList.separated(
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const Gap(8),
+              itemBuilder: (context, index) {
+                final folder = items[index];
 
-            itemCount: items.length,
-
-            separatorBuilder: (_, __) =>
-            const Gap(8),
-
-            itemBuilder: (context, index) {
-
-              final folder = items[index];
-
-              return FolderCard(
-
-                folder: folder,
-
-                isArchivedSection:
-                _section == LibrarySection.archived,
-
-                isTrashSection:
-                _section == LibrarySection.trash,
-
-                onOpen: () =>
-                    _openFolder(folder),
-
-                onDelete: () =>
-                    _moveFolderToTrash(folder),
-
-                onMove: () =>
-                    _moveFolder(folder),
-
-                onRestore: () =>
-                    _restoreFolder(folder),
-
-                onRename: () =>
-                    _renameFolder(folder),
-
-                onPermanentDelete: () =>
-                    _permanentlyDeleteFolder(folder),
-
-                onToggleFavorite: () =>
-                    _toggleFavorite(folder),
-
-                onToggleArchived: () =>
-                    _toggleArchived(folder),
-
-              );
-
-            },
-
-          ),
-
-        ),
-        if (items.isEmpty &&
-            !hasNotes &&
-            _section != LibrarySection.browse)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: EmptyState(
-              icon: switch (_section) {
-                LibrarySection.favorites => Icons.star_outline,
-                LibrarySection.archived => Icons.archive_outlined,
-                LibrarySection.trash => Icons.delete_outline,
-                _ => Icons.folder_outlined,
-              },
-              title: switch (_section) {
-                LibrarySection.favorites => 'No favourite folders',
-                LibrarySection.archived => 'No archived folders',
-                LibrarySection.trash => 'Trash is empty',
-                _ => '',
-              },
-              message: switch (_section) {
-                LibrarySection.favorites =>
-                'Mark useful folders as favourites for quick access.',
-
-                LibrarySection.archived =>
-                'Folders you archive will appear here.',
-
-                LibrarySection.trash =>
-                'Deleted folders and notes will appear here.',
-
-                _ => '',
+                return FolderCard(
+                  folder: folder,
+                  isArchivedSection: _section == LibrarySection.archived,
+                  isTrashSection: _section == LibrarySection.trash,
+                  onOpen: () => _openFolder(folder),
+                  onDelete: () => _moveFolderToTrash(folder),
+                  onMove: () => _moveFolder(folder),
+                  onRestore: () => _restoreFolder(folder),
+                  onRename: () => _renameFolder(folder),
+                  onPermanentDelete: () => _permanentlyDeleteFolder(folder),
+                  onToggleFavorite: () => _toggleFavorite(folder),
+                  onToggleArchived: () => _toggleArchived(folder),
+                );
               },
             ),
           ),
-];
-
-},
+          if (items.isEmpty && !hasNotes && _section != LibrarySection.browse)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: EmptyState(
+                icon: switch (_section) {
+                  LibrarySection.favorites => Icons.star_outline,
+                  LibrarySection.archived => Icons.archive_outlined,
+                  LibrarySection.trash => Icons.delete_outline,
+                  _ => Icons.folder_outlined,
+                },
+                title: switch (_section) {
+                  LibrarySection.favorites => 'No favourite folders',
+                  LibrarySection.archived => 'No archived folders',
+                  LibrarySection.trash => 'Trash is empty',
+                  _ => '',
+                },
+                message: switch (_section) {
+                  LibrarySection.favorites =>
+                    'Mark useful folders as favourites for quick access.',
+                  LibrarySection.archived =>
+                    'Folders you archive will appear here.',
+                  LibrarySection.trash =>
+                    'Deleted folders and notes will appear here.',
+                  _ => '',
+                },
+              ),
+            ),
+        ];
+      },
     );
   }
 
   List<Widget> _buildNoteSlivers(
-      AsyncValue<List<NoteItem>> notes,
-      bool hasFolders,
-      ){
+    AsyncValue<List<NoteItem>> notes,
+    bool hasFolders,
+  ) {
     return notes.when(
       loading: () => const [
         SliverPadding(
@@ -496,116 +383,79 @@ return [
           ),
         ),
       ],
-data: (items) {
+      data: (items) {
+        if (_section == LibrarySection.trash) {
+          return const <Widget>[];
+        }
 
-if (_section == LibrarySection.trash) {
-return const <Widget>[];
-}
-
-return [
-        if (items.isNotEmpty)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              24,
-              20,
-              8,
-            ),
-            sliver: SliverToBoxAdapter(
-
-              child: Row(
-
-                children: [
-
-                  const Expanded(
-
-                    child: Text(
-
-                      'Files',
-
-                      style: TextStyle(
-
-                        fontSize: 18,
-
-                        fontWeight:
-                        FontWeight.w600,
-
+        return [
+          if (items.isNotEmpty)
+            const SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                24,
+                20,
+                8,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Files',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-
                     ),
-
-                  ),
-
-                ],
-
+                  ],
+                ),
               ),
-
             ),
-
-          ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverList.separated(
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const Gap(8),
-            itemBuilder: (context, index) => NoteCard(
-              note: items[index],
-
-              onTap: () => _openNote(items[index]),
-
-              onRename: () =>
-                  _renameNote(items[index]),
-
-              onMove: () =>
-                  _moveNote(items[index]),
-
-              onCopy: () =>
-                  _copyNote(items[index]),
-
-              onToggleFavorite: () =>
-                  _toggleNoteFavorite(items[index]),
-
-              onDelete: () =>
-                  _deleteNote(items[index]),
-
-              isTrashSection:
-              _section == LibrarySection.trash,
-
-              onRestore: () =>
-                  _restoreNote(items[index]),
-
-              onPermanentDelete: () =>
-                  _permanentlyDeleteNote(items[index]),
-            ),
-          ),
-        ),
-        if (items.isEmpty &&
-            !hasFolders &&
-            _section != LibrarySection.trash)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              48,
-              20,
-              24,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: EmptyState(
-                icon: _section == LibrarySection.trash
-                    ? Icons.delete_outline
-                    : Icons.upload_file_outlined,
-                title: _section == LibrarySection.trash
-                    ? 'Trash is empty'
-                    : 'This folder is empty',
-                message: _section == LibrarySection.trash
-                    ? 'Deleted notes will appear here.'
-                    : 'Create a subfolder or upload your first note.',
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverList.separated(
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const Gap(8),
+              itemBuilder: (context, index) => NoteCard(
+                note: items[index],
+                onTap: () => _openNote(items[index]),
+                onRename: () => _renameNote(items[index]),
+                onMove: () => _moveNote(items[index]),
+                onCopy: () => _copyNote(items[index]),
+                onToggleFavorite: () => _toggleNoteFavorite(items[index]),
+                onDelete: () => _deleteNote(items[index]),
+                isTrashSection: _section == LibrarySection.trash,
+                onRestore: () => _restoreNote(items[index]),
+                onPermanentDelete: () => _permanentlyDeleteNote(items[index]),
               ),
             ),
           ),
-];
-
-},
+          if (items.isEmpty && !hasFolders && _section != LibrarySection.trash)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                48,
+                20,
+                24,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: EmptyState(
+                  icon: _section == LibrarySection.trash
+                      ? Icons.delete_outline
+                      : Icons.upload_file_outlined,
+                  title: _section == LibrarySection.trash
+                      ? 'Trash is empty'
+                      : 'This folder is empty',
+                  message: _section == LibrarySection.trash
+                      ? 'Deleted notes will appear here.'
+                      : 'Create a subfolder or upload your first note.',
+                ),
+              ),
+            ),
+        ];
+      },
     );
   }
 
@@ -655,8 +505,7 @@ return [
   Future<String?> _pickFolder({
     String? excludeFolderId,
   }) async {
-    final folders =
-    await ref.read(
+    final folders = await ref.read(
       allFoldersProvider.future,
     );
 
@@ -666,45 +515,39 @@ return [
       context: context,
       builder: (_) => FolderPickerDialog(
         folders: folders,
-        excludeFolderId:
-        excludeFolderId,
+        excludeFolderId: excludeFolderId,
       ),
     );
   }
 
   Future<void> _moveNote(
-      NoteItem note,
-      ) async {
-    final destination =
-    await _pickFolder();
+    NoteItem note,
+  ) async {
+    final destination = await _pickFolder();
 
     if (destination == null) return;
 
     final success = await ref
         .read(
-      libraryActionControllerProvider
-          .notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .moveNote(
-      noteId: note.id,
-      destinationFolderId:
-      destination,
-    );
+          noteId: note.id,
+          destinationFolderId: destination,
+        );
 
     if (!mounted) return;
 
     _showResult(
       success,
-      successMessage:
-      'Note moved successfully.',
+      successMessage: 'Note moved successfully.',
     );
   }
 
   Future<void> _copyNote(
-      NoteItem note,
-      ) async {
-    final destination =
-    await _pickFolder();
+    NoteItem note,
+  ) async {
+    final destination = await _pickFolder();
 
     if (destination == null) {
       return;
@@ -712,29 +555,25 @@ return [
 
     final success = await ref
         .read(
-      libraryActionControllerProvider
-          .notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .copyNote(
-      noteId: note.id,
-      destinationFolderId:
-      destination,
-    );
+          noteId: note.id,
+          destinationFolderId: destination,
+        );
 
     if (!mounted) return;
 
     _showResult(
       success,
-      successMessage:
-      'Note copied successfully.',
+      successMessage: 'Note copied successfully.',
     );
   }
 
   Future<void> _moveFolder(
-      LibraryFolder folder,
-      ) async {
-    final destination =
-    await _pickFolder(
+    LibraryFolder folder,
+  ) async {
+    final destination = await _pickFolder(
       excludeFolderId: folder.id,
     );
 
@@ -742,27 +581,24 @@ return [
 
     final success = await ref
         .read(
-      libraryActionControllerProvider
-          .notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .moveFolder(
-      folderId: folder.id,
-      destinationFolderId:
-      destination,
-    );
+          folderId: folder.id,
+          destinationFolderId: destination,
+        );
 
     if (!mounted) return;
 
     _showResult(
       success,
-      successMessage:
-      'Folder moved successfully.',
+      successMessage: 'Folder moved successfully.',
     );
   }
 
   Future<void> _renameFolder(
-      LibraryFolder folder,
-      ) async {
+    LibraryFolder folder,
+  ) async {
     final controller = TextEditingController(
       text: folder.name,
     );
@@ -781,14 +617,12 @@ return [
           ),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(dialogContext),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
-                final value =
-                controller.text.trim();
+                final value = controller.text.trim();
 
                 if (value.isNotEmpty) {
                   Navigator.pop(
@@ -808,25 +642,24 @@ return [
 
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .renameFolder(
-      folderId: folder.id,
-      name: name,
-    );
+          folderId: folder.id,
+          name: name,
+        );
 
     if (!mounted) return;
 
     _showResult(
       success,
-      successMessage:
-      'Folder renamed successfully.',
+      successMessage: 'Folder renamed successfully.',
     );
   }
 
   Future<void> _renameNote(
-      NoteItem note,
-      ) async {
+    NoteItem note,
+  ) async {
     final controller = TextEditingController(
       text: note.name,
     );
@@ -845,14 +678,12 @@ return [
           ),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(dialogContext),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
-                final value =
-                controller.text.trim();
+                final value = controller.text.trim();
 
                 if (value.isNotEmpty) {
                   Navigator.pop(
@@ -872,48 +703,46 @@ return [
 
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .renameNote(
-      noteId: note.id,
-      name: name,
-    );
+          noteId: note.id,
+          name: name,
+        );
 
     if (!mounted) return;
 
     _showResult(
       success,
-      successMessage:
-      'Note renamed successfully.',
+      successMessage: 'Note renamed successfully.',
     );
   }
 
   Future<void> _toggleNoteFavorite(
-      NoteItem note,
-      ) async {
+    NoteItem note,
+  ) async {
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .toggleNoteFavorite(note);
 
     if (!mounted) return;
 
     _showResult(
       success,
-      successMessage: note.isFavorite
-          ? 'Removed from favourites.'
-          : 'Added to favourites.',
+      successMessage:
+          note.isFavorite ? 'Removed from favourites.' : 'Added to favourites.',
     );
   }
 
   Future<void> _deleteNote(
-      NoteItem note,
-      ) async {
+    NoteItem note,
+  ) async {
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .softDeleteNote(note);
 
     if (!mounted) return;
@@ -925,12 +754,12 @@ return [
   }
 
   Future<void> _restoreNote(
-      NoteItem note,
-      ) async {
+    NoteItem note,
+  ) async {
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .restoreNote(note);
 
     if (!mounted) return;
@@ -942,54 +771,48 @@ return [
   }
 
   Future<void> _permanentlyDeleteNote(
-      NoteItem note,
-      ) async {
-    final confirmed =
-    await showDialog<bool>(
+    NoteItem note,
+  ) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) =>
-          AlertDialog(
-            title:
-            const Text('Delete permanently?'),
-            content: const Text(
-              'This note will be permanently deleted.\n\n'
-                  'This action cannot be undone.',
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete permanently?'),
+        content: const Text(
+          'This note will be permanently deleted.\n\n'
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(
+              dialogContext,
+              false,
             ),
-            actions: [
-              TextButton(
-                onPressed: () =>
-                    Navigator.pop(
-                      dialogContext,
-                      false,
-                    ),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () =>
-                    Navigator.pop(
-                      dialogContext,
-                      true,
-                    ),
-                child: const Text('Delete'),
-              ),
-            ],
+            child: const Text('Cancel'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              dialogContext,
+              true,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
 
     if (confirmed != true) return;
 
     final success = await ref
         .read(
-      libraryActionControllerProvider.notifier,
-    )
+          libraryActionControllerProvider.notifier,
+        )
         .permanentlyDeleteNote(note);
 
     if (!mounted) return;
 
     _showResult(
       success,
-      successMessage:
-      'Note permanently deleted.',
+      successMessage: 'Note permanently deleted.',
     );
   }
 
@@ -1034,9 +857,9 @@ return [
     final created = await ref
         .read(libraryActionControllerProvider.notifier)
         .createInternalNote(
-      folderId: _folderId,
-      name: name,
-    );
+          folderId: _folderId,
+          name: name,
+        );
 
     if (!mounted) return;
 
@@ -1075,7 +898,7 @@ return [
         title: const Text('Move folder to Trash?'),
         content: const Text(
           'This folder, all nested folders, and all notes inside them '
-              'will be moved to Trash.',
+          'will be moved to Trash.',
         ),
         actions: [
           TextButton(
@@ -1118,16 +941,16 @@ return [
   }
 
   Future<void> _permanentlyDeleteFolder(
-      LibraryFolder folder,
-      ) async {
+    LibraryFolder folder,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete permanently?'),
         content: const Text(
           'This folder, all child folders, and all notes inside it '
-              'will be permanently deleted.\n\n'
-              'This action cannot be undone.',
+          'will be permanently deleted.\n\n'
+          'This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -1157,8 +980,7 @@ return [
   }
 
   Future<void> _uploadNotes() async {
-    final source =
-    await showModalBottomSheet<_ImportSource>(
+    final source = await showModalBottomSheet<_ImportSource>(
       context: context,
       builder: (context) {
         return SafeArea(
@@ -1223,28 +1045,35 @@ return [
         break;
 
       case _ImportSource.classroom:
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                GoogleClassroomImportScreen(
-                  defaultFolderId: _folderId,
-                ),
-          ),
-        );
+        await _importFromClassroom();
         break;
 
       case _ImportSource.drive:
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => GoogleDriveImportScreen(
-              defaultFolderId: _folderId,
-            ),
-          ),
-        );
+        await _importFromDrive();
         break;
     }
+  }
+
+  Future<void> _importFromClassroom() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GoogleClassroomImportScreen(
+          defaultFolderId: _folderId,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _importFromDrive() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GoogleDriveImportScreen(
+          defaultFolderId: _folderId,
+        ),
+      ),
+    );
   }
 
   Future<void> _uploadFromDevice() async {
@@ -1288,18 +1117,16 @@ return [
       }
 
       final extension =
-      file.name.contains('.')
-          ? file.name.split('.').last
-          : '';
+          file.name.contains('.') ? file.name.split('.').last : '';
 
       final storagePath =
-      await ref.read(libraryActionControllerProvider.notifier).uploadNote(
-        folderId: _folderId,
-        fileName: file.name,
-        extension: extension,
-        bytes: bytes,
-        category: category,
-      );
+          await ref.read(libraryActionControllerProvider.notifier).uploadNote(
+                folderId: _folderId,
+                fileName: file.name,
+                extension: extension,
+                bytes: bytes,
+                category: category,
+              );
 
       if (!mounted) return;
 
@@ -1338,7 +1165,7 @@ return [
     _showResult(
       success,
       successMessage:
-      folder.isArchived ? 'Folder restored.' : 'Folder archived.',
+          folder.isArchived ? 'Folder restored.' : 'Folder archived.',
     );
   }
 

@@ -35,6 +35,38 @@ service cloud.firestore {
         allow create: if isOwner(userId)
           && validNote(request.resource.data);
       }
+
+      match /settings/{settingsId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && settingsId == 'app'
+          && validAppSettings(request.resource.data);
+      }
+
+      match /study_streak/{streakId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && streakId == 'summary'
+          && validStudyStreak(request.resource.data);
+      }
+
+      match /countdowns/{countdownId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validCountdown(request.resource.data);
+      }
+
+      match /flashcard_decks/{deckId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validFlashcardDeck(request.resource.data);
+
+        match /cards/{cardId} {
+          allow read, delete: if isOwner(userId);
+          allow create, update: if isOwner(userId)
+            && validFlashcard(request.resource.data);
+        }
+      }
     }
 
     function validFolder(data) {
@@ -103,6 +135,176 @@ service cloud.firestore {
           'pastYearQuestions'
         ]
         && data.source in ['manual', 'classroom']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validAppSettings(data) {
+      return data.keys().hasAll([
+          'selected_theme',
+          'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'selected_theme',
+          'updated_at'
+        ])
+        && data.selected_theme in [
+          'scholar_blue',
+          'sakura_pink',
+          'midnight'
+        ]
+        && data.updated_at is timestamp;
+    }
+
+    function validStudyStreak(data) {
+      return data.keys().hasAll([
+          'currentStreak',
+          'longestStreak',
+          'totalStudyDays',
+          'lastStudyDate',
+          'monthlyActivity',
+          'achievements',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'currentStreak',
+          'longestStreak',
+          'totalStudyDays',
+          'lastStudyDate',
+          'monthlyActivity',
+          'achievements',
+          'updatedAt'
+        ])
+        && data.currentStreak is int
+        && data.longestStreak is int
+        && data.totalStudyDays is int
+        && data.lastStudyDate is string
+        && data.monthlyActivity is map
+        && data.achievements is list
+        && data.updatedAt is timestamp;
+    }
+
+    function validCountdown(data) {
+      return data.keys().hasAll([
+          'title',
+          'type',
+          'priority',
+          'dueDate',
+          'description',
+          'deadlineExtendable',
+          'isCompleted',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title',
+          'type',
+          'priority',
+          'dueDate',
+          'description',
+          'deadlineExtendable',
+          'isCompleted',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 120
+        && data.type in [
+          'assignment',
+          'quiz',
+          'lab',
+          'presentation',
+          'project',
+          'midterm',
+          'final_examination',
+          'personal',
+          'other'
+        ]
+        && data.priority is int
+        && data.priority >= 0
+        && data.priority <= 999
+        && data.dueDate is timestamp
+        && (data.description == null || data.description is string)
+        && data.deadlineExtendable is bool
+        && data.isCompleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validFlashcardDeck(data) {
+      return data.keys().hasAll([
+          'name',
+          'tags',
+          'generationMethod',
+          'sourceReference',
+          'description',
+          'cardCount',
+          'sessionsCompleted',
+          'cardsReviewed',
+          'knownCards',
+          'needsReviewCards',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'tags',
+          'generationMethod',
+          'sourceReference',
+          'description',
+          'cardCount',
+          'sessionsCompleted',
+          'cardsReviewed',
+          'knownCards',
+          'needsReviewCards',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 120
+        && data.tags is list
+        && data.generationMethod in ['manual', 'aiGenerated']
+        && (data.sourceReference == null || data.sourceReference is string)
+        && (data.description == null || data.description is string)
+        && data.cardCount is int
+        && data.sessionsCompleted is int
+        && data.cardsReviewed is int
+        && data.knownCards is int
+        && data.needsReviewCards is int
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validFlashcard(data) {
+      return data.keys().hasAll([
+          'front',
+          'back',
+          'tags',
+          'frontImageUrl',
+          'backImageUrl',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'front',
+          'back',
+          'tags',
+          'frontImageUrl',
+          'backImageUrl',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.front is string
+        && data.front.size() > 0
+        && data.front.size() <= 5000
+        && data.back is string
+        && data.back.size() > 0
+        && data.back.size() <= 10000
+        && data.tags is list
+        && (data.frontImageUrl == null || data.frontImageUrl is string)
+        && (data.backImageUrl == null || data.backImageUrl is string)
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }

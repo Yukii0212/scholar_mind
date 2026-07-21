@@ -49,6 +49,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
   flutter_lints: ^3.0.0
   build_runner: ^2.4.9
   riverpod_generator: ^2.3.10
@@ -59,5 +60,19 @@ flutter:
   uses-material-design: true
   assets:
     - .env
-    - assets/images/
     - assets/icons/
+    - assets/images/
+    - assets/illustrations/
+    - assets/animations/
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  image_path: "assets/icons/scholar_blue_icon.png"
+
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icons/scholar_blue_icon.png"
+
+  remove_alpha_ios: true

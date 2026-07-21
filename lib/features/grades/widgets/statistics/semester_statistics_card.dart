@@ -106,17 +106,23 @@ class SemesterStatisticsCard extends ConsumerWidget {
                         target,
                       );
 
+                      final remainingTarget = course.summary.remainingTarget;
+
+                      String subtitle;
+
+                      if (!achievable) {
+                        subtitle = 'Target is no longer achievable.';
+                      } else if (required == null || remainingTarget == null) {
+                        subtitle = 'No remaining assessments.';
+                      } else {
+                        subtitle =
+                        'Need ${required.toStringAsFixed(1)}% in ${remainingTarget.component.name}';
+                      }
+
                       return ListTile(
-                        contentPadding:
-                        EdgeInsets.zero,
-                        title: Text(
-                          course.course.name,
-                        ),
-                        subtitle: Text(
-                          achievable
-                              ? 'Need ${required!.toStringAsFixed(1)}% in ${course.summary.remainingTarget!.component.name}'
-                              : 'Target is no longer achievable.',
-                        ),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(course.course.name),
+                        subtitle: Text(subtitle),
                       );
                     },
                   ),

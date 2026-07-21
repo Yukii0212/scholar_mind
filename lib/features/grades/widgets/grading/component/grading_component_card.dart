@@ -56,8 +56,6 @@ class _GradingComponentCardState extends ConsumerState<GradingComponentCard> {
       },
     );
 
-    controller.dispose();
-
     if (!mounted || name == null || name.isEmpty) return;
 
     ref.read(gradingStructureDraftProvider.notifier).addSubcomponent(

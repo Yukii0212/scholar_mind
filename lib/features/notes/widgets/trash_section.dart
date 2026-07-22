@@ -114,6 +114,41 @@ class TrashSection extends StatelessWidget {
               ],
 
             ),
+            const SizedBox(height: 24),
+
+            if (folders.isEmpty && files.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      size: 56,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No items in Trash',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Deleted notes and folders will appear here.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+
             if (folders.isNotEmpty) ...[
 
               const SizedBox(height: 20),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../notes/domain/library_folder.dart';
-import '../../notes/providers/library_provider.dart';
+import '../../../features/notes/domain/library_folder.dart';
+import '../../../features/notes/providers/library_provider.dart';
 
-class LibraryBrowser extends ConsumerWidget {
-  const LibraryBrowser({
+class FavoriteBrowser extends ConsumerWidget {
+  const FavoriteBrowser({
     super.key,
     required this.currentFolderId,
     required this.folderStack,
@@ -28,13 +28,25 @@ class LibraryBrowser extends ConsumerWidget {
       List<String> ids,
       ) onToggleSelectAll;
 
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final foldersAsync = ref.watch(
+    final bool atFavoritesRoot =
+        folderStack.isEmpty;
+
+    final foldersAsync = atFavoritesRoot
+        ? ref.watch(
+      favoriteFoldersProvider,
+    )
+        : ref.watch(
       childFoldersProvider(currentFolderId),
     );
 
-    final notesAsync = ref.watch(
+    final notesAsync = atFavoritesRoot
+        ? ref.watch(
+      favoriteNotesProvider,
+    )
+        : ref.watch(
       notesInFolderProvider(currentFolderId),
     );
 
@@ -107,7 +119,7 @@ class LibraryBrowser extends ConsumerWidget {
                     child: ListTile(
                       leading: const Icon(Icons.folder),
                       title: Text(folder.name),
-                      trailing: folder.isFavorite
+                      trailing: atFavoritesRoot
                           ? const Icon(Icons.star)
                           : const Icon(Icons.chevron_right),
                       onTap: () => onFolderOpened(folder),
@@ -121,6 +133,11 @@ class LibraryBrowser extends ConsumerWidget {
                           onTap: () {
                             final isSelected =
                             selectedNoteIds.contains(note.id);
+
+                            if (!isSelected &&
+                                selectedNoteIds.length >= 30) {
+                              return;
+                            }
 
                             onNoteSelectionChanged(
                               note.id,
@@ -140,22 +157,27 @@ class LibraryBrowser extends ConsumerWidget {
                       subtitle: Text(
                         note.extension.toUpperCase(),
                       ),
+                      trailing: const Icon(Icons.star),
                     ),
                   ),
                 ),
               ],
             );
           },
-          loading: () =>
-          const Center(child: CircularProgressIndicator()),
-          error: (error, _) =>
-              Center(child: Text(error.toString())),
+          loading: () => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          error: (error, _) => Center(
+            child: Text(error.toString()),
+          ),
         );
       },
-      loading: () =>
-      const Center(child: CircularProgressIndicator()),
-      error: (error, _) =>
-          Center(child: Text(error.toString())),
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (error, _) => Center(
+        child: Text(error.toString()),
+      ),
     );
   }
 }

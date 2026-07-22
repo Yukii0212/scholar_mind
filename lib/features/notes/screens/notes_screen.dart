@@ -114,8 +114,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                     onCreateFolder: _createFolder,
                     onCreateNote: _createNote,
                     onUpload: _uploadNotes,
-                    onRestoreAll: _restoreAll,
-                    onDeleteAll: _permanentlyDeleteAll,
                   ),
                 ),
               ),

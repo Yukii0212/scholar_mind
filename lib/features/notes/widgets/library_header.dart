@@ -16,8 +16,6 @@ class LibraryHeader extends StatelessWidget {
     required this.onCreateFolder,
     required this.onCreateNote,
     required this.onUpload,
-    required this.onRestoreAll,
-    required this.onDeleteAll,
   });
 
   final LibrarySection section;
@@ -28,8 +26,6 @@ class LibraryHeader extends StatelessWidget {
   final VoidCallback onCreateFolder;
   final VoidCallback onCreateNote;
   final VoidCallback onUpload;
-  final VoidCallback onRestoreAll;
-  final VoidCallback onDeleteAll;
 
   @override
   Widget build(BuildContext context) {
@@ -41,23 +37,7 @@ class LibraryHeader extends StatelessWidget {
         ScholarSectionHeader(
           title: _title,
           subtitle: _subtitle,
-          trailing: section == LibrarySection.trash
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: isBusy ? null : onRestoreAll,
-                      icon: const Icon(Icons.restore_rounded),
-                      tooltip: 'Restore all',
-                    ),
-                    IconButton(
-                      onPressed: isBusy ? null : onDeleteAll,
-                      icon: const Icon(Icons.delete_forever_outlined),
-                      tooltip: 'Delete all',
-                    ),
-                  ],
-                )
-              : null,
+          trailing: null,
         ),
         if (section == LibrarySection.browse) ...[
           const Gap(12),

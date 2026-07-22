@@ -8,13 +8,21 @@ class ThemeService {
 
   static const _themeKey = 'selected_theme';
 
+  static Future<ScholarTheme> loadLocalTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    return ScholarThemeExtension.fromId(
+      prefs.getString(_themeKey),
+    );
+  }
+
   static Future<ScholarTheme> loadTheme({
     String? userId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final localTheme = ScholarThemeExtension.fromId(
-      prefs.getString(_themeKey),
-    );
+
+    final localTheme =
+    await loadLocalTheme();
 
     if (userId == null) {
       return localTheme;

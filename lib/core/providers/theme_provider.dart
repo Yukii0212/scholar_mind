@@ -5,7 +5,9 @@ import '../models/scholar_theme.dart';
 import '../services/theme_service.dart';
 
 class ThemeNotifier extends StateNotifier<ScholarTheme> {
-  ThemeNotifier() : super(ScholarTheme.midnight);
+  ThemeNotifier(
+      ScholarTheme initialTheme,
+      ) : super(initialTheme);
 
   String? _userId;
 
@@ -28,14 +30,37 @@ class ThemeNotifier extends StateNotifier<ScholarTheme> {
   }
 }
 
-final themeProvider = StateNotifierProvider<ThemeNotifier, ScholarTheme>(
-  (ref) {
-    final notifier = ThemeNotifier();
-    notifier.loadForUser(ref.read(authStateProvider).valueOrNull?.uid);
+final initialThemeProvider =
+Provider<ScholarTheme>(
+      (_) => ScholarTheme.midnight,
+);
 
-    ref.listen(authStateProvider, (_, next) {
-      notifier.loadForUser(next.valueOrNull?.uid);
-    });
+final themeProvider =
+StateNotifierProvider<
+    ThemeNotifier,
+    ScholarTheme>(
+      (ref) {
+    final notifier = ThemeNotifier(
+      ref.watch(
+        initialThemeProvider,
+      ),
+    );
+
+    notifier.loadForUser(
+      ref
+          .read(authStateProvider)
+          .valueOrNull
+          ?.uid,
+    );
+
+    ref.listen(
+      authStateProvider,
+          (_, next) {
+        notifier.loadForUser(
+          next.valueOrNull?.uid,
+        );
+      },
+    );
 
     return notifier;
   },

@@ -829,7 +829,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             autofocus: true,
             decoration: const InputDecoration(
               labelText: 'Note name',
-              hintText: 'OSI Revision Notes',
+              hintText: 'Start writing your notes...',
             ),
           ),
           actions: [

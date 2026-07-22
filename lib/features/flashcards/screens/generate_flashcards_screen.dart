@@ -4,9 +4,10 @@ import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../notes/domain/note_item.dart';
 import '../../notes/providers/library_provider.dart';
+import '../../../core/widgets/study_material_picker/study_material_picker_screen.dart';
 import '../../quiz/data/quiz_repository.dart';
+import '../../quiz/domain/study_material_type.dart';
 import '../../quiz/services/study_material_preprocessor.dart';
 import '../providers/flashcard_provider.dart';
 import '../services/openai_flashcard_service.dart';
@@ -41,8 +42,6 @@ class _GenerateFlashcardsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final notesAsync = ref.watch(allUploadedNotesProvider);
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -51,36 +50,44 @@ class _GenerateFlashcardsScreenState
       body: ScholarScaffoldBackground(
         child: SafeArea(
           top: false,
-          child: notesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) =>
-                Center(child: Text('Unable to load notes: $error')),
-            data: (notes) => SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 980),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SelectedMaterialsPanel(
-                        notes: notes,
-                        selectedIds: _selectedNoteIds,
-                        onToggle: _toggleNote,
-                      ),
-                      const Gap(16),
-                      _CountPanel(
-                        count: _cardCount,
-                        onChanged: (value) =>
-                            setState(() => _cardCount = value),
-                      ),
-                      const Gap(16),
-                      _DifficultyPanel(
-                        difficulty: _difficulty,
-                        onChanged: (value) =>
-                            setState(() => _difficulty = value),
-                      ),
-                      const Gap(16),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 980),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    _SelectedMaterialsPanel(
+                      selectedCount:
+                      _selectedNoteIds.length,
+                      onPressed:
+                      _selectStudyMaterials,
+                    ),
+
+                    const Gap(16),
+
+                    _CountPanel(
+                      count: _cardCount,
+                      onChanged: (value) =>
+                          setState(() {
+                            _cardCount = value;
+                          }),
+                    ),
+
+                    const Gap(16),
+
+                    _DifficultyPanel(
+                      difficulty: _difficulty,
+                      onChanged: (value) =>
+                          setState(() {
+                            _difficulty = value;
+                          }),
+                    ),
+
+                    const Gap(16),
+
                       ScholarPanel(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +124,7 @@ class _GenerateFlashcardsScreenState
                         child: FilledButton.icon(
                           onPressed: _generating || _selectedNoteIds.isEmpty
                               ? null
-                              : () => _generate(notes),
+                              : _generate,
                           icon: _generating
                               ? const SizedBox(
                                   width: 18,
@@ -140,26 +147,60 @@ class _GenerateFlashcardsScreenState
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
-  void _toggleNote(NoteItem note) {
+  Future<void> _selectStudyMaterials() async {
+    final selected =
+    await Navigator.push<Set<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            StudyMaterialPickerScreen(
+              type: StudyMaterialType.lectureNotes,
+              initialSelection: _selectedNoteIds,
+            )
+      ),
+    );
+
+    if (selected == null) {
+      return;
+    }
+
     setState(() {
-      if (_selectedNoteIds.contains(note.id)) {
-        _selectedNoteIds.remove(note.id);
-      } else {
-        _selectedNoteIds.add(note.id);
-      }
+      _selectedNoteIds
+        ..clear()
+        ..addAll(selected);
     });
   }
 
-  Future<void> _generate(List<NoteItem> notes) async {
+  Future<void> _generate() async {
     final userId = ref.read(authStateProvider).valueOrNull?.uid;
     if (userId == null) return;
 
+    final notesAsync = ref.read(
+      allUploadedNotesProvider,
+    );
+
+    final notes = notesAsync.valueOrNull;
+
+    if (notes == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Study materials are still loading. Please try again.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
     final selectedNotes = notes
-        .where((note) => _selectedNoteIds.contains(note.id))
+        .where(
+          (note) => _selectedNoteIds.contains(note.id),
+    )
         .toList(growable: false);
 
     setState(() => _generating = true);
@@ -198,52 +239,45 @@ class _GenerateFlashcardsScreenState
   }
 }
 
-class _SelectedMaterialsPanel extends StatelessWidget {
+class _SelectedMaterialsPanel
+    extends StatelessWidget {
+
   const _SelectedMaterialsPanel({
-    required this.notes,
-    required this.selectedIds,
-    required this.onToggle,
+    required this.selectedCount,
+    required this.onPressed,
   });
 
-  final List<NoteItem> notes;
-  final Set<String> selectedIds;
-  final ValueChanged<NoteItem> onToggle;
+  final int selectedCount;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.scholarPalette;
 
     return ScholarPanel(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
+
           ScholarSectionHeader(
-            title: 'Selected Study Materials',
-            subtitle: '${selectedIds.length} selected',
+            title: 'Study Materials',
+            subtitle:
+            '$selectedCount selected',
           ),
+
           const Gap(14),
-          if (notes.isEmpty)
-            Text(
-              'Upload notes first to generate flashcards.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: palette.textMuted),
-            )
-          else
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final note in notes)
-                  FilterChip(
-                    selected: selectedIds.contains(note.id),
-                    onSelected: (_) => onToggle(note),
-                    avatar: const Icon(Icons.description_outlined, size: 18),
-                    label: Text(note.name),
-                  ),
-              ],
+
+          FilledButton.icon(
+            onPressed: onPressed,
+            icon: const Icon(
+              Icons.folder_open,
             ),
+            label: Text(
+              selectedCount == 0
+                  ? 'Select Study Materials'
+                  : 'Change Selection',
+            ),
+          ),
         ],
       ),
     );

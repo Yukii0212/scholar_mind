@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../notes/providers/library_provider.dart';
-import '../domain/quiz_folder.dart';
-import '../domain/study_material_type.dart';
+import '../../../features/notes/providers/library_provider.dart';
+import '../../../features/quiz/domain/quiz_folder.dart';
+import '../../../features/quiz/domain/study_material_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../notes/domain/library_folder.dart';
-import '../widgets/favorite_browser.dart';
-import '../widgets/library_browser.dart';
-import '../domain/material_browser_mode.dart';
+import '../../../features/notes/domain/library_folder.dart';
+import 'favorite_browser.dart';
+import 'library_browser.dart';
+import '../../../features/quiz/domain/material_browser_mode.dart';
 
 
 class StudyMaterialPickerScreen extends ConsumerStatefulWidget {

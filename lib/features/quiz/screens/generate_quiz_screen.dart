@@ -16,7 +16,7 @@ import '../domain/study_material_type.dart';
 import '../domain/question_type.dart';
 import '../domain/quiz_difficulty.dart';
 import '../domain/quiz_generation_request.dart';
-import 'study_material_picker_screen.dart';
+import '../../../core/widgets/study_material_picker/study_material_picker_screen.dart';
 import 'selection_manager_screen.dart';
 import 'quiz_generating_screen.dart';
 import '../domain/question_type_weight.dart';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/semester_model.dart';
+import '../../providers/semester/semester_provider.dart';
 import '../../widgets/common/grade_speed_dial.dart';
 import '../../widgets/course/course_actions.dart';
 import '../../widgets/semester/semester_detail_body.dart';
@@ -23,53 +24,71 @@ class SemesterDetailScreen extends ConsumerWidget {
       BuildContext context,
       WidgetRef ref,
       ) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(semester.name),
-          actions: [
-            SemesterDetailPopupMenu(
-              semester: semester,
-            ),
-          ],
+    final semesterAsync = ref.watch(
+      semesterProvider(semester.id),
+    );
+
+    return semesterAsync.when(
+      loading: () => const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
         ),
-      body: SemesterDetailBody(
-        semester: semester,
       ),
-      floatingActionButton: GradeSpeedDial(
-        onCreateCourse: () async {
-          final createdCourse =
-          await showDialog<CourseModel>(
-            context: context,
-            builder: (_) =>
-                CreateCourseDialog(
+      error: (error, stackTrace) => Scaffold(
+        appBar: AppBar(),
+        body: Center(
+          child: Text(error.toString()),
+        ),
+      ),
+      data: (semester) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(semester.name),
+            actions: [
+              SemesterDetailPopupMenu(
+                semester: semester,
+              ),
+            ],
+          ),
+          body: SemesterDetailBody(
+            semester: semester,
+          ),
+          floatingActionButton: GradeSpeedDial(
+            onCreateCourse: () async {
+              final createdCourse =
+              await showDialog<CourseModel>(
+                context: context,
+                builder: (_) => CreateCourseDialog(
                   semesterId: semester.id,
                 ),
-          );
+              );
 
-          if (!context.mounted ||
-              createdCourse == null) {
-            return;
-          }
+              if (!context.mounted ||
+                  createdCourse == null) {
+                return;
+              }
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  CreateGradingStructureScreen(
-                    course: createdCourse,
-                    isEditing: false,
-                  ),
-            ),
-          );
-        },
-        onImportCourse: () {
-          CourseActions.copyFromExistingCourse(
-            context,
-            ref,
-            semester.id,
-          );
-        },
-      ),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CreateGradingStructureScreen(
+                        course: createdCourse,
+                        isEditing: false,
+                      ),
+                ),
+              );
+            },
+            onImportCourse: () {
+              CourseActions.copyFromExistingCourse(
+                context,
+                ref,
+                semester.id,
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

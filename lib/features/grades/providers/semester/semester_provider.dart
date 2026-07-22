@@ -15,3 +15,19 @@ StreamProvider<List<SemesterModel>>(
         .watchSemesters();
   },
 );
+
+final semesterProvider = Provider.family<
+    AsyncValue<SemesterModel>,
+    String>(
+      (ref, semesterId) {
+    final semesters = ref.watch(
+      semesterStreamProvider,
+    );
+
+    return semesters.whenData(
+          (list) => list.firstWhere(
+            (semester) => semester.id == semesterId,
+      ),
+    );
+  },
+);

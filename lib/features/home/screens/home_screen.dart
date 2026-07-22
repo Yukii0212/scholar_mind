@@ -79,6 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: isWide ? 24 : 8,
@@ -681,7 +682,7 @@ class _DesktopRail extends StatelessWidget {
               selected: selectedIndex == i,
               onTap: () => onSelected(i),
             ),
-          const Spacer(),
+          //const Spacer(),
           const _ThemeChooser(),
           const Gap(12),
         ],

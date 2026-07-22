@@ -457,40 +457,26 @@ class _AssessmentEntryDialogState
   }
 
   Widget _buildScoreFields() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 360;
-        final fields = [
-          _scoreField(
+    return Row(
+      children: [
+        Expanded(
+          child: _scoreField(
             controller: _scoreController,
-            label: widget.isPrediction ? 'Expected score' : 'Actual score',
+            label: widget.isPrediction
+                ? 'Expected score'
+                : 'Actual score',
             icon: Icons.edit_note_rounded,
           ),
-          _scoreField(
+        ),
+        const Gap(12),
+        Expanded(
+          child: _scoreField(
             controller: _denominatorController,
             label: 'Out of',
             icon: Icons.percent_rounded,
           ),
-        ];
-
-        if (isNarrow) {
-          return Column(
-            children: [
-              fields[0],
-              const Gap(12),
-              fields[1],
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(child: fields[0]),
-            const Gap(12),
-            Expanded(child: fields[1]),
-          ],
-        );
-      },
+        ),
+      ],
     );
   }
 

@@ -26,6 +26,7 @@ class TrashSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasItems = folders.isNotEmpty || files.isNotEmpty;
 
     return Card(
 
@@ -64,51 +65,35 @@ class TrashSection extends StatelessWidget {
                 ),
 
                 PopupMenuButton<String>(
-
-                  itemBuilder: (_) => const [
-
+                  itemBuilder: (_) => [
                     PopupMenuItem(
-
                       value: 'restore_all',
-
-                      child: Text(
+                      enabled: hasItems,
+                      child: const Text(
                         'Restore All',
                       ),
-
                     ),
-
                     PopupMenuItem(
-
                       value: 'delete_all',
-
-                      child: Text(
+                      enabled: hasItems,
+                      child: const Text(
                         'Empty Trash',
                       ),
-
                     ),
-
                   ],
-
                   onSelected: (value) {
+                    if (!hasItems) return;
 
                     switch (value) {
-
                       case 'restore_all':
-
                         onRestoreAll();
-
                         break;
 
                       case 'delete_all':
-
                         onDeleteAll();
-
                         break;
-
                     }
-
                   },
-
                 ),
 
               ],

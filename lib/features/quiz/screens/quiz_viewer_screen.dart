@@ -33,6 +33,9 @@ class _QuizViewerScreenState
   QuizResponse get quiz =>
       attempt.quiz;
 
+  final Map<int, TextEditingController>
+  _openEndedControllers = {};
+
   @override
   void initState() {
     super.initState();
@@ -284,44 +287,55 @@ class _QuizViewerScreenState
                       ),
                     ],
 
-                  if (question.type ==
-                      QuestionType
-                          .openEnded)
-                    TextField(
-                      controller:
-                      TextEditingController(
-                        text:
-                        answers[index]
-                            ?.openEndedAnswer ??
-                            '',
-                      ),
-                      decoration:
-                      const InputDecoration(
-                        border:
-                        OutlineInputBorder(),
-                        hintText:
-                        'Enter your answer...',
-                      ),
-                      onChanged: (value) {
-                        final updated =
-                        (answers[index] ??
-                            const QuizAnswer())
-                            .copyWith(
-                          openEndedAnswer: value,
+                  if (question.type == QuestionType.openEnded) ...[
+                    Builder(
+                      builder: (context) {
+                        final controller =
+                        _openEndedControllers.putIfAbsent(
+                          index,
+                              () => TextEditingController(
+                            text: answers[index]?.openEndedAnswer ?? '',
+                          ),
                         );
 
-                        
+                        final expectedText =
+                            answers[index]?.openEndedAnswer ?? '';
 
-                        ref
-                            .read(
-                          quizAttemptProvider.notifier,
-                        )
-                            .updateAnswer(
-                          questionIndex: index,
-                          answer: updated,
+                        if (controller.text != expectedText) {
+                          controller.value = TextEditingValue(
+                            text: expectedText,
+                            selection: TextSelection.collapsed(
+                              offset: expectedText.length,
+                            ),
+                          );
+                        }
+
+                        return TextField(
+                          controller: controller,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            hintText: 'Enter your answer...',
+                          ),
+                          onChanged: (value) {
+                            final updated =
+                            (answers[index] ?? const QuizAnswer())
+                                .copyWith(
+                              openEndedAnswer: value,
+                            );
+
+                            ref
+                                .read(
+                              quizAttemptProvider.notifier,
+                            )
+                                .updateAnswer(
+                              questionIndex: index,
+                              answer: updated,
+                            );
+                          },
                         );
                       },
                     ),
+                  ],
 
                   const SizedBox(
                     height: 12,
@@ -419,6 +433,16 @@ class _QuizViewerScreenState
       ),
         ),
     );
+  }
+
+  @override
+  void dispose() {
+    for (final controller
+    in _openEndedControllers.values) {
+      controller.dispose();
+    }
+
+    super.dispose();
   }
 
   Future<void> _submitQuiz() async {

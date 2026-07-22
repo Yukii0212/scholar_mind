@@ -6,7 +6,6 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../domain/note_item.dart';
-import '../../../core/services/background_sync_service.dart';
 
 class FileCacheService {
   static const cacheDeletionDelay = Duration(
@@ -111,12 +110,6 @@ class FileCacheService {
       Uri.parse(url),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to download cached file.',
-      );
-    }
-
     return saveBytes(
       storagePath: storagePath,
       fileName: fileName,
@@ -153,9 +146,6 @@ class FileCacheService {
       } catch (_) {
       }
     }
-
-    print('CACHE SYNC START');
-    print('Notes: ${notes.length}');
   }
 
   static Future<void> delete({
@@ -193,7 +183,6 @@ class FileCacheService {
   static Future<void> deleteCache(
       NoteItem note,
       ) async {
-    print("DELETE FILE CALLED");
     await delete(
       storagePath: note.storagePath,
       fileName: note.name,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
@@ -83,7 +84,16 @@ class LoginScreen extends ConsumerWidget {
                           const Gap(18),
                           if (authAction.hasError) ...[
                             Text(
-                              'Sign-in failed. Please try again.',
+                              (() {
+                                final error = authAction.error;
+
+                                if (error is PlatformException &&
+                                    error.code == 'network_error') {
+                                  return 'No internet connection. Please connect to the internet and try again.';
+                                }
+
+                                return 'Sign-in failed. Please try again.';
+                              })(),
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.error,
                               ),

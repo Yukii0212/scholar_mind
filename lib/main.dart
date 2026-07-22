@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'core/services/theme_service.dart';
 import 'firebase_options.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -10,9 +11,30 @@ import 'core/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await dotenv.load(fileName: ".env");
-  runApp(const ProviderScope(child: ScholarMindApp()));
+
+  await Firebase.initializeApp(
+    options:
+    DefaultFirebaseOptions
+        .currentPlatform,
+  );
+
+  await dotenv.load(
+    fileName: ".env",
+  );
+
+  final initialTheme =
+  await ThemeService.loadLocalTheme();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        initialThemeProvider.overrideWithValue(
+          initialTheme,
+        ),
+      ],
+      child: const ScholarMindApp(),
+    ),
+  );
 }
 
 class ScholarMindApp extends ConsumerWidget {

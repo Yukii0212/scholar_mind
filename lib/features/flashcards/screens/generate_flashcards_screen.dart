@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../notes/providers/library_provider.dart';
@@ -31,7 +35,6 @@ class _GenerateFlashcardsScreenState
   final Set<String> _selectedNoteIds = {};
   var _cardCount = 30;
   var _difficulty = 'Intermediate';
-  var _generating = false;
 
   @override
   void dispose() {
@@ -122,21 +125,14 @@ class _GenerateFlashcardsScreenState
                         width: double.infinity,
                         height: 54,
                         child: FilledButton.icon(
-                          onPressed: _generating || _selectedNoteIds.isEmpty
+                          onPressed: _selectedNoteIds.isEmpty
                               ? null
                               : _generate,
-                          icon: _generating
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.auto_awesome_rounded),
-                          label: Text(
-                            _generating
-                                ? 'Generating...'
-                                : 'Generate Flashcards',
+                          icon: const Icon(
+                            Icons.auto_awesome_rounded,
+                          ),
+                          label: const Text(
+                            'Generate Flashcards',
                           ),
                         ),
                       ),
@@ -175,14 +171,17 @@ class _GenerateFlashcardsScreenState
   }
 
   Future<void> _generate() async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
-    if (userId == null) return;
+    final userId =
+        ref.read(authStateProvider).valueOrNull?.uid;
 
-    final notesAsync = ref.read(
-      allUploadedNotesProvider,
-    );
+    if (userId == null) {
+      return;
+    }
 
-    final notes = notesAsync.valueOrNull;
+    final notes =
+        ref.read(
+          allUploadedNotesProvider,
+        ).valueOrNull;
 
     if (notes == null) {
       if (mounted) {
@@ -194,48 +193,92 @@ class _GenerateFlashcardsScreenState
           ),
         );
       }
+
       return;
     }
 
-    final selectedNotes = notes
+    final selectedNotes =
+    notes
         .where(
-          (note) => _selectedNoteIds.contains(note.id),
+          (note) =>
+          _selectedNoteIds.contains(note.id),
     )
-        .toList(growable: false);
+        .toList(
+      growable: false,
+    );
 
-    setState(() => _generating = true);
-    try {
-      final processed = await _preprocessor.process(selectedNotes);
-      final studyContext = await _quizRepository.buildStudyContext(
-        lectureNotes: processed.values.toList(),
-        pastYearQuestions: const [],
-      );
-      final generated = await _aiService.generateFlashcards(
-        studyContext: studyContext,
-        cardCount: _cardCount,
-        difficulty: _difficulty,
-        extraInstructions: _instructionsController.text,
-      );
+    final processed =
+    await _preprocessor.process(
+      selectedNotes,
+    );
 
-      await ref.read(flashcardRepositoryProvider).saveGeneratedDeck(
-            userId: userId,
-            generated: generated,
-            tags: _tagsController.text.split(','),
-            sourceReference: selectedNotes.map((note) => note.name).join(', '),
-            description:
-                'Generated from ${selectedNotes.length} study material(s).',
+    final studyContext =
+    await _quizRepository.buildStudyContext(
+      lectureNotes:
+      processed.values.toList(),
+      pastYearQuestions: const [],
+    );
+
+    final repository =
+    ref.read(
+      flashcardRepositoryProvider,
+    );
+
+    final taskController =
+    ref.read(
+      appTaskControllerProvider,
+    );
+
+    final tags =
+    _tagsController.text.split(',');
+
+    final extraInstructions =
+        _instructionsController.text;
+
+    unawaited(
+      taskController.run<void>(
+        id: 'flashcard_generation',
+        type:
+        AppTaskType.flashcardGeneration,
+        title:
+        'Generating Flashcards',
+        task: (progress) async {
+          progress(
+            'Generating flashcards...',
           );
 
-      if (!mounted) return;
-      Navigator.of(context).pop();
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to generate flashcards: $error')),
-      );
-    } finally {
-      if (mounted) setState(() => _generating = false);
+          final generated =
+          await _aiService.generateFlashcards(
+            studyContext: studyContext,
+            cardCount: _cardCount,
+            difficulty: _difficulty,
+            extraInstructions:
+            extraInstructions,
+          );
+
+          await repository.saveGeneratedDeck(
+            userId: userId,
+            generated: generated,
+            tags: tags,
+            sourceReference:
+            selectedNotes
+                .map(
+                  (e) => e.name,
+            )
+                .join(', '),
+            description:
+            'Generated from ${selectedNotes.length} study material(s).',
+            onProgress: progress,
+          );
+        },
+      ),
+    );
+
+    if (!mounted) {
+      return;
     }
+
+    Navigator.of(context).pop();
   }
 }
 

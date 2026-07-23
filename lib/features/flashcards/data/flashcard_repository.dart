@@ -126,7 +126,10 @@ class FlashcardRepository {
     required List<String> tags,
     required String? sourceReference,
     required String? description,
+    void Function(String message)? onProgress,
   }) async {
+    onProgress?.call('Creating flashcard deck...');
+
     final deckId = await saveDeck(
       userId: userId,
       name: generated.title,
@@ -138,22 +141,38 @@ class FlashcardRepository {
 
     final batch = _firestore.batch();
     final now = Timestamp.fromDate(DateTime.now());
-    for (final card in generated.cards) {
+
+    for (var i = 0; i < generated.cards.length; i++) {
+      final card = generated.cards[i];
+
+      onProgress?.call(
+        'Saving ${i + 1} of ${generated.cards.length}',
+      );
+
       final reference = _cards(userId, deckId).doc();
+
       batch.set(reference, {
         'front': card.front,
         'back': card.back,
-        'tags': _cleanTags([...tags, ...card.tags]),
+        'tags': _cleanTags([
+          ...tags,
+          ...card.tags,
+        ]),
         'frontImageUrl': null,
         'backImageUrl': null,
         'createdAt': now,
         'updatedAt': now,
       });
     }
-    batch.update(_decks(userId).doc(deckId), {
-      'cardCount': generated.cards.length,
-      'updatedAt': now,
-    });
+
+    batch.update(
+      _decks(userId).doc(deckId),
+      {
+        'cardCount': generated.cards.length,
+        'updatedAt': now,
+      },
+    );
+
     await batch.commit();
   }
 

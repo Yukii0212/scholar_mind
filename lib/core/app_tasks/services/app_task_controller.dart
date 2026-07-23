@@ -62,7 +62,15 @@ class AppTaskController {
           current.copyWith(
             status: AppTaskStatus.completed,
             payload: result,
+            completedAt: DateTime.now(),
           ),
+        );
+
+        Timer(
+          const Duration(minutes: 5),
+              () {
+            notifier.removeCompleted();
+          },
         );
       }
 
@@ -78,7 +86,15 @@ class AppTaskController {
           current.copyWith(
             status: AppTaskStatus.failed,
             error: error,
+            completedAt: DateTime.now(),
           ),
+        );
+
+        Timer(
+          const Duration(minutes: 5),
+              () {
+            notifier.removeCompleted();
+          },
         );
       }
 

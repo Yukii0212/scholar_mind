@@ -21,30 +21,47 @@ class AppTaskBanner extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    if (task.status == AppTaskStatus.completed ||
-        task.status == AppTaskStatus.failed) {
-      return const SizedBox.shrink();
-    }
-
-    return Material(
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) =>
-              const AppTaskDetailsScreen(),
-            ),
-          );
-        },
-          child: Row(
+    return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          12,
+          8,
+          12,
+          0,
+        ),
+        child: Material(
+            elevation: 2,
+            borderRadius: BorderRadius.circular(12),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                    const AppTaskDetailsScreen(),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
             children: [
-              const SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
+              switch (task.status) {
+                AppTaskStatus.completed => const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
                 ),
-              ),
+                AppTaskStatus.failed => const Icon(
+                  Icons.error,
+                  color: Colors.red,
+                ),
+                _ => const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                ),
+              },
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -57,6 +74,7 @@ class AppTaskBanner extends ConsumerWidget {
                           .textTheme
                           .titleSmall,
                     ),
+
                     if (task.message.isNotEmpty)
                       Text(
                         task.message,
@@ -64,13 +82,58 @@ class AppTaskBanner extends ConsumerWidget {
                             .textTheme
                             .bodySmall,
                       ),
+
+                    if (task.status ==
+                        AppTaskStatus.completed)
+                      Text(
+                        'Completed',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                          color: Colors.green,
+                        ),
+                      ),
+
+                    if (task.status ==
+                        AppTaskStatus.failed)
+                      Text(
+                        'Failed',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(
+                          color: Colors.red,
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+
+              if (task.status ==
+                  AppTaskStatus.completed ||
+                  task.status ==
+                      AppTaskStatus.failed)
+                TextButton(
+                  onPressed: () {
+                    ref
+                        .read(
+                      appTaskProvider.notifier,
+                    )
+                        .remove(task.id);
+                  },
+                  child: const Text(
+                    'Dismiss',
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.chevron_right,
+                ),
             ],
           ),
         ),
-      );
+            ),
+        ));
   }
 }

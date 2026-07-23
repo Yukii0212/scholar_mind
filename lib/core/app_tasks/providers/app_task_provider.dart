@@ -22,11 +22,27 @@ class AppTaskController extends StateNotifier<List<AppTask>> {
       }
     }
 
-    if (state.isEmpty) {
-      return null;
+    final now = DateTime.now();
+
+    for (final task in state.reversed) {
+      if (task.status != AppTaskStatus.completed &&
+          task.status != AppTaskStatus.failed) {
+        continue;
+      }
+
+      final completedAt = task.completedAt;
+
+      if (completedAt == null) {
+        continue;
+      }
+
+      if (now.difference(completedAt) <
+          const Duration(minutes: 5)) {
+        return task;
+      }
     }
 
-    return state.last;
+    return null;
   }
 
   AppTask? taskById(String id) {
@@ -54,6 +70,24 @@ class AppTaskController extends StateNotifier<List<AppTask>> {
 
   void remove(String id) {
     state = state.where((task) => task.id != id).toList();
+  }
+
+  void removeCompleted() {
+    final now = DateTime.now();
+
+    state = state.where((task) {
+      if (task.status != AppTaskStatus.completed &&
+          task.status != AppTaskStatus.failed) {
+        return true;
+      }
+
+      if (task.completedAt == null) {
+        return false;
+      }
+
+      return now.difference(task.completedAt!) <
+          const Duration(minutes: 5);
+    }).toList();
   }
 
   void clear() {

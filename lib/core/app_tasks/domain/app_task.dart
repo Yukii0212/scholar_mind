@@ -1,9 +1,6 @@
 import 'app_task_status.dart';
 import 'app_task_type.dart';
 
-import 'app_task_status.dart';
-import 'app_task_type.dart';
-
 const _unset = Object();
 
 class AppTask {
@@ -15,6 +12,7 @@ class AppTask {
     this.message = '',
     this.payload,
     this.error,
+    this.completedAt,
   });
 
   final String id;
@@ -27,12 +25,15 @@ class AppTask {
   final Object? payload;
   final Object? error;
 
+  final DateTime? completedAt;
+
   AppTask copyWith({
     AppTaskStatus? status,
     String? title,
     String? message,
     Object? payload = _unset,
     Object? error = _unset,
+    Object? completedAt = _unset,
   }) {
     return AppTask(
       id: id,
@@ -46,6 +47,9 @@ class AppTask {
       error: identical(error, _unset)
           ? this.error
           : error,
+      completedAt: identical(completedAt, _unset)
+          ? this.completedAt
+          : completedAt as DateTime?,
     );
   }
 }

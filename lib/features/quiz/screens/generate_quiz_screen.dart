@@ -18,7 +18,10 @@ import '../domain/quiz_difficulty.dart';
 import '../domain/quiz_generation_request.dart';
 import '../../../core/widgets/study_material_picker/study_material_picker_screen.dart';
 import 'selection_manager_screen.dart';
-import 'quiz_generating_screen.dart';
+import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/services/app_task_controller.dart';
+import '../providers/quiz_attempt_provider.dart';
+import '../services/quiz_generation_service.dart';
 import '../domain/question_type_weight.dart';
 import '../domain/quiz_folder.dart';
 import '../providers/quiz_library_provider.dart' as quiz_library;
@@ -56,6 +59,9 @@ class _QuizScreenState
 
   final _quizRepository =
   QuizRepository();
+
+  final _generationService =
+  const QuizGenerationService();
 
   String _destinationFolderId = QuizFolder.rootId;
 
@@ -675,16 +681,37 @@ class _QuizScreenState
       _extraInstructions,
     );
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            QuizGeneratingScreen(
-              request: request,
-              destinationFolderId:
-              _destinationFolderId,
-            ),
-      ),
+    final taskController =
+    ref.read(appTaskControllerProvider);
+
+    final quizAttemptNotifier =
+    ref.read(
+      quizAttemptProvider.notifier,
     );
+
+    taskController.run(
+      id: 'quiz_generation',
+      type: AppTaskType.quizGeneration,
+      title: 'Generating Quiz',
+      task: (progress) async {
+        final attempt =
+        await _generationService.generate(
+          request: request,
+          destinationFolderId:
+          _destinationFolderId,
+          onProgress: progress,
+        );
+
+        await quizAttemptNotifier.startAttempt(
+          attempt,
+        );
+
+        return attempt;
+      },
+    );
+
+    if (!mounted) return;
+
+    Navigator.of(context).pop();
   }
 }

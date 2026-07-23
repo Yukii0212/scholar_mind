@@ -176,29 +176,6 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                           );
                         },
                       ),
-                      const Gap(16),
-                      ScholarPanel(
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline_rounded,
-                                color: palette.brandEnd),
-                            const Gap(12),
-                            Expanded(
-                              child: Text(
-                                _deadlineExtendable
-                                    ? 'Missed deadlines remain active so you can update the date or complete them later.'
-                                    : 'Once the due date has passed, this countdown is automatically marked as completed.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: palette.textMuted),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const Gap(24),
 
                       SizedBox(
                         width: double.infinity,
@@ -585,8 +562,20 @@ class _OptionsPanel extends StatelessWidget {
               value: deadlineExtendable,
               onChanged: onExtendableChanged,
               title: const Text('Allow deadline extensions'),
-              subtitle:
-                  const Text('Missed this deadline? You can update the due date and keep this countdown active.'),
+          ),
+          ),
+          const Gap(8),
+
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+                deadlineExtendable
+                    ? 'The countdown stays active after the due date.'
+                    : 'The countdown is completed after the due date.',
+              key: ValueKey(deadlineExtendable),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: palette.textMuted,
+              ),
             ),
           ),
         ],

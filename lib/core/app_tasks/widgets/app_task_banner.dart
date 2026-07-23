@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/app_task_status.dart';
 import '../providers/app_task_provider.dart';
 import '../screens/app_task_details_screen.dart';
+import '../services/app_task_controller.dart';
 
 class AppTaskBanner extends ConsumerWidget {
   const AppTaskBanner({
@@ -32,19 +33,96 @@ class AppTaskBanner extends ConsumerWidget {
             elevation: 2,
             borderRadius: BorderRadius.circular(12),
             clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                    const AppTaskDetailsScreen(),
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-            children: [
+            child: GestureDetector(
+                onVerticalDragEnd: (details) {
+                  final controller =
+                  ref.read(
+                    appTaskControllerProvider,
+                  );
+
+                  final velocity =
+                      details.primaryVelocity ?? 0;
+
+                  if (velocity < -150) {
+                    controller.collapse(task.id);
+                  } else if (velocity > 150) {
+                    controller.expand(task.id);
+                  }
+                },
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const AppTaskDetailsScreen(),
+                      ),
+                    );
+                  },
+                  child: AnimatedSize(
+                    duration:
+                    const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    child: Padding(
+                      padding:
+                      const EdgeInsets.all(16),
+                      child: task.isCollapsed
+                          ? Row(
+                        children: [
+                          switch (task.status) {
+                            AppTaskStatus.completed =>
+                            const Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                            ),
+                            AppTaskStatus.failed =>
+                            const Icon(
+                              Icons.error,
+                              color: Colors.red,
+                            ),
+                            _ =>
+                            const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child:
+                              CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          },
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              task.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall,
+                            ),
+                          ),
+                          if (task.message.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                right: 8,
+                              ),
+                              child: Text(
+                                task.message
+                                    .split('\n')
+                                    .first,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall,
+                              ),
+                            ),
+                          const Icon(
+                            Icons.unfold_more,
+                          ),
+                        ],
+                      )
+                          : Row(
+                        children: [
               switch (task.status) {
                 AppTaskStatus.completed => const Icon(
                   Icons.check_circle,
@@ -134,6 +212,9 @@ class AppTaskBanner extends ConsumerWidget {
           ),
         ),
             ),
-        ));
+        )
+            )
+        )
+    );
   }
 }

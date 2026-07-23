@@ -72,6 +72,42 @@ class AppTaskController extends StateNotifier<List<AppTask>> {
     state = state.where((task) => task.id != id).toList();
   }
 
+  void collapse(String id) {
+    final index =
+    state.indexWhere((t) => t.id == id);
+
+    if (index == -1) {
+      return;
+    }
+
+    final updated = [...state];
+
+    updated[index] =
+        updated[index].copyWith(
+          isCollapsed: true,
+        );
+
+    state = updated;
+  }
+
+  void expand(String id) {
+    final index =
+    state.indexWhere((t) => t.id == id);
+
+    if (index == -1) {
+      return;
+    }
+
+    final updated = [...state];
+
+    updated[index] =
+        updated[index].copyWith(
+          isCollapsed: false,
+        );
+
+    state = updated;
+  }
+
   void removeCompleted() {
     final now = DateTime.now();
 

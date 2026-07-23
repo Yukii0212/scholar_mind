@@ -30,6 +30,7 @@ class AppTaskController {
         status: AppTaskStatus.running,
         title: title,
         message: '',
+        isCollapsed: false,
       ),
     );
 
@@ -63,6 +64,7 @@ class AppTaskController {
             status: AppTaskStatus.completed,
             payload: result,
             completedAt: DateTime.now(),
+            isCollapsed: false,
           ),
         );
 
@@ -84,6 +86,7 @@ class AppTaskController {
             status: AppTaskStatus.failed,
             error: error,
             completedAt: DateTime.now(),
+            isCollapsed: false,
           ),
         );
 
@@ -113,6 +116,18 @@ class AppTaskController {
         message: message,
       ),
     );
+  }
+
+  void collapse(String id) {
+    _ref
+        .read(appTaskProvider.notifier)
+        .collapse(id);
+  }
+
+  void expand(String id) {
+    _ref
+        .read(appTaskProvider.notifier)
+        .expand(id);
   }
 
   void clear() {

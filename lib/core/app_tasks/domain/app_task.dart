@@ -13,6 +13,7 @@ class AppTask {
     this.payload,
     this.error,
     this.completedAt,
+    this.isCollapsed = false,
   });
 
   final String id;
@@ -27,6 +28,8 @@ class AppTask {
 
   final DateTime? completedAt;
 
+  final bool isCollapsed;
+
   AppTask copyWith({
     AppTaskStatus? status,
     String? title,
@@ -34,6 +37,7 @@ class AppTask {
     Object? payload = _unset,
     Object? error = _unset,
     Object? completedAt = _unset,
+    bool? isCollapsed,
   }) {
     return AppTask(
       id: id,
@@ -50,6 +54,8 @@ class AppTask {
       completedAt: identical(completedAt, _unset)
           ? this.completedAt
           : completedAt as DateTime?,
+      isCollapsed:
+      isCollapsed ?? this.isCollapsed,
     );
   }
 }

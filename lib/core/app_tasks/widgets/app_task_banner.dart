@@ -29,11 +29,29 @@ class AppTaskBanner extends ConsumerWidget {
           12,
           0,
         ),
-        child: Material(
+        child: Dismissible(
+            key: ValueKey(task.id),
+            direction:
+            task.status ==
+                AppTaskStatus.completed ||
+                task.status ==
+                    AppTaskStatus.failed
+                ? DismissDirection.horizontal
+                : DismissDirection.none,
+            onDismissed: (_) {
+              ref
+                  .read(
+                appTaskProvider.notifier,
+              )
+                  .remove(task.id);
+            },
+            child: Material(
             elevation: 2,
             borderRadius: BorderRadius.circular(12),
             clipBehavior: Clip.antiAlias,
-            child: GestureDetector(
+                child: GestureDetector(
+                    behavior:
+                    HitTestBehavior.opaque,
                 onVerticalDragEnd: (details) {
                   final controller =
                   ref.read(
@@ -59,6 +77,7 @@ class AppTaskBanner extends ConsumerWidget {
                     );
                   },
                   child: AnimatedSize(
+                    alignment: Alignment.topCenter,
                     duration:
                     const Duration(milliseconds: 200),
                     curve: Curves.easeOut,
@@ -91,33 +110,50 @@ class AppTaskBanner extends ConsumerWidget {
                           },
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              task.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    task.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall,
+                                  ),
+                                ),
+                                if (task.message.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 8,
+                                    ),
+                                    child: ConstrainedBox(
+                                      constraints:
+                                      const BoxConstraints(
+                                        maxWidth: 120,
+                                      ),
+                                      child: Text(
+                                        task.message
+                                            .split('\n')
+                                            .first,
+                                        maxLines: 1,
+                                        overflow:
+                                        TextOverflow.ellipsis,
+                                        textAlign: TextAlign.end,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                          if (task.message.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                right: 8,
-                              ),
-                              child: Text(
-                                task.message
-                                    .split('\n')
-                                    .first,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall,
-                              ),
-                            ),
+
+                          const SizedBox(width: 8),
+
                           const Icon(
-                            Icons.unfold_more,
+                            Icons.expand_more,
                           ),
                         ],
                       )
@@ -214,6 +250,7 @@ class AppTaskBanner extends ConsumerWidget {
             ),
         )
             )
+        )
         )
     );
   }

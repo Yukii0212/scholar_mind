@@ -20,29 +20,68 @@ class CountdownCrudScreen extends ConsumerStatefulWidget {
       _CountdownCrudScreenState();
 }
 
+enum CountdownPriorityPreset {
+  low,
+  normal,
+  high,
+  critical,
+  custom,
+}
+
 class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  static const Map<CountdownPriorityPreset, int> _presetValues = {
+    CountdownPriorityPreset.low: 50,
+    CountdownPriorityPreset.normal: 100,
+    CountdownPriorityPreset.high: 150,
+    CountdownPriorityPreset.critical: 200,
+  };
+
   late final TextEditingController _titleController;
   late final TextEditingController _priorityController;
   late final TextEditingController _descriptionController;
+
+  late CountdownPriorityPreset _priorityPreset;
+
   late CountdownType _type;
   late DateTime _dueDate;
   late bool _deadlineExtendable;
+
   var _saving = false;
 
   @override
   void initState() {
     super.initState();
+
     final initial = widget.initial;
-    _titleController = TextEditingController(text: initial?.title ?? '');
-    _priorityController = TextEditingController(
-      text: '${initial?.priority ?? 100}',
+
+    _titleController = TextEditingController(
+      text: initial?.title ?? '',
     );
+
+    final priority = initial?.priority ?? 100;
+
+    _priorityPreset = switch (priority) {
+      50 => CountdownPriorityPreset.low,
+      100 => CountdownPriorityPreset.normal,
+      150 => CountdownPriorityPreset.high,
+      200 => CountdownPriorityPreset.critical,
+      _ => CountdownPriorityPreset.custom,
+    };
+
+    _priorityController = TextEditingController(
+      text: '$priority',
+    );
+
     _descriptionController = TextEditingController(
       text: initial?.description ?? '',
     );
+
     _type = initial?.type ?? CountdownType.finalExamination;
-    _dueDate = initial?.dueDate ?? DateTime.now().add(const Duration(days: 7));
+    _dueDate = initial?.dueDate ?? DateTime.now().add(
+      const Duration(days: 7),
+    );
     _deadlineExtendable = initial?.deadlineExtendable ?? false;
   }
 
@@ -63,20 +102,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Countdown' : 'Create Countdown'),
-        actions: [
-          TextButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check_rounded),
-            label: const Text('Save'),
-          ),
-          const Gap(8),
-        ],
+        actions: const [],
       ),
       body: ScholarScaffoldBackground(
         child: SafeArea(
@@ -105,6 +131,17 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                             titleController: _titleController,
                             priorityController: _priorityController,
                             descriptionController: _descriptionController,
+                            priorityPreset: _priorityPreset,
+                            onPriorityPresetChanged: (preset) {
+                              setState(() {
+                                _priorityPreset = preset;
+
+                                if (preset != CountdownPriorityPreset.custom) {
+                                  _priorityController.text =
+                                  '${_presetValues[preset]!}';
+                                }
+                              });
+                            },
                             onChanged: () => setState(() {}),
                           );
                           final options = _OptionsPanel(
@@ -139,25 +176,25 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                           );
                         },
                       ),
-                      const Gap(16),
-                      ScholarPanel(
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline_rounded,
-                                color: palette.brandEnd),
-                            const Gap(12),
-                            Expanded(
-                              child: Text(
-                                _deadlineExtendable
-                                    ? 'Extendable overdue countdowns stay active until you complete or edit them.'
-                                    : 'Non-extendable overdue countdowns are automatically completed.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: palette.textMuted),
-                              ),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _saving ? null : _save,
+                          icon: _saving
+                              ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
                             ),
-                          ],
+                          )
+                              : const Icon(Icons.check_rounded),
+                          label: Text(
+                            isEditing
+                                ? 'Save Changes'
+                                : 'Create Countdown',
+                          ),
                         ),
                       ),
                     ],
@@ -246,7 +283,7 @@ class _HeaderPreview extends StatelessWidget {
                   children: [
                     _PreviewPill(text: type.label, color: palette.brandEnd),
                     _PreviewPill(
-                      text: 'Priority $priority',
+                      text: priorityDisplay(priority),
                       color: palette.textMuted,
                     ),
                     _PreviewPill(
@@ -269,8 +306,13 @@ class _DetailsPanel extends StatelessWidget {
     required this.titleController,
     required this.priorityController,
     required this.descriptionController,
+    required this.priorityPreset,
+    required this.onPriorityPresetChanged,
     required this.onChanged,
   });
+
+  final CountdownPriorityPreset priorityPreset;
+  final ValueChanged<CountdownPriorityPreset> onPriorityPresetChanged;
 
   final TextEditingController titleController;
   final TextEditingController priorityController;
@@ -303,24 +345,131 @@ class _DetailsPanel extends StatelessWidget {
             },
           ),
           const Gap(12),
-          TextFormField(
-            controller: priorityController,
-            onChanged: (_) => onChanged(),
-            keyboardType: TextInputType.number,
+          DropdownButtonFormField<CountdownPriorityPreset>(
+            initialValue: priorityPreset,
             decoration: const InputDecoration(
               labelText: 'Priority',
-              helperText: 'Higher priority appears first',
               prefixIcon: Icon(Icons.priority_high_rounded),
             ),
-            validator: (value) {
-              final parsed = int.tryParse((value ?? '').trim());
-              if (parsed == null || parsed < 0 || parsed > 999) {
-                return 'Enter a number from 0 to 999';
+            items: const [
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.low,
+                child: Text('Low'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.normal,
+                child: Text('Normal'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.high,
+                child: Text('High'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.critical,
+                child: Text('Critical'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.custom,
+                child: Text('Custom'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                onPriorityPresetChanged(value);
+                onChanged();
               }
-              return null;
             },
           ),
+
           const Gap(12),
+
+          if (priorityPreset == CountdownPriorityPreset.custom) ...[
+            const Gap(12),
+
+            TextFormField(
+              controller: priorityController,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => onChanged(),
+              decoration: const InputDecoration(
+                labelText: 'Custom Priority',
+                helperText: 'Higher values appear before lower values.',
+                prefixIcon: Icon(Icons.tune_rounded),
+              ),
+              validator: (value) {
+                final parsed = int.tryParse((value ?? '').trim());
+
+                if (parsed == null || parsed < 0 || parsed > 999) {
+                  return 'Enter a number from 0 to 999';
+                }
+
+                return null;
+              },
+            ),
+          ],
+
+          if (priorityPreset == CountdownPriorityPreset.custom) ...[
+            const Gap(16),
+
+            Text(
+              'Priority Presets',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+
+            const Gap(8),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outlineVariant,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: Text('• Low = 50')),
+                      Expanded(child: Text('• High = 150')),
+                    ],
+                  ),
+
+                  const Gap(6),
+
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: Text('• Normal = 100')),
+                      Expanded(child: Text('• Critical = 200')),
+                    ],
+                  ),
+
+                  const Gap(14),
+
+                  Text(
+                    'Custom lets you enter any priority value.\n\n'
+                        'Use a higher value to make this countdown appear higher in your countdown list.\n\n'
+                        'Example:\n'
+                        '• A countdown with priority 200 appears above one with priority 100.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+
+            const Gap(12),
+          ],
           TextFormField(
             controller: descriptionController,
             maxLines: 5,
@@ -412,9 +561,21 @@ class _OptionsPanel extends StatelessWidget {
             child: SwitchListTile(
               value: deadlineExtendable,
               onChanged: onExtendableChanged,
-              title: const Text('Deadline can be extended'),
-              subtitle:
-                  const Text('Keep overdue items open for manual action.'),
+              title: const Text('Allow deadline extensions'),
+          ),
+          ),
+          const Gap(8),
+
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+                deadlineExtendable
+                    ? 'The countdown stays active after the due date.'
+                    : 'The countdown is completed after the due date.',
+              key: ValueKey(deadlineExtendable),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: palette.textMuted,
+              ),
             ),
           ),
         ],
@@ -470,4 +631,24 @@ String _daysText(int days) {
   if (days == 0) return 'Today';
   if (days == 1) return 'Tomorrow';
   return '$days days';
+}
+
+String priorityPresetLabel(CountdownPriorityPreset preset) {
+  return switch (preset) {
+    CountdownPriorityPreset.low => 'Low',
+    CountdownPriorityPreset.normal => 'Normal',
+    CountdownPriorityPreset.high => 'High',
+    CountdownPriorityPreset.critical => 'Critical',
+    CountdownPriorityPreset.custom => 'Custom',
+  };
+}
+
+String priorityDisplay(int priority) {
+  return switch (priority) {
+    50 => 'Low (50)',
+    100 => 'Normal (100)',
+    150 => 'High (150)',
+    200 => 'Critical (200)',
+    _ => 'Custom ($priority)',
+  };
 }

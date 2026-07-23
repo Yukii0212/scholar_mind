@@ -54,6 +54,79 @@ class GoogleClassroomService {
     return response.bodyBytes;
   }
 
+  Future<int> importAttachments({
+    required Iterable<Map<String, dynamic>> attachments,
+    required String destinationFolderId,
+    required Future<String?> Function({
+    required String folderId,
+    required String fileName,
+    required String extension,
+    required Uint8List bytes,
+    }) uploadNote,
+    required Future<void> Function(
+        String storagePath,
+        String fileName,
+        Uint8List bytes,
+        ) cacheFile,
+    required void Function(String message) onProgress,
+  }) async {
+    var importedCount = 0;
+
+    final files =
+    attachments.toList(
+      growable: false,
+    );
+
+    for (var i = 0;
+    i < files.length;
+    i++) {
+
+      final file = files[i];
+
+      final fileName =
+      file['title'] as String;
+
+      onProgress(
+        'Importing ${i + 1} of ${files.length}: $fileName',
+      );
+
+      final bytes =
+      await downloadDriveFile(
+        file['id'] as String,
+      );
+
+      final extension =
+      fileName.contains('.')
+          ? fileName
+          .split('.')
+          .last
+          : 'txt';
+
+      final storagePath =
+      await uploadNote(
+        folderId:
+        destinationFolderId,
+        fileName: fileName,
+        extension: extension,
+        bytes: bytes,
+      );
+
+      if (storagePath == null) {
+        continue;
+      }
+
+      importedCount++;
+
+      await cacheFile(
+        storagePath,
+        fileName,
+        bytes,
+      );
+    }
+
+    return importedCount;
+  }
+
   Future<List<DriveItem>> fetchDriveItems(
       String folderId,
       ) async {

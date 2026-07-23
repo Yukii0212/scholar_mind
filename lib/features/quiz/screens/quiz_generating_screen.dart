@@ -71,11 +71,12 @@ class _QuizGeneratingScreenState
         id: 'quiz_generation',
         type: AppTaskType.quizGeneration,
         title: 'Generating Quiz',
-        task: () async {
+        task: (progress) async {
           return _generationService.generate(
             request: widget.request,
             destinationFolderId:
             widget.destinationFolderId,
+            onProgress: progress,
           );
         },
       );

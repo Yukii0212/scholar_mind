@@ -16,8 +16,11 @@ class AppTaskController {
     required String id,
     required AppTaskType type,
     required String title,
-    required Future<T> Function() task,
+    required Future<T> Function(
+        void Function(String message) progress,
+        ) task,
   }) async {
+
     final notifier =
     _ref.read(appTaskProvider.notifier);
 
@@ -32,7 +35,20 @@ class AppTaskController {
     );
 
     try {
-      final result = await task();
+
+      final result = await task(
+            (message) {
+          final current = notifier.state;
+
+          if (current == null) return;
+
+          notifier.update(
+            current.copyWith(
+              message: message,
+            ),
+          );
+        },
+      );
 
       notifier.update(
         AppTask(
@@ -45,7 +61,9 @@ class AppTaskController {
       );
 
       return result;
+
     } catch (error) {
+
       notifier.update(
         AppTask(
           id: id,

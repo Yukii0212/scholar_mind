@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/app_tasks/widgets/app_task_banner.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/models/scholar_theme.dart';
 import '../../../core/providers/theme_provider.dart';
@@ -108,14 +109,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       drawer: const _AppMenu(),
       body: ScholarScaffoldBackground(
-        child: Row(
+        child: Column(
           children: [
-            if (isWide)
-              _DesktopRail(
-                selectedIndex: selectedIndex,
-                onSelected: (index) => context.go(_navRoutes[index]),
+            const AppTaskBanner(),
+            Expanded(
+              child: Row(
+                children: [
+                  if (isWide)
+                    _DesktopRail(
+                      selectedIndex: selectedIndex,
+                      onSelected: (index) => context.go(_navRoutes[index]),
+                    ),
+                  Expanded(
+                    child: widget.child,
+                  ),
+                ],
               ),
-            Expanded(child: widget.child),
+            ),
           ],
         ),
       ),

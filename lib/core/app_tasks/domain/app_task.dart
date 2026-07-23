@@ -1,6 +1,11 @@
 import 'app_task_status.dart';
 import 'app_task_type.dart';
 
+import 'app_task_status.dart';
+import 'app_task_type.dart';
+
+const _unset = Object();
+
 class AppTask {
   const AppTask({
     required this.id,
@@ -26,8 +31,8 @@ class AppTask {
     AppTaskStatus? status,
     String? title,
     String? message,
-    Object? payload,
-    Object? error,
+    Object? payload = _unset,
+    Object? error = _unset,
   }) {
     return AppTask(
       id: id,
@@ -35,8 +40,12 @@ class AppTask {
       status: status ?? this.status,
       title: title ?? this.title,
       message: message ?? this.message,
-      payload: payload ?? this.payload,
-      error: error ?? this.error,
+      payload: identical(payload, _unset)
+          ? this.payload
+          : payload,
+      error: identical(error, _unset)
+          ? this.error
+          : error,
     );
   }
 }

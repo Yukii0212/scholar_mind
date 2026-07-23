@@ -38,41 +38,49 @@ class AppTaskController {
 
       final result = await task(
             (message) {
-          final current = notifier.state;
+              final current =
+                  notifier.currentTask;
 
-          if (current == null) return;
+              if (current == null ||
+                  current.id != id) {
+                return;
+              }
 
-          notifier.update(
-            current.copyWith(
-              message: message,
-            ),
-          );
+              notifier.update(
+                current.copyWith(
+                  message: message,
+                ),
+              );
         },
       );
 
-      notifier.update(
-        AppTask(
-          id: id,
-          type: type,
-          status: AppTaskStatus.completed,
-          title: title,
-          payload: result,
-        ),
-      );
+      final current =
+          notifier.currentTask;
+
+      if (current != null) {
+        notifier.update(
+          current.copyWith(
+            status: AppTaskStatus.completed,
+            payload: result,
+          ),
+        );
+      }
 
       return result;
 
     } catch (error) {
 
-      notifier.update(
-        AppTask(
-          id: id,
-          type: type,
-          status: AppTaskStatus.failed,
-          title: title,
-          error: error,
-        ),
-      );
+      final current =
+          notifier.currentTask;
+
+      if (current != null) {
+        notifier.update(
+          current.copyWith(
+            status: AppTaskStatus.failed,
+            error: error,
+          ),
+        );
+      }
 
       rethrow;
     }

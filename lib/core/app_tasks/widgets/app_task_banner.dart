@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/app_task_status.dart';
 import '../providers/app_task_provider.dart';
+import '../screens/app_task_details_screen.dart';
 
 class AppTaskBanner extends ConsumerWidget {
   const AppTaskBanner({
@@ -11,7 +12,10 @@ class AppTaskBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final task = ref.watch(appTaskProvider);
+    ref.watch(appTaskProvider);
+
+    final task =
+        ref.read(appTaskProvider.notifier).currentTask;
 
     if (task == null) {
       return const SizedBox.shrink();
@@ -23,14 +27,15 @@ class AppTaskBanner extends ConsumerWidget {
     }
 
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: InkWell(
-        onTap: () {},
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 10,
-          ),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+              const AppTaskDetailsScreen(),
+            ),
+          );
+        },
           child: Row(
             children: [
               const SizedBox(
@@ -66,7 +71,6 @@ class AppTaskBanner extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

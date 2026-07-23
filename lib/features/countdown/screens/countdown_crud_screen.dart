@@ -20,29 +20,68 @@ class CountdownCrudScreen extends ConsumerStatefulWidget {
       _CountdownCrudScreenState();
 }
 
+enum CountdownPriorityPreset {
+  low,
+  normal,
+  high,
+  critical,
+  custom,
+}
+
 class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  static const Map<CountdownPriorityPreset, int> _presetValues = {
+    CountdownPriorityPreset.low: 50,
+    CountdownPriorityPreset.normal: 100,
+    CountdownPriorityPreset.high: 150,
+    CountdownPriorityPreset.critical: 200,
+  };
+
   late final TextEditingController _titleController;
   late final TextEditingController _priorityController;
   late final TextEditingController _descriptionController;
+
+  late CountdownPriorityPreset _priorityPreset;
+
   late CountdownType _type;
   late DateTime _dueDate;
   late bool _deadlineExtendable;
+
   var _saving = false;
 
   @override
   void initState() {
     super.initState();
+
     final initial = widget.initial;
-    _titleController = TextEditingController(text: initial?.title ?? '');
-    _priorityController = TextEditingController(
-      text: '${initial?.priority ?? 100}',
+
+    _titleController = TextEditingController(
+      text: initial?.title ?? '',
     );
+
+    final priority = initial?.priority ?? 100;
+
+    _priorityPreset = switch (priority) {
+      50 => CountdownPriorityPreset.low,
+      100 => CountdownPriorityPreset.normal,
+      150 => CountdownPriorityPreset.high,
+      200 => CountdownPriorityPreset.critical,
+      _ => CountdownPriorityPreset.custom,
+    };
+
+    _priorityController = TextEditingController(
+      text: '$priority',
+    );
+
     _descriptionController = TextEditingController(
       text: initial?.description ?? '',
     );
+
     _type = initial?.type ?? CountdownType.finalExamination;
-    _dueDate = initial?.dueDate ?? DateTime.now().add(const Duration(days: 7));
+    _dueDate = initial?.dueDate ?? DateTime.now().add(
+      const Duration(days: 7),
+    );
     _deadlineExtendable = initial?.deadlineExtendable ?? false;
   }
 
@@ -63,20 +102,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Countdown' : 'Create Countdown'),
-        actions: [
-          TextButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check_rounded),
-            label: const Text('Save'),
-          ),
-          const Gap(8),
-        ],
+        actions: const [],
       ),
       body: ScholarScaffoldBackground(
         child: SafeArea(
@@ -105,6 +131,17 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                             titleController: _titleController,
                             priorityController: _priorityController,
                             descriptionController: _descriptionController,
+                            priorityPreset: _priorityPreset,
+                            onPriorityPresetChanged: (preset) {
+                              setState(() {
+                                _priorityPreset = preset;
+
+                                if (preset != CountdownPriorityPreset.custom) {
+                                  _priorityController.text =
+                                  '${_presetValues[preset]!}';
+                                }
+                              });
+                            },
                             onChanged: () => setState(() {}),
                           );
                           final options = _OptionsPanel(
@@ -158,6 +195,29 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+
+                      const Gap(24),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _saving ? null : _save,
+                          icon: _saving
+                              ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                              : const Icon(Icons.check_rounded),
+                          label: Text(
+                            isEditing
+                                ? 'Save Changes'
+                                : 'Create Countdown',
+                          ),
                         ),
                       ),
                     ],
@@ -246,7 +306,7 @@ class _HeaderPreview extends StatelessWidget {
                   children: [
                     _PreviewPill(text: type.label, color: palette.brandEnd),
                     _PreviewPill(
-                      text: 'Priority $priority',
+                      text: priorityDisplay(priority),
                       color: palette.textMuted,
                     ),
                     _PreviewPill(
@@ -269,8 +329,13 @@ class _DetailsPanel extends StatelessWidget {
     required this.titleController,
     required this.priorityController,
     required this.descriptionController,
+    required this.priorityPreset,
+    required this.onPriorityPresetChanged,
     required this.onChanged,
   });
+
+  final CountdownPriorityPreset priorityPreset;
+  final ValueChanged<CountdownPriorityPreset> onPriorityPresetChanged;
 
   final TextEditingController titleController;
   final TextEditingController priorityController;
@@ -303,22 +368,107 @@ class _DetailsPanel extends StatelessWidget {
             },
           ),
           const Gap(12),
-          TextFormField(
-            controller: priorityController,
-            onChanged: (_) => onChanged(),
-            keyboardType: TextInputType.number,
+          DropdownButtonFormField<CountdownPriorityPreset>(
+            initialValue: priorityPreset,
             decoration: const InputDecoration(
               labelText: 'Priority',
-              helperText: 'Higher priority appears first',
               prefixIcon: Icon(Icons.priority_high_rounded),
             ),
-            validator: (value) {
-              final parsed = int.tryParse((value ?? '').trim());
-              if (parsed == null || parsed < 0 || parsed > 999) {
-                return 'Enter a number from 0 to 999';
+            items: const [
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.low,
+                child: Text('Low'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.normal,
+                child: Text('Normal'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.high,
+                child: Text('High'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.critical,
+                child: Text('Critical'),
+              ),
+              DropdownMenuItem(
+                value: CountdownPriorityPreset.custom,
+                child: Text('Custom'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                onPriorityPresetChanged(value);
+                onChanged();
               }
-              return null;
             },
+          ),
+
+          const Gap(12),
+
+          if (priorityPreset == CountdownPriorityPreset.custom) ...[
+            const Gap(12),
+
+            TextFormField(
+              controller: priorityController,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => onChanged(),
+              decoration: const InputDecoration(
+                labelText: 'Custom Priority',
+                helperText: 'Higher values appear before lower values.',
+                prefixIcon: Icon(Icons.tune_rounded),
+              ),
+              validator: (value) {
+                final parsed = int.tryParse((value ?? '').trim());
+
+                if (parsed == null || parsed < 0 || parsed > 999) {
+                  return 'Enter a number from 0 to 999';
+                }
+
+                return null;
+              },
+            ),
+          ],
+
+          const Gap(16),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text('Priority Presets'),
+                      content: const Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Low = 50'),
+                          Text('Normal = 100'),
+                          Text('High = 150'),
+                          Text('Critical = 200'),
+                          SizedBox(height: 16),
+                          Text(
+                            'Custom lets you enter any priority value.\n\n'
+                                'Higher numbers appear before lower numbers.',
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        FilledButton(
+                          onPressed: Navigator.of(context).pop,
+                          child: Text('Got it'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.info_outline_rounded),
+              label: const Text('Priority Presets'),
+            ),
           ),
           const Gap(12),
           TextFormField(
@@ -470,4 +620,24 @@ String _daysText(int days) {
   if (days == 0) return 'Today';
   if (days == 1) return 'Tomorrow';
   return '$days days';
+}
+
+String priorityPresetLabel(CountdownPriorityPreset preset) {
+  return switch (preset) {
+    CountdownPriorityPreset.low => 'Low',
+    CountdownPriorityPreset.normal => 'Normal',
+    CountdownPriorityPreset.high => 'High',
+    CountdownPriorityPreset.critical => 'Critical',
+    CountdownPriorityPreset.custom => 'Custom',
+  };
+}
+
+String priorityDisplay(int priority) {
+  return switch (priority) {
+    50 => 'Low (50)',
+    100 => 'Normal (100)',
+    150 => 'High (150)',
+    200 => 'Critical (200)',
+    _ => 'Custom ($priority)',
+  };
 }

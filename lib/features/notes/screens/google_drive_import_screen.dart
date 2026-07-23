@@ -1,5 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/providers/app_task_provider.dart';
+import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../domain/drive_item.dart';
 import '../providers/google_classroom_provider.dart';
 import '../providers/library_provider.dart';
@@ -27,17 +33,11 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
   final Map<String, Map<String, dynamic>>
   _selectedAttachments = {};
 
-  bool _isImporting = false;
-
   final List<DriveItem> _items = [];
 
   final List<DriveItem> _navigationStack = [];
 
   bool _isLoading = true;
-
-  int _currentImport = 0;
-  int _totalImports = 0;
-  String _currentFileName = '';
 
   late String _destinationFolderId;
 
@@ -87,9 +87,7 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
 
   @override
   Widget build(BuildContext context) {
-      return Stack(
-        children: [
-          Scaffold(
+    return Scaffold(
             appBar: AppBar(
               title: Text(
                 _navigationStack.isEmpty
@@ -115,28 +113,17 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
               actions: [
                 if (_selectedAttachments.isNotEmpty)
                   TextButton.icon(
-                    onPressed:
-                    _isImporting ? null : _handleBatchImport,
-                    icon: _isImporting
-                        ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                        : const Icon(Icons.download),
+                    onPressed: _handleBatchImport,
+                    icon: const Icon(
+                      Icons.download,
+                    ),
                     label: Text(
-                      _isImporting
-                          ? 'Importing...'
-                          : 'Import (${_selectedAttachments.length})',
+                      'Import (${_selectedAttachments.length})',
                     ),
                   ),
               ],
             ),
-            body: IgnorePointer(
-              ignoring: _isImporting,
-              child: RefreshIndicator(
+      body: RefreshIndicator(
                 onRefresh: () async {
                   await _loadFolder(
                     _navigationStack.isEmpty
@@ -252,148 +239,85 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
                   },
                 ),
               ),
-            ),
-          ),
-
-          if (_isImporting)
-            Container(
-              color: Colors.black54,
-              child: Center(
-                child: Card(
-                  child: Padding(
-                    padding:
-                    const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize:
-                      MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        Text(
-                          'Importing $_currentImport / $_totalImports',
-                        ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Text(
-                          _currentFileName,
-                          textAlign:
-                          TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      );
+            );
     }
 
   Future<void> _handleBatchImport() async {
-    setState(() {
-      _isImporting = true;
 
-      _currentImport = 0;
-      _totalImports =
-          _selectedAttachments.length;
+    final taskController =
+    ref.read(
+      appTaskControllerProvider,
+    );
 
-      _currentFileName = '';
-    });
+    final classroomService =
+    ref.read(
+      googleClassroomServiceProvider,
+    );
 
-    try {
-      final controller =
-      ref.read(
-        libraryActionControllerProvider
-            .notifier,
-      );
+    final libraryController =
+    ref.read(
+      libraryActionControllerProvider
+          .notifier,
+    );
 
-      var importedCount = 0;
+    final attachments =
+    _selectedAttachments.values
+        .map(
+      Map<String, dynamic>.from,
+    )
+        .toList(
+      growable: false,
+    );
 
-      for (final file
-      in _selectedAttachments.values) {
+    final destinationFolderId =
+        _destinationFolderId;
 
-        final classroomService =
-        ref.read(
-          googleClassroomServiceProvider,
-        );
-
-        final fileName =
-        file['title'] as String;
-
-        setState(() {
-          _currentImport++;
-
-          _currentFileName =
-              fileName;
-        });
-
-        final fileId =
-        file['id'] as String;
-
-        final extension =
-        fileName.contains('.')
-            ? fileName.split('.').last
-            : 'txt';
-
-        final bytes =
-        await classroomService
-            .downloadDriveFile(
-          fileId,
-        );
-
-        final storagePath =
-        await controller.uploadNote(
-          folderId: _destinationFolderId,
-          fileName: fileName,
-          extension: extension,
-          bytes: bytes,
-          category: NoteCategory.selfStudyNotes,
-        );
-
-        if (storagePath != null) {
-
-          importedCount++;
-
-          await FileCacheService.saveBytes(
-            storagePath: storagePath,
-            fileName: fileName,
-            bytes: bytes,
+    unawaited(
+      taskController.run<int>(
+        id: 'google_drive_import',
+        type: AppTaskType.googleDriveImport,
+        title: 'Importing Google Drive Files',
+        task: (progress) async {
+          return classroomService.importAttachments(
+            attachments: attachments,
+            destinationFolderId:
+            destinationFolderId,
+            uploadNote: ({
+              required folderId,
+              required fileName,
+              required extension,
+              required bytes,
+            }) {
+              return libraryController.uploadNote(
+                folderId: folderId,
+                fileName: fileName,
+                extension: extension,
+                bytes: bytes,
+                category:
+                NoteCategory.selfStudyNotes,
+              );
+            },
+            cacheFile: (
+                storagePath,
+                fileName,
+                bytes,
+                ) {
+              return FileCacheService.saveBytes(
+                storagePath: storagePath,
+                fileName: fileName,
+                bytes: bytes,
+              );
+            },
+            onProgress: progress,
           );
-        }
-      }
+        },
+      ),
+    );
 
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            'Imported $importedCount files.',
-          ),
-        ),
-      );
-
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            'Import failed: $e',
-          ),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isImporting = false;
-        });
-      }
+    if (!mounted) {
+      return;
     }
+
+    Navigator.of(context).pop();
   }
 }

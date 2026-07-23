@@ -20,7 +20,6 @@ class AppTaskController {
         void Function(String message) progress,
         ) task,
   }) async {
-
     final notifier =
     _ref.read(appTaskProvider.notifier);
 
@@ -34,30 +33,31 @@ class AppTaskController {
       ),
     );
 
-    try {
+    void progress(String message) {
+      final current =
+          notifier.currentTask;
 
-      final result = await task(
-            (message) {
-              final current =
-                  notifier.currentTask;
+      if (current == null ||
+          current.id != id) {
+        return;
+      }
 
-              if (current == null ||
-                  current.id != id) {
-                return;
-              }
-
-              notifier.update(
-                current.copyWith(
-                  message: message,
-                ),
-              );
-        },
+      notifier.update(
+        current.copyWith(
+          message: message,
+        ),
       );
+    }
+
+    try {
+      final result =
+      await task(progress);
 
       final current =
           notifier.currentTask;
 
-      if (current != null) {
+      if (current != null &&
+          current.id == id) {
         notifier.update(
           current.copyWith(
             status: AppTaskStatus.completed,
@@ -68,20 +68,17 @@ class AppTaskController {
 
         Timer(
           const Duration(minutes: 5),
-              () {
-            notifier.removeCompleted();
-          },
+          notifier.removeCompleted,
         );
       }
 
       return result;
-
     } catch (error) {
-
       final current =
           notifier.currentTask;
 
-      if (current != null) {
+      if (current != null &&
+          current.id == id) {
         notifier.update(
           current.copyWith(
             status: AppTaskStatus.failed,
@@ -92,9 +89,7 @@ class AppTaskController {
 
         Timer(
           const Duration(minutes: 5),
-              () {
-            notifier.removeCompleted();
-          },
+          notifier.removeCompleted,
         );
       }
 

@@ -186,8 +186,8 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                             Expanded(
                               child: Text(
                                 _deadlineExtendable
-                                    ? 'Extendable overdue countdowns stay active until you complete or edit them.'
-                                    : 'Non-extendable overdue countdowns are automatically completed.',
+                                    ? 'Missed deadlines remain active so you can update the date or complete them later.'
+                                    : 'Once the due date has passed, this countdown is automatically marked as completed.',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -430,47 +430,69 @@ class _DetailsPanel extends StatelessWidget {
             ),
           ],
 
-          const Gap(16),
+          if (priorityPreset == CountdownPriorityPreset.custom) ...[
+            const Gap(16),
 
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: const Text('Priority Presets'),
-                      content: const Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Low = 50'),
-                          Text('Normal = 100'),
-                          Text('High = 150'),
-                          Text('Critical = 200'),
-                          SizedBox(height: 16),
-                          Text(
-                            'Custom lets you enter any priority value.\n\n'
-                                'Higher numbers appear before lower numbers.',
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        FilledButton(
-                          onPressed: Navigator.of(context).pop,
-                          child: Text('Got it'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-              icon: const Icon(Icons.info_outline_rounded),
-              label: const Text('Priority Presets'),
+            Text(
+              'Priority Presets',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const Gap(12),
+
+            const Gap(8),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outlineVariant,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: Text('• Low = 50')),
+                      Expanded(child: Text('• High = 150')),
+                    ],
+                  ),
+
+                  const Gap(6),
+
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: Text('• Normal = 100')),
+                      Expanded(child: Text('• Critical = 200')),
+                    ],
+                  ),
+
+                  const Gap(14),
+
+                  Text(
+                    'Custom lets you enter any priority value.\n\n'
+                        'Use a higher value to make this countdown appear higher in your countdown list.\n\n'
+                        'Example:\n'
+                        '• A countdown with priority 200 appears above one with priority 100.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+
+            const Gap(12),
+          ],
           TextFormField(
             controller: descriptionController,
             maxLines: 5,
@@ -562,9 +584,9 @@ class _OptionsPanel extends StatelessWidget {
             child: SwitchListTile(
               value: deadlineExtendable,
               onChanged: onExtendableChanged,
-              title: const Text('Deadline can be extended'),
+              title: const Text('Allow deadline extensions'),
               subtitle:
-                  const Text('Keep overdue items open for manual action.'),
+                  const Text('Missed this deadline? You can update the due date and keep this countdown active.'),
             ),
           ),
         ],

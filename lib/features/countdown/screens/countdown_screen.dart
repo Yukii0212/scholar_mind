@@ -283,7 +283,7 @@ class _CountdownCard extends StatelessWidget {
                       color: palette.brandEnd,
                     ),
                     _CountdownPill(
-                      text: 'Priority ${item.priority}',
+                      text: item.priority.priorityLabel,
                       color: urgent ? palette.warning : palette.textMuted,
                     ),
                     if (item.deadlineExtendable)

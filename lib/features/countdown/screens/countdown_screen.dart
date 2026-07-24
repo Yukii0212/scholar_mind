@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
@@ -19,10 +20,19 @@ class CountdownScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: userId == null ? null : () => _openCountdownCrud(context),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('New Countdown'),
+      floatingActionButton: SpeedDial(
+        icon: Icons.add,
+        activeIcon: Icons.close,
+        spacing: 12,
+        children: [
+          SpeedDialChild(
+            child: const Icon(Icons.event_note_outlined),
+            label: 'New Countdown',
+            onTap: userId == null
+                ? null
+                : () => _openCountdownCrud(context),
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,

@@ -105,12 +105,16 @@ class SemesterStatisticsCard extends ConsumerWidget {
   }
 
   static double? _average(List<SemesterCoursePriority> courses) {
-    if (courses.isEmpty) return null;
-    final total = courses.fold<double>(
-      0,
-      (sum, course) => sum + course.summary.projectedPercentage,
-    );
-    return total / courses.length;
+    final scores = courses
+        .map((course) => course.summary.averageAssessmentScore)
+        .whereType<double>()
+        .toList();
+
+    if (scores.isEmpty) {
+      return null;
+    }
+
+    return scores.reduce((a, b) => a + b) / scores.length;
   }
 }
 

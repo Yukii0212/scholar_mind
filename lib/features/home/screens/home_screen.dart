@@ -251,12 +251,19 @@ class DashboardView extends ConsumerWidget {
   }
 
   static double? _averageScore(List<SemesterCoursePriority>? statistics) {
-    if (statistics == null || statistics.isEmpty) return null;
+    if (statistics == null) {
+      return null;
+    }
+
     final scores = statistics
-        .map((entry) => entry.summary.projectedPercentage)
+        .map((entry) => entry.summary.averageAssessmentScore)
         .whereType<double>()
         .toList();
-    if (scores.isEmpty) return null;
+
+    if (scores.isEmpty) {
+      return null;
+    }
+
     return scores.reduce((a, b) => a + b) / scores.length;
   }
 }

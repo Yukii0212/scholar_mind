@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
 import '../../providers/grading/grading_provider.dart';
-import '../../widgets/common/grade_speed_dial.dart';
 import '../../widgets/course/course_detail_body.dart';
-import '../grading/create_grading_structure_screen.dart';
 
 class CourseDetailScreen extends ConsumerStatefulWidget {
   const CourseDetailScreen({

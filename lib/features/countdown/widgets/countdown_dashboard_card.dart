@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_design.dart';
 import '../domain/countdown_item.dart';
 import '../providers/countdown_provider.dart';
+import '../screens/countdown_crud_screen.dart';
 
 class CountdownDashboardCard extends ConsumerWidget {
   const CountdownDashboardCard({super.key});
@@ -38,7 +39,18 @@ class CountdownDashboardCard extends ConsumerWidget {
             Column(
               children: [
                 for (final item in featured) ...[
-                  _CountdownPreview(item: item),
+                  _CountdownPreview(
+                    item: item,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CountdownCrudScreen(
+                            initial: item,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   if (item != featured.last) const Gap(10),
                 ],
               ],
@@ -50,9 +62,13 @@ class CountdownDashboardCard extends ConsumerWidget {
 }
 
 class _CountdownPreview extends StatelessWidget {
-  const _CountdownPreview({required this.item});
+  const _CountdownPreview({
+    required this.item,
+    required this.onTap,
+  });
 
   final CountdownItem item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -60,58 +76,76 @@ class _CountdownPreview extends StatelessWidget {
     final days = item.daysRemaining;
     final isUrgent = days <= 3;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.panelStrong.withValues(alpha: 0.58),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isUrgent
-              ? palette.warning.withValues(alpha: 0.52)
-              : palette.stroke.withValues(alpha: 0.72),
-        ),
-      ),
-      child: Row(
-        children: [
-          ScholarIconBadge(
-            icon: _iconFor(item.type),
-            size: 36,
-          ),
-          const Gap(12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const Gap(3),
-                Text(
-                  '${item.type.label} - Priority ${item.priority}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: palette.textMuted,
-                      ),
-                ),
-              ],
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: palette.panelStrong.withValues(alpha: 0.58),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isUrgent
+                  ? palette.warning.withValues(alpha: 0.52)
+                  : palette.stroke.withValues(alpha: 0.72),
             ),
           ),
-          const Gap(10),
-          Text(
-            _daysText(days),
-            textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: isUrgent ? palette.warning : palette.brandEnd,
+          child: Row(
+            children: [
+              ScholarIconBadge(
+                icon: _iconFor(item.type),
+                size: 36,
+              ),
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelLarge
+                          ?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const Gap(3),
+                    Text(
+                      '${item.type.label} - Priority ${item.priority}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(
+                        color: palette.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Gap(10),
+              Text(
+                _daysText(days),
+                textAlign: TextAlign.right,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(
+                  color: isUrgent
+                      ? palette.warning
+                      : palette.brandEnd,
                   fontWeight: FontWeight.w900,
                 ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

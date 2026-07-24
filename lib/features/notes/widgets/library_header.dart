@@ -39,15 +39,22 @@ class LibraryHeader extends StatelessWidget {
           subtitle: _subtitle,
           trailing: null,
         ),
-        if (section == LibrarySection.browse) ...[
-          const Gap(12),
+
+        const Gap(12),
+
+        if (section == LibrarySection.browse)
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 2,
             children: [
               TextButton.icon(
-                onPressed: () => onBreadcrumbPressed(-1),
-                icon: const Icon(Icons.home_outlined, size: 18),
+                onPressed: folderStack.isEmpty
+                    ? null
+                    : () => onBreadcrumbPressed(-1),
+                icon: const Icon(
+                  Icons.home_outlined,
+                  size: 18,
+                ),
                 label: const Text('Library'),
               ),
               for (var index = 0; index < folderStack.length; index++) ...[
@@ -62,9 +69,12 @@ class LibraryHeader extends StatelessWidget {
                 ),
               ],
             ],
-          ),
-        ],
+          )
+        else
+          const SizedBox(height: 48),
+
         const Gap(16),
+
         SizedBox(
           width: double.infinity,
           child: SegmentedButton<LibrarySection>(

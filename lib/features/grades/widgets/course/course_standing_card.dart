@@ -144,22 +144,19 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                 _targetController.text,
                               );
 
-                              if (value != null &&
-                                  value > summary.totalWeight) {
+                              if (value != null && (value < 0 || value > 100)) {
                                 ScaffoldMessenger.of(
                                   context,
                                 ).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                     content: Text(
-                                      'Target Score cannot exceed the maximum course score '
-                                      '(${summary.totalWeight.toStringAsFixed(0)}%).',
+                                      'Target Score must be between 0% and 100%.',
                                     ),
                                   ),
                                 );
 
                                 _targetController.text =
-                                    course.targetScore?.toStringAsFixed(0) ??
-                                        '';
+                                    course.targetScore?.toStringAsFixed(0) ?? '';
 
                                 return;
                               }
@@ -194,23 +191,21 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                           _minimumController.text,
                                         );
 
-                              if (value != null &&
-                                  value > summary.totalWeight) {
+                              if (value != null && (value < 0 || value > 100)) {
                                 ScaffoldMessenger.of(
                                   context,
                                 ).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                     content: Text(
-                                      'Minimum Acceptable cannot exceed the maximum course score '
-                                      '(${summary.totalWeight.toStringAsFixed(0)}%).',
+                                      'Minimum Acceptable score must be between 0% and 100%.',
                                     ),
                                   ),
                                 );
 
-                                _minimumController.text = course
-                                        .minimumAcceptableScore
+                                _minimumController.text =
+                                    course.minimumAcceptableScore
                                         ?.toStringAsFixed(0) ??
-                                    '';
+                                        '';
 
                                 return;
                               }

@@ -11,9 +11,11 @@ class CountdownCrudScreen extends ConsumerStatefulWidget {
   const CountdownCrudScreen({
     super.key,
     this.initial,
+    this.initialDueDate,
   });
 
   final CountdownItem? initial;
+  final DateTime? initialDueDate;
 
   @override
   ConsumerState<CountdownCrudScreen> createState() =>
@@ -79,9 +81,11 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
     );
 
     _type = initial?.type ?? CountdownType.finalExamination;
-    _dueDate = initial?.dueDate ?? DateTime.now().add(
-      const Duration(days: 7),
-    );
+    _dueDate = initial?.dueDate ??
+        widget.initialDueDate ??
+        DateTime.now().add(
+          const Duration(days: 7),
+        );
     _deadlineExtendable = initial?.deadlineExtendable ?? false;
   }
 

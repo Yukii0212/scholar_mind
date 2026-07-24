@@ -85,7 +85,7 @@ class _CreateCourseDialogState
         constraints: const BoxConstraints(
           maxWidth: 500,
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
@@ -135,21 +135,34 @@ class _CreateCourseDialogState
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller:
-                  _targetScoreController,
+                  controller: _targetScoreController,
                   decoration: const InputDecoration(
-                    labelText:
-                    'Target Score (Optional)',
-                    hintText:
-                    'Example: 80',
+                    labelText: 'Target Score (Optional)',
+                    hintText: 'Example: 80',
                     suffixText: '%',
                     border: OutlineInputBorder(),
+                    errorMaxLines: 2,
                   ),
-                  keyboardType:
-                  const TextInputType
-                      .numberWithOptions(
+                  keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return null;
+                    }
+
+                    final score = double.tryParse(value.trim());
+
+                    if (score == null) {
+                      return 'Please enter a valid number.';
+                    }
+
+                    if (score < 0 || score > 100) {
+                      return 'Target score must be between 0% and 100%.';
+                    }
+
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 24),

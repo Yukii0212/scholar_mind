@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
+import '../../../../core/theme/app_design.dart';
 import '../../../countdown/domain/countdown_item.dart';
 
 class DashboardDayEventsSheet extends StatelessWidget {
@@ -61,7 +62,7 @@ class DashboardDayEventsSheet extends StatelessWidget {
                       onTap: () => onCountdownSelected(countdowns[i]),
                     ),
                     if (i != countdowns.length - 1)
-                      const Divider(height: 20),
+                      const Gap(10),
                   ],
                 ],
               ),
@@ -112,31 +113,72 @@ class _CountdownTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = context.scholarPalette;
     final days = item.daysRemaining;
 
-    return ListTile(
-      onTap: onTap,
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        _iconFor(item.type),
-      ),
-      title: Text(
-        item.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        '${item.type.label} • Priority ${item.priority}',
-      ),
-      trailing: Text(
-        switch (days) {
-          < 0 => 'Overdue',
-          0 => 'Today',
-          1 => '1 day',
-          _ => '$days days',
-        },
-        style: Theme.of(context).textTheme.labelMedium,
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: palette.panelStrong.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: palette.stroke.withValues(alpha: 0.7),
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ScholarIconBadge(
+                  icon: _iconFor(item.type),
+                  size: 36,
+                ),
+                const Gap(12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Gap(4),
+                      Text(
+                        '${item.type.label} • Priority ${item.priority}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: palette.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Gap(12),
+                Text(
+                  switch (days) {
+                    < 0 => 'Overdue',
+                    0 => 'Today',
+                    1 => '1 day',
+                    _ => '$days days',
+                  },
+                  textAlign: TextAlign.right,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

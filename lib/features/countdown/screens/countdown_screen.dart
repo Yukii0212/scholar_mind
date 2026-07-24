@@ -14,6 +14,7 @@ class CountdownScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countdownsAsync = ref.watch(countdownsProvider);
+    final upcoming = ref.watch(upcomingCountdownsProvider);
     final userId = ref.watch(authStateProvider).valueOrNull?.uid;
 
     return Scaffold(
@@ -30,63 +31,73 @@ class CountdownScreen extends ConsumerWidget {
           error: (error, _) => Center(
             child: Text('Unable to load countdowns: $error'),
           ),
-          data: (items) => SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 112),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 980),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const ScholarSectionHeader(
-                      title: 'Countdown',
-                      subtitle:
-                          'Track exams, assessments, and important deadlines',
-                    ),
-                    const Gap(16),
-                    _CountdownSummary(items: items),
-                    const Gap(16),
-                    if (items.isEmpty)
-                      const _EmptyCountdowns()
-                    else
-                      Column(
-                        children: [
-                          for (final item in items) ...[
-                            _CountdownCard(
-                              item: item,
-                              onToggle: userId == null
-                                  ? null
-                                  : (completed) => ref
-                                      .read(countdownRepositoryProvider)
-                                      .markCompleted(
-                                        userId: userId,
-                                        countdownId: item.id,
-                                        completed: completed,
-                                      ),
-                              onEdit: userId == null
-                                  ? null
-                                  : () => _openCountdownCrud(
-                                        context,
-                                        initial: item,
-                                      ),
-                              onDelete: userId == null
-                                  ? null
-                                  : () => _deleteCountdown(
-                                        context,
-                                        ref,
-                                        userId,
-                                        item,
-                                      ),
-                            ),
-                            if (item != items.last) const Gap(12),
-                          ],
-                        ],
+          data: (items) {
+            final completed = items.where((item) => item.isCompleted).toList();
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 112),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 980),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ScholarSectionHeader(
+                        title: 'Countdown',
+                        subtitle:
+                        'Track exams, assessments, and important deadlines',
                       ),
-                  ],
+                      const Gap(16),
+                      _CountdownSummary(items: items),
+                      const Gap(16),
+                      if (items.isEmpty)
+                        const _EmptyCountdowns()
+                      else
+                        Column(
+                          children: [
+                            for (final item in [
+                              ...upcoming,
+                              ...completed,
+                            ]) ...[
+                              _CountdownCard(
+                                item: item,
+                                onToggle: userId == null
+                                    ? null
+                                    : (completed) =>
+                                    ref
+                                        .read(countdownRepositoryProvider)
+                                        .markCompleted(
+                                      userId: userId,
+                                      countdownId: item.id,
+                                      completed: completed,
+                                    ),
+                                onEdit: userId == null
+                                    ? null
+                                    : () =>
+                                    _openCountdownCrud(
+                                      context,
+                                      initial: item,
+                                    ),
+                                onDelete: userId == null
+                                    ? null
+                                    : () =>
+                                    _deleteCountdown(
+                                      context,
+                                      ref,
+                                      userId,
+                                      item,
+                                    ),
+                              ),
+                              if (item != items.last) const Gap(12),
+                            ],
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          }
         ),
       ),
     );

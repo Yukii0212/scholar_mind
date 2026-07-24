@@ -16,5 +16,42 @@ final countdownsProvider = StreamProvider<List<CountdownItem>>((ref) {
 
 final upcomingCountdownsProvider = Provider<List<CountdownItem>>((ref) {
   final countdowns = ref.watch(countdownsProvider).valueOrNull ?? const [];
-  return countdowns.where((item) => !item.isCompleted).toList();
+
+  final upcoming = countdowns
+      .where((item) => !item.isCompleted)
+      .toList();
+
+  upcoming.sort((a, b) {
+    final bucketCompare =
+    _bucketFor(a.daysRemaining).compareTo(_bucketFor(b.daysRemaining));
+
+    if (bucketCompare != 0) {
+      return bucketCompare;
+    }
+
+    final priorityCompare = b.priority.compareTo(a.priority);
+    if (priorityCompare != 0) {
+      return priorityCompare;
+    }
+
+    return a.dueDate.compareTo(b.dueDate);
+  });
+
+  return upcoming;
 });
+
+int _bucketFor(int daysRemaining) {
+  if (daysRemaining < 3) {
+    return 0;
+  }
+
+  if (daysRemaining < 7) {
+    return 1;
+  }
+
+  if (daysRemaining < 30) {
+    return 2;
+  }
+
+  return 3;
+}

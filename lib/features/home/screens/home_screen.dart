@@ -334,6 +334,7 @@ class _DashboardHero extends StatelessWidget {
               StudyStreakDashboardCard(),
               Gap(16),
               DashboardCountdownCarousel(),
+              Gap(12),
             ],
           ),
       ],
@@ -994,6 +995,7 @@ class _AppMenu extends ConsumerWidget {
             ),
             const Spacer(),
             const Divider(height: 1),
+
             _MenuTile(
               icon: Icons.logout_rounded,
               title: 'Sign out',

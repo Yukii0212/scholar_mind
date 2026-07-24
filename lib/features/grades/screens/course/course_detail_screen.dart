@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/course_model.dart';
+import '../../providers/course/course_provider.dart';
 import '../../providers/grading/grading_provider.dart';
 import '../../widgets/course/course_detail_body.dart';
 
@@ -26,16 +27,25 @@ class _CourseDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final hasGradingStructure =
     ref.watch(
       hasGradingStructureProvider(
         widget.course.id,
       ),
     );
 
+    final liveCourse = ref.watch(
+      courseProvider(
+        widget.course.id,
+      ),
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.course.name),
+        title: liveCourse.when(
+          loading: () => Text(widget.course.name),
+          error: (_, __) => Text(widget.course.name),
+          data: (course) => Text(course.name),
+        ),
       ),
       body: CourseDetailBody(
         key: _bodyKey,

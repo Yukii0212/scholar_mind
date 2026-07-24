@@ -7,8 +7,8 @@ import '../../../core/models/scholar_theme.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../core/theme/app_design.dart';
 
-class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+class AppearanceScreen extends ConsumerWidget {
+  const AppearanceScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,8 +25,8 @@ class SettingsScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const ScholarSectionHeader(
-                  title: 'Settings',
-                  subtitle: 'Personalize ScholarMind across your account',
+                    title: 'Appearance',
+                    subtitle: 'Customize the theme for ScholarMind',
                 ),
                 const Gap(16),
                 ScholarPanel(

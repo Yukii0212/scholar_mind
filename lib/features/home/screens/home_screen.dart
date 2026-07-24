@@ -879,7 +879,7 @@ class _AppMenu extends ConsumerWidget {
             ),
             _MenuTile(
               icon: Icons.settings_outlined,
-              title: 'Settings',
+              title: 'Appearance',
               onTap: () => _go(context, '/settings'),
             ),
             const Divider(height: 1),

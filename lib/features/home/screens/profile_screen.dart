@@ -149,7 +149,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     children: [
                       ListTile(
                         leading: const Icon(Icons.settings_outlined),
-                        title: const Text('Settings'),
+                        title: const Text('Appearance'),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/settings'),
                       ),

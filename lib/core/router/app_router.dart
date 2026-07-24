@@ -7,7 +7,7 @@ import '../../features/flashcards/screens/flashcard_library_screen.dart';
 import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/home/screens/profile_screen.dart';
-import '../../features/home/screens/settings_screen.dart';
+import '../../features/home/screens/appearance_screen.dart';
 import '../../features/notes/screens/notes_screen.dart';
 import '../../features/quiz/screens/quiz_library_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
@@ -95,7 +95,7 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
+            builder: (context, state) => const AppearanceScreen(),
           ),
         ],
       ),

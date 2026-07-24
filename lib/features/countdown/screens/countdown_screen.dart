@@ -5,7 +5,7 @@ import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../grades/widgets/sections/semester/hidden_section.dart';
+import '../widgets/sections/hidden_section.dart';
 import '../domain/countdown_item.dart';
 import '../providers/countdown_provider.dart';
 import '../widgets/sections/completed_section.dart';

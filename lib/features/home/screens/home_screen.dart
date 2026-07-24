@@ -366,7 +366,6 @@ class _QuickAccessGrid extends StatelessWidget {
     ];
 
     return ScholarPanel(
-      onTap: () => context.go('/grades'),
       child: Column(
         children: [
           const ScholarSectionHeader(title: 'Quick Access'),

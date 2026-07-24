@@ -1,34 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../core/theme/app_design.dart';
+import '../../../countdown/domain/countdown_item.dart';
+import '../../../countdown/providers/countdown_provider.dart';
 import '../../../countdown/screens/countdown_crud_screen.dart';
-import 'dashboard_calendar_day.dart';
 import 'dashboard_calendar_grid.dart';
 import 'dashboard_day_events_sheet.dart';
 
-class DashboardCalendarPage extends StatefulWidget {
+class DashboardCalendarPage extends ConsumerStatefulWidget {
   const DashboardCalendarPage({
     super.key,
   });
 
   @override
-  State<DashboardCalendarPage> createState() =>
+  ConsumerState<DashboardCalendarPage> createState() =>
       _DashboardCalendarPageState();
 }
 
 class _DashboardCalendarPageState
-    extends State<DashboardCalendarPage> {
+    extends ConsumerState<DashboardCalendarPage> {
   DateTime _displayedMonth = DateTime.now();
   DateTime _selectedDate = DateTime.now();
 
-  /// 1 = Monday ... 7 = Sunday.
-  /// This will later come from user preferences.
-  int _firstDayOfWeek = DateTime.monday;
+  final int _firstDayOfWeek = DateTime.monday;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.scholarPalette;
+
+    final countdowns =
+        ref.watch(countdownsProvider).valueOrNull ??
+            const <CountdownItem>[];
 
     final days = _buildCalendarDays(
       month: _displayedMonth,
@@ -100,13 +104,16 @@ class _DashboardCalendarPageState
             days: days,
             selectedDate: _selectedDate,
             eventCountBuilder: (date) {
-              // TODO:
-              // Replace with countdown provider.
-              return switch (date.day % 5) {
-                0 => 2,
-                1 => 1,
-                _ => 0,
-              };
+              final count = countdowns.where((item) {
+                if (item.isCompleted) return false;
+
+                return _isSameDate(item.dueDate, date);
+              }).length;
+
+              if (count == 0) return 0;
+              if (count == 1) return 1;
+
+              return 2;
             },
             onDateSelected: (date) {
               setState(() {
@@ -193,12 +200,28 @@ class _DashboardCalendarPageState
       BuildContext context,
       DateTime date,
       ) {
+    final countdowns =
+        ref.read(countdownsProvider).valueOrNull ??
+            const <CountdownItem>[];
+
+    final events = countdowns.where((item) {
+      return !item.isCompleted &&
+          _isSameDate(item.dueDate, date);
+    }).toList()
+      ..sort((a, b) {
+        final priority = b.priority.compareTo(a.priority);
+        if (priority != 0) return priority;
+
+        return a.dueDate.compareTo(b.dueDate);
+      });
+
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
       builder: (_) {
         return DashboardDayEventsSheet(
           date: date,
+          countdowns: events,
           onAddCountdown: () {
             Navigator.pop(context);
 

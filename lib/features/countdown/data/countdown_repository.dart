@@ -52,6 +52,7 @@ class CountdownRepository {
     final existingData = existing?.data();
     final createdAt = existingData?['createdAt'] as Timestamp?;
     final isCompleted = existingData?['isCompleted'] as bool? ?? false;
+    final isHidden = existingData?['isHidden'] as bool? ?? false;
 
     final item = CountdownItem(
       id: reference.id,
@@ -62,6 +63,7 @@ class CountdownRepository {
       description: description,
       deadlineExtendable: deadlineExtendable,
       isCompleted: isCompleted,
+      isHidden: isHidden,
       createdAt: createdAt?.toDate() ?? now,
       updatedAt: now,
     );
@@ -87,9 +89,21 @@ class CountdownRepository {
     return _collection(userId).doc(countdownId).delete();
   }
 
+  Future<void> setHidden({
+    required String userId,
+    required String countdownId,
+    required bool hidden,
+  }) {
+    return _collection(userId).doc(countdownId).update({
+      'isHidden': hidden,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
   bool _shouldAutoComplete(CountdownItem item) {
     return !item.deadlineExtendable &&
         !item.isCompleted &&
+        !item.isHidden &&
         item.daysRemaining < 0;
   }
 }

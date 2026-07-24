@@ -55,6 +55,7 @@ class CountdownItem {
     required this.description,
     required this.deadlineExtendable,
     required this.isCompleted,
+    required this.isHidden,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -67,6 +68,7 @@ class CountdownItem {
   final String? description;
   final bool deadlineExtendable;
   final bool isCompleted;
+  final bool isHidden;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -91,6 +93,7 @@ class CountdownItem {
       description: data['description'] as String?,
       deadlineExtendable: data['deadlineExtendable'] as bool? ?? false,
       isCompleted: data['isCompleted'] as bool? ?? false,
+      isHidden: data['isHidden'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
@@ -105,6 +108,7 @@ class CountdownItem {
       'description': description,
       'deadlineExtendable': deadlineExtendable,
       'isCompleted': isCompleted,
+      'isHidden': isHidden,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -119,6 +123,7 @@ class CountdownItem {
     String? description,
     bool? deadlineExtendable,
     bool? isCompleted,
+    bool? isHidden,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -131,6 +136,7 @@ class CountdownItem {
       description: description ?? this.description,
       deadlineExtendable: deadlineExtendable ?? this.deadlineExtendable,
       isCompleted: isCompleted ?? this.isCompleted,
+      isHidden: isHidden ?? this.isHidden,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

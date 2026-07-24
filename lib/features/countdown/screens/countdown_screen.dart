@@ -5,8 +5,11 @@ import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../widgets/sections/hidden_section.dart';
 import '../domain/countdown_item.dart';
 import '../providers/countdown_provider.dart';
+import '../widgets/sections/completed_section.dart';
+import '../widgets/sections/active_section.dart';
 import 'countdown_crud_screen.dart';
 
 class CountdownScreen extends ConsumerWidget {
@@ -42,8 +45,6 @@ class CountdownScreen extends ConsumerWidget {
             child: Text('Unable to load countdowns: $error'),
           ),
           data: (items) {
-            final completed = items.where((item) => item.isCompleted).toList();
-
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 112),
               child: Center(
@@ -63,43 +64,12 @@ class CountdownScreen extends ConsumerWidget {
                       if (items.isEmpty)
                         const _EmptyCountdowns()
                       else
-                        Column(
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            for (final item in [
-                              ...upcoming,
-                              ...completed,
-                            ]) ...[
-                              _CountdownCard(
-                                item: item,
-                                onToggle: userId == null
-                                    ? null
-                                    : (completed) =>
-                                    ref
-                                        .read(countdownRepositoryProvider)
-                                        .markCompleted(
-                                      userId: userId,
-                                      countdownId: item.id,
-                                      completed: completed,
-                                    ),
-                                onEdit: userId == null
-                                    ? null
-                                    : () =>
-                                    _openCountdownCrud(
-                                      context,
-                                      initial: item,
-                                    ),
-                                onDelete: userId == null
-                                    ? null
-                                    : () =>
-                                    _deleteCountdown(
-                                      context,
-                                      ref,
-                                      userId,
-                                      item,
-                                    ),
-                              ),
-                              if (item != items.last) const Gap(12),
-                            ],
+                            ActiveSection(),
+                            CompletedSection(),
+                            HiddenSection(),
                           ],
                         ),
                     ],
@@ -227,144 +197,6 @@ class _SummaryTile extends StatelessWidget {
   }
 }
 
-class _CountdownCard extends StatelessWidget {
-  const _CountdownCard({
-    required this.item,
-    required this.onToggle,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final CountdownItem item;
-  final ValueChanged<bool>? onToggle;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.scholarPalette;
-    final days = item.daysRemaining;
-    final overdue = days < 0;
-    final urgent = days <= 3 && !item.isCompleted;
-
-    return ScholarPanel(
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Checkbox(
-            value: item.isCompleted,
-            onChanged:
-                onToggle == null ? null : (value) => onToggle!(value ?? false),
-          ),
-          const Gap(8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              decoration: item.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
-                      ),
-                    ),
-                    _CountdownPill(
-                      text: _daysText(days),
-                      color: overdue ? palette.warning : palette.brandEnd,
-                    ),
-                  ],
-                ),
-                const Gap(8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _CountdownPill(
-                      text: item.type.label,
-                      color: palette.brandEnd,
-                    ),
-                    _CountdownPill(
-                      text: item.priority.priorityLabel,
-                      color: urgent ? palette.warning : palette.textMuted,
-                    ),
-                    if (item.deadlineExtendable)
-                      _CountdownPill(
-                        text: overdue ? 'Extendable overdue' : 'Extendable',
-                        color: overdue ? palette.warning : palette.success,
-                      ),
-                  ],
-                ),
-                if ((item.description ?? '').trim().isNotEmpty) ...[
-                  const Gap(10),
-                  Text(
-                    item.description!.trim(),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: palette.textMuted,
-                        ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'edit') onEdit?.call();
-              if (value == 'delete') onDelete?.call();
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'edit',
-                child: Text('Edit'),
-              ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Text('Delete'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountdownPill extends StatelessWidget {
-  const _CountdownPill({
-    required this.text,
-    required this.color,
-  });
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w800,
-            ),
-      ),
-    );
-  }
-}
-
 class _EmptyCountdowns extends StatelessWidget {
   const _EmptyCountdowns();
 
@@ -411,43 +243,4 @@ Future<void> _openCountdownCrud(
       builder: (_) => CountdownCrudScreen(initial: initial),
     ),
   );
-}
-
-Future<void> _deleteCountdown(
-  BuildContext context,
-  WidgetRef ref,
-  String userId,
-  CountdownItem item,
-) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete countdown?'),
-      content: Text('This will remove "${item.title}" permanently.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmed != true) return;
-
-  await ref.read(countdownRepositoryProvider).deleteCountdown(
-        userId: userId,
-        countdownId: item.id,
-      );
-}
-
-String _daysText(int days) {
-  if (days < 0) return '${days.abs()} days late';
-  if (days == 0) return 'Today';
-  if (days == 1) return 'Tomorrow';
-  return '$days days';
 }

@@ -12,6 +12,8 @@ import '../../../core/services/background_sync_service.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../countdown/widgets/countdown_dashboard_card.dart';
+
+import '../widgets/countdown/dashboard_countdown_carousel.dart';
 import '../../grades/providers/semester/current_semester_provider.dart';
 import '../../grades/providers/semester/semester_statistics_provider.dart';
 import '../../notes/providers/library_provider.dart';
@@ -321,7 +323,9 @@ class _DashboardHero extends StatelessWidget {
             children: [
               Expanded(child: StudyStreakDashboardCard()),
               Gap(16),
-              Expanded(child: CountdownDashboardCard()),
+              Expanded(
+                child: DashboardCountdownCarousel(),
+              ),
             ],
           )
         else
@@ -329,7 +333,7 @@ class _DashboardHero extends StatelessWidget {
             children: [
               StudyStreakDashboardCard(),
               Gap(16),
-              CountdownDashboardCard(),
+              DashboardCountdownCarousel(),
             ],
           ),
       ],

@@ -227,7 +227,7 @@ class _SummaryTile extends StatelessWidget {
   }
 }
 
-class _CountdownCard extends StatelessWidget {
+class _CountdownCard extends StatefulWidget {
   const _CountdownCard({
     required this.item,
     required this.onToggle,
@@ -241,95 +241,258 @@ class _CountdownCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   @override
+  State<_CountdownCard> createState() => _CountdownCardState();
+}
+
+class _CountdownCardState extends State<_CountdownCard>
+    with SingleTickerProviderStateMixin {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.scholarPalette;
+
+    final item = widget.item;
+
     final days = item.daysRemaining;
     final overdue = days < 0;
     final urgent = days <= 3 && !item.isCompleted;
 
     return ScholarPanel(
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.zero,
+      child: Column(
         children: [
-          Checkbox(
-            value: item.isCompleted,
-            onChanged:
-                onToggle == null ? null : (value) => onToggle!(value ?? false),
-          ),
-          const Gap(8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                setState(() {
+                  _expanded = !_expanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   children: [
+                    ScholarIconBadge(
+
+                        icon: switch (item.type) {
+                          CountdownType.finalExamination =>
+                          Icons.event_note_outlined,
+                          CountdownType.midterm =>
+                          Icons.school_outlined,
+                          CountdownType.assignment =>
+                          Icons.assignment_outlined,
+                          CountdownType.quiz =>
+                          Icons.quiz_outlined,
+                          CountdownType.presentation =>
+                          Icons.slideshow_outlined,
+                          CountdownType.project =>
+                          Icons.work_outline,
+                          CountdownType.lab =>
+                          Icons.science_outlined,
+                          CountdownType.personal =>
+                          Icons.person_outline,
+                          CountdownType.other =>
+                          Icons.event_outlined,
+                        },
+                      size: 54,
+                      color: palette.brandStart
+                    ),
+
+                    const Gap(16),
+
                     Expanded(
-                      child: Text(
-                        item.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
                               fontWeight: FontWeight.w900,
                               decoration: item.isCompleted
-                                  ? TextDecoration.lineThrough
+                                  ? TextDecoration
+                                  .lineThrough
                                   : null,
                             ),
+                          ),
+
+                          const Gap(6),
+
+                          Text(
+                            '${item.type.label} • ${item.priority.priorityLabel}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                              color:
+                              palette.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    _CountdownPill(
-                      text: _daysText(days),
-                      color: overdue ? palette.warning : palette.brandEnd,
-                    ),
-                  ],
-                ),
-                const Gap(8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _CountdownPill(
-                      text: item.type.label,
-                      color: palette.brandEnd,
-                    ),
-                    _CountdownPill(
-                      text: item.priority.priorityLabel,
-                      color: urgent ? palette.warning : palette.textMuted,
-                    ),
-                    if (item.deadlineExtendable)
-                      _CountdownPill(
-                        text: overdue ? 'Extendable overdue' : 'Extendable',
-                        color: overdue ? palette.warning : palette.success,
-                      ),
-                  ],
-                ),
-                if ((item.description ?? '').trim().isNotEmpty) ...[
-                  const Gap(10),
-                  Text(
-                    item.description!.trim(),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: palette.textMuted,
+                    const Gap(12),
+                    Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _daysText(days),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                            color: overdue
+                                ? palette.warning
+                                : palette.brandEnd,
+                            fontWeight:
+                            FontWeight.w900,
+                          ),
                         ),
-                  ),
-                ],
-              ],
+
+                        const Gap(8),
+
+                        AnimatedRotation(
+                          turns: _expanded ? 0.5 : 0,
+                          duration: const Duration(
+                            milliseconds: 200,
+                          ),
+                          child: Icon(
+                            Icons.expand_more_rounded,
+                            color: palette.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'edit') onEdit?.call();
-              if (value == 'delete') onDelete?.call();
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'edit',
-                child: Text('Edit'),
+
+          ClipRect(
+            child: AnimatedSize(
+              duration: const Duration(
+                milliseconds: 220,
               ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Text('Delete'),
+              curve: Curves.easeInOut,
+              child: !_expanded
+                  ? const SizedBox.shrink()
+                  : Padding(
+                padding:
+                const EdgeInsets.fromLTRB(
+                  16,
+                  0,
+                  16,
+                  16,
+                ),
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      height: 1,
+                      color: palette.stroke,
+                    ),
+
+                    if ((item.description ?? '')
+                        .trim()
+                        .isNotEmpty) ...[
+                      Text(
+                        item.description!.trim(),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(
+                          color: palette
+                              .textMuted,
+                        ),
+                      ),
+
+                      const Gap(16),
+                    ],
+
+                    if (item.deadlineExtendable)
+                      Padding(
+                        padding:
+                        const EdgeInsets.only(
+                          bottom: 16,
+                        ),
+                        child: _CountdownPill(
+                          text: overdue
+                              ? 'Extendable overdue'
+                              : 'Extendable',
+                          color: overdue
+                              ? palette.warning
+                              : palette.success,
+                        ),
+                      ),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        icon: Icon(
+                          item.isCompleted
+                              ? Icons.undo
+                              : Icons.check,
+                        ),
+                        label: Text(
+                          item.isCompleted
+                              ? 'Mark as Active'
+                              : 'Mark as Completed',
+                        ),
+                        onPressed:
+                        widget.onToggle == null
+                            ? null
+                            : () => widget
+                            .onToggle!(
+                          !item
+                              .isCompleted,
+                        ),
+                      ),
+                    ),
+
+                    const Gap(10),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                        ),
+                        label:
+                        const Text('Edit'),
+                        onPressed:
+                        widget.onEdit,
+                      ),
+                    ),
+
+                    const Gap(10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.delete_outline,
+                        ),
+                        label: const Text(
+                          'Delete',
+                        ),
+                        onPressed: widget.onDelete,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ],
       ),

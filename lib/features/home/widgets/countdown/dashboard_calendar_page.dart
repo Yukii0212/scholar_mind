@@ -222,6 +222,17 @@ class _DashboardCalendarPageState
         return DashboardDayEventsSheet(
           date: date,
           countdowns: events,
+          onCountdownSelected: (item) {
+            Navigator.pop(context);
+
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => CountdownCrudScreen(
+                  initial: item,
+                ),
+              ),
+            );
+          },
           onAddCountdown: () {
             Navigator.pop(context);
 

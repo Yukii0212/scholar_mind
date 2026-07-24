@@ -29,13 +29,14 @@ class _DashboardCountdownCarouselState
           onHorizontalDragEnd: (details) {
             final velocity = details.primaryVelocity ?? 0;
 
-            if (velocity < -100 && _currentPage < pages.length - 1) {
+            if (velocity < -100) {
               setState(() {
-                _currentPage++;
+                _currentPage = (_currentPage + 1) % pages.length;
               });
-            } else if (velocity > 100 && _currentPage > 0) {
+            } else if (velocity > 100) {
               setState(() {
-                _currentPage--;
+                _currentPage =
+                    (_currentPage - 1 + pages.length) % pages.length;
               });
             }
           },

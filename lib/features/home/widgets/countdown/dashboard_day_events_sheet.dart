@@ -8,12 +8,14 @@ class DashboardDayEventsSheet extends StatelessWidget {
     super.key,
     required this.date,
     required this.countdowns,
+    required this.onCountdownSelected,
     required this.onAddCountdown,
   });
 
   final DateTime date;
   final List<CountdownItem> countdowns;
   final VoidCallback onAddCountdown;
+  final ValueChanged<CountdownItem> onCountdownSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,7 @@ class DashboardDayEventsSheet extends StatelessWidget {
                   for (var i = 0; i < countdowns.length; i++) ...[
                     _CountdownTile(
                       item: countdowns[i],
+                      onTap: () => onCountdownSelected(countdowns[i]),
                     ),
                     if (i != countdowns.length - 1)
                       const Divider(height: 20),
@@ -101,15 +104,18 @@ class DashboardDayEventsSheet extends StatelessWidget {
 class _CountdownTile extends StatelessWidget {
   const _CountdownTile({
     required this.item,
+    required this.onTap,
   });
 
   final CountdownItem item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final days = item.daysRemaining;
 
     return ListTile(
+      onTap: onTap,
       dense: true,
       contentPadding: EdgeInsets.zero,
       leading: Icon(

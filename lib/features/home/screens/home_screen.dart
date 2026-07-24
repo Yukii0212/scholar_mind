@@ -50,7 +50,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late final BackgroundSyncService _backgroundSync;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _locationToIndex(String location) {
     for (var i = 0; i < _navRoutes.length; i++) {
@@ -82,18 +81,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final user = ref.watch(firebaseAuthProvider).currentUser;
 
     return Scaffold(
-      key: _scaffoldKey,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: isWide ? 24 : 8,
-        leading: isWide
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.menu_rounded),
-                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                tooltip: 'Menu',
-              ),
+        leading: null,
         title: const ScholarBrand(compact: true),
         actions: [
           _UserAvatar(
@@ -110,7 +102,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const Gap(8),
         ],
       ),
-      drawer: const _AppMenu(),
       body: ScholarScaffoldBackground(
         child: Column(
           children: [
@@ -815,151 +806,6 @@ class _UserAvatar extends StatelessWidget {
     );
   }
 }
-
-class _AppMenu extends ConsumerWidget {
-  const _AppMenu();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(firebaseAuthProvider).currentUser;
-    final palette = context.scholarPalette;
-
-    return Drawer(
-      backgroundColor: palette.panel,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Row(
-                children: [
-                  _UserAvatar(
-                    user: user,
-                    onTap: () => _go(context, '/profile'),
-                  ),
-                  const Gap(12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.displayName ?? 'ScholarMind User',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                        ),
-                        Text(
-                          user?.email ?? 'Signed in',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: palette.textMuted,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            _MenuTile(
-              icon: Icons.home_outlined,
-              title: 'Dashboard',
-              onTap: () => _go(context, '/home'),
-            ),
-            _MenuTile(
-              icon: Icons.person_outline_rounded,
-              title: 'Profile',
-              onTap: () => _go(context, '/profile'),
-            ),
-            _MenuTile(
-              icon: Icons.settings_outlined,
-              title: 'Appearance',
-              onTap: () => _go(context, '/settings'),
-            ),
-            const Divider(height: 1),
-            _MenuTile(
-              icon: Icons.description_outlined,
-              title: 'Notes',
-              onTap: () => _go(context, '/notes'),
-            ),
-            _MenuTile(
-              icon: Icons.quiz_outlined,
-              title: 'Quiz',
-              onTap: () => _go(context, '/quiz'),
-            ),
-            _MenuTile(
-              icon: Icons.style_outlined,
-              title: 'Flashcards',
-              onTap: () => _go(context, '/flashcards'),
-            ),
-            _MenuTile(
-              icon: Icons.bar_chart_outlined,
-              title: 'Grades',
-              onTap: () => _go(context, '/grades'),
-            ),
-            _MenuTile(
-              icon: Icons.local_fire_department_outlined,
-              title: 'Study Streak',
-              onTap: () => _go(context, '/study-streak'),
-            ),
-            _MenuTile(
-              icon: Icons.event_note_outlined,
-              title: 'Countdown',
-              onTap: () => _go(context, '/countdown'),
-            ),
-            const Spacer(),
-            const Divider(height: 1),
-
-            _MenuTile(
-              icon: Icons.logout_rounded,
-              title: 'Sign out',
-              onTap: () {
-                Navigator.of(context).pop();
-                ref.read(authControllerProvider.notifier).signOut();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _go(BuildContext context, String route) {
-    final router = GoRouter.of(context);
-    Navigator.of(context).pop();
-    router.go(route);
-  }
-}
-
-class _MenuTile extends StatelessWidget {
-  const _MenuTile({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right_rounded, size: 18),
-      onTap: onTap,
-    );
-  }
-}
-
-
 
 class _Tag extends StatelessWidget {
   const _Tag({

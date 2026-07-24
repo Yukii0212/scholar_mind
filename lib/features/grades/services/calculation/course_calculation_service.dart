@@ -131,6 +131,13 @@ class CourseCalculationService {
     final maximumPossiblePercentage =
         guaranteedPercentage + remainingOpportunity;
 
+    final averageAssessmentScore = actualEntries.isEmpty
+        ? null
+        : actualEntries
+        .map((entry) => entry.percentage)
+        .reduce((a, b) => a + b) /
+        actualEntries.length;
+
     return CourseCalculationSummary(
       totalWeight: totalWeight,
       completedWeight: completedWeight,
@@ -139,6 +146,7 @@ class CourseCalculationService {
       projectedPercentage: projectedPercentage,
       maximumPossiblePercentage: maximumPossiblePercentage,
       remainingOpportunity: remainingOpportunity,
+      averageAssessmentScore: averageAssessmentScore,
       actualEntries: actualEntries,
       expectedEntries: expectedEntries,
       completedComponents: completedComponents,

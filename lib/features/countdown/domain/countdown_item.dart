@@ -136,3 +136,15 @@ class CountdownItem {
     );
   }
 }
+
+extension CountdownPriorityLabel on int {
+  String get priorityLabel {
+    return switch (this) {
+      50 => 'Low',
+      100 => 'Normal',
+      150 => 'High',
+      200 => 'Critical',
+      _ => 'Custom ($this)',
+    };
+  }
+}

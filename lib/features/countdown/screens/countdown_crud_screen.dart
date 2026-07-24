@@ -287,7 +287,7 @@ class _HeaderPreview extends StatelessWidget {
                   children: [
                     _PreviewPill(text: type.label, color: palette.brandEnd),
                     _PreviewPill(
-                      text: priorityDisplay(priority),
+                      text: priority.priorityLabel,
                       color: palette.textMuted,
                     ),
                     _PreviewPill(
@@ -644,15 +644,5 @@ String priorityPresetLabel(CountdownPriorityPreset preset) {
     CountdownPriorityPreset.high => 'High',
     CountdownPriorityPreset.critical => 'Critical',
     CountdownPriorityPreset.custom => 'Custom',
-  };
-}
-
-String priorityDisplay(int priority) {
-  return switch (priority) {
-    50 => 'Low (50)',
-    100 => 'Normal (100)',
-    150 => 'High (150)',
-    200 => 'Critical (200)',
-    _ => 'Custom ($priority)',
   };
 }

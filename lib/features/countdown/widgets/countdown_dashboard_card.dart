@@ -116,7 +116,7 @@ class _CountdownPreview extends StatelessWidget {
                     ),
                     const Gap(3),
                     Text(
-                      '${item.type.label} - Priority ${item.priority}',
+                      '${item.type.label} • ${item.priority.priorityLabel}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)

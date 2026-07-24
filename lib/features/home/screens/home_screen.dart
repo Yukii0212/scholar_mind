@@ -12,6 +12,7 @@ import '../../../core/services/background_sync_service.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../countdown/widgets/countdown_dashboard_card.dart';
+import '../widgets/grades/semester_panel.dart';
 
 import '../widgets/countdown/dashboard_countdown_carousel.dart';
 import '../../grades/providers/semester/current_semester_provider.dart';
@@ -216,7 +217,7 @@ class DashboardView extends ConsumerWidget {
                       const Gap(16),
                       Expanded(
                         flex: 2,
-                        child: _SemesterPanel(
+                        child: SemesterPanel(
                           semesterName: semester?.name,
                           courseCount: statistics?.length ?? 0,
                           averageScore: averageScore,
@@ -232,7 +233,7 @@ class DashboardView extends ConsumerWidget {
                         quizCount: quizzes.length,
                       ),
                       const Gap(16),
-                      _SemesterPanel(
+                      SemesterPanel(
                         semesterName: semester?.name,
                         courseCount: statistics?.length ?? 0,
                         averageScore: averageScore,
@@ -522,94 +523,7 @@ class _TaskRow extends StatelessWidget {
   }
 }
 
-class _SemesterPanel extends StatelessWidget {
-  const _SemesterPanel({
-    required this.semesterName,
-    required this.courseCount,
-    required this.averageScore,
-  });
 
-  final String? semesterName;
-  final int courseCount;
-  final double? averageScore;
-
-  @override
-  Widget build(BuildContext context) {
-    final value = averageScore == null ? 0.0 : averageScore! / 100;
-
-    return ScholarPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ScholarSectionHeader(
-            title: 'This Semester',
-            trailing: TextButton(
-              onPressed: () => context.go('/grades'),
-              child: const Text('View All'),
-            ),
-          ),
-          const Gap(16),
-          Center(
-            child: SizedBox(
-              width: 142,
-              height: 142,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox.expand(
-                    child: CircularProgressIndicator(
-                      value: value.clamp(0, 1),
-                      strokeWidth: 9,
-                    ),
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        averageScore == null
-                            ? '--'
-                            : averageScore!.toStringAsFixed(1),
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                      ),
-                      Text(
-                        semesterName ?? 'No semester',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: context.scholarPalette.textMuted,
-                            ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Gap(16),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniStat(label: 'Courses', value: '$courseCount'),
-              ),
-              const Gap(8),
-              Expanded(
-                child: _MiniStat(
-                  label: 'Avg Score',
-                  value: averageScore == null
-                      ? '--'
-                      : '${averageScore!.toStringAsFixed(0)}%',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _GenerateQuizBanner extends StatelessWidget {
   const _GenerateQuizBanner();
@@ -1039,43 +953,7 @@ class _MenuTile extends StatelessWidget {
   }
 }
 
-class _MiniStat extends StatelessWidget {
-  const _MiniStat({
-    required this.label,
-    required this.value,
-  });
 
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: context.scholarPalette.panelStrong.withValues(alpha: 0.62),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: context.scholarPalette.stroke),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context.scholarPalette.textMuted,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _Tag extends StatelessWidget {
   const _Tag({

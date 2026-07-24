@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
@@ -25,16 +26,25 @@ class FlashcardDeckDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: userId == null
-            ? null
-            : () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => FlashcardCardEditorScreen(deck: deck),
-                  ),
+      floatingActionButton: SpeedDial(
+        icon: Icons.add,
+        activeIcon: Icons.close,
+        spacing: 12,
+        children: [
+          SpeedDialChild(
+            child: const Icon(Icons.style_outlined),
+            label: 'Add Card',
+            onTap: userId == null
+                ? null
+                : () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => FlashcardCardEditorScreen(deck: deck),
                 ),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Card'),
+              );
+            },
+          ),
+        ],
       ),
       appBar: AppBar(
         title: Text(deck.name),

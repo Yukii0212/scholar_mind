@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
@@ -19,7 +20,7 @@ class FlashcardLibraryScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: _FlashcardSpeedDial(),
+      floatingActionButton: const _FlashcardSpeedDial(),
       body: SafeArea(
         top: false,
         child: decksAsync.when(
@@ -65,29 +66,36 @@ class FlashcardLibraryScreen extends ConsumerWidget {
 }
 
 class _FlashcardSpeedDial extends StatelessWidget {
+  const _FlashcardSpeedDial();
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return SpeedDial(
+      icon: Icons.add,
+      activeIcon: Icons.close,
+      spacing: 12,
       children: [
-        FloatingActionButton.extended(
-          heroTag: 'generate-flashcards',
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const GenerateFlashcardsScreen()),
-          ),
-          icon: const Icon(Icons.auto_awesome_rounded),
-          label: const Text('Generate'),
+        SpeedDialChild(
+          child: const Icon(Icons.auto_awesome_rounded),
+          label: 'Generate Flashcards',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const GenerateFlashcardsScreen(),
+              ),
+            );
+          },
         ),
-        const Gap(10),
-        FloatingActionButton.extended(
-          heroTag: 'create-flashcard-deck',
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(
-                builder: (_) => const FlashcardDeckEditorScreen()),
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Create Deck'),
+        SpeedDialChild(
+          child: const Icon(Icons.style_outlined),
+          label: 'Create Deck',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const FlashcardDeckEditorScreen(),
+              ),
+            );
+          },
         ),
       ],
     );

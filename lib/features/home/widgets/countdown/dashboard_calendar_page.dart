@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../core/theme/app_design.dart';
+import '../../../countdown/screens/countdown_crud_screen.dart';
 import 'dashboard_calendar_day.dart';
 import 'dashboard_calendar_grid.dart';
 import 'dashboard_day_events_sheet.dart';
@@ -201,9 +202,13 @@ class _DashboardCalendarPageState
           onAddCountdown: () {
             Navigator.pop(context);
 
-            // TODO:
-            // Navigate to Countdown CRUD
-            // with the selected date.
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => CountdownCrudScreen(
+                  initialDueDate: date,
+                ),
+              ),
+            );
           },
         );
       },

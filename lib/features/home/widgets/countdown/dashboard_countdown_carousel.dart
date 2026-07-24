@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../countdown/widgets/countdown_dashboard_card.dart';
 import 'dashboard_calendar_page.dart';
-import 'dashboard_countdown_state.dart';
 
 class DashboardCountdownCarousel extends StatefulWidget {
   const DashboardCountdownCarousel({super.key});
@@ -14,72 +13,81 @@ class DashboardCountdownCarousel extends StatefulWidget {
 
 class _DashboardCountdownCarouselState
     extends State<DashboardCountdownCarousel> {
-  late final PageController _pageController;
 
   int _currentPage = 0;
 
   @override
-  void initState() {
-    super.initState();
-
-    _pageController = PageController(
-      keepPage: true,
-    );
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return DashboardCountdownState(
-      pageController: _pageController,
-      currentPage: _currentPage,
-      child: Column(
-        children: [
-          SizedBox(
-            height: 300,
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (page) {
-                setState(() {
-                  _currentPage = page;
-                });
+    const pages = [
+      CountdownDashboardCard(),
+      DashboardCalendarPage(),
+    ];
+
+    return Column(
+      children: [
+        GestureDetector(
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
+
+            if (velocity < -100 && _currentPage < pages.length - 1) {
+              setState(() {
+                _currentPage++;
+              });
+            } else if (velocity > 100 && _currentPage > 0) {
+              setState(() {
+                _currentPage--;
+              });
+            }
+          },
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.08, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
               },
-              children: const [
-                CountdownDashboardCard(),
-                DashboardCalendarPage(),
-              ],
+              child: KeyedSubtree(
+                key: ValueKey(_currentPage),
+                child: pages[_currentPage],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment:
-            MainAxisAlignment.center,
-            children: List.generate(
-              2,
-                  (index) => AnimatedContainer(
-                duration: const Duration(
-                  milliseconds: 200,
-                ),
-                width: _currentPage == index
-                    ? 18
-                    : 8,
+        ),
+
+        const SizedBox(height: 12),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            2,
+                (index) => GestureDetector(
+              onTap: () {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: _currentPage == index ? 18 : 8,
                 height: 8,
-                margin:
-                const EdgeInsets.symmetric(
-                  horizontal: 4,
-                ),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  borderRadius:
-                  BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(999),
                   color: _currentPage == index
-                      ? Theme.of(context)
-                      .colorScheme
-                      .primary
+                      ? Theme.of(context).colorScheme.primary
                       : Theme.of(context)
                       .colorScheme
                       .outline
@@ -88,8 +96,8 @@ class _DashboardCountdownCarouselState
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

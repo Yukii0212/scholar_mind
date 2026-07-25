@@ -596,6 +596,22 @@ class LibraryRepository {
     });
   }
 
+  Future<NoteItem?> getNote({
+    required String userId,
+    required String noteId,
+  }) async {
+    final snapshot =
+    await _notes(userId)
+        .doc(noteId)
+        .get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return NoteItem.fromDocument(snapshot);
+  }
+
   Stream<List<NoteItem>> watchAllUploadedNotes(
       String userId,
       ) {
@@ -630,6 +646,58 @@ class LibraryRepository {
 
       return folders;
     });
+  }
+
+  Future<LibraryFolder?> getFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    final snapshot = await _folders(userId)
+        .doc(folderId)
+        .get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return LibraryFolder.fromDocument(snapshot);
+  }
+
+  Future<List<LibraryFolder>> getChildFolders({
+    required String userId,
+    required String parentFolderId,
+  }) async {
+    final snapshot = await _folders(userId)
+        .where('parentId', isEqualTo: parentFolderId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isArchived', isEqualTo: false)
+        .get();
+
+    final folders =
+    snapshot.docs.map(LibraryFolder.fromDocument).toList();
+
+    folders.sort(_sortFolders);
+
+    return folders;
+  }
+
+  Future<List<NoteItem>> getNotesInFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    final snapshot = await _notes(userId)
+        .where('folderId', isEqualTo: folderId)
+        .where('isDeleted', isEqualTo: false)
+        .get();
+
+    final notes =
+    snapshot.docs.map(NoteItem.fromDocument).toList();
+
+    notes.sort(
+          (a, b) => b.createdAt.compareTo(a.createdAt),
+    );
+
+    return notes;
   }
 
   Future<void> createFolder({

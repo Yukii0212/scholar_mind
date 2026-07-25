@@ -4,7 +4,8 @@ import '../domain/models/share/share_resource_type.dart';
 abstract class DataShareCollector {
   ShareResourceType get resourceType;
 
-  Future<CollectionResult> collect(
-      List<String> resourceIds,
-      );
+  Future<CollectionResult> collect({
+    required String userId,
+    required List<String> resourceIds,
+  });
 }

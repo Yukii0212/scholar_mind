@@ -15,9 +15,10 @@ abstract class DataShareHandler {
       ShareResource resource,
       );
 
-  Future<List<ShareResource>> export(
-      List<String> resourceIds,
-      );
+  Future<List<ShareResource>> export({
+    required String userId,
+    required List<String> resourceIds,
+  });
 
   Future<void> import(
       List<ShareResource> resources,

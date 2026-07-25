@@ -7,6 +7,7 @@ class CollectionService {
   const CollectionService();
 
   Future<CollectionResult> collect({
+    required String userId,
     required ShareResourceType resourceType,
     required List<String> resourceIds,
   }) async {
@@ -22,6 +23,9 @@ class CollectionService {
       );
     }
 
-    return collector.collect(resourceIds);
+    return collector.collect(
+      userId: userId,
+      resourceIds: resourceIds,
+    );
   }
 }

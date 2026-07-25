@@ -1,3 +1,4 @@
+import '../../../data_sharing/domain/models/collection/collected_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource_metadata.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
@@ -7,7 +8,29 @@ import '../../domain/note_item.dart';
 class NotesExportMapper {
   const NotesExportMapper();
 
-  ShareResource folderToResource(
+  ShareResource toResource(
+      CollectedResource resource,
+      ) {
+    switch (resource.resourceType) {
+      case ShareResourceType.note:
+        return _note(
+          resource.asType<NoteItem>(),
+        );
+
+      case ShareResourceType.noteFolder:
+        return _folder(
+          resource.asType<LibraryFolder>(),
+        );
+
+      default:
+        throw UnsupportedError(
+          'Unsupported Notes resource: '
+              '${resource.resourceType}',
+        );
+    }
+  }
+
+  ShareResource _folder(
       LibraryFolder folder,
       ) {
     return ShareResource(
@@ -26,7 +49,7 @@ class NotesExportMapper {
     );
   }
 
-  ShareResource noteToResource(
+  ShareResource _note(
       NoteItem note,
       ) {
     return ShareResource(

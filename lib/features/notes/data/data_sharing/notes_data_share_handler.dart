@@ -60,38 +60,19 @@ class NotesDataShareHandler
   }
 
   @override
-  Future<List<ShareResource>> export(
-      List<String> resourceIds,
-      ) async {
+  Future<List<ShareResource>> export({
+    required String userId,
+    required List<String> resourceIds,
+  }) async {
     final collected =
-    await _collector.collect(resourceIds);
+    await _collector.collect(
+      userId: userId,
+      resourceIds: resourceIds,
+    );
 
-    final resources = <ShareResource>[];
-
-    for (final item in collected.resources) {
-      switch (item.resourceType) {
-        case ShareResourceType.note:
-          resources.add(
-            _exportMapper.noteToResource(
-              item.data as NoteItem,
-            ),
-          );
-          break;
-
-        case ShareResourceType.noteFolder:
-          resources.add(
-            _exportMapper.folderToResource(
-              item.data as LibraryFolder,
-            ),
-          );
-          break;
-
-        default:
-          break;
-      }
-    }
-
-    return resources;
+    return collected.resources
+        .map(_exportMapper.toResource)
+        .toList();
   }
 
   @override

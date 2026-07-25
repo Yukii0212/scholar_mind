@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../domain/models/export/export_module.dart';
+import '../model/export_module.dart';
 import 'export_item_tile.dart';
 
 class ExportModuleCard extends StatelessWidget {

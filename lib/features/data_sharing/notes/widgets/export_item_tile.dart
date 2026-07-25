@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
-import '../domain/models/export/export_item.dart';
-import '../domain/models/share/share_resource_type.dart';
-import '../providers/export_selection_provider.dart';
+import '../model/export_item.dart';
+import '../../domain/models/share/share_resource_type.dart';
+import '../../providers/export_selection_provider.dart';
 
 class ExportItemTile extends ConsumerWidget {
   const ExportItemTile({

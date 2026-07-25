@@ -1,4 +1,4 @@
-import '../share/share_resource_type.dart';
+import '../../domain/models/share/share_resource_type.dart';
 
 class ExportItem {
   const ExportItem({

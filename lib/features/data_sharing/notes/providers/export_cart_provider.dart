@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../domain/models/export/export_item.dart';
+import '../model/export_item.dart';
 import 'export_library_provider.dart';
-import 'export_selection_provider.dart';
+import '../../providers/export_selection_provider.dart';
 
 part 'export_cart_provider.g.dart';
 

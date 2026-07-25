@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../domain/models/export/export_cart_item.dart';
+import '../model/export_cart_item.dart';
 import 'export_cart_provider.dart';
 
 part 'export_cart_items_provider.g.dart';

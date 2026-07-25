@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/export_filtered_library_provider.dart';
+import '../notes/providers/export_filtered_library_provider.dart';
 import '../providers/export_summary_provider.dart';
-import '../widgets/export_module_card.dart';
+import '../notes/widgets/export_module_tree.dart';
 import '../widgets/export_search_bar.dart';
 import '../widgets/export_selection_summary.dart';
 import 'export_cart_screen.dart';
@@ -16,9 +16,6 @@ class ExportLibraryScreen
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final modules = ref.watch(
-      exportFilteredLibraryProvider,
-    );
 
     final summary = ref.watch(
       exportSummaryProvider,
@@ -49,13 +46,13 @@ class ExportLibraryScreen
           'Continue',
         ),
       ),
-      body: Column(
+      body: const Column(
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16),
             child: ExportSearchBar(),
           ),
-          const Padding(
+          Padding(
             padding:
             EdgeInsets.symmetric(
               horizontal: 16,
@@ -63,46 +60,13 @@ class ExportLibraryScreen
             child:
             ExportSelectionSummary(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Expanded(
-            child: modules.when(
-              data: (modules) {
-                if (modules.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No study materials found.',
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding:
-                  const EdgeInsets.all(
-                    16,
-                  ),
-                  itemCount:
-                  modules.length,
-                  itemBuilder:
-                      (context, index) {
-                    return ExportModuleCard(
-                      module:
-                      modules[index],
-                    );
-                  },
-                );
-              },
-              loading: () =>
-              const Center(
-                child:
-                CircularProgressIndicator(),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 16,
               ),
-              error:
-                  (error, stackTrace) =>
-                  Center(
-                    child: Text(
-                      error.toString(),
-                    ),
-                  ),
+              child: ExportModuleTree(),
             ),
           ),
         ],

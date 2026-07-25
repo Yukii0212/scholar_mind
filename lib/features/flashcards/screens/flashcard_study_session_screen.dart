@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'dart:math';
 
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -44,7 +45,9 @@ class _FlashcardStudySessionScreenState
   @override
   void initState() {
     super.initState();
+
     _queue = [...widget.cards];
+    _queue.shuffle(Random());
   }
 
   @override

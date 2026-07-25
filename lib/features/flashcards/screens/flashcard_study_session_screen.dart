@@ -6,11 +6,14 @@ import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/flashcard_models.dart';
 import '../providers/flashcard_provider.dart';
+import '../widgets/study_swipe_card_item.dart';
+import '../widgets/study_swipe_cards.dart';
 
 enum _SelfEvaluation {
   knewIt,
   almost,
   didntKnow,
+  skipped,
 }
 
 class FlashcardStudySessionScreen extends ConsumerStatefulWidget {
@@ -109,47 +112,64 @@ class _FlashcardStudySessionScreenState
                           const Gap(16),
                           if (current != null)
                             Expanded(
-                              child: GestureDetector(
-                                onTap: () =>
-                                    setState(() => _showAnswer = !_showAnswer),
-                                child: ScholarPanel(
-                                  padding: const EdgeInsets.all(22),
-                                  child: Center(
-                                    child: SingleChildScrollView(
-                                      child: Column(
-                                        mainAxisAlignment:
+                              child: StudySwipeCards(
+                                enabled: !_showAnswer,
+                                item: StudySwipeCardItem(
+                                  title: 'Flashcard',
+                                  icon: Icons.style_rounded,
+                                  onSkipped: () =>
+                                      _evaluate(_SelfEvaluation.skipped),
+                                  child: GestureDetector(
+                                    onTap: () => setState(
+                                          () => _showAnswer = !_showAnswer,
+                                    ),
+                                    child: ScholarPanel(
+                                      padding: const EdgeInsets.all(22),
+                                      child: Center(
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                            mainAxisAlignment:
                                             MainAxisAlignment.center,
-                                        children: [
-                                          _Pill(
-                                            _showAnswer ? 'Answer' : 'Question',
-                                            _showAnswer
-                                                ? palette.success
-                                                : palette.brandEnd,
-                                          ),
-                                          const Gap(22),
-                                          Text(
-                                            _showAnswer
-                                                ? current.back
-                                                : current.front,
-                                            textAlign: TextAlign.center,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .headlineSmall
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w800,
+                                            children: [
+                                              _Pill(
+                                                _showAnswer
+                                                    ? 'Answer'
+                                                    : 'Question',
+                                                _showAnswer
+                                                    ? palette.success
+                                                    : palette.brandEnd,
+                                              ),
+                                              const Gap(22),
+                                              Text(
+                                                _showAnswer
+                                                    ? current.back
+                                                    : current.front,
+                                                textAlign:
+                                                TextAlign.center,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .headlineSmall
+                                                    ?.copyWith(
+                                                  fontWeight:
+                                                  FontWeight.w800,
                                                 ),
-                                          ),
-                                          const Gap(22),
-                                          Text(
-                                            'Tap card to flip',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                  color: palette.textMuted,
+                                              ),
+                                              const Gap(22),
+                                              Text(
+                                                _showAnswer
+                                                    ? 'Choose how well you knew it'
+                                                    : 'Tap to reveal • Swipe to skip',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                  color:
+                                                  palette.textMuted,
                                                 ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -171,6 +191,24 @@ class _FlashcardStudySessionScreenState
 
   void _evaluate(_SelfEvaluation evaluation) {
     final current = _queue[_currentIndex];
+
+    if (evaluation == _SelfEvaluation.skipped) {
+      _queue.add(current);
+
+      if (_currentIndex >= _queue.length - 1) {
+        setState(() => _completed = true);
+        _recordSession();
+        return;
+      }
+
+      setState(() {
+        _currentIndex++;
+        _showAnswer = false;
+      });
+
+      return;
+    }
+
     _reviewed++;
 
     if (evaluation == _SelfEvaluation.knewIt) {

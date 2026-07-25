@@ -22,62 +22,100 @@ class NotesCollectionService
     required List<String> resourceIds,
   }) async {
     final resources = <CollectedResource>[];
+    final visitedFolders = <String>{};
+    final visitedNotes = <String>{};
 
     for (final resourceId in resourceIds) {
-      final folder = await _repository.getFolder(
+      await _collectResource(
         userId: userId,
-        folderId: resourceId,
+        resourceId: resourceId,
+        resources: resources,
+        visitedFolders: visitedFolders,
+        visitedNotes: visitedNotes,
       );
+    }
 
-      if (folder != null) {
-        resources.add(
-          CollectedResource(
-            resourceType: ShareResourceType.noteFolder,
-            resourceId: folder.id,
-            data: folder,
-          ),
-        );
+    return CollectionResult(
+      resources: resources,
+    );
+  }
 
-        final notes = await _repository.getNotesInFolder(
-          userId: userId,
-          folderId: folder.id,
-        );
+  Future<void> _collectResource({
+    required String userId,
+    required String resourceId,
+    required List<CollectedResource> resources,
+    required Set<String> visitedFolders,
+    required Set<String> visitedNotes,
+  }) async {
+    final folder = await _repository.getFolder(
+      userId: userId,
+      folderId: resourceId,
+    );
 
-        for (final note in notes) {
-          resources.add(
-            CollectedResource(
-              resourceType: ShareResourceType.note,
-              resourceId: note.id,
-              data: note,
-            ),
-          );
-        }
-
-        final childFolders =
-        await _repository.getChildFolders(
-          userId: userId,
-          parentFolderId: folder.id,
-        );
-
-        for (final childFolder in childFolders) {
-          resources.add(
-            CollectedResource(
-              resourceType: ShareResourceType.noteFolder,
-              resourceId: childFolder.id,
-              data: childFolder,
-            ),
-          );
-        }
-
-        continue;
-      }
-
-      final note = await _repository.getNote(
+    if (folder != null) {
+      await _collectFolder(
         userId: userId,
-        noteId: resourceId,
+        folderId: folder.id,
+        resources: resources,
+        visitedFolders: visitedFolders,
+        visitedNotes: visitedNotes,
       );
+      return;
+    }
 
-      if (note == null) {
+    final note = await _repository.getNote(
+      userId: userId,
+      noteId: resourceId,
+    );
+
+    if (note == null || !visitedNotes.add(note.id)) {
+      return;
+    }
+
+    resources.add(
+      CollectedResource(
+        resourceType: ShareResourceType.note,
+        resourceId: note.id,
+        data: note,
+      ),
+    );
+  }
+
+  Future<void> _collectFolder({
+    required String userId,
+    required String folderId,
+    required List<CollectedResource> resources,
+    required Set<String> visitedFolders,
+    required Set<String> visitedNotes,
+  }) async {
+    if (!visitedFolders.add(folderId)) {
+      return;
+    }
+
+    final folder = await _repository.getFolder(
+      userId: userId,
+      folderId: folderId,
+    );
+
+    if (folder == null) {
+      return;
+    }
+
+    resources.add(
+      CollectedResource(
+        resourceType: ShareResourceType.noteFolder,
+        resourceId: folder.id,
+        data: folder,
+      ),
+    );
+
+    final notes = await _repository.getNotesInFolder(
+      userId: userId,
+      folderId: folder.id,
+    );
+
+    for (final note in notes) {
+      if (!visitedNotes.add(note.id)) {
         continue;
       }
 
@@ -90,8 +128,19 @@ class NotesCollectionService
       );
     }
 
-    return CollectionResult(
-      resources: resources,
+    final childFolders = await _repository.getChildFolders(
+      userId: userId,
+      parentFolderId: folder.id,
     );
+
+    for (final child in childFolders) {
+      await _collectFolder(
+        userId: userId,
+        folderId: child.id,
+        resources: resources,
+        visitedFolders: visitedFolders,
+        visitedNotes: visitedNotes,
+      );
+    }
   }
 }

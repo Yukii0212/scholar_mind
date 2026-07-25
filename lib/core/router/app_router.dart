@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/countdown/screens/countdown_screen.dart';
+import '../../features/data_sharing/screens/export_library_screen.dart';
 import '../../features/flashcards/screens/flashcard_library_screen.dart';
 import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
@@ -95,7 +96,13 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const AppearanceScreen(),
+            builder: (context, state) =>
+            const AppearanceScreen(),
+          ),
+          GoRoute(
+            path: '/export',
+            builder: (context, state) =>
+            const ExportLibraryScreen(),
           ),
         ],
       ),

@@ -1,3 +1,5 @@
+import 'package:scholar_mind/features/data_sharing/domain/models/share_resource_type.dart';
+
 import 'share_method.dart';
 
 class ExportRequest {
@@ -6,7 +8,7 @@ class ExportRequest {
     required this.method,
   });
 
-  final Map<String, List<String>> resourceIds;
+  final Map<ShareResourceType, List<String>> resourceIds;
 
   final ShareMethod method;
 }

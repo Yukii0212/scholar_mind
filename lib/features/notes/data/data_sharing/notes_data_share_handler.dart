@@ -1,24 +1,28 @@
-import '../../../data_sharing/domain/models/share_resource.dart';
-import '../../../data_sharing/domain/models/share_resource_type.dart';
-import '../../../data_sharing/domain/models/validation_result.dart';
+
+import '../../../data_sharing/domain/models/share/share_resource.dart';
+import '../../../data_sharing/domain/models/share/share_resource_type.dart';
+import '../../../data_sharing/domain/models/validation/validation_result.dart';
 import '../../../data_sharing/registry/data_share_handler.dart';
+import '../../domain/library_folder.dart';
+import '../../domain/note_item.dart';
 import '../library_repository.dart';
+import 'notes_collection_service.dart';
 import 'notes_export_mapper.dart';
 import 'notes_import_mapper.dart';
 
 class NotesDataShareHandler
     implements DataShareHandler {
   NotesDataShareHandler({
-    required LibraryRepository repository,
+    required NotesCollectionService collector,
     NotesExportMapper? exportMapper,
     NotesImportMapper? importMapper,
-  })  : _repository = repository,
+  })  : _collector = collector,
         _exportMapper =
             exportMapper ?? const NotesExportMapper(),
         _importMapper =
             importMapper ?? const NotesImportMapper();
 
-  final LibraryRepository _repository;
+  final NotesCollectionService _collector;
 
   final NotesExportMapper _exportMapper;
 
@@ -59,8 +63,35 @@ class NotesDataShareHandler
   Future<List<ShareResource>> export(
       List<String> resourceIds,
       ) async {
-    // Repository integration comes next sprint.
-    return [];
+    final collected =
+    await _collector.collect(resourceIds);
+
+    final resources = <ShareResource>[];
+
+    for (final item in collected.resources) {
+      switch (item.resourceType) {
+        case ShareResourceType.note:
+          resources.add(
+            _exportMapper.noteToResource(
+              item.data as NoteItem,
+            ),
+          );
+          break;
+
+        case ShareResourceType.noteFolder:
+          resources.add(
+            _exportMapper.folderToResource(
+              item.data as LibraryFolder,
+            ),
+          );
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    return resources;
   }
 
   @override

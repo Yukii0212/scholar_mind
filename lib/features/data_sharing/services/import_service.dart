@@ -1,7 +1,7 @@
-import '../domain/models/import_request.dart';
-import '../domain/models/import_result.dart';
-import '../domain/models/share_resource.dart';
-import '../domain/models/share_resource_type.dart';
+import '../domain/models/import/import_request.dart';
+import '../domain/models/import/import_result.dart';
+import '../domain/models/share/share_resource.dart';
+import '../domain/models/share/share_resource_type.dart';
 import '../registry/data_share_registry.dart';
 import 'validation_service.dart';
 

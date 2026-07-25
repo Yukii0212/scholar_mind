@@ -1,8 +1,8 @@
-import '../domain/models/export_request.dart';
-import '../domain/models/share_archive.dart';
-import '../domain/models/share_manifest.dart';
-import '../domain/models/share_resource.dart';
-import '../domain/models/share_resource_type.dart';
+import '../domain/models/export/export_request.dart';
+import '../domain/models/share/share_archive.dart';
+import '../domain/models/share/share_manifest.dart';
+import '../domain/models/share/share_resource.dart';
+import '../domain/models/share/share_resource_type.dart';
 import '../registry/data_share_registry.dart';
 import 'validation_service.dart';
 

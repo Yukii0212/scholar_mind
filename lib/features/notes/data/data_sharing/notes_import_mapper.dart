@@ -1,4 +1,4 @@
-import '../../../data_sharing/domain/models/share_resource.dart';
+import '../../../data_sharing/domain/models/share/share_resource.dart';
 
 class NotesImportMapper {
   const NotesImportMapper();

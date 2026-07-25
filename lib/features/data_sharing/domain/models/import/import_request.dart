@@ -1,4 +1,4 @@
-import 'share_archive.dart';
+import '../share/share_archive.dart';
 
 class ImportRequest {
   const ImportRequest({

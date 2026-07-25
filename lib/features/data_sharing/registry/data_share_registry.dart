@@ -1,4 +1,4 @@
-import '../domain/models/share_resource_type.dart';
+import '../domain/models/share/share_resource_type.dart';
 import 'data_share_handler.dart';
 
 class DataShareRegistry {

@@ -1,6 +1,6 @@
-import '../../../data_sharing/domain/models/share_resource.dart';
-import '../../../data_sharing/domain/models/share_resource_metadata.dart';
-import '../../../data_sharing/domain/models/share_resource_type.dart';
+import '../../../data_sharing/domain/models/share/share_resource.dart';
+import '../../../data_sharing/domain/models/share/share_resource_metadata.dart';
+import '../../../data_sharing/domain/models/share/share_resource_type.dart';
 import '../../domain/library_folder.dart';
 import '../../domain/note_item.dart';
 

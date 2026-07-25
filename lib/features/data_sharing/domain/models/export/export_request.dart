@@ -1,6 +1,7 @@
-import 'package:scholar_mind/features/data_sharing/domain/models/share_resource_type.dart';
 
-import 'share_method.dart';
+
+import '../share/share_method.dart';
+import '../share/share_resource_type.dart';
 
 class ExportRequest {
   const ExportRequest({

@@ -1,4 +1,4 @@
-import '../domain/models/share_method.dart';
+import '../domain/models/share/share_method.dart';
 
 abstract class TransportService {
   Future<void> send({

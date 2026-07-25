@@ -1,4 +1,4 @@
-import '../domain/models/share_archive.dart';
+import '../domain/models/share/share_archive.dart';
 
 abstract class ArchiveService {
   Future<List<int>> encode(

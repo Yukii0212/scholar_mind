@@ -267,15 +267,25 @@ class _CardRow extends ConsumerWidget {
                       ),
                 ),
                 const Gap(6),
-                Text(
-                  card.back,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: palette.textMuted),
-                ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.visibility_off_outlined,
+                      size: 14,
+                      color: palette.textMuted,
+                    ),
+                    const Gap(6),
+                    Expanded(
+                      child: Text(
+                          'Answer hidden',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: palette.textMuted),
+                      ),
+                    ),
+                  ],
+                )
               ],
             ),
           ),

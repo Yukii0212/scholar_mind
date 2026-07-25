@@ -33,7 +33,7 @@ class _GenerateFlashcardsScreenState
   final _aiService = const OpenAIFlashcardService();
 
   final Set<String> _selectedNoteIds = {};
-  var _cardCount = 30;
+  var _cardCount = 15;
   var _difficulty = 'Intermediate';
 
   @override
@@ -338,7 +338,7 @@ class _CountPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const options = [20, 30, 50, 75, 100];
+    const options = [5, 10, 15, 20, 25];
 
     return ScholarPanel(
       child: Column(
@@ -349,13 +349,24 @@ class _CountPanel extends StatelessWidget {
             subtitle: 'Choose how many cards to generate',
           ),
           const Gap(14),
-          SegmentedButton<int>(
-            segments: [
+          DropdownButtonFormField<int>(
+            initialValue: count,
+            decoration: const InputDecoration(
+              labelText: 'Number of Flashcards',
+              prefixIcon: Icon(Icons.style_rounded),
+            ),
+            items: [
               for (final option in options)
-                ButtonSegment(value: option, label: Text('$option')),
+                DropdownMenuItem(
+                  value: option,
+                  child: Text('$option Flashcards'),
+                ),
             ],
-            selected: {count},
-            onSelectionChanged: (value) => onChanged(value.first),
+            onChanged: (value) {
+              if (value != null) {
+                onChanged(value);
+              }
+            },
           ),
         ],
       ),
@@ -374,7 +385,12 @@ class _DifficultyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const options = ['Basic', 'Intermediate', 'Advanced', 'Expert'];
+    const options = [
+      'Basic',
+      'Intermediate',
+      'Advanced',
+      'Expert',
+    ];
 
     return ScholarPanel(
       child: Column(
@@ -385,17 +401,24 @@ class _DifficultyPanel extends StatelessWidget {
             subtitle: 'Control the complexity of generated cards',
           ),
           const Gap(14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
+          DropdownButtonFormField<String>(
+            initialValue: difficulty,
+            decoration: const InputDecoration(
+              labelText: 'Difficulty Level',
+              prefixIcon: Icon(Icons.tune_rounded),
+            ),
+            items: [
               for (final option in options)
-                ChoiceChip(
-                  selected: difficulty == option,
-                  onSelected: (_) => onChanged(option),
-                  label: Text(option),
+                DropdownMenuItem(
+                  value: option,
+                  child: Text(option),
                 ),
             ],
+            onChanged: (value) {
+              if (value != null) {
+                onChanged(value);
+              }
+            },
           ),
         ],
       ),

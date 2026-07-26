@@ -3,11 +3,11 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-import '../../../core/services/device_id_service.dart';
-import '../domain/library_folder.dart';
-import '../domain/note_category.dart';
-import '../domain/note_item.dart';
-import '../services/file_cache_service.dart';
+import '../../../../core/services/device_id_service.dart';
+import '../../domain/library_folder.dart';
+import '../../domain/note_category.dart';
+import '../../domain/note_item.dart';
+import '../../services/file_cache_service.dart';
 
 class LibraryRepository {
   LibraryRepository(this._firestore, this._storage);

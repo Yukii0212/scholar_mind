@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:gap/gap.dart';
 
-import '../data/library_repository.dart';
+import '../data/repository/library_repository.dart';
 
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';

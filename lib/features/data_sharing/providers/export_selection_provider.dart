@@ -46,20 +46,20 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
   }
 
   void selectAll(
-      ShareResourceType type,
-      Iterable<String> ids,
+      Map<ShareResourceType, Set<String>> selections,
       ) {
     final updated = <ShareResourceType, Set<String>>{
       ...state.selectedIds,
     };
 
-    final current = <String>{
-      ...?updated[type],
-    };
+    for (final entry in selections.entries) {
+      final current = <String>{
+        ...?updated[entry.key],
+      };
 
-    current.addAll(ids);
-
-    updated[type] = current;
+      current.addAll(entry.value);
+      updated[entry.key] = current;
+    }
 
     state = state.copyWith(
       selectedIds: updated,
@@ -67,23 +67,24 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
   }
 
   void unselectAll(
-      ShareResourceType type,
-      Iterable<String> ids,
+      Map<ShareResourceType, Set<String>> selections,
       ) {
     final updated = <ShareResourceType, Set<String>>{
       ...state.selectedIds,
     };
 
-    final current = <String>{
-      ...?updated[type],
-    };
+    for (final entry in selections.entries) {
+      final current = <String>{
+        ...?updated[entry.key],
+      };
 
-    current.removeAll(ids);
+      current.removeAll(entry.value);
 
-    if (current.isEmpty) {
-      updated.remove(type);
-    } else {
-      updated[type] = current;
+      if (current.isEmpty) {
+        updated.remove(entry.key);
+      } else {
+        updated[entry.key] = current;
+      }
     }
 
     state = state.copyWith(

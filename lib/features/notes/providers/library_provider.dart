@@ -6,7 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../auth/providers/auth_provider.dart';
-import '../data/library_repository.dart';
+import '../data/repository/library_repository.dart';
 import '../services/file_cache_service.dart';
 import '../domain/library_folder.dart';
 import '../domain/note_category.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/share/share_resource_type.dart';
 import '../../providers/export_selection_provider.dart';
 import '../../widgets/dialog/folder_selection_dialog.dart';
 import '../model/export_tree_node.dart';
@@ -44,10 +45,16 @@ class ExportTreeTile extends ConsumerWidget {
         onChanged: (_) async {
 
           if (selected) {
-            final ids = <String>{};
+            final selections =
+            <ShareResourceType, Set<String>>{};
 
             void collect(ExportTreeNode node) {
-              ids.add(node.item.id);
+              selections
+                  .putIfAbsent(
+                node.item.type,
+                    () => <String>{},
+              )
+                  .add(node.item.id);
 
               for (final child in node.children) {
                 collect(child);
@@ -62,8 +69,7 @@ class ExportTreeTile extends ConsumerWidget {
                   .notifier,
             )
                 .unselectAll(
-              node.item.type,
-              ids,
+              selections,
             );
 
             return;
@@ -99,10 +105,16 @@ class ExportTreeTile extends ConsumerWidget {
 
             case FolderSelectionOption.includeEverything:
 
-              final ids = <String>{};
+              final selections =
+              <ShareResourceType, Set<String>>{};
 
               void collect(ExportTreeNode node) {
-                ids.add(node.item.id);
+                selections
+                    .putIfAbsent(
+                  node.item.type,
+                      () => <String>{},
+                )
+                    .add(node.item.id);
 
                 for (final child in node.children) {
                   collect(child);
@@ -115,8 +127,7 @@ class ExportTreeTile extends ConsumerWidget {
                 exportSelectionNotifierProvider.notifier,
               )
                   .selectAll(
-                node.item.type,
-                ids,
+                selections,
               );
 
               break;

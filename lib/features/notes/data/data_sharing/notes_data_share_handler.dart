@@ -5,7 +5,7 @@ import '../../../data_sharing/domain/models/validation/validation_result.dart';
 import '../../../data_sharing/registry/data_share_handler.dart';
 import '../../domain/library_folder.dart';
 import '../../domain/note_item.dart';
-import '../library_repository.dart';
+import '../repository/library_repository.dart';
 import 'notes_collection_service.dart';
 import 'notes_export_mapper.dart';
 import 'notes_import_mapper.dart';

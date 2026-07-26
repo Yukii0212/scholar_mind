@@ -2,7 +2,7 @@ import '../../../data_sharing/collection/data_share_collector.dart';
 import '../../../data_sharing/domain/models/collection/collected_resource.dart';
 import '../../../data_sharing/domain/models/collection/collection_result.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
-import '../library_repository.dart';
+import '../repository/library_repository.dart';
 
 class NotesCollectionService
     implements DataShareCollector {

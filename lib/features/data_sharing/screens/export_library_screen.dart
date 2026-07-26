@@ -25,35 +25,6 @@ class ExportLibraryScreen
           'Export Library',
         ),
       ),
-      floatingActionButton:
-      FloatingActionButton.extended(
-        onPressed: summary.totalItems == 0
-            ? null
-            : () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) =>
-              const ExportCartScreen(),
-            ),
-          );
-        },
-        backgroundColor: summary.totalItems == 0
-            ? Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest
-            : null,
-        foregroundColor: summary.totalItems == 0
-            ? Theme.of(context)
-            .colorScheme
-            .onSurfaceVariant
-            : null,
-        icon: const Icon(
-          Icons.arrow_forward_rounded,
-        ),
-        label: Text(
-          'Continue (${summary.totalItems})',
-        ),
-      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -61,7 +32,7 @@ class ExportLibraryScreen
         child: ListView(
           padding: const EdgeInsets.only(
             top: 16,
-            bottom: 96,
+            bottom: 112,
           ),
           children: const [
             ExportModuleSection(
@@ -70,6 +41,54 @@ class ExportLibraryScreen
               child: ExportModuleTree(),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            16,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${summary.totalItems} item${summary.totalItems == 1 ? '' : 's'} selected',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium,
+                ),
+              ),
+              FilledButton(
+                onPressed: summary.totalItems == 0
+                    ? null
+                    : () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                      const ExportCartScreen(),
+                    ),
+                  );
+                },
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Continue',
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

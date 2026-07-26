@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../../../core/preferences/export_preferences.dart';
+
 class ExportCartSwipeHint extends StatefulWidget {
   const ExportCartSwipeHint({
     super.key,
@@ -14,23 +16,36 @@ class ExportCartSwipeHint extends StatefulWidget {
 
 class _ExportCartSwipeHintState
     extends State<ExportCartSwipeHint> {
-  bool _visible = true;
+  bool _visible = false;
+  bool _loaded = false;
+
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    _loadPreference();
+  }
 
-    _timer = Timer(
-      const Duration(seconds: 5),
-          () {
-        if (mounted) {
-          setState(() {
-            _visible = false;
-          });
-        }
-      },
-    );
+  Future<void> _loadPreference() async {
+    final shouldShow =
+    await ExportPreferences.shouldShowSwipeHint();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _loaded = true;
+      _visible = shouldShow;
+    });
+
+    if (shouldShow) {
+      _timer = Timer(
+        const Duration(seconds: 5),
+        _dismiss,
+      );
+    }
   }
 
   @override
@@ -42,13 +57,26 @@ class _ExportCartSwipeHintState
   void _dismiss() {
     _timer?.cancel();
 
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _visible = false;
     });
   }
 
+  Future<void> _dismissForever() async {
+    await ExportPreferences.dismissSwipeHint();
+    _dismiss();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return const SizedBox.shrink();
+    }
+
     return AnimatedSwitcher(
       duration: const Duration(
         milliseconds: 300,
@@ -102,8 +130,7 @@ class _ExportCartSwipeHintState
                     Expanded(
                       child: Text(
                         'Swipe left or right on any item to remove it from your export cart.',
-                        style: Theme.of(
-                            context)
+                        style: Theme.of(context)
                             .textTheme
                             .bodyMedium,
                       ),
@@ -117,10 +144,8 @@ class _ExportCartSwipeHintState
                   alignment:
                   Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // TODO: Save preference.
-                      _dismiss();
-                    },
+                    onPressed:
+                    _dismissForever,
                     child: const Text(
                       "Don't show again",
                     ),

@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/preferences/export_preferences.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -152,6 +153,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         title: const Text('Appearance'),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/settings'),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.lightbulb_outline_rounded),
+                        title: const Text('Export swipe hint'),
+                        subtitle: const Text(
+                          'Show onboarding hint in Export Cart',
+                        ),
+                        trailing: FutureBuilder<bool>(
+                          future: ExportPreferences.shouldShowSwipeHint(),
+                          builder: (context, snapshot) {
+                            final enabled = snapshot.data ?? true;
+
+                            return Switch(
+                              value: enabled,
+                              onChanged: (value) async {
+                                if (value) {
+                                  await ExportPreferences.enableSwipeHint();
+                                } else {
+                                  await ExportPreferences.dismissSwipeHint();
+                                }
+
+                                if (context.mounted) {
+                                  setState(() {});
+                                }
+                              },
+                            );
+                          },
+                        ),
                       ),
                       const Divider(height: 1),
                       ListTile(

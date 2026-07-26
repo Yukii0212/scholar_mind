@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../notes/providers/export_cart_items_provider.dart';
 import '../providers/export_selection_provider.dart';
 import '../widgets/screen/cart/export_cart_header.dart';
+import '../widgets/screen/cart/export_cart_swipe_hint.dart';
 import '../widgets/screen/cart/module/export_cart_module_card.dart';
 import '../widgets/screen/cart/notes/export_card_note_tile.dart';
 
@@ -106,6 +107,10 @@ class ExportCartScreen
                       .onSurfaceVariant,
                 ),
               ),
+              const SizedBox(
+                height: 20,
+              ),
+              const ExportCartSwipeHint(),
               const SizedBox(
                 height: 20,
               ),

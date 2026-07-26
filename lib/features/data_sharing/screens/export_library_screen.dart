@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../notes/providers/export_filtered_library_provider.dart';
 import '../providers/export_summary_provider.dart';
 import '../notes/widgets/export_module_tree.dart';
 import '../widgets/export_module_section.dart';
-import '../widgets/export_search_bar.dart';
-import '../widgets/export_selection_summary.dart';
 import 'export_cart_screen.dart';
 
 class ExportLibraryScreen
@@ -57,33 +54,23 @@ class ExportLibraryScreen
           'Continue (${summary.totalItems})',
         ),
       ),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: ExportSearchBar(),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ),
+        child: ListView(
+          padding: const EdgeInsets.only(
+            top: 16,
+            bottom: 96,
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-              ),
-              child: ListView(
-                padding: const EdgeInsets.only(
-                  bottom: 96,
-                ),
-                children: const [
-                  ExportModuleSection(
-                    title: 'Notes',
-                    subtitle:
-                    'Export folders and study materials',
-                    child: ExportModuleTree(),
-                  ),
-                ],
-              ),
+          children: const [
+            ExportModuleSection(
+              title: 'Notes',
+              subtitle: 'Export folders and study materials',
+              child: ExportModuleTree(),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

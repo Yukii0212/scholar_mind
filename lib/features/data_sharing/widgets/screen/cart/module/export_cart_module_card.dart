@@ -9,7 +9,7 @@ class ExportCartModuleCard extends StatefulWidget {
     required this.title,
     required this.subtitle,
     required this.children,
-    this.initiallyExpanded = true,
+    this.initiallyExpanded = false,
   });
 
   final IconData icon;

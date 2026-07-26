@@ -4,11 +4,13 @@ class ExportModuleSection extends StatefulWidget {
   const ExportModuleSection({
     super.key,
     required this.title,
+    required this.subtitle,
     required this.child,
     this.initiallyExpanded = false,
   });
 
   final String title;
+  final String subtitle;
   final Widget child;
   final bool initiallyExpanded;
 
@@ -33,36 +35,64 @@ class _ExportModuleSectionState
 
     final theme = Theme.of(context);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(
-        bottom: 16,
+        bottom: 20,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius:
+        BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant,
+        ),
       ),
       child: Column(
         children: [
 
           InkWell(
+            borderRadius:
+            BorderRadius.circular(20),
             onTap: () {
               setState(() {
                 _expanded = !_expanded;
               });
             },
-            borderRadius:
-            BorderRadius.circular(12),
             child: Padding(
               padding:
-              const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
+              const EdgeInsets.all(20),
               child: Row(
                 children: [
 
                   Expanded(
-                    child: Text(
-                      widget.title,
-                      style: theme
-                          .textTheme
-                          .titleMedium,
+                    child: Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                      children: [
+
+                        Text(
+                          widget.title,
+                          style: theme
+                              .textTheme
+                              .titleLarge,
+                        ),
+
+                        const SizedBox(
+                          height: 4,
+                        ),
+
+                        Text(
+                          widget.subtitle,
+                          style: theme
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                            color: theme
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -71,11 +101,10 @@ class _ExportModuleSectionState
                     const Duration(
                       milliseconds: 200,
                     ),
-                    turns: _expanded
-                        ? 0.5
-                        : 0,
+                    turns:
+                    _expanded ? .5 : 0,
                     child: const Icon(
-                      Icons.keyboard_arrow_down,
+                      Icons.keyboard_arrow_down_rounded,
                     ),
                   ),
                 ],
@@ -88,17 +117,20 @@ class _ExportModuleSectionState
             const SizedBox.shrink(),
             secondChild: Padding(
               padding:
-              const EdgeInsets.only(
-                left: 12,
-                right: 12,
-                bottom: 12,
+              const EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                16,
               ),
               child: widget.child,
             ),
-            crossFadeState: _expanded
+            crossFadeState:
+            _expanded
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            duration: const Duration(
+            duration:
+            const Duration(
               milliseconds: 200,
             ),
           ),

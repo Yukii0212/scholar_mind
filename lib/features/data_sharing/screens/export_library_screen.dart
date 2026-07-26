@@ -40,11 +40,21 @@ class ExportLibraryScreen
             ),
           );
         },
+        backgroundColor: summary.totalItems == 0
+            ? Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            : null,
+        foregroundColor: summary.totalItems == 0
+            ? Theme.of(context)
+            .colorScheme
+            .onSurfaceVariant
+            : null,
         icon: const Icon(
           Icons.arrow_forward_rounded,
         ),
-        label: const Text(
-          'Continue',
+        label: Text(
+          'Continue (${summary.totalItems})',
         ),
       ),
       body: Column(
@@ -53,15 +63,6 @@ class ExportLibraryScreen
             padding: EdgeInsets.all(16),
             child: ExportSearchBar(),
           ),
-          const Padding(
-            padding:
-            EdgeInsets.symmetric(
-              horizontal: 16,
-            ),
-            child:
-            ExportSelectionSummary(),
-          ),
-          const SizedBox(height: 16),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -69,12 +70,12 @@ class ExportLibraryScreen
               ),
               child: ListView(
                 children: const [
-
                   ExportModuleSection(
                     title: 'Notes',
+                    subtitle:
+                    'Export folders and study materials',
                     child: ExportModuleTree(),
                   ),
-
                 ],
               ),
             ),

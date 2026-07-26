@@ -53,7 +53,13 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
       ...state.selectedIds,
     };
 
-    updated[type] = ids.toSet();
+    final current = <String>{
+      ...?updated[type],
+    };
+
+    current.addAll(ids);
+
+    updated[type] = current;
 
     state = state.copyWith(
       selectedIds: updated,

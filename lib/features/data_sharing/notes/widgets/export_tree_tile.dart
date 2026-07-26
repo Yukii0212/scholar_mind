@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/export_selection_provider.dart';
+import '../../widgets/dialog/folder_selection_dialog.dart';
 import '../model/export_tree_node.dart';
 import 'export_item_tile.dart';
 
-class ExportTreeTile extends StatelessWidget {
+class ExportTreeTile extends ConsumerWidget {
   const ExportTreeTile({
     super.key,
     required this.node,
@@ -12,16 +15,92 @@ class ExportTreeTile extends StatelessWidget {
   final ExportTreeNode node;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
     if (!node.hasChildren) {
       return ExportItemTile(
         item: node.item,
       );
     }
 
+    final selection = ref.watch(
+      exportSelectionNotifierProvider,
+    );
+
+    final selected =
+        selection.selectedIds[node.item.type]
+            ?.contains(node.item.id) ??
+            false;
+
     return ExpansionTile(
-      leading: const Icon(
-        Icons.folder_rounded,
+      initiallyExpanded: false,
+      leading: Checkbox(
+        value: selected,
+        onChanged: (_) async {
+
+          final result =
+          await showDialog<
+              FolderSelectionOption>(
+            context: context,
+            builder: (_) =>
+                FolderSelectionDialog(
+                  folderName:
+                  node.item.name,
+                ),
+          );
+
+          if (result == null) {
+            return;
+          }
+
+          switch (result) {
+
+            case FolderSelectionOption.folderOnly:
+
+              ref.read(
+                exportSelectionNotifierProvider.notifier,
+              )
+                  .toggle(
+                node.item.type,
+                node.item.id,
+              );
+
+              break;
+
+            case FolderSelectionOption.chooseResources:
+
+            // TODO
+            // Open lightweight child resource picker.
+
+              break;
+
+            case FolderSelectionOption.includeEverything:
+
+              final ids = <String>{};
+
+              void collect(ExportTreeNode node) {
+                ids.add(node.item.id);
+
+                for (final child in node.children) {
+                  collect(child);
+                }
+              }
+
+              collect(this.node);
+
+              ref.read(
+                exportSelectionNotifierProvider.notifier,
+              )
+                  .selectAll(
+                node.item.type,
+                ids,
+              );
+
+              break;
+          }
+        },
       ),
       title: Text(
         node.item.name,

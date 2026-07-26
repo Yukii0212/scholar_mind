@@ -27,9 +27,45 @@ class ExportCartScreen
     );
 
     return Scaffold(
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            16,
+          ),
+          child: FilledButton(
+            onPressed: () {
+              // TODO: Open export method bottom sheet.
+            },
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Export',
+                ),
+                SizedBox(
+                  width: 8,
+                ),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       appBar: AppBar(
-        title: const Text(
-          'Export Cart',
+        titleSpacing: 8,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+          ),
+          tooltip: 'Back to Library',
         ),
       ),
       body: cart.when(
@@ -50,6 +86,29 @@ class ExportCartScreen
               96,
             ),
             children: [
+              Text(
+                'Export Cart',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium,
+              ),
+              const SizedBox(
+                height: 8,
+              ),
+              Text(
+                'Going back to the library keeps your selected items.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
               ExportCartHeader(
                 itemCount: selection.totalSelected,
               ),
@@ -68,6 +127,9 @@ class ExportCartScreen
                   ),
                 )
                     .toList(),
+              ),
+              const SizedBox(
+                height: 96,
               ),
             ],
           );

@@ -44,14 +44,26 @@ class ExportTreeTile extends ConsumerWidget {
         onChanged: (_) async {
 
           if (selected) {
+            final ids = <String>{};
+
+            void collect(ExportTreeNode node) {
+              ids.add(node.item.id);
+
+              for (final child in node.children) {
+                collect(child);
+              }
+            }
+
+            collect(this.node);
+
             ref
                 .read(
               exportSelectionNotifierProvider
                   .notifier,
             )
-                .toggle(
+                .unselectAll(
               node.item.type,
-              node.item.id,
+              ids,
             );
 
             return;

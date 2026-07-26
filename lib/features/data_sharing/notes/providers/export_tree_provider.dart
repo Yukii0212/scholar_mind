@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../notes/domain/library_folder.dart';
 import '../model/export_item.dart';
 import '../model/export_tree_node.dart';
+import 'export_filtered_library_provider.dart';
 import 'export_library_provider.dart';
 
 part 'export_tree_provider.g.dart';
@@ -13,7 +14,7 @@ Future<List<ExportTreeNode>> exportTree(
     ExportTreeRef ref,
     ) async {
   final modules = await ref.watch(
-    exportLibraryProvider.future,
+    exportFilteredLibraryProvider.future,
   );
 
   final allItems = modules

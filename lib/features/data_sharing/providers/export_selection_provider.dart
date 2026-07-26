@@ -68,12 +68,23 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
 
   void unselectAll(
       ShareResourceType type,
+      Iterable<String> ids,
       ) {
     final updated = <ShareResourceType, Set<String>>{
       ...state.selectedIds,
     };
 
-    updated.remove(type);
+    final current = <String>{
+      ...?updated[type],
+    };
+
+    current.removeAll(ids);
+
+    if (current.isEmpty) {
+      updated.remove(type);
+    } else {
+      updated[type] = current;
+    }
 
     state = state.copyWith(
       selectedIds: updated,

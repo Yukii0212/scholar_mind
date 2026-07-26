@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/export/export_module.dart';
 import '../../domain/models/share/share_resource_type.dart';
 import '../../providers/export_selection_provider.dart';
 import '../../widgets/dialog/folder_selection_dialog.dart';
@@ -99,6 +100,7 @@ class ExportTreeTile extends ConsumerWidget {
                   .toggle(
                 node.item.type,
                 node.item.id,
+                ExportModule.notes,
               );
 
               break;
@@ -128,6 +130,7 @@ class ExportTreeTile extends ConsumerWidget {
               )
                   .selectAll(
                 selections,
+                ExportModule.notes,
               );
 
               break;

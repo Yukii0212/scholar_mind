@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../notes/providers/export_cart_items_provider.dart';
 import '../widgets/screen/cart/export_cart_header.dart';
 import '../widgets/screen/cart/module/export_cart_module_card.dart';
+import '../widgets/screen/cart/notes/export_card_note_tile.dart';
 
 class ExportCartScreen
     extends ConsumerWidget {
@@ -54,9 +55,13 @@ class ExportCartScreen
                 icon: Icons.folder_copy_outlined,
                 title: 'Notes',
                 subtitle: '${items.length} items',
-                children: const [
-                  SizedBox.shrink(),
-                ],
+                children: items
+                    .map(
+                      (item) => ExportCartNoteTile(
+                    item: item,
+                  ),
+                )
+                    .toList(),
               ),
             ],
           );

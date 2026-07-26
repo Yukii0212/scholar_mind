@@ -35,16 +35,17 @@ class _ExportModuleSectionState
 
     final theme = Theme.of(context);
 
-    return Container(
-      margin: const EdgeInsets.only(
-        bottom: 20,
-      ),
-      decoration: BoxDecoration(
+    return Material(
         color: theme.colorScheme.surface,
-        borderRadius:
-        BorderRadius.circular(20),
-      ),
-      child: Column(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          margin: const EdgeInsets.only(
+            bottom: 20,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
         children: [
 
           InkWell(
@@ -133,6 +134,7 @@ class _ExportModuleSectionState
           ),
         ],
       ),
+        ),
     );
   }
 }

@@ -1,5 +1,4 @@
-
-
+import '../../domain/models/export/export_module.dart';
 import '../../domain/models/share/share_resource_type.dart';
 
 class ExportCartItem {
@@ -19,7 +18,7 @@ class ExportCartItem {
 
   final ShareResourceType type;
 
-  final String module;
+  final ExportModule module;
 
   final String? subtitle;
 

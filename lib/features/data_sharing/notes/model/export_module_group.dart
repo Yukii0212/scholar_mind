@@ -1,7 +1,7 @@
 import 'export_item.dart';
 
-class ExportModule {
-  const ExportModule({
+class ExportModuleGroup {
+  const ExportModuleGroup({
     required this.id,
     required this.title,
     required this.items,

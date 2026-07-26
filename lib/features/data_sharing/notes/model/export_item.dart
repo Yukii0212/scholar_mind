@@ -1,3 +1,4 @@
+import '../../domain/models/export/export_module.dart';
 import '../../domain/models/share/share_resource_type.dart';
 
 class ExportItem {
@@ -16,7 +17,7 @@ class ExportItem {
 
   final String id;
   final String name;
-  final String module;
+  final ExportModule module;
   final String? parentId;
   final String? subtitle;
   final String? icon;

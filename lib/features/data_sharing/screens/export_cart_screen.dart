@@ -119,7 +119,7 @@ class ExportCartScreen
                 icon: Icons.folder_copy_outlined,
                 title: 'Notes',
                 subtitle:
-                '${selection.totalSelected} items',
+                '${selection.totalSelected} item${selection.totalSelected == 1 ? '' : 's'}',
                 children: items
                     .map(
                       (item) => ExportCartNoteTile(

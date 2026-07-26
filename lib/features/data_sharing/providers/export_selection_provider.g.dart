@@ -7,7 +7,7 @@ part of 'export_selection_provider.dart';
 // **************************************************************************
 
 String _$exportSelectionNotifierHash() =>
-    r'23c5da628d20be03e134afdcc5816a649169db04';
+    r'5de0ebc17d1406db90f23e9be9a32dee6fe5d2fc';
 
 /// See also [ExportSelectionNotifier].
 @ProviderFor(ExportSelectionNotifier)

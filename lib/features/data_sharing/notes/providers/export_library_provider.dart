@@ -2,13 +2,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../notes/providers/library_provider.dart';
 import '../model/export_item.dart';
-import '../model/export_module.dart';
+import '../model/export_module_group.dart';
+import '../../domain/models/export/export_module.dart';
 import '../../domain/models/share/share_resource_type.dart';
 
 part 'export_library_provider.g.dart';
 
 @riverpod
-Future<List<ExportModule>> exportLibrary(
+Future<List<ExportModuleGroup>> exportLibrary(
     ExportLibraryRef ref,
     ) async {
   final folders = await ref.watch(
@@ -25,7 +26,7 @@ Future<List<ExportModule>> exportLibrary(
         id: folder.id,
         name: folder.name,
         type: ShareResourceType.noteFolder,
-        module: 'Notes',
+        module: ExportModule.notes,
         parentId: folder.parentId,
       ),
     ),
@@ -37,14 +38,14 @@ Future<List<ExportModule>> exportLibrary(
                 ? null
                 : note.extension.toUpperCase(),
         type: ShareResourceType.note,
-        module: 'Notes',
+        module: ExportModule.notes,
         parentId: note.folderId,
       ),
     ),
   ];
 
   return [
-    ExportModule(
+    ExportModuleGroup(
       id: 'notes',
       title: 'Notes',
       description: 'Notes, folders and study materials',

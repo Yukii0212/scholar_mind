@@ -23,7 +23,7 @@ class ExportCartTile extends StatelessWidget {
       title: Text(item.name),
       subtitle: Text(
         item.subtitle ??
-            item.module,
+            item.module.name,
       ),
       trailing: IconButton(
         onPressed: onRemove,

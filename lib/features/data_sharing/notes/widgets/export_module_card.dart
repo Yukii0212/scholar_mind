@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../model/export_module.dart';
+import '../model/export_module_group.dart';
 import 'export_item_tile.dart';
 
 class ExportModuleCard extends StatelessWidget {
@@ -9,7 +9,7 @@ class ExportModuleCard extends StatelessWidget {
     required this.module,
   });
 
-  final ExportModule module;
+  final ExportModuleGroup module;
 
   @override
   Widget build(BuildContext context) {

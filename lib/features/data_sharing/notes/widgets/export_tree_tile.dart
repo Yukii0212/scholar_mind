@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/models/export/export_module.dart';
 import '../../domain/models/share/share_resource_type.dart';
 import '../../providers/export_selection_provider.dart';
-import '../../widgets/dialog/folder_selection_dialog.dart';
 import '../model/export_tree_node.dart';
 import 'export_item_tile.dart';
 
@@ -43,97 +41,33 @@ class ExportTreeTile extends ConsumerWidget {
           : const SizedBox.shrink(),
       leading: Checkbox(
         value: selected,
-        onChanged: (_) async {
+        onChanged: (_) {
+          final selections =
+          <ShareResourceType, Set<String>>{};
 
-          if (selected) {
-            final selections =
-            <ShareResourceType, Set<String>>{};
-
-            void collect(ExportTreeNode node) {
-              selections
-                  .putIfAbsent(
-                node.item.type,
-                    () => <String>{},
-              )
-                  .add(node.item.id);
-
-              for (final child in node.children) {
-                collect(child);
-              }
-            }
-
-            collect(this.node);
-
-            ref
-                .read(
-              exportSelectionNotifierProvider
-                  .notifier,
+          void collect(ExportTreeNode node) {
+            selections
+                .putIfAbsent(
+              node.item.type,
+                  () => <String>{},
             )
-                .unselectAll(
-              selections,
-            );
+                .add(node.item.id);
 
-            return;
+            for (final child in node.children) {
+              collect(child);
+            }
           }
 
-          final result =
-          await showDialog<
-              FolderSelectionOption>(
-            context: context,
-            builder: (_) =>
-                FolderSelectionDialog(
-                  folderName: node.item.name,
-                ),
+          collect(this.node);
+
+          final notifier = ref.read(
+            exportSelectionNotifierProvider.notifier,
           );
 
-          if (result == null) {
-            return;
-          }
-
-          switch (result) {
-
-            case FolderSelectionOption.folderOnly:
-
-              ref.read(
-                exportSelectionNotifierProvider.notifier,
-              )
-                  .toggle(
-                node.item.type,
-                node.item.id,
-                ExportModule.notes,
-              );
-
-              break;
-
-            case FolderSelectionOption.includeEverything:
-
-              final selections =
-              <ShareResourceType, Set<String>>{};
-
-              void collect(ExportTreeNode node) {
-                selections
-                    .putIfAbsent(
-                  node.item.type,
-                      () => <String>{},
-                )
-                    .add(node.item.id);
-
-                for (final child in node.children) {
-                  collect(child);
-                }
-              }
-
-              collect(this.node);
-
-              ref.read(
-                exportSelectionNotifierProvider.notifier,
-              )
-                  .selectAll(
-                selections,
-                ExportModule.notes,
-              );
-
-              break;
+          if (selected) {
+            notifier.unselectAll(selections);
+          } else {
+            notifier.selectAll(selections, node.item.module);
           }
         },
       ),

@@ -6,12 +6,12 @@ part of 'export_library_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$exportLibraryHash() => r'b59fdc42d212281d2b1a5ba51d6359616bae9b0f';
+String _$exportLibraryHash() => r'a7b06273696fa3e276224a20d2b01fd6eb71816b';
 
 /// See also [exportLibrary].
 @ProviderFor(exportLibrary)
 final exportLibraryProvider =
-    AutoDisposeFutureProvider<List<ExportModule>>.internal(
+    AutoDisposeFutureProvider<List<ExportModuleGroup>>.internal(
   exportLibrary,
   name: r'exportLibraryProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -21,6 +21,7 @@ final exportLibraryProvider =
   allTransitiveDependencies: null,
 );
 
-typedef ExportLibraryRef = AutoDisposeFutureProviderRef<List<ExportModule>>;
+typedef ExportLibraryRef
+    = AutoDisposeFutureProviderRef<List<ExportModuleGroup>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

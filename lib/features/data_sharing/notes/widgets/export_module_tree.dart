@@ -22,9 +22,11 @@ class ExportModuleTree
     return tree.when(
       data: (nodes) {
         return ListView.builder(
+          shrinkWrap: true,
+          physics:
+          const NeverScrollableScrollPhysics(),
           itemCount: nodes.length,
-          itemBuilder:
-              (context, index) {
+          itemBuilder: (context, index) {
             return ExportTreeTile(
               node: nodes[index],
             );

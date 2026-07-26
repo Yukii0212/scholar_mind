@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../notes/providers/export_filtered_library_provider.dart';
 import '../providers/export_summary_provider.dart';
 import '../notes/widgets/export_module_tree.dart';
+import '../widgets/export_module_section.dart';
 import '../widgets/export_search_bar.dart';
 import '../widgets/export_selection_summary.dart';
 import 'export_cart_screen.dart';
@@ -46,13 +47,13 @@ class ExportLibraryScreen
           'Continue',
         ),
       ),
-      body: const Column(
+      body: Column(
         children: [
-          Padding(
+          const Padding(
             padding: EdgeInsets.all(16),
             child: ExportSearchBar(),
           ),
-          Padding(
+          const Padding(
             padding:
             EdgeInsets.symmetric(
               horizontal: 16,
@@ -60,13 +61,22 @@ class ExportLibraryScreen
             child:
             ExportSelectionSummary(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: 16,
               ),
-              child: ExportModuleTree(),
+              child: ListView(
+                children: const [
+
+                  ExportModuleSection(
+                    title: 'Notes',
+                    child: ExportModuleTree(),
+                  ),
+
+                ],
+              ),
             ),
           ),
         ],

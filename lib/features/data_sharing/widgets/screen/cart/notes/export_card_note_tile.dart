@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../notes/model/export_cart_item.dart';
 import '../item/export_cart_item_tile.dart';
+import '../shared/export_cart_delete_button.dart';
 import '../shared/export_cart_icon_container.dart';
 
 class ExportCartNoteTile extends StatelessWidget {
@@ -23,7 +24,7 @@ class ExportCartNoteTile extends StatelessWidget {
             ExportCartIconContainer(
               child: Icon(
                 _icon,
-                size: 32,
+                size: 24,
               ),
             ),
             const SizedBox(width: 16),
@@ -54,16 +55,18 @@ class ExportCartNoteTile extends StatelessWidget {
                     children: [
                       if (item.type.name ==
                           'noteFolder') ...[
-                        _MetadataChip(
-                          icon: Icons.folder_outlined,
-                          text:
-                          '${item.childCount} subfolders',
-                        ),
-                        _MetadataChip(
-                          icon: Icons.description_outlined,
-                          text:
-                          '${item.noteCount} notes',
-                        ),
+                        if (item.childCount > 0)
+                          _MetadataChip(
+                            icon: Icons.folder_outlined,
+                            text:
+                            '${item.childCount} subfolders',
+                          ),
+                        if (item.noteCount > 0)
+                          _MetadataChip(
+                            icon: Icons.description_outlined,
+                            text:
+                            '${item.noteCount} notes',
+                          ),
                       ] else
                         _MetadataChip(
                           icon: Icons.insert_drive_file_outlined,
@@ -74,10 +77,10 @@ class ExportCartNoteTile extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.delete_outline,
+            const Align(
+              alignment: Alignment.topCenter,
+              child: ExportCartDeleteButton(
+                onPressed: null,
               ),
             ),
           ],

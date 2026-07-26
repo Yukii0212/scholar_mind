@@ -12,8 +12,8 @@ class ExportCartIconContainer
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
-      height: 72,
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
         borderRadius:
         BorderRadius.circular(16),

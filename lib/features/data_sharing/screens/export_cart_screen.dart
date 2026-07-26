@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../notes/providers/export_cart_items_provider.dart';
 import '../widgets/screen/cart/export_cart_header.dart';
-import '../widgets/screen/library/export_cart_summary.dart';
-import '../widgets/screen/library/export_cart_tile.dart';
+import '../widgets/screen/cart/module/export_cart_module_card.dart';
 
 class ExportCartScreen
     extends ConsumerWidget {
@@ -51,19 +50,13 @@ class ExportCartScreen
               const SizedBox(
                 height: 20,
               ),
-              const ExportCartSummary(),
-              const SizedBox(
-                height: 20,
-              ),
-              ...items.map(
-                    (item) => Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 12,
-                  ),
-                  child: ExportCartTile(
-                    item: item,
-                  ),
-                ),
+              ExportCartModuleCard(
+                icon: Icons.folder_copy_outlined,
+                title: 'Notes',
+                subtitle: '${items.length} items',
+                children: const [
+                  SizedBox.shrink(),
+                ],
               ),
             ],
           );

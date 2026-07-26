@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/models/share/share_resource_type.dart';
 import '../model/export_item.dart';
 import 'export_library_provider.dart';
 import '../../providers/export_selection_provider.dart';
@@ -111,6 +112,32 @@ Future<List<ExportItem>> exportCart(
         visit(root.id);
 
         return count;
+      }
+
+      Map<ShareResourceType, Set<String>> collectSelections(
+          ExportItem root,
+          ) {
+        final selections =
+        <ShareResourceType, Set<String>>{};
+
+        void collect(ExportItem current) {
+          selections
+              .putIfAbsent(
+            current.type,
+                () => <String>{},
+          )
+              .add(current.id);
+
+          for (final child in module.items.where(
+                (e) => e.parentId == current.id,
+          )) {
+            collect(child);
+          }
+        }
+
+        collect(root);
+
+        return selections;
       }
 
       results.add(

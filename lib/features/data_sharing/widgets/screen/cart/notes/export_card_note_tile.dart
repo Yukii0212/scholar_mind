@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../domain/models/share/share_resource_type.dart';
 import '../../../../notes/model/export_cart_item.dart';
+import '../../../../notes/model/export_item.dart';
+import '../../../../notes/providers/export_library_provider.dart';
+import '../../../../providers/export_selection_provider.dart';
 import '../item/export_cart_item_tile.dart';
 import '../shared/export_cart_delete_button.dart';
 import '../shared/export_cart_icon_container.dart';
 
-class ExportCartNoteTile extends StatelessWidget {
+class ExportCartNoteTile extends ConsumerWidget {
   const ExportCartNoteTile({
     super.key,
     required this.item,
@@ -14,7 +19,10 @@ class ExportCartNoteTile extends StatelessWidget {
   final ExportCartItem item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
     return ExportCartItemTile(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -77,10 +85,52 @@ class ExportCartNoteTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Align(
+            Align(
               alignment: Alignment.topCenter,
               child: ExportCartDeleteButton(
-                onPressed: null,
+                onPressed: () async {
+                  final modules = await ref.read(
+                    exportLibraryProvider.future,
+                  );
+
+                  final selections =
+                  <ShareResourceType, Set<String>>{};
+
+                  for (final module in modules) {
+                    final root = module.items.where(
+                          (e) => e.id == item.id,
+                    );
+
+                    if (root.isEmpty) {
+                      continue;
+                    }
+
+                    void collect(ExportItem current) {
+                      selections
+                          .putIfAbsent(
+                        current.type,
+                            () => <String>{},
+                      )
+                          .add(current.id);
+
+                      for (final child in module.items.where(
+                            (e) => e.parentId == current.id,
+                      )) {
+                        collect(child);
+                      }
+                    }
+
+                    collect(root.first);
+                    break;
+                  }
+
+                  ref
+                      .read(
+                    exportSelectionNotifierProvider
+                        .notifier,
+                  )
+                      .unselectAll(selections);
+                },
               ),
             ),
           ],

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../notes/model/export_cart_item.dart';
+import '../../../notes/model/export_cart_item.dart';
 
 class ExportCartTile extends StatelessWidget {
   const ExportCartTile({

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 enum FolderSelectionOption {
   folderOnly,
-  chooseResources,
   includeEverything,
 }
 
@@ -48,23 +47,6 @@ class FolderSelectionDialog extends StatelessWidget {
               Navigator.pop(
                 context,
                 FolderSelectionOption.folderOnly,
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.rule_folder_outlined,
-            ),
-            title: const Text(
-              'Choose Resources',
-            ),
-            subtitle: const Text(
-              'Select which child resources to include.',
-            ),
-            onTap: () {
-              Navigator.pop(
-                context,
-                FolderSelectionOption.chooseResources,
               );
             },
           ),

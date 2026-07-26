@@ -43,9 +43,6 @@ class _ExportModuleSectionState
         color: theme.colorScheme.surface,
         borderRadius:
         BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant,
-        ),
       ),
       child: Column(
         children: [

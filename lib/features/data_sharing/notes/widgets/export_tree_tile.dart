@@ -19,7 +19,7 @@ class ExportTreeTile extends ConsumerWidget {
       BuildContext context,
       WidgetRef ref,
       ) {
-    if (!node.hasChildren) {
+    if (!node.isFolder) {
       return ExportItemTile(
         item: node.item,
       );
@@ -36,9 +36,26 @@ class ExportTreeTile extends ConsumerWidget {
 
     return ExpansionTile(
       initiallyExpanded: false,
+      trailing: node.hasChildren
+          ? null
+          : const SizedBox.shrink(),
       leading: Checkbox(
         value: selected,
         onChanged: (_) async {
+
+          if (selected) {
+            ref
+                .read(
+              exportSelectionNotifierProvider
+                  .notifier,
+            )
+                .toggle(
+              node.item.type,
+              node.item.id,
+            );
+
+            return;
+          }
 
           final result =
           await showDialog<
@@ -46,8 +63,7 @@ class ExportTreeTile extends ConsumerWidget {
             context: context,
             builder: (_) =>
                 FolderSelectionDialog(
-                  folderName:
-                  node.item.name,
+                  folderName: node.item.name,
                 ),
           );
 
@@ -66,13 +82,6 @@ class ExportTreeTile extends ConsumerWidget {
                 node.item.type,
                 node.item.id,
               );
-
-              break;
-
-            case FolderSelectionOption.chooseResources:
-
-            // TODO
-            // Open lightweight child resource picker.
 
               break;
 
@@ -108,9 +117,8 @@ class ExportTreeTile extends ConsumerWidget {
       children: [
         for (final child in node.children)
           Padding(
-            padding:
-            const EdgeInsets.only(
-              left: 20,
+            padding: const EdgeInsets.only(
+              left: 12,
             ),
             child: ExportTreeTile(
               node: child,

@@ -69,6 +69,9 @@ class ExportLibraryScreen
                 horizontal: 16,
               ),
               child: ListView(
+                padding: const EdgeInsets.only(
+                  bottom: 96,
+                ),
                 children: const [
                   ExportModuleSection(
                     title: 'Notes',

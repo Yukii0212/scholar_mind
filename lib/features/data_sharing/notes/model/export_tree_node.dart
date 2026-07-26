@@ -1,3 +1,4 @@
+import '../../domain/models/share/share_resource_type.dart';
 import 'export_item.dart';
 
 class ExportTreeNode {
@@ -10,5 +11,10 @@ class ExportTreeNode {
 
   final List<ExportTreeNode> children;
 
-  bool get hasChildren => children.isNotEmpty;
+  bool get isFolder =>
+      item.type ==
+          ShareResourceType.noteFolder;
+
+  bool get hasChildren =>
+      children.isNotEmpty;
 }

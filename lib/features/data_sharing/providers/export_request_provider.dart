@@ -1,9 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:scholar_mind/features/auth/providers/auth_provider.dart';
 import 'package:scholar_mind/features/data_sharing/providers/share_method_provider.dart';
 
-
 import '../domain/models/export/export_request.dart';
-import '../domain/models/share/share_method.dart';
 import 'export_selection_provider.dart';
 
 part 'export_request_provider.g.dart';
@@ -20,16 +19,23 @@ ExportRequest? exportRequest(
     return null;
   }
 
+  final user = ref.watch(
+    authStateProvider,
+  ).value;
+
+  if (user == null) {
+    return null;
+  }
+
   final method = ref.watch(
     shareMethodNotifierProvider,
   );
 
   return ExportRequest(
-    userId: '',
+    userId: user.uid,
     method: method,
     resourceIds: {
-      for (final entry
-      in selection.selectedIds.entries)
+      for (final entry in selection.selectedIds.entries)
         entry.key: entry.value.toList(),
     },
   );

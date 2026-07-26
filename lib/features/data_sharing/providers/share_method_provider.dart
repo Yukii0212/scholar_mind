@@ -8,7 +8,7 @@ class ShareMethodNotifier
     extends _$ShareMethodNotifier {
   @override
   ShareMethod build() {
-    return ShareMethod.scholarFile;
+    return ShareMethod.qrCode;
   }
 
   void setMethod(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../widgets/export/export_flow.dart';
 import '../notes/providers/export_cart_items_provider.dart';
 import '../providers/export_selection_provider.dart';
 import '../widgets/screen/cart/export_cart_header.dart';
@@ -38,7 +39,10 @@ class ExportCartScreen
           ),
           child: FilledButton(
             onPressed: () {
-              // TODO: Open export method bottom sheet.
+              ExportFlow.start(
+                context,
+                ref,
+              );
             },
             child: const Row(
               mainAxisSize: MainAxisSize.min,

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 
 import '../../../../core/services/device_id_service.dart';
 import '../../domain/library_folder.dart';
@@ -720,6 +721,113 @@ class LibraryRepository {
       'deletedAt': null,
       'createdAt': now,
       'updatedAt': now,
+    });
+  }
+
+  Future<String> importFolder({
+    required String userId,
+    required String name,
+    required String parentId,
+    required bool isFavorite,
+  }) async {
+    final document = _folders(userId).doc();
+
+    final now = FieldValue.serverTimestamp();
+
+    debugPrint('Creating folder: $name');
+
+    await document.set({
+      'name': name,
+      'parentId': parentId,
+      'isFavorite': isFavorite,
+      'isArchived': false,
+      'isDeleted': false,
+      'deletedAt': null,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    debugPrint('Created folder ${document.id}');
+
+    return document.id;
+  }
+
+  Future<void> importInternalNote({
+    required String userId,
+    required String folderId,
+    required String name,
+    required String content,
+    required String category,
+    required bool isFavorite,
+  }) async {
+    final now = FieldValue.serverTimestamp();
+
+    await _notes(userId).add({
+      'name': name,
+      'folderId': folderId,
+
+      'storagePath': '',
+      'extension': 'md',
+      'sizeBytes': 0,
+
+      'isInternal': true,
+      'content': content,
+
+      'category': category,
+      'source': 'import',
+
+      'isFavorite': isFavorite,
+      'isDeleted': false,
+      'deletedAt': null,
+      'cacheExpiresAt': null,
+
+      'createdAt': now,
+      'updatedAt': now,
+
+      'lockedBy': null,
+      'heartbeatAt': null,
+      'lockExpiresAt': null,
+    });
+  }
+
+  Future<void> importUploadedNote({
+    required String userId,
+    required String folderId,
+    required String name,
+    required String extension,
+    required String storagePath,
+    required int sizeBytes,
+    required String category,
+    required String source,
+    required bool isFavorite,
+  }) async {
+    final now = FieldValue.serverTimestamp();
+
+    await _notes(userId).add({
+      'name': name,
+      'folderId': folderId,
+
+      'storagePath': storagePath,
+      'extension': extension,
+      'sizeBytes': sizeBytes,
+
+      'isInternal': false,
+      'content': '',
+
+      'category': category,
+      'source': source,
+
+      'isFavorite': isFavorite,
+      'isDeleted': false,
+      'deletedAt': null,
+      'cacheExpiresAt': null,
+
+      'createdAt': now,
+      'updatedAt': now,
+
+      'lockedBy': null,
+      'heartbeatAt': null,
+      'lockExpiresAt': null,
     });
   }
 

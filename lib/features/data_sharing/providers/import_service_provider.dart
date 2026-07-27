@@ -20,6 +20,7 @@ ImportService importService(
 
   if (registry.handlerFor(
     NotesDataShareHandler(
+      repository: repository,
       collector: NotesCollectionService(
         repository: repository,
       ),
@@ -27,11 +28,12 @@ ImportService importService(
   ) ==
       null) {
     registry.register(
-      NotesDataShareHandler(
-        collector: NotesCollectionService(
+        NotesDataShareHandler(
           repository: repository,
+          collector: NotesCollectionService(
+            repository: repository,
+          ),
         ),
-      ),
     );
   }
 

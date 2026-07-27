@@ -21,6 +21,7 @@ ExportService exportService(
 
   if (registry.handlerFor(
     NotesDataShareHandler(
+      repository: repository,
       collector: NotesCollectionService(
         repository: repository,
       ),
@@ -28,11 +29,12 @@ ExportService exportService(
   ) ==
       null) {
     registry.register(
-      NotesDataShareHandler(
-        collector: NotesCollectionService(
+        NotesDataShareHandler(
           repository: repository,
-        ),
-      ),
+          collector: NotesCollectionService(
+            repository: repository,
+          ),
+        )
     );
   }
 

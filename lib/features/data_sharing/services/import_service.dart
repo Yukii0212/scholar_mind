@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 import '../domain/models/import/import_request.dart';
 import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_resource.dart';
@@ -55,17 +57,11 @@ class ImportService {
           .add(resource);
     }
 
-    for (final entry in groupedResources.entries) {
-      final handler =
-      DataShareRegistry.instance.handlerFor(
-        entry.key,
+    for (final handler in DataShareRegistry.instance.handlers) {
+      await handler.import(
+        userId: request.userId,
+        resources: request.archive.resources,
       );
-
-      if (handler == null) {
-        continue;
-      }
-
-      await handler.import(entry.value);
     }
 
     return ImportResult(

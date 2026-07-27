@@ -8,9 +8,9 @@ class NotesCollectionService
     implements DataShareCollector {
   NotesCollectionService({
     required LibraryRepository repository,
-  }) : _repository = repository;
+  }) : repository = repository;
 
-  final LibraryRepository _repository;
+  final LibraryRepository repository;
 
   @override
   ShareResourceType get resourceType =>
@@ -47,7 +47,7 @@ class NotesCollectionService
     required Set<String> visitedFolders,
     required Set<String> visitedNotes,
   }) async {
-    final folder = await _repository.getFolder(
+    final folder = await repository.getFolder(
       userId: userId,
       folderId: resourceId,
     );
@@ -63,7 +63,7 @@ class NotesCollectionService
       return;
     }
 
-    final note = await _repository.getNote(
+    final note = await repository.getNote(
       userId: userId,
       noteId: resourceId,
     );
@@ -92,7 +92,7 @@ class NotesCollectionService
       return;
     }
 
-    final folder = await _repository.getFolder(
+    final folder = await repository.getFolder(
       userId: userId,
       folderId: folderId,
     );
@@ -109,7 +109,7 @@ class NotesCollectionService
       ),
     );
 
-    final notes = await _repository.getNotesInFolder(
+    final notes = await repository.getNotesInFolder(
       userId: userId,
       folderId: folder.id,
     );
@@ -128,7 +128,7 @@ class NotesCollectionService
       );
     }
 
-    final childFolders = await _repository.getChildFolders(
+    final childFolders = await repository.getChildFolders(
       userId: userId,
       parentFolderId: folder.id,
     );

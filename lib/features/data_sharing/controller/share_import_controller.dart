@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../auth/providers/auth_provider.dart';
 import '../domain/models/import/import_request.dart';
 import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_archive.dart';
@@ -94,12 +95,21 @@ class ShareImportController extends _$ShareImportController {
   Future<ImportResult> importArchive(
       ShareArchive archive,
       ) {
+    final user = ref.read(firebaseAuthProvider).currentUser;
+
+    if (user == null) {
+      throw Exception(
+        'You must be signed in to import shared data.',
+      );
+    }
+
     return ref
         .read(
       importServiceProvider,
     )
         .import(
       ImportRequest(
+        userId: user.uid,
         archive: archive,
       ),
     );

@@ -20,7 +20,8 @@ abstract class DataShareHandler {
     required List<String> resourceIds,
   });
 
-  Future<void> import(
-      List<ShareResource> resources,
-      );
+  Future<void> import({
+    required String userId,
+    required List<ShareResource> resources,
+  });
 }

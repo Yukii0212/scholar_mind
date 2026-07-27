@@ -58,7 +58,17 @@ class ImportService {
     }
 
     final handlers =
-    DataShareRegistry.instance.handlers.toSet();
+        DataShareRegistry.instance.handlers;
+
+    debugPrint(
+      'Handlers registered: ${DataShareRegistry.instance.handlers.length}',
+    );
+
+    for (final handler in DataShareRegistry.instance.handlers) {
+      debugPrint(
+        '${handler.runtimeType} | ${identityHashCode(handler)} | ${handler.resourceTypes}',
+      );
+    }
 
     for (final handler in handlers) {
       final resources = <ShareResource>[];

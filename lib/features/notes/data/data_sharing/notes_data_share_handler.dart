@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 
 import '../../../data_sharing/domain/models/share/share_resource.dart';
@@ -79,8 +78,6 @@ class NotesDataShareHandler
       resourceIds: resourceIds,
     );
 
-    ('=== Collected Resources ===');
-
     for (final resource in collected.resources) {
       (
         '${resource.resourceType.name} '
@@ -93,7 +90,6 @@ class NotesDataShareHandler
         .map(_exportMapper.toResource)
         .toList();
 
-    ('=== Share Resources ===');
 
     for (final resource in resources) {
       (
@@ -170,10 +166,6 @@ class NotesDataShareHandler
           continue;
         }
 
-        (
-          'Importing folder: ${resource.metadata.displayName}',
-        );
-
         final newFolderId =
         await _repository.importFolder(
           userId: userId,
@@ -185,32 +177,16 @@ class NotesDataShareHandler
           payload['isFavorite'] as bool? ?? false,
         );
 
-        (
-          'Created folder: $newFolderId',
-        );
-
         folderMap[resource.resourceId] =
             newFolderId;
 
         importedAny = true;
-      }
-
-      if (!importedAny) {
-        (
-          'Unable to resolve remaining folder hierarchy.',
-        );
-        break;
       }
     }
 
     for (final resource in notes) {
       final payload =
       _importMapper.notePayload(resource);
-
-      debugPrint('----- Note Payload -----');
-      debugPrint('id=${resource.resourceId}');
-      debugPrint('name=${resource.metadata.displayName}');
-      debugPrint(payload.toString());
 
       final originalFolderId = payload['folderId'] as String;
 
@@ -219,26 +195,11 @@ class NotesDataShareHandler
           ? LibraryFolder.rootId
           : folderMap[originalFolderId] ?? LibraryFolder.rootId;
 
-      if (targetFolderId == null) {
-        (
-          'Skipping note "${resource.metadata.displayName}" because folder "$originalFolderId" was not imported.',
-        );
-        continue;
-      }
-
-      (
-        'Importing note: ${resource.metadata.displayName}',
-      );
-
       final isInternal =
           payload['isInternal'] as bool? ?? false;
 
       try {
         if (isInternal) {
-          debugPrint('===== IMPORTING INTERNAL NOTE =====');
-          debugPrint('folderId=$targetFolderId');
-          debugPrint('payload=$payload');
-
           await _collector.repository.importInternalNote(
             userId: userId,
             folderId: targetFolderId,
@@ -248,10 +209,6 @@ class NotesDataShareHandler
             isFavorite: payload['isFavorite'] as bool? ?? false,
           );
         } else {
-          debugPrint('===== IMPORTING UPLOADED NOTE =====');
-          debugPrint('folderId=$targetFolderId');
-          debugPrint('payload=$payload');
-
           await _collector.repository.importUploadedNote(
             userId: userId,
             folderId: targetFolderId,
@@ -265,12 +222,6 @@ class NotesDataShareHandler
           );
         }
       } catch (e, st) {
-        debugPrint('========== IMPORT FAILED ==========');
-        debugPrint('Resource: ${resource.metadata.displayName}');
-        debugPrint('Type: ${resource.resourceType}');
-        debugPrint('Payload: $payload');
-        debugPrint('Error: $e');
-        debugPrint(st.toString());
         rethrow;
       }
     }

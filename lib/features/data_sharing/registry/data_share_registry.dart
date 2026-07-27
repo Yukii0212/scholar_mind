@@ -25,5 +25,5 @@ class DataShareRegistry {
   }
 
   Iterable<DataShareHandler> get handlers =>
-      _handlers.values;
+      _handlers.values.toSet();
 }

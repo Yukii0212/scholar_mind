@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../controller/share_import_controller.dart';
+import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_archive.dart';
 import '../domain/models/share/share_resource.dart';
 
@@ -22,8 +27,6 @@ class _ImportPreviewScreenState
     extends ConsumerState<ImportPreviewScreen> {
   late final List<bool> _selected;
 
-  bool _isImporting = false;
-
   @override
   void initState() {
     super.initState();
@@ -34,7 +37,7 @@ class _ImportPreviewScreenState
     );
   }
 
-  Future<void> _import() async {
+  void _import() {
     final resources = <ShareResource>[];
 
     for (var i = 0; i < widget.archive.resources.length; i++) {
@@ -56,55 +59,49 @@ class _ImportPreviewScreenState
       return;
     }
 
-    setState(() {
-      _isImporting = true;
-    });
+    final archive = ShareArchive(
+      manifest: widget.archive.manifest,
+      resources: resources,
+    );
 
-    try {
-      final archive = ShareArchive(
-        manifest: widget.archive.manifest,
-        resources: resources,
-      );
+    final taskController = ref.read(
+      appTaskControllerProvider,
+    );
 
-      final result = await ref
-          .read(
-        shareImportControllerProvider.notifier,
-      )
-          .importArchive(
-        archive,
-      );
+    final importController = ref.read(
+      shareImportControllerProvider.notifier,
+    );
 
-      if (!mounted) {
-        return;
-      }
+    unawaited(
+      taskController.run<ImportResult>(
+        id: 'share_import',
+        type: AppTaskType.shareImport,
+        title: 'Importing shared materials',
+        task: (progress) async {
+          final result = await importController.importArchive(
+            archive,
+          );
 
-      if (!result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+          if (!result.success) {
+            throw Exception(
               result.errors.join('\n'),
-            ),
-          ),
-        );
-        return;
-      }
+            );
+          }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Imported ${resources.length} item(s).',
-          ),
+          return result;
+        },
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Importing ${resources.length} item(s) in the background.',
         ),
-      );
+      ),
+    );
 
-      Navigator.of(context).pop(true);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isImporting = false;
-        });
-      }
-    }
+    Navigator.of(context).pop(true);
   }
 
   @override
@@ -192,14 +189,9 @@ class _ImportPreviewScreenState
               padding:
               const EdgeInsets.all(16),
               child: FilledButton(
-                onPressed:
-                _isImporting
-                    ? null
-                    : _import,
-                child: Text(
-                  _isImporting
-                      ? 'Importing...'
-                      : 'Import Selected',
+                onPressed: _import,
+                child: const Text(
+                  'Import Selected',
                 ),
               ),
             ),

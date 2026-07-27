@@ -10,6 +10,7 @@ class ExportItem {
     this.parentId,
     this.subtitle,
     this.icon,
+    this.groupLabel,
     this.childCount = 0,
     this.noteCount = 0,
     this.isSelectable = true,
@@ -21,6 +22,10 @@ class ExportItem {
   final String? parentId;
   final String? subtitle;
   final String? icon;
+
+  /// Non-interactive grouping label used by flat, sectioned export lists
+  /// (e.g. a quiz's parent folder name) — has no bearing on selection.
+  final String? groupLabel;
 
   final int childCount;
   final int noteCount;

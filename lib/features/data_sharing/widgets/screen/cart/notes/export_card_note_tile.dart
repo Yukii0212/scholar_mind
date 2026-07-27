@@ -127,6 +127,8 @@ class ExportCartNoteTile extends ConsumerWidget {
                   children: [
                     Text(
                       item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium,
@@ -135,6 +137,8 @@ class ExportCartNoteTile extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         item.subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium,

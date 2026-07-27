@@ -34,7 +34,7 @@ class _CountdownCardState extends State<CountdownCard>
     final item = widget.item;
 
     final days = item.daysRemaining;
-    final overdue = days < 0;
+    final overdue = !item.isCompleted && days < 0;
 
     return ScholarPanel(
       padding: EdgeInsets.zero,
@@ -120,7 +120,9 @@ class _CountdownCardState extends State<CountdownCard>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          _daysText(days),
+                          item.isCompleted
+                              ? 'Completed'
+                              : _daysText(days),
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium

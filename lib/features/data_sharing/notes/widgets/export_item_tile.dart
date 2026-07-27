@@ -31,10 +31,18 @@ class ExportItemTile extends ConsumerWidget {
       value: selected,
       controlAffinity:
       ListTileControlAffinity.leading,
-      title: Text(item.name),
+      title: Text(
+        item.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: item.subtitle == null
           ? null
-          : Text(item.subtitle!),
+          : Text(
+        item.subtitle!,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       secondary: _buildIcon(),
       onChanged: (_) {
         ref

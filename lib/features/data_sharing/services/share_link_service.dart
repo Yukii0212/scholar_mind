@@ -30,7 +30,7 @@ class ShareLinkService {
     });
 
     final url = Uri.parse(
-      'https://scholarmind.app/share/${document.id}',
+      'scholarmind://share/${document.id}',
     );
 
     return ShareResult(

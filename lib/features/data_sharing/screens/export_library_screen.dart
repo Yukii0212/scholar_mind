@@ -5,6 +5,7 @@ import '../domain/models/export/export_module.dart';
 import '../providers/export_summary_provider.dart';
 import '../notes/widgets/export_module_tree.dart';
 import '../widgets/screen/library/export_flat_item_list.dart';
+import '../widgets/screen/library/export_grouped_item_list.dart';
 import '../widgets/screen/library/export_module_section.dart';
 import 'export_cart_screen.dart';
 
@@ -60,9 +61,9 @@ class ExportLibraryScreen
             ),
             ExportModuleSection(
               title: 'Quizzes',
-              subtitle: 'Export quiz folders and quizzes',
-              child: ExportModuleTree(
-                module: ExportModule.quizzes,
+              subtitle: 'Export quizzes, grouped by folder',
+              child: ExportGroupedItemList(
+                moduleGroupId: 'quizzes',
               ),
             ),
             ExportModuleSection(

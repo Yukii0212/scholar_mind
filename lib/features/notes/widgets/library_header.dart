@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
+import '../../../core/widgets/collapsible_breadcrumb.dart';
 import '../domain/library_enums.dart';
 import '../domain/library_folder.dart';
 
@@ -29,8 +30,6 @@ class LibraryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.scholarPalette;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -43,32 +42,13 @@ class LibraryHeader extends StatelessWidget {
         const Gap(12),
 
         if (section == LibrarySection.browse)
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 2,
-            children: [
-              TextButton.icon(
-                onPressed: folderStack.isEmpty
-                    ? null
-                    : () => onBreadcrumbPressed(-1),
-                icon: const Icon(
-                  Icons.home_outlined,
-                  size: 18,
-                ),
-                label: const Text('Library'),
-              ),
-              for (var index = 0; index < folderStack.length; index++) ...[
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 18,
-                  color: palette.textMuted,
-                ),
-                TextButton(
-                  onPressed: () => onBreadcrumbPressed(index),
-                  child: Text(folderStack[index].name),
-                ),
-              ],
+          CollapsibleBreadcrumb(
+            homeLabel: 'Library',
+            homeIcon: Icons.home_outlined,
+            segments: [
+              for (final folder in folderStack) folder.name,
             ],
+            onPressed: onBreadcrumbPressed,
           )
         else
           const SizedBox(height: 48),

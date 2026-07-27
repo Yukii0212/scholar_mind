@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
+import '../../../core/widgets/collapsible_breadcrumb.dart';
 import '../domain/quiz_enums.dart';
 import '../domain/quiz_folder.dart';
 
@@ -71,23 +72,13 @@ class QuizHeader extends StatelessWidget {
         ),
         if (section == QuizSection.browse) ...[
           const Gap(18),
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 2,
-            children: [
-              TextButton.icon(
-                onPressed: () => onBreadcrumbPressed(-1),
-                icon: const Icon(Icons.home_outlined, size: 18),
-                label: const Text('My Quizzes'),
-              ),
-              for (var index = 0; index < folderStack.length; index++) ...[
-                const Icon(Icons.chevron_right, size: 18),
-                TextButton(
-                  onPressed: () => onBreadcrumbPressed(index),
-                  child: Text(folderStack[index].name),
-                ),
-              ],
+          CollapsibleBreadcrumb(
+            homeLabel: 'My Quizzes',
+            homeIcon: Icons.home_outlined,
+            segments: [
+              for (final folder in folderStack) folder.name,
             ],
+            onPressed: onBreadcrumbPressed,
           ),
           const Gap(10),
           Wrap(

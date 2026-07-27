@@ -75,7 +75,30 @@ Future<List<ExportModuleGroup>> exportLibrary(
     ),
   ];
 
-  final countdownItems = countdowns
+  final exportableCountdowns = countdowns
+      .where(
+        (countdown) =>
+    !countdown.isHidden && !countdown.isCompleted,
+  )
+      .toList()
+    ..sort((a, b) {
+      final bucketCompare = _countdownUrgencyBucket(a.daysRemaining)
+          .compareTo(_countdownUrgencyBucket(b.daysRemaining));
+
+      if (bucketCompare != 0) {
+        return bucketCompare;
+      }
+
+      final priorityCompare = b.priority.compareTo(a.priority);
+
+      if (priorityCompare != 0) {
+        return priorityCompare;
+      }
+
+      return a.dueDate.compareTo(b.dueDate);
+    });
+
+  final countdownItems = exportableCountdowns
       .map(
         (countdown) => ExportItem(
       id: countdown.id,
@@ -99,28 +122,23 @@ Future<List<ExportModuleGroup>> exportLibrary(
   )
       .toList();
 
-  final quizItems = <ExportItem>[
-    ...quizFolders.map(
-          (folder) => ExportItem(
-        id: folder.id,
-        name: folder.name,
-        type: ShareResourceType.quizFolder,
-        module: ExportModule.quizzes,
-        parentId: folder.parentId,
-      ),
+  final quizFolderNames = {
+    for (final folder in quizFolders) folder.id: folder.name,
+  };
+
+  final quizItems = quizzes
+      .map(
+        (quiz) => ExportItem(
+      id: quiz.id,
+      name: quiz.name,
+      subtitle:
+      '${quiz.quiz.questions.length} question${quiz.quiz.questions.length == 1 ? '' : 's'}',
+      type: ShareResourceType.quiz,
+      module: ExportModule.quizzes,
+      groupLabel: quizFolderNames[quiz.folderId] ?? 'Ungrouped',
     ),
-    ...quizzes.map(
-          (quiz) => ExportItem(
-        id: quiz.id,
-        name: quiz.name,
-        subtitle:
-        '${quiz.quiz.questions.length} question${quiz.quiz.questions.length == 1 ? '' : 's'}',
-        type: ShareResourceType.quiz,
-        module: ExportModule.quizzes,
-        parentId: quiz.folderId,
-      ),
-    ),
-  ];
+  )
+      .toList();
 
   final semesterItems = semesters
       .map(
@@ -176,4 +194,20 @@ Future<List<ExportModuleGroup>> exportLibrary(
       items: semesterItems,
     ),
   ];
+}
+
+int _countdownUrgencyBucket(int daysRemaining) {
+  if (daysRemaining < 3) {
+    return 0;
+  }
+
+  if (daysRemaining < 7) {
+    return 1;
+  }
+
+  if (daysRemaining < 30) {
+    return 2;
+  }
+
+  return 3;
 }

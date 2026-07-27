@@ -48,6 +48,26 @@ final authStateProvider = AutoDisposeStreamProvider<User?>.internal(
 );
 
 typedef AuthStateRef = AutoDisposeStreamProviderRef<User?>;
+String _$authWarmupHash() => r'c18577c8d59da1d559faaf9b5f9e8dd5c8e2a6e4';
+
+/// Primes the Google Sign-In platform channel on app start. Without this,
+/// the very first `signIn()` call after a cold start (or after a full
+/// `disconnect()`) can silently return before the native picker result is
+/// delivered, which is why the button sometimes needs to be tapped twice.
+/// Watch this once near the app root to trigger it.
+///
+/// Copied from [AuthWarmup].
+@ProviderFor(AuthWarmup)
+final authWarmupProvider = NotifierProvider<AuthWarmup, void>.internal(
+  AuthWarmup.new,
+  name: r'authWarmupProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$authWarmupHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$AuthWarmup = Notifier<void>;
 String _$authControllerHash() => r'34659bf18ad9059ec93b4f77dd05eb29a0eaab52';
 
 /// See also [AuthController].

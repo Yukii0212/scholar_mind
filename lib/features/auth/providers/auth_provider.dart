@@ -8,6 +8,24 @@ import 'package:flutter/foundation.dart';
 
 part 'auth_provider.g.dart';
 
+/// Primes the Google Sign-In platform channel on app start. Without this,
+/// the very first `signIn()` call after a cold start (or after a full
+/// `disconnect()`) can silently return before the native picker result is
+/// delivered, which is why the button sometimes needs to be tapped twice.
+/// Watch this once near the app root to trigger it.
+@Riverpod(keepAlive: true)
+class AuthWarmup extends _$AuthWarmup {
+  @override
+  void build() {
+    unawaited(
+      ref
+          .read(googleSignInProvider)
+          .signInSilently()
+          .catchError((_) => null),
+    );
+  }
+}
+
 @Riverpod(keepAlive: true)
 FirebaseAuth firebaseAuth(FirebaseAuthRef ref) => FirebaseAuth.instance;
 

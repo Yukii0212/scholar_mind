@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/models/import/import_request.dart';
+import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_archive.dart';
 import '../providers/share_archive_deserializer_provider.dart';
 import '../providers/share_download_service_provider.dart';
@@ -87,7 +88,13 @@ class ShareImportController extends _$ShareImportController {
       );
     }
 
-    final result = await ref
+    return archive;
+  }
+
+  Future<ImportResult> importArchive(
+      ShareArchive archive,
+      ) {
+    return ref
         .read(
       importServiceProvider,
     )
@@ -96,13 +103,6 @@ class ShareImportController extends _$ShareImportController {
         archive: archive,
       ),
     );
-
-    if (!result.success) {
-      throw Exception(
-        result.errors.join('\n'),
-      );
-    }
-
-    return archive;
   }
 }
+

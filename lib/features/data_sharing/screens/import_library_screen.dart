@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controller/share_import_controller.dart';
+import 'import_preview_screen.dart';
 
 class ImportLibraryScreen extends ConsumerStatefulWidget {
   const ImportLibraryScreen({
@@ -47,7 +48,7 @@ class _ImportLibraryScreenState
     try {
       final shareId = _extractShareId(input);
 
-      await ref
+      final archive = await ref
           .read(
         shareImportControllerProvider.notifier,
       )
@@ -59,15 +60,23 @@ class _ImportLibraryScreenState
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Import completed successfully.',
+      final imported = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ImportPreviewScreen(
+            archive: archive,
           ),
         ),
       );
 
-      _controller.clear();
+      if (!mounted) {
+        return;
+      }
+
+      if (imported == true) {
+        _controller.clear();
+
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (!mounted) {
         return;

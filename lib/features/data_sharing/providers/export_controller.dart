@@ -26,15 +26,9 @@ class ExportController
       return null;
     }
 
-    state = const AsyncLoading();
-
-    final archive = await ref
+    return ref
         .read(exportServiceProvider)
         .export(request);
-
-    state = const AsyncData(null);
-
-    return archive;
   }
 
   Future<ShareResult?> generateShare({

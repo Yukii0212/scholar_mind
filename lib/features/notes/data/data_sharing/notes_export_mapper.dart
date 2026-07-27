@@ -66,12 +66,16 @@ class NotesExportMapper {
     String? fileBytesBase64;
 
     if (!note.isInternal && note.storagePath.isNotEmpty) {
-      final bytes = await _storageInstance
-          .ref(note.storagePath)
-          .getData();
+      try {
+        final bytes = await _storageInstance
+            .ref(note.storagePath)
+            .getData();
 
-      if (bytes != null) {
-        fileBytesBase64 = base64Encode(bytes);
+        if (bytes != null) {
+          fileBytesBase64 = base64Encode(bytes);
+        }
+      } catch (_) {
+        fileBytesBase64 = null;
       }
     }
 

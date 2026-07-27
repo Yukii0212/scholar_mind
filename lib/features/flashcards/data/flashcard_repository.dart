@@ -41,6 +41,40 @@ class FlashcardRepository {
     });
   }
 
+  Future<FlashcardDeck?> getDeck({
+    required String userId,
+    required String deckId,
+  }) async {
+    final snapshot = await _decks(userId).doc(deckId).get();
+
+    if (!snapshot.exists) return null;
+
+    return FlashcardDeck.fromFirestore(snapshot);
+  }
+
+  Future<Flashcard?> getCard({
+    required String userId,
+    required String deckId,
+    required String cardId,
+  }) async {
+    final snapshot = await _cards(userId, deckId).doc(cardId).get();
+
+    if (!snapshot.exists) return null;
+
+    return Flashcard.fromFirestore(snapshot);
+  }
+
+  Future<List<Flashcard>> getCardsInDeck({
+    required String userId,
+    required String deckId,
+  }) async {
+    final snapshot = await _cards(userId, deckId).get();
+
+    final cards = snapshot.docs.map(Flashcard.fromFirestore).toList();
+    cards.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return cards;
+  }
+
   Future<String> saveDeck({
     required String userId,
     String? deckId,

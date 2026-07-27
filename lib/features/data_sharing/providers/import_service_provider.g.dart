@@ -6,7 +6,7 @@ part of 'import_service_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$importServiceHash() => r'03f91829a3f5a0176e9f3c2ca2a86a3da53dfbda';
+String _$importServiceHash() => r'c64d7f326a2edef28e4150e74461413cadb04454';
 
 /// See also [importService].
 @ProviderFor(importService)

@@ -75,6 +75,22 @@ Stream<List<QuizAttempt>> favoriteQuizzes(
       .watchFavoriteQuizzes(userId);
 }
 
+@Riverpod(keepAlive: true)
+Stream<List<QuizAttempt>> allQuizzes(
+    AllQuizzesRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(quizLibraryRepositoryProvider)
+      .watchAllQuizzes(userId);
+}
+
 @riverpod
 Stream<List<QuizFolder>> archivedFolders(ArchivedFoldersRef ref) {
   final userId = ref.watch(authStateProvider).valueOrNull?.uid;

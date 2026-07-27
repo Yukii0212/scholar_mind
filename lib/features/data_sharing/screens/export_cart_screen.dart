@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scholar_mind/features/data_sharing/screens/share_screen.dart';
 
+import '../domain/models/export/export_module.dart';
+import '../notes/model/export_cart_item.dart';
 import '../notes/providers/export_cart_items_provider.dart';
-import '../providers/export_controller.dart';
 import '../providers/export_selection_provider.dart';
 import '../widgets/screen/cart/export_cart_header.dart';
 import '../widgets/screen/cart/export_cart_swipe_hint.dart';
@@ -40,21 +41,9 @@ class ExportCartScreen
           ),
           child: FilledButton(
             onPressed: () async {
-              final archive = await ref
-                  .read(
-                exportControllerProvider.notifier,
-              )
-                  .export();
-
-              if (!context.mounted || archive == null) {
-                return;
-              }
-
               await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ShareScreen(
-                    archive: archive,
-                  ),
+                  builder: (_) => const ShareScreen(),
                 ),
               );
             },
@@ -95,6 +84,18 @@ class ExportCartScreen
                 'Nothing selected.',
               ),
             );
+          }
+
+          final itemsByModule =
+          <ExportModule, List<ExportCartItem>>{};
+
+          for (final item in items) {
+            itemsByModule
+                .putIfAbsent(
+              item.module,
+                  () => [],
+            )
+                .add(item);
           }
 
           return ListView(
@@ -138,21 +139,26 @@ class ExportCartScreen
               const SizedBox(
                 height: 20,
               ),
-              ExportCartModuleCard(
-                icon: Icons.folder_copy_outlined,
-                title: 'Notes',
-                subtitle:
-                '${selection.totalSelected} item${selection.totalSelected == 1 ? '' : 's'}',
-                children: items
-                    .map(
-                      (item) => ExportCartNoteTile(
-                    item: item,
-                  ),
-                )
-                    .toList(),
-              ),
+              for (final entry in itemsByModule.entries) ...[
+                ExportCartModuleCard(
+                  icon: _iconForModule(entry.key),
+                  title: _titleForModule(entry.key),
+                  subtitle:
+                  '${entry.value.length} item${entry.value.length == 1 ? '' : 's'}',
+                  children: entry.value
+                      .map(
+                        (item) => ExportCartNoteTile(
+                      item: item,
+                    ),
+                  )
+                      .toList(),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+              ],
               const SizedBox(
-                height: 96,
+                height: 80,
               ),
             ],
           );
@@ -168,4 +174,28 @@ class ExportCartScreen
       ),
     );
   }
+}
+
+IconData _iconForModule(
+    ExportModule module,
+    ) {
+  return switch (module) {
+    ExportModule.notes => Icons.folder_copy_outlined,
+    ExportModule.flashcards => Icons.style_outlined,
+    ExportModule.quizzes => Icons.quiz_outlined,
+    ExportModule.countdowns => Icons.timer_outlined,
+    ExportModule.grades => Icons.school_outlined,
+  };
+}
+
+String _titleForModule(
+    ExportModule module,
+    ) {
+  return switch (module) {
+    ExportModule.notes => 'Notes',
+    ExportModule.flashcards => 'Flashcards',
+    ExportModule.quizzes => 'Quizzes',
+    ExportModule.countdowns => 'Countdowns',
+    ExportModule.grades => 'Grades',
+  };
 }

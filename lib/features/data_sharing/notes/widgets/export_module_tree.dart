@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/export/export_module.dart';
 import '../providers/export_tree_provider.dart';
 import 'export_tree_tile.dart';
 
@@ -8,7 +9,10 @@ class ExportModuleTree
     extends ConsumerWidget {
   const ExportModuleTree({
     super.key,
+    required this.module,
   });
+
+  final ExportModule module;
 
   @override
   Widget build(
@@ -16,7 +20,7 @@ class ExportModuleTree
       WidgetRef ref,
       ) {
     final tree = ref.watch(
-      exportTreeProvider,
+      exportTreeProvider(module),
     );
 
     return tree.when(

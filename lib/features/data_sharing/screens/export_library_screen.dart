@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/models/export/export_module.dart';
 import '../providers/export_summary_provider.dart';
 import '../notes/widgets/export_module_tree.dart';
+import '../widgets/screen/library/export_flat_item_list.dart';
 import '../widgets/screen/library/export_module_section.dart';
 import 'export_cart_screen.dart';
 
@@ -38,7 +40,37 @@ class ExportLibraryScreen
             ExportModuleSection(
               title: 'Notes',
               subtitle: 'Export folders and study materials',
-              child: ExportModuleTree(),
+              child: ExportModuleTree(
+                module: ExportModule.notes,
+              ),
+            ),
+            ExportModuleSection(
+              title: 'Countdowns',
+              subtitle: 'Export assignments, exams and other deadlines',
+              child: ExportFlatItemList(
+                moduleGroupId: 'countdowns',
+              ),
+            ),
+            ExportModuleSection(
+              title: 'Flashcards',
+              subtitle: 'Export flashcard decks',
+              child: ExportFlatItemList(
+                moduleGroupId: 'flashcards',
+              ),
+            ),
+            ExportModuleSection(
+              title: 'Quizzes',
+              subtitle: 'Export quiz folders and quizzes',
+              child: ExportModuleTree(
+                module: ExportModule.quizzes,
+              ),
+            ),
+            ExportModuleSection(
+              title: 'Grades',
+              subtitle: 'Export semesters, courses and grade entries',
+              child: ExportFlatItemList(
+                moduleGroupId: 'grades',
+              ),
             ),
           ],
         ),

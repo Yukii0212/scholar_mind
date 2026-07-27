@@ -817,40 +817,54 @@ class LibraryRepository {
     required String folderId,
     required String name,
     required String extension,
-    required String storagePath,
-    required int sizeBytes,
+    required Uint8List fileBytes,
     required String category,
     required String source,
     required bool isFavorite,
   }) async {
+    final noteReference = _notes(userId).doc();
+    final safeName = name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final storagePath = 'users/$userId/notes/${noteReference.id}/$safeName';
+    final storageReference = _storage.ref(storagePath);
+
+    await storageReference.putData(
+      fileBytes,
+      SettableMetadata(contentType: _contentTypeFor(extension)),
+    );
+
     final now = FieldValue.serverTimestamp();
 
-    await _notes(userId).add({
-      'name': name,
-      'folderId': folderId,
+    try {
+      await noteReference.set({
+        'name': name,
+        'folderId': folderId,
 
-      'storagePath': storagePath,
-      'extension': extension,
-      'sizeBytes': sizeBytes,
+        'storagePath': storagePath,
+        'extension': extension,
+        'sizeBytes': fileBytes.length,
 
-      'isInternal': false,
-      'content': '',
+        'isInternal': false,
+        'content': '',
 
-      'category': category,
-      'source': source,
+        'category': category,
+        'source': source,
 
-      'isFavorite': isFavorite,
-      'isDeleted': false,
-      'deletedAt': null,
-      'cacheExpiresAt': null,
+        'isFavorite': isFavorite,
+        'isDeleted': false,
+        'deletedAt': null,
+        'cacheExpiresAt': null,
 
-      'createdAt': now,
-      'updatedAt': now,
+        'createdAt': now,
+        'updatedAt': now,
 
-      'lockedBy': null,
-      'heartbeatAt': null,
-      'lockExpiresAt': null,
-    });
+        'lockedBy': null,
+        'heartbeatAt': null,
+        'lockExpiresAt': null,
+      });
+    } catch (_) {
+      await storageReference.delete();
+      rethrow;
+    }
   }
 
   Future<void> renameFolder({

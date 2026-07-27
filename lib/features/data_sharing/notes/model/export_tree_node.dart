@@ -12,8 +12,8 @@ class ExportTreeNode {
   final List<ExportTreeNode> children;
 
   bool get isFolder =>
-      item.type ==
-          ShareResourceType.noteFolder;
+      item.type == ShareResourceType.noteFolder ||
+          item.type == ShareResourceType.quizFolder;
 
   bool get hasChildren =>
       children.isNotEmpty;

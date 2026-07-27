@@ -3,7 +3,6 @@ import 'package:scholar_mind/features/data_sharing/providers/share_link_service_
 import 'package:scholar_mind/features/data_sharing/providers/share_upload_service_provider.dart';
 import 'package:uuid/uuid.dart';
 
-import '../domain/models/share/share_archive.dart';
 import '../domain/models/share/share_expiry.dart';
 import '../domain/models/share/share_result.dart';
 import 'export_request_provider.dart';
@@ -16,20 +15,6 @@ class ExportController
     extends _$ExportController {
   @override
   FutureOr<void> build() {}
-
-  Future<ShareArchive?> export() async {
-    final request = ref.read(
-      exportRequestProvider,
-    );
-
-    if (request == null) {
-      return null;
-    }
-
-    return ref
-        .read(exportServiceProvider)
-        .export(request);
-  }
 
   Future<ShareResult?> generateShare({
     required ShareExpiry expiry,

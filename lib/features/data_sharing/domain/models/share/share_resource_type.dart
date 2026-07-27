@@ -4,8 +4,12 @@ enum ShareResourceType {
   flashcardDeck('flashcard_deck'),
   flashcard('flashcard'),
   quiz('quiz'),
+  quizFolder('quiz_folder'),
   countdown('countdown'),
-  gradeSemester('grade_semester');
+  gradeSemester('grade_semester'),
+  gradeCourse('grade_course'),
+  gradingComponent('grading_component'),
+  assessmentEntry('assessment_entry');
 
   const ShareResourceType(this.value);
 

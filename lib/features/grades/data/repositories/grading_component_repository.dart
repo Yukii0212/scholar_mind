@@ -118,4 +118,30 @@ class GradingComponentRepository {
     )
         .toList();
   }
+
+  Future<String> importComponent({
+    required GradingComponentModel component,
+    required String courseId,
+    String? parentId,
+  }) async {
+    final now = DateTime.now();
+    final reference = _dataSource.collection.doc();
+
+    final imported = GradingComponentModel(
+      id: reference.id,
+      courseId: courseId,
+      parentId: parentId,
+      name: component.name,
+      weight: component.weight,
+      order: component.order,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await reference.set(
+      imported.toFirestore(),
+    );
+
+    return reference.id;
+  }
 }

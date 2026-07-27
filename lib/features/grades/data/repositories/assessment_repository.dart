@@ -26,6 +26,22 @@ class AssessmentRepository {
     );
   }
 
+  Future<List<AssessmentEntryModel>> getEntries(
+      String courseId,
+      ) {
+    return _datasource.getEntries(
+      courseId,
+    );
+  }
+
+  Future<void> importEntry(
+      AssessmentEntryModel entry,
+      ) {
+    return _datasource.importEntry(
+      entry,
+    );
+  }
+
   Future<void> deleteEntry(
       String courseId,
       String id,

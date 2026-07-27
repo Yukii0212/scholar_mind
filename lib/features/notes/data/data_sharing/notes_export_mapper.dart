@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:firebase_storage/firebase_storage.dart';
+
 import '../../../data_sharing/domain/models/collection/collected_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource_metadata.dart';
@@ -6,9 +10,16 @@ import '../../domain/library_folder.dart';
 import '../../domain/note_item.dart';
 
 class NotesExportMapper {
-  const NotesExportMapper();
+  const NotesExportMapper({
+    FirebaseStorage? storage,
+  }) : _storage = storage;
 
-  ShareResource toResource(
+  final FirebaseStorage? _storage;
+
+  FirebaseStorage get _storageInstance =>
+      _storage ?? FirebaseStorage.instance;
+
+  Future<ShareResource> toResource(
       CollectedResource resource,
       ) {
     switch (resource.resourceType) {
@@ -30,9 +41,9 @@ class NotesExportMapper {
     }
   }
 
-  ShareResource _folder(
+  Future<ShareResource> _folder(
       LibraryFolder folder,
-      ) {
+      ) async {
     return ShareResource(
       resourceType: ShareResourceType.noteFolder,
       resourceVersion: 1,
@@ -49,9 +60,21 @@ class NotesExportMapper {
     );
   }
 
-  ShareResource _note(
+  Future<ShareResource> _note(
       NoteItem note,
-      ) {
+      ) async {
+    String? fileBytesBase64;
+
+    if (!note.isInternal && note.storagePath.isNotEmpty) {
+      final bytes = await _storageInstance
+          .ref(note.storagePath)
+          .getData();
+
+      if (bytes != null) {
+        fileBytesBase64 = base64Encode(bytes);
+      }
+    }
+
     return ShareResource(
       resourceType: ShareResourceType.note,
       resourceVersion: 1,
@@ -64,13 +87,13 @@ class NotesExportMapper {
       payload: {
         'folderId': note.folderId,
         'extension': note.extension,
-        'storagePath': note.storagePath,
         'sizeBytes': note.sizeBytes,
         'content': note.content,
         'category': note.category.key,
         'source': note.source,
         'isInternal': note.isInternal,
         'isFavorite': note.isFavorite,
+        'fileBytes': fileBytesBase64,
       },
     );
   }

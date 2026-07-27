@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/models/share/share_archive.dart';
 import '../domain/models/share/share_expiry.dart';
 import '../domain/models/share/share_result.dart';
 import '../providers/export_controller.dart';
@@ -11,10 +10,7 @@ import '../widgets/screen/share/share_qr_view.dart';
 class ShareScreen extends ConsumerStatefulWidget {
   const ShareScreen({
     super.key,
-    required this.archive,
   });
-
-  final ShareArchive archive;
 
   @override
   ConsumerState<ShareScreen> createState() =>
@@ -204,7 +200,7 @@ class _ShareScreenState
                   duration: const Duration(milliseconds: 250),
                   child: _selectedIndex == 0
                       ? ShareQrView(
-                    archive: widget.archive,
+                    share: _share,
                   )
                       : ShareLinkView(
                     share: _share,

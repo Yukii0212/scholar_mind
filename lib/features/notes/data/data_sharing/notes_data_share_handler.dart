@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 
 import '../../../data_sharing/domain/models/share/share_resource.dart';
@@ -86,9 +88,9 @@ class NotesDataShareHandler
       );
     }
 
-    final resources = collected.resources
-        .map(_exportMapper.toResource)
-        .toList();
+    final resources = await Future.wait(
+      collected.resources.map(_exportMapper.toResource),
+    );
 
 
     for (final resource in resources) {
@@ -209,13 +211,18 @@ class NotesDataShareHandler
             isFavorite: payload['isFavorite'] as bool? ?? false,
           );
         } else {
+          final fileBytesBase64 = payload['fileBytes'] as String?;
+
+          if (fileBytesBase64 == null) {
+            continue;
+          }
+
           await _collector.repository.importUploadedNote(
             userId: userId,
             folderId: targetFolderId,
             name: resource.metadata.displayName,
             extension: payload['extension'] as String,
-            storagePath: payload['storagePath'] as String,
-            sizeBytes: payload['sizeBytes'] as int,
+            fileBytes: base64Decode(fileBytesBase64),
             category: payload['category'] as String,
             source: payload['source'] as String,
             isFavorite: payload['isFavorite'] as bool? ?? false,

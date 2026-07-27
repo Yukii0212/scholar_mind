@@ -50,6 +50,17 @@ class SemesterRepository {
     return false;
   }
 
+  Future<SemesterModel?> getSemester(
+      String semesterId,
+      ) async {
+    final snapshot =
+    await _dataSource.collection.doc(semesterId).get();
+
+    if (!snapshot.exists) return null;
+
+    return SemesterModel.fromFirestore(snapshot);
+  }
+
   Future<void> createSemester(
       SemesterModel semester,
       ) async {
@@ -60,6 +71,25 @@ class SemesterRepository {
         id: doc.id,
       ).toFirestore(),
     );
+  }
+
+  Future<String> importSemester(
+      SemesterModel semester,
+      ) async {
+    final doc = _dataSource.collection.doc();
+
+    await doc.set(
+      semester
+          .copyWith(
+        id: doc.id,
+        isCurrent: false,
+        isManuallyEdited: false,
+        isHidden: false,
+      )
+          .toFirestore(),
+    );
+
+    return doc.id;
   }
 
   Future<void> updateSemester(

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-import '../../domain/models/export/export_module.dart';
 import '../model/export_item.dart';
 import '../../domain/models/share/share_resource_type.dart';
 import '../../providers/export_selection_provider.dart';
@@ -47,7 +45,7 @@ class ExportItemTile extends ConsumerWidget {
             .toggle(
           item.type,
           item.id,
-          ExportModule.notes,
+          item.module,
         );
 
         onTap?.call();
@@ -62,6 +60,21 @@ class ExportItemTile extends ConsumerWidget {
 
       case ShareResourceType.note:
         return const Icon(Icons.description_rounded);
+
+      case ShareResourceType.countdown:
+        return const Icon(Icons.timer_outlined);
+
+      case ShareResourceType.flashcardDeck:
+        return const Icon(Icons.style_outlined);
+
+      case ShareResourceType.quizFolder:
+        return const Icon(Icons.folder_rounded);
+
+      case ShareResourceType.quiz:
+        return const Icon(Icons.quiz_outlined);
+
+      case ShareResourceType.gradeSemester:
+        return const Icon(Icons.school_outlined);
 
       default:
         return const Icon(Icons.dataset_rounded);

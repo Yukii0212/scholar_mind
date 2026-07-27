@@ -77,6 +77,57 @@ class CourseRepository {
     );
   }
 
+  Future<CourseModel?> getCourse(
+      String courseId,
+      ) async {
+    final snapshot =
+    await _dataSource.collection.doc(courseId).get();
+
+    if (!snapshot.exists) return null;
+
+    return CourseModel.fromFirestore(snapshot);
+  }
+
+  Future<List<CourseModel>> getSemesterCourses(
+      String semesterId,
+      ) async {
+    final snapshot = await _dataSource.collection
+        .where(
+      'semesterId',
+      isEqualTo: semesterId,
+    )
+        .get();
+
+    return snapshot.docs
+        .map(CourseModel.fromFirestore)
+        .toList();
+  }
+
+  Future<String> importCourse({
+    required CourseModel course,
+    required String semesterId,
+  }) async {
+    final now = DateTime.now();
+    final reference = _dataSource.collection.doc();
+
+    final imported = CourseModel(
+      id: reference.id,
+      semesterId: semesterId,
+      name: course.name,
+      targetScore: course.targetScore,
+      minimumAcceptableScore: course.minimumAcceptableScore,
+      passingScore: course.passingScore,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await reference.set(
+      imported.toFirestore(),
+    );
+
+    return reference.id;
+  }
+
   Future<void> updateCourse(
       CourseModel course,
       ) async {

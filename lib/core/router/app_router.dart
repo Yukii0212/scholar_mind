@@ -4,6 +4,8 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/countdown/screens/countdown_screen.dart';
 import '../../features/data_sharing/screens/export_library_screen.dart';
+import '../../features/data_sharing/screens/import_library_screen.dart';
+import '../../features/data_sharing/screens/share_hub_screen.dart';
 import '../../features/flashcards/screens/flashcard_library_screen.dart';
 import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
@@ -100,9 +102,19 @@ GoRouter appRouter(AppRouterRef ref) {
             const AppearanceScreen(),
           ),
           GoRoute(
+            path: '/share',
+            builder: (context, state) =>
+            const ShareHubScreen(),
+          ),
+          GoRoute(
             path: '/export',
             builder: (context, state) =>
             const ExportLibraryScreen(),
+          ),
+          GoRoute(
+            path: '/import',
+            builder: (context, state) =>
+            const ImportLibraryScreen(),
           ),
         ],
       ),

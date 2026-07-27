@@ -361,7 +361,7 @@ class _QuickAccessGrid extends StatelessWidget {
       _QuickAction('Quiz', Icons.bolt_rounded, '/quiz'),
       _QuickAction('Grades', Icons.bar_chart_rounded, '/grades'),
       _QuickAction('Flashcards', Icons.style_rounded, '/flashcards'),
-      _QuickAction('Share', Icons.ios_share_rounded, '/export'),
+      _QuickAction('Share', Icons.ios_share_rounded, '/share'),
     ];
 
     return ScholarPanel(

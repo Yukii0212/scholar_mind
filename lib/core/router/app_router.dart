@@ -24,6 +24,21 @@ GoRouter appRouter(AppRouterRef ref) {
   final router = GoRouter(
     initialLocation: '/splash',
     redirect: (context, state) {
+      // Incoming `scholarmind://share/{id}` deep links arrive as the raw
+      // platform route (both on cold start and while already running) —
+      // go_router tries to match that whole URI as a location by default,
+      // which never matches any path-based route. Rewrite it to the actual
+      // in-app path before normal matching/auth redirects run.
+      if (state.uri.scheme == 'scholarmind') {
+        final segments = state.uri.pathSegments;
+
+        if (segments.isEmpty) {
+          return '/home';
+        }
+
+        return '/import/share/${segments.last}';
+      }
+
       final authState = ref.read(authStateProvider);
 
       if (authState.isLoading) {

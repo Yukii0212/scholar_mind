@@ -162,46 +162,60 @@ class _ShareQrViewState extends State<ShareQrView> {
 
     final url = share.shareUrl.toString();
 
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          RepaintBoundary(
-            key: _boundaryKey,
-            child: Card(
-              child: Padding(
+    return SingleChildScrollView(
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RepaintBoundary(
+              key: _boundaryKey,
+              child: Container(
                 padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: QrImageView(
                   data: url,
                   version: QrVersions.auto,
                   size: 220,
+                  backgroundColor: Colors.white,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: Colors.black,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: Colors.black,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Scan to import these study materials',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _busy ? null : _saveToGallery,
-                icon: const Icon(Icons.download_rounded),
-                label: const Text('Save'),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton.icon(
-                onPressed: _busy ? null : _shareImage,
-                icon: const Icon(Icons.ios_share_rounded),
-                label: const Text('Share'),
-              ),
-            ],
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              'Scan to import these study materials',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _saveToGallery,
+                  icon: const Icon(Icons.download_rounded),
+                  label: const Text('Save'),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _shareImage,
+                  icon: const Icon(Icons.ios_share_rounded),
+                  label: const Text('Share'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }

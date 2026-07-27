@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'core/services/deep_link_service.dart';
 import 'core/services/theme_service.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'firebase_options.dart';
@@ -47,7 +46,6 @@ class ScholarMindApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final scholarTheme = ref.watch(themeProvider);
 
-    ref.watch(deepLinkListenerProvider);
     ref.watch(authWarmupProvider);
 
     return MaterialApp.router(

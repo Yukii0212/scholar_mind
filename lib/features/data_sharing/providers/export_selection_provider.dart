@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/models/export/export_module.dart';
@@ -47,6 +48,14 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
       selectedIds: updated,
       selectedModules: modules,
     );
+
+    ('=== Selection Updated ===');
+
+    for (final entry in state.selectedIds.entries) {
+      (
+        '${entry.key.name}: ${entry.value.toList()}',
+      );
+    }
   }
 
   void clear() {

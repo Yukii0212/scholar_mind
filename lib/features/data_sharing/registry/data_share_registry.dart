@@ -13,7 +13,9 @@ class DataShareRegistry {
   void register(
       DataShareHandler handler,
       ) {
-    _handlers[handler.resourceType] = handler;
+    for (final resourceType in handler.resourceTypes) {
+      _handlers[resourceType] = handler;
+    }
   }
 
   DataShareHandler? handlerFor(

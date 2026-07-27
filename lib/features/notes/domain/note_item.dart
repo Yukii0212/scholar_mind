@@ -42,7 +42,10 @@ class NoteItem {
       isFavorite: data['isFavorite'] as bool? ?? false,
       isDeleted: data['isDeleted'] as bool? ?? false,
       isInternal: data['isInternal'] as bool? ?? false,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt:
+      (data['createdAt'] as Timestamp?)
+          ?.toDate() ??
+          DateTime.now(),
       deletedAt: data['deletedAt'] != null
           ? (data['deletedAt'] as Timestamp).toDate()
           : null,

@@ -734,7 +734,7 @@ class LibraryRepository {
 
     final now = FieldValue.serverTimestamp();
 
-    debugPrint('Creating folder: $name');
+    ('Creating folder: $name');
 
     await document.set({
       'name': name,
@@ -747,7 +747,7 @@ class LibraryRepository {
       'updatedAt': now,
     });
 
-    debugPrint('Created folder ${document.id}');
+    ('Created folder ${document.id}');
 
     return document.id;
   }

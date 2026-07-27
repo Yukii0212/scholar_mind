@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 import '../domain/models/export/export_request.dart';
 import '../domain/models/share/share_archive.dart';
 import '../domain/models/share/share_manifest.dart';
@@ -28,6 +30,10 @@ class ExportService {
 
     for (final MapEntry<ShareResourceType, List<String>> entry
     in request.resourceIds.entries) {
+      (
+        'Exporting ${entry.key.name}: ${entry.value}',
+      );
+
       final validation =
       _validationService.validateExport(
         resourceType: entry.key,
@@ -35,6 +41,9 @@ class ExportService {
       );
 
       if (!validation.isValid) {
+        (
+          'Validation failed for ${entry.key.name}',
+        );
         continue;
       }
 
@@ -43,7 +52,14 @@ class ExportService {
         entry.key,
       );
 
+      (
+        'Handler: ${handler?.runtimeType}',
+      );
+
       if (handler == null) {
+        (
+          'No handler found for ${entry.key.name}',
+        );
         continue;
       }
 
@@ -51,6 +67,10 @@ class ExportService {
       await handler.export(
         userId: request.userId,
         resourceIds: entry.value,
+      );
+
+      (
+        'Exported ${exported.length} resources',
       );
 
       resources.addAll(exported);

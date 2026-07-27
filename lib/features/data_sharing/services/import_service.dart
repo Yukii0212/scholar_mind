@@ -57,10 +57,25 @@ class ImportService {
           .add(resource);
     }
 
-    for (final handler in DataShareRegistry.instance.handlers) {
+    final handlers =
+    DataShareRegistry.instance.handlers.toSet();
+
+    for (final handler in handlers) {
+      final resources = <ShareResource>[];
+
+      for (final resourceType in handler.resourceTypes) {
+        resources.addAll(
+          groupedResources[resourceType] ?? const [],
+        );
+      }
+
+      if (resources.isEmpty) {
+        continue;
+      }
+
       await handler.import(
         userId: request.userId,
-        resources: request.archive.resources,
+        resources: resources,
       );
     }
 

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:scholar_mind/features/auth/providers/auth_provider.dart';
 
@@ -24,6 +25,14 @@ ExportRequest? exportRequest(
 
   if (user == null) {
     return null;
+  }
+
+  ('=== Export Request ===');
+
+  for (final entry in selection.selectedIds.entries) {
+    (
+      '${entry.key.name}: ${entry.value.toList()}',
+    );
   }
 
   return ExportRequest(

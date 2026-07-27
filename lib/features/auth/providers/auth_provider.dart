@@ -55,8 +55,7 @@ class AuthController extends _$AuthController {
       state = const AsyncValue.data(null);
     }
     catch (e, st) {
-      debugPrint("GOOGLE SIGN IN ERROR: $e");
-      debugPrintStack(stackTrace: st);
+      ("GOOGLE SIGN IN ERROR: $e");
 
       state = AsyncValue.error(e, st);
     }

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../notes/providers/library_provider.dart';
@@ -43,6 +44,14 @@ Future<List<ExportModuleGroup>> exportLibrary(
       ),
     ),
   ];
+
+  ('=== Export Library ===');
+
+  for (final item in items) {
+    (
+      '${item.type.name} | ${item.name} | id=${item.id} | parent=${item.parentId}',
+    );
+  }
 
   return [
     ExportModuleGroup(

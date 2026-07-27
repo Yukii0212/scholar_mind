@@ -19,22 +19,19 @@ ExportService exportService(
 
   final registry = DataShareRegistry.instance;
 
-  if (registry.handlerFor(
-    NotesDataShareHandler(
+  final notesHandler = NotesDataShareHandler(
+    repository: repository,
+    collector: NotesCollectionService(
       repository: repository,
-      collector: NotesCollectionService(
-        repository: repository,
-      ),
-    ).resourceType,
+    ),
+  );
+
+  if (registry.handlerFor(
+    notesHandler.resourceTypes.first,
   ) ==
       null) {
     registry.register(
-        NotesDataShareHandler(
-          repository: repository,
-          collector: NotesCollectionService(
-            repository: repository,
-          ),
-        )
+      notesHandler,
     );
   }
 

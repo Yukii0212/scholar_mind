@@ -36,8 +36,10 @@ class NotesDataShareHandler
 
 
   @override
-  ShareResourceType get resourceType =>
-      ShareResourceType.note;
+  List<ShareResourceType> get resourceTypes => const [
+    ShareResourceType.note,
+    ShareResourceType.noteFolder,
+  ];
 
   @override
   ValidationResult validateExport(
@@ -77,9 +79,30 @@ class NotesDataShareHandler
       resourceIds: resourceIds,
     );
 
-    return collected.resources
+    ('=== Collected Resources ===');
+
+    for (final resource in collected.resources) {
+      (
+        '${resource.resourceType.name} '
+            '${resource.resourceId} '
+            '${resource.data.runtimeType}',
+      );
+    }
+
+    final resources = collected.resources
         .map(_exportMapper.toResource)
         .toList();
+
+    ('=== Share Resources ===');
+
+    for (final resource in resources) {
+      (
+        '${resource.resourceType.name} '
+            '${resource.metadata.displayName}',
+      );
+    }
+
+    return resources;
   }
 
   @override
@@ -87,8 +110,8 @@ class NotesDataShareHandler
     required String userId,
     required List<ShareResource> resources,
   })async {
-    debugPrint('=== Notes import started ===');
-    debugPrint('Resources: ${resources.length}');
+    ('=== Notes import started ===');
+    ('Resources: ${resources.length}');
 
     if (resources.isEmpty) {
       return;
@@ -112,7 +135,7 @@ class NotesDataShareHandler
     )
         .toList();
 
-    debugPrint(
+    (
       'Folders: ${folders.length}, Notes: ${notes.length}',
     );
 
@@ -131,6 +154,11 @@ class NotesDataShareHandler
         final payload =
         _importMapper.folderPayload(resource);
 
+        debugPrint('----- Folder Payload -----');
+        debugPrint('id=${resource.resourceId}');
+        debugPrint('name=${resource.metadata.displayName}');
+        debugPrint(payload.toString());
+
         final oldParentId =
         payload['parentId'] as String;
 
@@ -142,7 +170,7 @@ class NotesDataShareHandler
           continue;
         }
 
-        debugPrint(
+        (
           'Importing folder: ${resource.metadata.displayName}',
         );
 
@@ -157,7 +185,7 @@ class NotesDataShareHandler
           payload['isFavorite'] as bool? ?? false,
         );
 
-        debugPrint(
+        (
           'Created folder: $newFolderId',
         );
 
@@ -168,7 +196,7 @@ class NotesDataShareHandler
       }
 
       if (!importedAny) {
-        debugPrint(
+        (
           'Unable to resolve remaining folder hierarchy.',
         );
         break;
@@ -179,6 +207,11 @@ class NotesDataShareHandler
       final payload =
       _importMapper.notePayload(resource);
 
+      debugPrint('----- Note Payload -----');
+      debugPrint('id=${resource.resourceId}');
+      debugPrint('name=${resource.metadata.displayName}');
+      debugPrint(payload.toString());
+
       final originalFolderId = payload['folderId'] as String;
 
       final targetFolderId =
@@ -187,49 +220,58 @@ class NotesDataShareHandler
           : folderMap[originalFolderId] ?? LibraryFolder.rootId;
 
       if (targetFolderId == null) {
-        debugPrint(
+        (
           'Skipping note "${resource.metadata.displayName}" because folder "$originalFolderId" was not imported.',
         );
         continue;
       }
 
-      debugPrint(
+      (
         'Importing note: ${resource.metadata.displayName}',
       );
 
       final isInternal =
           payload['isInternal'] as bool? ?? false;
 
-      if (isInternal) {
-        await _collector.repository.importInternalNote(
-          userId: userId,
-          folderId: targetFolderId,
-          name: resource.metadata.displayName,
-          content:
-          payload['content'] as String? ?? '',
-          category:
-          payload['category'] as String,
-          isFavorite:
-          payload['isFavorite'] as bool? ?? false,
-        );
-      } else {
-        await _collector.repository.importUploadedNote(
-          userId: userId,
-          folderId: targetFolderId,
-          name: resource.metadata.displayName,
-          extension:
-          payload['extension'] as String,
-          storagePath:
-          payload['storagePath'] as String,
-          sizeBytes:
-          payload['sizeBytes'] as int,
-          category:
-          payload['category'] as String,
-          source:
-          payload['source'] as String,
-          isFavorite:
-          payload['isFavorite'] as bool? ?? false,
-        );
+      try {
+        if (isInternal) {
+          debugPrint('===== IMPORTING INTERNAL NOTE =====');
+          debugPrint('folderId=$targetFolderId');
+          debugPrint('payload=$payload');
+
+          await _collector.repository.importInternalNote(
+            userId: userId,
+            folderId: targetFolderId,
+            name: resource.metadata.displayName,
+            content: payload['content'] as String? ?? '',
+            category: payload['category'] as String,
+            isFavorite: payload['isFavorite'] as bool? ?? false,
+          );
+        } else {
+          debugPrint('===== IMPORTING UPLOADED NOTE =====');
+          debugPrint('folderId=$targetFolderId');
+          debugPrint('payload=$payload');
+
+          await _collector.repository.importUploadedNote(
+            userId: userId,
+            folderId: targetFolderId,
+            name: resource.metadata.displayName,
+            extension: payload['extension'] as String,
+            storagePath: payload['storagePath'] as String,
+            sizeBytes: payload['sizeBytes'] as int,
+            category: payload['category'] as String,
+            source: payload['source'] as String,
+            isFavorite: payload['isFavorite'] as bool? ?? false,
+          );
+        }
+      } catch (e, st) {
+        debugPrint('========== IMPORT FAILED ==========');
+        debugPrint('Resource: ${resource.metadata.displayName}');
+        debugPrint('Type: ${resource.resourceType}');
+        debugPrint('Payload: $payload');
+        debugPrint('Error: $e');
+        debugPrint(st.toString());
+        rethrow;
       }
     }
   }

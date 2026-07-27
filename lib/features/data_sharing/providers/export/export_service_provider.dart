@@ -1,25 +1,25 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../countdown/data/data_sharing/countdown_collection_service.dart';
-import '../../countdown/data/data_sharing/countdown_data_share_handler.dart';
-import '../../countdown/providers/countdown_provider.dart';
-import '../../flashcards/data/data_sharing/flashcard_collection_service.dart';
-import '../../flashcards/data/data_sharing/flashcard_data_share_handler.dart';
-import '../../flashcards/providers/flashcard_provider.dart';
-import '../../grades/data/data_sharing/grades_collection_service.dart';
-import '../../grades/data/data_sharing/grades_data_share_handler.dart';
-import '../../grades/providers/assessment/assessment_provider.dart';
-import '../../grades/providers/course/course_provider.dart';
-import '../../grades/providers/grading/grading_provider.dart';
-import '../../grades/providers/semester/semester_provider.dart';
-import '../../notes/data/data_sharing/notes_collection_service.dart';
-import '../../notes/data/data_sharing/notes_data_share_handler.dart';
-import '../../notes/providers/library_provider.dart';
-import '../../quiz/data/data_sharing/quiz_collection_service.dart';
-import '../../quiz/data/data_sharing/quiz_data_share_handler.dart';
-import '../../quiz/providers/quiz_library_provider.dart';
-import '../registry/data_share_registry.dart';
-import '../services/export_service.dart';
+import '../../../countdown/data/data_sharing/countdown_collection_service.dart';
+import '../../../countdown/data/data_sharing/countdown_data_share_handler.dart';
+import '../../../countdown/providers/countdown_provider.dart';
+import '../../../flashcards/data/data_sharing/flashcard_collection_service.dart';
+import '../../../flashcards/data/data_sharing/flashcard_data_share_handler.dart';
+import '../../../flashcards/providers/flashcard_provider.dart';
+import '../../../grades/data/data_sharing/grades_collection_service.dart';
+import '../../../grades/data/data_sharing/grades_data_share_handler.dart';
+import '../../../grades/providers/assessment/assessment_provider.dart';
+import '../../../grades/providers/course/course_provider.dart';
+import '../../../grades/providers/grading/grading_provider.dart';
+import '../../../grades/providers/semester/semester_provider.dart';
+import '../../../notes/data/data_sharing/notes_collection_service.dart';
+import '../../../notes/data/data_sharing/notes_data_share_handler.dart';
+import '../../../notes/providers/library_provider.dart';
+import '../../../quiz/data/data_sharing/quiz_collection_service.dart';
+import '../../../quiz/data/data_sharing/quiz_data_share_handler.dart';
+import '../../../quiz/providers/quiz_library_provider.dart';
+import '../../registry/data_share_registry.dart';
+import '../../services/export_service.dart';
 
 part 'export_service_provider.g.dart';
 

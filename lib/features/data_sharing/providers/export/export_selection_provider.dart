@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../domain/models/export/export_module.dart';
-import '../domain/models/export/export_selection.dart';
-import '../domain/models/share/share_resource_type.dart';
+import '../../domain/models/export/export_module.dart';
+import '../../domain/models/export/export_selection.dart';
+import '../../domain/models/share/share_resource_type.dart';
 
 part 'export_selection_provider.g.dart';
 

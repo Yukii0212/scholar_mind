@@ -4,11 +4,11 @@ import '../../auth/providers/auth_provider.dart';
 import '../domain/models/import/import_request.dart';
 import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_archive.dart';
-import '../providers/share_archive_deserializer_provider.dart';
-import '../providers/share_download_service_provider.dart';
-import '../providers/share_lookup_service_provider.dart';
-import '../providers/import_service_provider.dart';
-import '../providers/validation_service_provider.dart';
+import '../providers/share/share_archive_deserializer_provider.dart';
+import '../providers/share/share_download_service_provider.dart';
+import '../providers/share/share_lookup_service_provider.dart';
+import '../providers/import/import_service_provider.dart';
+import '../providers/validation/validation_service_provider.dart';
 
 part 'share_import_controller.g.dart';
 

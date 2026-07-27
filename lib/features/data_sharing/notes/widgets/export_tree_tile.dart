@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/share/share_resource_type.dart';
-import '../../providers/export_selection_provider.dart';
+import '../../providers/export/export_selection_provider.dart';
 import '../model/export_tree_node.dart';
 import 'export_item_tile.dart';
 

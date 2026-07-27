@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../domain/models/export/export_selection.dart';
+import '../../domain/models/export/export_selection.dart';
 import 'export_selection_provider.dart';
 
 part 'export_summary_provider.g.dart';

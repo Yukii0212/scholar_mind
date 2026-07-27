@@ -5,7 +5,7 @@ import '../../../../domain/models/share/share_resource_type.dart';
 import '../../../../notes/model/export_cart_item.dart';
 import '../../../../notes/model/export_item.dart';
 import '../../../../notes/providers/export_library_provider.dart';
-import '../../../../providers/export_selection_provider.dart';
+import '../../../../providers/export/export_selection_provider.dart';
 import '../item/export_cart_item_tile.dart';
 import '../shared/export_cart_icon_container.dart';
 

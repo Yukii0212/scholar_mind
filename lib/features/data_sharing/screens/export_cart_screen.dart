@@ -5,7 +5,7 @@ import 'package:scholar_mind/features/data_sharing/screens/share_screen.dart';
 import '../domain/models/export/export_module.dart';
 import '../notes/model/export_cart_item.dart';
 import '../notes/providers/export_cart_items_provider.dart';
-import '../providers/export_selection_provider.dart';
+import '../providers/export/export_selection_provider.dart';
 import '../widgets/screen/cart/export_cart_header.dart';
 import '../widgets/screen/cart/export_cart_swipe_hint.dart';
 import '../widgets/screen/cart/module/export_cart_module_card.dart';

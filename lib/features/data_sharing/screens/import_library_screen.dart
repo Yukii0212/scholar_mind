@@ -77,16 +77,19 @@ class _ImportLibraryScreenState
 
         Navigator.of(context).pop();
       }
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) {
         return;
       }
 
+      debugPrint('========== SHARE IMPORT FAILED ==========');
+      debugPrint('Error: $e');
+      debugPrint('Stack Trace:');
+      debugPrint(st.toString());
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            e.toString(),
-          ),
+          content: Text(e.toString()),
         ),
       );
     } finally {

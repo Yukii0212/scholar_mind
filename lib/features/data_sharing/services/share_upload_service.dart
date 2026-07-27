@@ -57,7 +57,7 @@ class ShareUploadService {
       ShareResource resource,
       ) {
     return {
-      'resourceType': resource.resourceType.name,
+      'resourceType': resource.resourceType.value,
       'resourceVersion': resource.resourceVersion,
       'resourceId': resource.resourceId,
       'metadata': {
@@ -72,9 +72,8 @@ class ShareUploadService {
       'references': resource.references
           .map(
             (reference) => {
-              'resourceType': resource.resourceType,
-          'resourceId':
-          reference.resourceId,
+          'resourceType': reference.resourceType,
+          'resourceId': reference.resourceId,
         },
       )
           .toList(),

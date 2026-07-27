@@ -52,7 +52,8 @@ class GradesCollectionService
       );
 
       final courses = await courseRepository.getSemesterCourses(
-        semester.id,
+        userId: userId,
+        semesterId: semester.id,
       );
 
       for (final course in courses) {

@@ -11,7 +11,7 @@ class CreateCourseDialog extends ConsumerStatefulWidget {
     required this.semesterId,
   });
 
-  final String? semesterId;
+  final String semesterId;
 
   @override
   ConsumerState<CreateCourseDialog> createState() =>
@@ -48,6 +48,8 @@ class _CreateCourseDialogState
 
     final course = CourseModel(
       id: const Uuid().v4(),
+      // Overwritten by CourseRepository.createCourse before it's persisted.
+      ownerId: '',
       semesterId: widget.semesterId,
       name: _nameController.text.trim(),
       targetScore:

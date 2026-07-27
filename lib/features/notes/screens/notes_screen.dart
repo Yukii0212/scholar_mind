@@ -1183,7 +1183,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
+        ),
+      );
   }
 
   static String _friendlyError(Object? error) {

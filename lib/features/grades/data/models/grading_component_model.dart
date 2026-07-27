@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class GradingComponentModel {
   const GradingComponentModel({
     required this.id,
+    required this.ownerId,
     required this.courseId,
     required this.parentId,
     required this.name,
@@ -13,6 +14,11 @@ class GradingComponentModel {
   });
 
   final String id;
+
+  /// Empty for documents written before ownership tracking was added --
+  /// not yet backfilled. See CourseRepository.backfillOwnership.
+  final String ownerId;
+
   final String courseId;
   final String? parentId;
   final String name;
@@ -31,6 +37,7 @@ class GradingComponentModel {
 
     return GradingComponentModel(
       id: doc.id,
+      ownerId: data['ownerId'] as String? ?? '',
       courseId: data['courseId'] as String,
       parentId: data['parentId'] as String?,
       name: data['name'] as String,
@@ -45,6 +52,7 @@ class GradingComponentModel {
 
   Map<String, dynamic> toFirestore() {
     return {
+      'ownerId': ownerId,
       'courseId': courseId,
       'parentId': parentId,
       'name': name,
@@ -57,6 +65,7 @@ class GradingComponentModel {
 
   GradingComponentModel copyWith({
     String? id,
+    String? ownerId,
     String? courseId,
     String? parentId,
     bool clearParentId = false,
@@ -68,6 +77,7 @@ class GradingComponentModel {
   }) {
     return GradingComponentModel(
       id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
       courseId: courseId ?? this.courseId,
       parentId: clearParentId
           ? null

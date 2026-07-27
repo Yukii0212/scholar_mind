@@ -92,21 +92,36 @@ service cloud.firestore {
     // user here -- this matches current (deployed) behavior, it is not a
     // regression, but it is a known gap. A real fix needs an ownerId field
     // added to both models plus a migration of existing documents.
+    // NOTE (pending -- do not deploy until confirmed): tightened from
+    // isSignedIn() to real per-owner checks now that Course/GradingComponent
+    // carry an ownerId field. Existing documents need
+    // GradesOwnershipBackfill (lib/features/grades/providers/
+    // grades_ownership_backfill_provider.dart) to have run at least once
+    // against the rebuilt app before this is deployed, or it will 403
+    // not-yet-migrated courses for their own owner.
     match /courses/{courseId} {
-      allow read, delete: if isSignedIn();
+      allow read, delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
       allow create, update: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
         && validCourse(request.resource.data);
 
       match /assessmentEntries/{entryId} {
-        allow read, delete: if isSignedIn();
+        allow read, delete: if isSignedIn()
+          && get(/databases/$(database)/documents/courses/$(courseId))
+            .data.ownerId == request.auth.uid;
         allow create, update: if isSignedIn()
+          && get(/databases/$(database)/documents/courses/$(courseId))
+            .data.ownerId == request.auth.uid
           && validAssessmentEntry(request.resource.data);
       }
     }
 
     match /grading_components/{componentId} {
-      allow read, delete: if isSignedIn();
+      allow read, delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
       allow create, update: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
         && validGradingComponent(request.resource.data);
     }
 
@@ -496,6 +511,12 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // ownerId is optional here (rather than required) so the backfill
+    // migration's merge write -- which only sets ownerId on an existing,
+    // otherwise-already-valid document -- still validates during the
+    // transition window before every course has one. Actual write access
+    // is still gated by the ownerId match in the `courses` match block
+    // above, not by this function.
     function validCourse(data) {
       return data.keys().hasAll([
           'semesterId',
@@ -507,6 +528,7 @@ service cloud.firestore {
           'updatedAt'
         ])
         && data.keys().hasOnly([
+          'ownerId',
           'semesterId',
           'name',
           'targetScore',
@@ -515,7 +537,8 @@ service cloud.firestore {
           'createdAt',
           'updatedAt'
         ])
-        && (data.semesterId == null || data.semesterId is string)
+        && (!('ownerId' in data) || data.ownerId is string)
+        && data.semesterId is string
         && data.name is string
         && data.name.size() > 0
         && (data.targetScore == null || data.targetScore is number)
@@ -537,6 +560,7 @@ service cloud.firestore {
           'updatedAt'
         ])
         && data.keys().hasOnly([
+          'ownerId',
           'courseId',
           'parentId',
           'name',
@@ -545,6 +569,7 @@ service cloud.firestore {
           'createdAt',
           'updatedAt'
         ])
+        && (!('ownerId' in data) || data.ownerId is string)
         && data.courseId is string
         && (data.parentId == null || data.parentId is string)
         && data.name is string

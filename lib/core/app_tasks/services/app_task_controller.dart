@@ -69,7 +69,7 @@ class AppTaskController {
         );
 
         Timer(
-          const Duration(minutes: 5),
+          const Duration(seconds: 5),
           notifier.removeCompleted,
         );
       }
@@ -91,7 +91,7 @@ class AppTaskController {
         );
 
         Timer(
-          const Duration(minutes: 5),
+          const Duration(seconds: 5),
           notifier.removeCompleted,
         );
       }

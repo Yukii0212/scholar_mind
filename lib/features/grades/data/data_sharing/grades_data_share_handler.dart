@@ -183,6 +183,7 @@ class GradesDataShareHandler
       final newCourseId = await _courseRepository.importCourse(
         course: CourseModel(
           id: resource.resourceId,
+          ownerId: userId,
           semesterId: newSemesterId,
           name: resource.metadata.displayName,
           targetScore:
@@ -195,6 +196,7 @@ class GradesDataShareHandler
           createdAt: now,
           updatedAt: now,
         ),
+        ownerId: userId,
         semesterId: newSemesterId,
       );
 
@@ -233,6 +235,7 @@ class GradesDataShareHandler
         await _componentRepository.importComponent(
           component: GradingComponentModel(
             id: resource.resourceId,
+            ownerId: userId,
             courseId: newCourseId,
             parentId: oldParentId,
             name: resource.metadata.displayName,
@@ -241,6 +244,7 @@ class GradesDataShareHandler
             createdAt: now,
             updatedAt: now,
           ),
+          ownerId: userId,
           courseId: newCourseId,
           parentId: oldParentId == null
               ? null

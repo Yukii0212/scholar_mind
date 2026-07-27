@@ -42,6 +42,8 @@ class GradingStructureMapper {
     output.add(
       GradingComponentModel(
         id: component.id,
+        // Overwritten by GradingComponentRepository before it's persisted.
+        ownerId: '',
         courseId: courseId,
         parentId: parentId,
         name: component.name,

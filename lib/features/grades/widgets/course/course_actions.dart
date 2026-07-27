@@ -53,7 +53,7 @@ class CourseActions {
   static Future<void> copyFromExistingCourse(
       BuildContext context,
       WidgetRef ref,
-      String? semesterId,
+      String semesterId,
       ) async {
 
     final selected =

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/grades_ownership_backfill_provider.dart';
 import '../../providers/semester/current_semester_provider.dart';
 import '../semester/semester_detail_screen.dart';
 import '../semester/semester_overview_screen.dart';
@@ -10,6 +11,8 @@ class GradeHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(gradesOwnershipBackfillProvider);
+
     final semester = ref.watch(currentSemesterProvider);
 
     return semester.when(

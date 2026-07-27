@@ -4,12 +4,11 @@ import 'package:scholar_mind/core/theme/app_design.dart';
 import 'package:scholar_mind/features/quiz/widgets/quiz_folder_picker_dialog.dart';
 
 import '../domain/quiz_attempt.dart';
-import '../domain/quiz_library_section.dart';
+import '../domain/quiz_folder.dart';
 import '../domain/quiz_sort_order.dart';
 import '../providers/quiz_attempt_provider.dart';
 import '../providers/quiz_library_provider.dart' as quiz_library;
 import '../providers/quiz_provider.dart';
-import '../screens/quiz_library_screen.dart';
 import '../screens/quiz_result_screen.dart';
 import '../screens/quiz_viewer_screen.dart';
 
@@ -19,9 +18,12 @@ class QuizLibrarySectionWidget
   const QuizLibrarySectionWidget({
     super.key,
     required this.folderId,
+    required this.onOpenFolder,
   });
 
   final String folderId;
+
+  final ValueChanged<QuizFolder> onOpenFolder;
 
   @override
   Widget build(
@@ -423,22 +425,7 @@ class QuizLibrarySectionWidget
                                 ),
 
                                 onTap: () {
-
-                                  Navigator.push(
-
-                                    context,
-
-                                    MaterialPageRoute(
-
-                                      builder: (_) => QuizLibraryScreen(
-                                        folderId: folder.id,
-                                        initialSection: QuizLibrarySection.library,
-                                      ),
-
-                                    ),
-
-                                  );
-
+                                  onOpenFolder(folder);
                                 },
 
                               ),

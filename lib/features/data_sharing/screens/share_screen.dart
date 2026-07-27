@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/models/share/share_archive.dart';
+import '../domain/models/share/share_expiry.dart';
+import '../domain/models/share/share_result.dart';
+import '../providers/export_controller.dart';
 import '../widgets/screen/share/share_link_view.dart';
 import '../widgets/screen/share/share_qr_view.dart';
 
-class ShareScreen extends StatefulWidget {
+class ShareScreen extends ConsumerStatefulWidget {
   const ShareScreen({
     super.key,
     required this.archive,
@@ -13,11 +17,19 @@ class ShareScreen extends StatefulWidget {
   final ShareArchive archive;
 
   @override
-  State<ShareScreen> createState() => _ShareScreenState();
+  ConsumerState<ShareScreen> createState() =>
+      _ShareScreenState();
 }
 
-class _ShareScreenState extends State<ShareScreen> {
-  var _selectedIndex = 0;
+class _ShareScreenState
+    extends ConsumerState<ShareScreen> {
+  var _selectedIndex = 1;
+
+  ShareResult? _share;
+
+  bool _generating = false;
+
+  ShareExpiry _expiry = ShareExpiry.oneDay;
 
   @override
   Widget build(BuildContext context) {
@@ -41,21 +53,90 @@ class _ShareScreenState extends State<ShareScreen> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 24),
+              DropdownButtonFormField<ShareExpiry>(
+                value: _expiry,
+                decoration: const InputDecoration(
+                  labelText: 'Link Expiry',
+                  border: OutlineInputBorder(),
+                ),
+                items: ShareExpiry.values
+                    .map(
+                      (expiry) => DropdownMenuItem(
+                    value: expiry,
+                    child: Text(expiry.label),
+                  ),
+                )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+
+                  setState(() {
+                    _expiry = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _generating
+                    ? null
+                    : () async {
+                  setState(() {
+                    _generating = true;
+                  });
+
+                  try {
+                    final share = await ref
+                        .read(
+                      exportControllerProvider.notifier,
+                    )
+                        .generateShare(
+                      expiry: _expiry,
+                    );
+
+                    if (!mounted) {
+                      return;
+                    }
+
+                    setState(() {
+                      _share = share;
+                      _selectedIndex = 1;
+                    });
+                  } finally {
+                    if (mounted) {
+                      setState(() {
+                        _generating = false;
+                      });
+                    }
+                  }
+                },
+                icon: _generating
+                    ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                )
+                    : const Icon(Icons.link),
+                label: const Text(
+                  'Generate Link',
+                ),
+              ),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<int>(
-                  style: const ButtonStyle(
-                    visualDensity: VisualDensity.standard,
-                  ),
                   segments: const [
                     ButtonSegment(
                       value: 0,
-                      icon: Icon(Icons.qr_code_rounded),
+                      icon: Icon(Icons.qr_code),
                       label: Text('QR Code'),
                     ),
                     ButtonSegment(
                       value: 1,
-                      icon: Icon(Icons.link_rounded),
+                      icon: Icon(Icons.link),
                       label: Text('Link'),
                     ),
                   ],
@@ -76,8 +157,8 @@ class _ShareScreenState extends State<ShareScreen> {
                     archive: widget.archive,
                   )
                       : ShareLinkView(
-                    archive: widget.archive,
-                  ),
+                    share: _share,
+                  )
                 ),
               ),
             ],

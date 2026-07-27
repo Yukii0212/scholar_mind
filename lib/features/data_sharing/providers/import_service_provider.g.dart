@@ -1,26 +1,25 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'export_controller.dart';
+part of 'import_service_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$exportControllerHash() => r'd5fa01909276704c2bbf2a2d6ad33396beb951ea';
+String _$importServiceHash() => r'd5536644891057063edbc6aa341b3be6ff707b7e';
 
-/// See also [ExportController].
-@ProviderFor(ExportController)
-final exportControllerProvider =
-    AutoDisposeAsyncNotifierProvider<ExportController, void>.internal(
-  ExportController.new,
-  name: r'exportControllerProvider',
+/// See also [importService].
+@ProviderFor(importService)
+final importServiceProvider = AutoDisposeProvider<ImportService>.internal(
+  importService,
+  name: r'importServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$exportControllerHash,
+      : _$importServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$ExportController = AutoDisposeAsyncNotifier<void>;
+typedef ImportServiceRef = AutoDisposeProviderRef<ImportService>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

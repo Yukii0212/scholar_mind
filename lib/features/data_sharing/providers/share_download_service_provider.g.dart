@@ -1,26 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'export_controller.dart';
+part of 'share_download_service_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$exportControllerHash() => r'd5fa01909276704c2bbf2a2d6ad33396beb951ea';
+String _$shareDownloadServiceHash() =>
+    r'e1596d2775c8e60064939d0cc41cad4d17780ae6';
 
-/// See also [ExportController].
-@ProviderFor(ExportController)
-final exportControllerProvider =
-    AutoDisposeAsyncNotifierProvider<ExportController, void>.internal(
-  ExportController.new,
-  name: r'exportControllerProvider',
+/// See also [shareDownloadService].
+@ProviderFor(shareDownloadService)
+final shareDownloadServiceProvider =
+    AutoDisposeProvider<ShareDownloadService>.internal(
+  shareDownloadService,
+  name: r'shareDownloadServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$exportControllerHash,
+      : _$shareDownloadServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$ExportController = AutoDisposeAsyncNotifier<void>;
+typedef ShareDownloadServiceRef = AutoDisposeProviderRef<ShareDownloadService>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

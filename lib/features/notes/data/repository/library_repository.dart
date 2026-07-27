@@ -617,12 +617,16 @@ class LibraryRepository {
       String userId,
       ) {
     return _notes(userId)
+        .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       final notes =
-      snapshot.docs.map(NoteItem.fromDocument).where((note) {
+      snapshot.docs
+          .map(NoteItem.fromDocument)
+          .where((note) {
         return !note.isInternal;
-      }).toList();
+      })
+          .toList();
 
       notes.sort(
             (a, b) => b.createdAt.compareTo(a.createdAt),

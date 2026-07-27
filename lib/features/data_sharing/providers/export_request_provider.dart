@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:scholar_mind/features/auth/providers/auth_provider.dart';
-import 'package:scholar_mind/features/data_sharing/providers/share_method_provider.dart';
 
 import '../domain/models/export/export_request.dart';
 import 'export_selection_provider.dart';
@@ -27,13 +26,8 @@ ExportRequest? exportRequest(
     return null;
   }
 
-  final method = ref.watch(
-    shareMethodNotifierProvider,
-  );
-
   return ExportRequest(
     userId: user.uid,
-    method: method,
     resourceIds: {
       for (final entry in selection.selectedIds.entries)
         entry.key: entry.value.toList(),

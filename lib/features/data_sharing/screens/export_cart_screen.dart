@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scholar_mind/features/data_sharing/screens/share_screen.dart';
 
-import '../widgets/export/export_flow.dart';
 import '../notes/providers/export_cart_items_provider.dart';
+import '../providers/export_controller.dart';
 import '../providers/export_selection_provider.dart';
 import '../widgets/screen/cart/export_cart_header.dart';
 import '../widgets/screen/cart/export_cart_swipe_hint.dart';
@@ -38,10 +39,23 @@ class ExportCartScreen
             16,
           ),
           child: FilledButton(
-            onPressed: () {
-              ExportFlow.start(
-                context,
-                ref,
+            onPressed: () async {
+              final archive = await ref
+                  .read(
+                exportControllerProvider.notifier,
+              )
+                  .export();
+
+              if (!context.mounted || archive == null) {
+                return;
+              }
+
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ShareScreen(
+                    archive: archive,
+                  ),
+                ),
               );
             },
             child: const Row(

@@ -1,4 +1,0 @@
-enum ShareMethod {
-  qrCode,
-  shareLink,
-}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart' hide ShareResult;
 
 import '../../../domain/models/share/share_result.dart';
 
@@ -84,8 +85,15 @@ class ShareLinkView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Native share (share_plus)
+            onPressed: () async {
+              await SharePlus.instance.share(
+                ShareParams(
+                  title: 'ScholarMind Share',
+                  subject: 'Study Materials',
+                  text:
+                  'I shared some study materials with you.\n\n$url',
+                ),
+              );
             },
             icon: const Icon(Icons.share),
             label: const Text('Share'),

@@ -33,9 +33,49 @@ class _ShareScreenState
 
   @override
   Widget build(BuildContext context) {
+    final hasShare = _share != null;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Share'),
+        actions: [
+          if (hasShare)
+            TextButton.icon(
+              onPressed: _generating
+                  ? null
+                  : () async {
+                setState(() {
+                  _generating = true;
+                });
+
+                try {
+                  final share = await ref
+                      .read(
+                    exportControllerProvider.notifier,
+                  )
+                      .generateShare(
+                    expiry: _expiry,
+                  );
+
+                  if (!mounted) {
+                    return;
+                  }
+
+                  setState(() {
+                    _share = share;
+                  });
+                } finally {
+                  if (mounted) {
+                    setState(() {
+                      _generating = false;
+                    });
+                  }
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('New Link'),
+            ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -52,79 +92,87 @@ class _ShareScreenState
                 'Anyone with ScholarMind can import these materials.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 24),
-              DropdownButtonFormField<ShareExpiry>(
-                value: _expiry,
-                decoration: const InputDecoration(
-                  labelText: 'Link Expiry',
-                  border: OutlineInputBorder(),
-                ),
-                items: ShareExpiry.values
-                    .map(
-                      (expiry) => DropdownMenuItem(
-                    value: expiry,
-                    child: Text(expiry.label),
+
+              if (!hasShare) ...[
+                const SizedBox(height: 24),
+
+                DropdownButtonFormField<ShareExpiry>(
+                  value: _expiry,
+                  decoration: const InputDecoration(
+                    labelText: 'Link Expiry',
+                    border: OutlineInputBorder(),
                   ),
-                )
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-
-                  setState(() {
-                    _expiry = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: _generating
-                    ? null
-                    : () async {
-                  setState(() {
-                    _generating = true;
-                  });
-
-                  try {
-                    final share = await ref
-                        .read(
-                      exportControllerProvider.notifier,
-                    )
-                        .generateShare(
-                      expiry: _expiry,
-                    );
-
-                    if (!mounted) {
+                  items: ShareExpiry.values
+                      .map(
+                        (expiry) => DropdownMenuItem(
+                      value: expiry,
+                      child: Text(expiry.label),
+                    ),
+                  )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) {
                       return;
                     }
 
                     setState(() {
-                      _share = share;
-                      _selectedIndex = 1;
+                      _expiry = value;
                     });
-                  } finally {
-                    if (mounted) {
-                      setState(() {
-                        _generating = false;
-                      });
-                    }
-                  }
-                },
-                icon: _generating
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
-                    : const Icon(Icons.link),
-                label: const Text(
-                  'Generate Link',
+                  },
                 ),
-              ),
+
+                const SizedBox(height: 16),
+
+                FilledButton.icon(
+                  onPressed: _generating
+                      ? null
+                      : () async {
+                    setState(() {
+                      _generating = true;
+                    });
+
+                    try {
+                      final share = await ref
+                          .read(
+                        exportControllerProvider.notifier,
+                      )
+                          .generateShare(
+                        expiry: _expiry,
+                      );
+
+                      if (!mounted) {
+                        return;
+                      }
+
+                      setState(() {
+                        _share = share;
+                        _selectedIndex = 1;
+                      });
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _generating = false;
+                        });
+                      }
+                    }
+                  },
+                  icon: _generating
+                      ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Icon(Icons.link),
+                  label: const Text(
+                    'Generate Link',
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 24),
+
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<int>(
@@ -148,7 +196,9 @@ class _ShareScreenState
                   },
                 ),
               ),
+
               const SizedBox(height: 24),
+
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
@@ -158,7 +208,7 @@ class _ShareScreenState
                   )
                       : ShareLinkView(
                     share: _share,
-                  )
+                  ),
                 ),
               ),
             ],

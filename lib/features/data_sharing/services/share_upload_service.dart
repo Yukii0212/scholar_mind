@@ -10,6 +10,7 @@ class ShareUploadService {
   const ShareUploadService();
 
   Future<String> uploadArchive({
+    required String userId,
     required String shareId,
     required ShareArchive archive,
   }) async {
@@ -18,7 +19,7 @@ class ShareUploadService {
     );
 
     final storagePath =
-        'shared_exports/$shareId/archive.json';
+        'users/$userId/shared_exports/$shareId/archive.json';
 
     final reference =
     FirebaseStorage.instance.ref(storagePath);

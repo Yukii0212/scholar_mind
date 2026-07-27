@@ -48,44 +48,30 @@ class ExportController
       return null;
     }
 
-    state = const AsyncLoading();
+    final archive = await ref
+        .read(exportServiceProvider)
+        .export(request);
 
-    try {
-      final archive = await ref
-          .read(exportServiceProvider)
-          .export(request);
+    final shareId = const Uuid().v4();
 
-      final shareId = const Uuid().v4();
+    final storagePath = await ref
+        .read(
+      shareUploadServiceProvider,
+    )
+        .uploadArchive(
+      userId: request.userId,
+      shareId: shareId,
+      archive: archive,
+    );
 
-      final storagePath = await ref
-          .read(
-        shareUploadServiceProvider,
-      )
-          .uploadArchive(
-        shareId: shareId,
-        archive: archive,
-      );
-
-      final result = await ref
-          .read(
-        shareLinkServiceProvider,
-      )
-          .createLink(
-        ownerId: request.userId,
-        storagePath: storagePath,
-        expiry: expiry,
-      );
-
-      state = const AsyncData(null);
-
-      return result;
-    } catch (e, st) {
-      state = AsyncError(
-        e,
-        st,
-      );
-
-      rethrow;
-    }
+    return ref
+        .read(
+      shareLinkServiceProvider,
+    )
+        .createLink(
+      ownerId: request.userId,
+      storagePath: storagePath,
+      expiry: expiry,
+    );
   }
 }

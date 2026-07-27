@@ -7,6 +7,7 @@ class StudyStreakSummary {
     required this.totalStudyDays,
     required this.lastStudyDate,
     required this.monthlyActivity,
+    required this.dailyActivity,
     required this.achievements,
   });
 
@@ -15,6 +16,7 @@ class StudyStreakSummary {
   final int totalStudyDays;
   final String? lastStudyDate;
   final Map<String, int> monthlyActivity;
+  final Map<String, bool> dailyActivity;
   final List<int> achievements;
 
   static const empty = StudyStreakSummary(
@@ -23,6 +25,7 @@ class StudyStreakSummary {
     totalStudyDays: 0,
     lastStudyDate: null,
     monthlyActivity: {},
+    dailyActivity: {},
     achievements: [],
   );
 
@@ -39,6 +42,8 @@ class StudyStreakSummary {
       lastStudyDate: data['lastStudyDate'] as String?,
       monthlyActivity: (data['monthlyActivity'] as Map<String, dynamic>? ?? {})
           .map((key, value) => MapEntry(key, (value as num).toInt())),
+      dailyActivity: (data['dailyActivity'] as Map<String, dynamic>? ?? {})
+          .map((key, value) => MapEntry(key, value as bool)),
       achievements: (data['achievements'] as List<dynamic>? ?? [])
           .map((value) => (value as num).toInt())
           .toList(),

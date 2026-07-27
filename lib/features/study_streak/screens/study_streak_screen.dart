@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
+import '../../home/widgets/countdown/dashboard_calendar_grid.dart';
 import '../domain/study_streak_summary.dart';
 import '../providers/study_streak_provider.dart';
 
@@ -34,6 +35,8 @@ class StudyStreakScreen extends ConsumerWidget {
                   ),
                   const Gap(16),
                   _StreakHero(summary: summary),
+                  const Gap(16),
+                  _ActivityCalendar(summary: summary),
                   const Gap(16),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -168,6 +171,149 @@ class _StreakHero extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class _ActivityCalendar extends StatefulWidget {
+  const _ActivityCalendar({required this.summary});
+
+  final StudyStreakSummary summary;
+
+  @override
+  State<_ActivityCalendar> createState() => _ActivityCalendarState();
+}
+
+class _ActivityCalendarState extends State<_ActivityCalendar> {
+  DateTime _displayedMonth = DateTime.now();
+  DateTime _selectedDate = DateTime.now();
+
+  final int _firstDayOfWeek = DateTime.monday;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.scholarPalette;
+    final days = _buildCalendarDays(
+      month: _displayedMonth,
+      firstDayOfWeek: _firstDayOfWeek,
+    );
+
+    return ScholarPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: ScholarSectionHeader(
+                  title: 'Activity Calendar',
+                  subtitle: _monthYear(_displayedMonth),
+                ),
+              ),
+              IconButton(
+                onPressed: () => _changeMonth(-1),
+                icon: const Icon(Icons.chevron_left_rounded),
+              ),
+              IconButton(
+                onPressed: () => _changeMonth(1),
+                icon: const Icon(Icons.chevron_right_rounded),
+              ),
+            ],
+          ),
+          const Gap(14),
+          Row(
+            children: _weekdayHeaders().map((weekday) {
+              return Expanded(
+                child: Center(
+                  child: Text(
+                    weekday,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: palette.textMuted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const Gap(10),
+          DashboardCalendarGrid(
+            days: days,
+            selectedDate: _selectedDate,
+            eventCountBuilder: (date) {
+              return widget.summary.dailyActivity[_dateId(date)] == true
+                  ? 1
+                  : 0;
+            },
+            onDateSelected: (date) {
+              setState(() {
+                _selectedDate = date;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changeMonth(int delta) {
+    setState(() {
+      _displayedMonth = DateTime(
+        _displayedMonth.year,
+        _displayedMonth.month + delta,
+      );
+    });
+  }
+
+  List<DateTime?> _buildCalendarDays({
+    required DateTime month,
+    required int firstDayOfWeek,
+  }) {
+    final first = DateTime(month.year, month.month, 1);
+    final last = DateTime(month.year, month.month + 1, 0);
+
+    final offset = (first.weekday - firstDayOfWeek + 7) % 7;
+
+    return [
+      ...List<DateTime?>.filled(offset, null),
+      for (var day = 1; day <= last.day; day++)
+        DateTime(month.year, month.month, day),
+    ];
+  }
+
+  List<String> _weekdayHeaders() {
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final start = _firstDayOfWeek - 1;
+
+    return [
+      ...labels.sublist(start),
+      ...labels.sublist(0, start),
+    ];
+  }
+
+  String _monthYear(DateTime date) {
+    const months = [
+      '',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    return '${months[date.month]} ${date.year}';
+  }
+
+  String _dateId(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 }
 

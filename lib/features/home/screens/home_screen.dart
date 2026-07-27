@@ -11,7 +11,13 @@ import '../../../core/providers/theme_provider.dart';
 import '../../../core/services/background_sync_service.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../countdown/domain/countdown_item.dart';
+import '../../countdown/providers/countdown_provider.dart';
+import '../../countdown/screens/countdown_crud_screen.dart';
 import '../../countdown/widgets/countdown_dashboard_card.dart';
+import '../../quiz/domain/quiz_attempt.dart';
+import '../../quiz/screens/quiz_viewer_screen.dart';
+import '../providers/dashboard_scroll_provider.dart';
 import '../widgets/grades/semester_panel.dart';
 
 import '../widgets/countdown/dashboard_countdown_carousel.dart';
@@ -72,6 +78,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  void _onNavTap(int index, int selectedIndex) {
+    if (index == selectedIndex && index == 0) {
+      final controller = ref.read(dashboardScrollControllerProvider);
+
+      if (controller.hasClients) {
+        controller.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+
+      return;
+    }
+
+    context.go(_navRoutes[index]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
@@ -112,7 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   if (isWide)
                     _DesktopRail(
                       selectedIndex: selectedIndex,
-                      onSelected: (index) => context.go(_navRoutes[index]),
+                      onSelected: (index) => _onNavTap(index, selectedIndex),
                     ),
                   Expanded(
                     child: widget.child,
@@ -148,7 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: _MobileNavButton(
                           item: _navItems[i],
                           selected: i == selectedIndex,
-                          onTap: () => context.go(_navRoutes[i]),
+                          onTap: () => _onNavTap(i, selectedIndex),
                         ),
                       ),
                   ],
@@ -165,21 +189,30 @@ class DashboardView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(studyStreakRecorderProvider);
-    final notes = ref.watch(allUploadedNotesProvider).valueOrNull ?? const [];
-    final quizzes =
+    final upcomingCountdowns = ref.watch(upcomingCountdownsProvider);
+    final urgentCountdown =
+        upcomingCountdowns.isEmpty ? null : upcomingCountdowns.first;
+    final activeQuizzes =
         ref.watch(quiz_library.activeQuizzesProvider).valueOrNull ?? const [];
+    final quizToResume = _quizToResume(activeQuizzes);
     final semester = ref.watch(currentSemesterProvider).valueOrNull;
     final statistics = semester == null
         ? null
         : ref.watch(semesterStatisticsProvider(semester.id)).valueOrNull;
-    final averageScore = _averageScore(statistics);
     final user = ref.watch(firebaseAuthProvider).currentUser;
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 900;
+    final hasTodayContent = urgentCountdown != null || quizToResume != null;
+
+    final semesterPanel = SemesterPanel(
+      semesterName: semester?.name,
+      courses: statistics ?? const [],
+    );
 
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
+        controller: ref.watch(dashboardScrollControllerProvider),
         padding: EdgeInsets.fromLTRB(16, 8, 16, isWide ? 24 : 96),
         child: Center(
           child: ConstrainedBox(
@@ -198,37 +231,34 @@ class DashboardView extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 3,
-                        child: _TodayPanel(
-                          noteCount: notes.length,
-                          quizCount: quizzes.length,
+                      if (hasTodayContent) ...[
+                        Expanded(
+                          flex: 3,
+                          child: _TodayPanel(
+                            countdown: urgentCountdown,
+                            quiz: quizToResume,
+                          ),
                         ),
-                      ),
-                      const Gap(16),
-                      Expanded(
-                        flex: 2,
-                        child: SemesterPanel(
-                          semesterName: semester?.name,
-                          courseCount: statistics?.length ?? 0,
-                          averageScore: averageScore,
+                        const Gap(16),
+                        Expanded(
+                          flex: 2,
+                          child: semesterPanel,
                         ),
-                      ),
+                      ] else
+                        Expanded(child: semesterPanel),
                     ],
                   )
                 else
                   Column(
                     children: [
-                      _TodayPanel(
-                        noteCount: notes.length,
-                        quizCount: quizzes.length,
-                      ),
-                      const Gap(16),
-                      SemesterPanel(
-                        semesterName: semester?.name,
-                        courseCount: statistics?.length ?? 0,
-                        averageScore: averageScore,
-                      ),
+                      if (hasTodayContent) ...[
+                        _TodayPanel(
+                          countdown: urgentCountdown,
+                          quiz: quizToResume,
+                        ),
+                        const Gap(16),
+                      ],
+                      semesterPanel,
                     ],
                   ),
                 const Gap(16),
@@ -241,21 +271,13 @@ class DashboardView extends ConsumerWidget {
     );
   }
 
-  static double? _averageScore(List<SemesterCoursePriority>? statistics) {
-    if (statistics == null) {
-      return null;
-    }
+  static QuizAttempt? _quizToResume(List<QuizAttempt> quizzes) {
+    final inProgress = quizzes
+        .where((quiz) => quiz.status == QuizAttemptStatus.inProgress)
+        .toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
-    final scores = statistics
-        .map((entry) => entry.summary.averageAssessmentScore)
-        .whereType<double>()
-        .toList();
-
-    if (scores.isEmpty) {
-      return null;
-    }
-
-    return scores.reduce((a, b) => a + b) / scores.length;
+    return inProgress.isEmpty ? null : inProgress.first;
   }
 }
 
@@ -408,12 +430,12 @@ class _QuickAccessGrid extends StatelessWidget {
 
 class _TodayPanel extends StatelessWidget {
   const _TodayPanel({
-    required this.noteCount,
-    required this.quizCount,
+    required this.countdown,
+    required this.quiz,
   });
 
-  final int noteCount;
-  final int quizCount;
+  final CountdownItem? countdown;
+  final QuizAttempt? quiz;
 
   @override
   Widget build(BuildContext context) {
@@ -423,35 +445,59 @@ class _TodayPanel extends StatelessWidget {
         children: [
           const ScholarSectionHeader(
             title: 'Today',
-            subtitle: 'A focused snapshot of your study space',
+            subtitle: 'What actually needs your attention',
           ),
           const Gap(16),
-          _TaskRow(
-            icon: Icons.upload_file_outlined,
-            title: 'Study materials ready',
-            subtitle: '$noteCount notes available for review',
-            priority: 'Library',
-            onTap: () => context.go('/notes'),
-          ),
-          const Gap(10),
-          _TaskRow(
-            icon: Icons.auto_awesome_rounded,
-            title: 'Quiz practice',
-            subtitle: '$quizCount generated quizzes in progress',
-            priority: 'AI',
-            onTap: () => context.go('/quiz'),
-          ),
-          const Gap(10),
-          _TaskRow(
-            icon: Icons.trending_up_rounded,
-            title: 'Grade check-in',
-            subtitle: 'Review your current course targets',
-            priority: 'Grades',
-            onTap: () => context.go('/grades'),
-          ),
+          if (countdown != null) ...[
+            _TaskRow(
+              icon: Icons.event_rounded,
+              title: countdown!.title,
+              subtitle: _dueLabel(countdown!),
+              priority: countdown!.priority.priorityLabel,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => CountdownCrudScreen(
+                    initial: countdown,
+                  ),
+                ),
+              ),
+            ),
+            if (quiz != null) const Gap(10),
+          ],
+          if (quiz != null)
+            _TaskRow(
+              icon: Icons.play_circle_fill_rounded,
+              title: quiz!.name,
+              subtitle: '${quiz!.answers.length} / '
+                  '${quiz!.quiz.questions.length} questions answered',
+              priority: 'Resume',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => QuizViewerScreen(attempt: quiz!),
+                ),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  static String _dueLabel(CountdownItem countdown) {
+    final days = countdown.daysRemaining;
+
+    if (days < 0) {
+      return 'Overdue';
+    }
+
+    if (days == 0) {
+      return 'Due today';
+    }
+
+    if (days == 1) {
+      return 'Due tomorrow';
+    }
+
+    return 'Due in $days days';
   }
 }
 

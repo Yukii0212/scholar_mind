@@ -22,6 +22,7 @@ class GradingSubcomponentRow extends ConsumerStatefulWidget {
 class _GradingSubcomponentRowState
     extends ConsumerState<GradingSubcomponentRow> {
   late final TextEditingController _controller;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
@@ -29,6 +30,16 @@ class _GradingSubcomponentRowState
     _controller = TextEditingController(
       text: widget.component.weight.toStringAsFixed(0),
     );
+
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        _controller.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _controller.text.length,
+        );
+      }
+    });
   }
 
   @override
@@ -44,6 +55,7 @@ class _GradingSubcomponentRowState
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -51,88 +63,83 @@ class _GradingSubcomponentRowState
   Widget build(BuildContext context) {
     final palette = context.scholarPalette;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.panelStrong.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: palette.stroke),
-      ),
-      child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              const ScholarIconBadge(
-                icon: Icons.segment_rounded,
-                size: 30,
-              ),
-              const Gap(10),
-              Expanded(
-                child: TextFormField(
-                  initialValue: widget.component.name,
-                  decoration: const InputDecoration(
-                    hintText: 'Subcomponent name',
-                    isDense: true,
-                  ),
-                  onChanged: (value) {
-                    ref
-                        .read(gradingStructureDraftProvider.notifier)
-                        .renameSubcomponent(
-                          componentId: widget.component.id,
-                          name: value,
-                        );
-                  },
-                ),
-              ),
-              const Gap(8),
-              IconButton(
-                onPressed: () {
-                  ref
-                      .read(gradingStructureDraftProvider.notifier)
-                      .removeSubcomponent(widget.component.id);
-                },
-                icon: const Icon(Icons.delete_outline_rounded),
-                tooltip: 'Remove subcomponent',
-              ),
-            ],
+          Icon(
+            Icons.subdirectory_arrow_right_rounded,
+            size: 18,
+            color: palette.textMuted,
           ),
-          const Gap(10),
-          Row(
-            children: [
-              SizedBox(
-                width: 92,
-                child: TextFormField(
-                  controller: _controller,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    suffixText: '%',
-                    isDense: true,
-                  ),
-                  onFieldSubmitted: _commitWeight,
-                ),
+          const Gap(8),
+          Expanded(
+            flex: 3,
+            child: TextFormField(
+              initialValue: widget.component.name,
+              style: Theme.of(context).textTheme.bodyMedium,
+              decoration: const InputDecoration(
+                hintText: 'Subcomponent name',
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 4),
               ),
-              const Gap(12),
-              Expanded(
-                child: Slider(
-                  value: widget.component.weight.clamp(0, 100).toDouble(),
-                  min: 0,
-                  max: 100,
-                  divisions: 100,
-                  onChanged: (value) {
-                    ref
-                        .read(gradingStructureDraftProvider.notifier)
-                        .updateSubcomponentWeight(
-                          componentId: widget.component.id,
-                          weight: value,
-                        );
-                  },
-                ),
+              onChanged: (value) {
+                ref
+                    .read(gradingStructureDraftProvider.notifier)
+                    .renameSubcomponent(
+                      componentId: widget.component.id,
+                      name: value,
+                    );
+              },
+            ),
+          ),
+          const Gap(8),
+          Expanded(
+            flex: 2,
+            child: Slider(
+              value: widget.component.weight.clamp(0, 100).toDouble(),
+              min: 0,
+              max: 100,
+              divisions: 100,
+              onChanged: (value) {
+                ref
+                    .read(gradingStructureDraftProvider.notifier)
+                    .updateSubcomponentWeight(
+                      componentId: widget.component.id,
+                      weight: value,
+                    );
+              },
+            ),
+          ),
+          SizedBox(
+            width: 64,
+            child: TextFormField(
+              controller: _controller,
+              focusNode: _focusNode,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
               ),
-            ],
+              textAlign: TextAlign.center,
+              decoration: const InputDecoration(
+                suffixText: '%',
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 4),
+              ),
+              onFieldSubmitted: _commitWeight,
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () {
+              ref
+                  .read(gradingStructureDraftProvider.notifier)
+                  .removeSubcomponent(widget.component.id);
+            },
+            icon: const Icon(Icons.close_rounded, size: 18),
+            tooltip: 'Remove subcomponent',
           ),
         ],
       ),

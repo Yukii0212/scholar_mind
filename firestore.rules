@@ -248,6 +248,7 @@ service cloud.firestore {
           'totalStudyDays',
           'lastStudyDate',
           'monthlyActivity',
+          'dailyActivity',
           'achievements',
           'updatedAt'
         ])
@@ -257,6 +258,7 @@ service cloud.firestore {
           'totalStudyDays',
           'lastStudyDate',
           'monthlyActivity',
+          'dailyActivity',
           'achievements',
           'updatedAt'
         ])
@@ -265,6 +267,7 @@ service cloud.firestore {
         && data.totalStudyDays is int
         && data.lastStudyDate is string
         && data.monthlyActivity is map
+        && data.dailyActivity is map
         && data.achievements is list
         && data.updatedAt is timestamp;
     }

@@ -15,7 +15,7 @@ class CountdownDashboardCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.scholarPalette;
     final upcoming = ref.watch(upcomingCountdownsProvider);
-    final featured = upcoming.take(3).toList();
+    final featured = upcoming.take(5).toList();
 
     return ScholarPanel(
       onTap: () => context.go('/countdown'),

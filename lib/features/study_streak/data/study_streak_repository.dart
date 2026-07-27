@@ -51,6 +51,8 @@ class StudyStreakRepository {
           : current.longestStreak;
       final monthlyActivity = Map<String, int>.of(current.monthlyActivity);
       monthlyActivity[month] = (monthlyActivity[month] ?? 0) + 1;
+      final dailyActivity = Map<String, bool>.of(current.dailyActivity);
+      dailyActivity[today] = true;
       final achievements = {
         ...current.achievements,
         for (final threshold in _achievementThresholds)
@@ -66,6 +68,7 @@ class StudyStreakRepository {
           'totalStudyDays': current.totalStudyDays + 1,
           'lastStudyDate': today,
           'monthlyActivity': monthlyActivity,
+          'dailyActivity': dailyActivity,
           'achievements': achievements,
           'updatedAt': FieldValue.serverTimestamp(),
         },

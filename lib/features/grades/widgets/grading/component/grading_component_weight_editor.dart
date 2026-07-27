@@ -27,6 +27,7 @@ class _GradingComponentWeightEditorState
 
   late final TextEditingController
   _controller;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
@@ -36,6 +37,16 @@ class _GradingComponentWeightEditorState
       text:
       widget.component.weight.toStringAsFixed(0),
     );
+
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        _controller.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _controller.text.length,
+        );
+      }
+    });
   }
 
   @override
@@ -55,6 +66,7 @@ class _GradingComponentWeightEditorState
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -76,6 +88,7 @@ class _GradingComponentWeightEditorState
               width: 80,
               child: TextFormField(
                 controller: _controller,
+                focusNode: _focusNode,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),

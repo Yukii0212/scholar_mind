@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import '../../../core/theme/app_design.dart';
+import '../../../core/widgets/collapsible_breadcrumb.dart';
 import '../domain/quiz_folder.dart';
 import '../providers/quiz_library_provider.dart'
 as quiz_library;
@@ -16,48 +17,59 @@ import '../widgets/quiz_trash_section.dart';
 
 class QuizLibraryScreen
     extends ConsumerStatefulWidget {
-
   const QuizLibraryScreen({
-
     super.key,
-
-    this.folderId = QuizFolder.rootId,
-
-    this.initialSection,
-
   });
-
-  final String folderId;
-
-  final QuizLibrarySection? initialSection;
 
   @override
   ConsumerState<QuizLibraryScreen>
   createState() =>
       _QuizLibraryScreenState();
-
 }
 
 class _QuizLibraryScreenState
     extends ConsumerState<QuizLibraryScreen> {
+  final List<QuizFolder> _folderStack = [];
 
-  late QuizLibrarySection _section;
+  QuizLibrarySection _section =
+      QuizLibrarySection.continueSection;
 
-  @override
-  void initState() {
-    super.initState();
+  String get _folderId =>
+      _folderStack.isEmpty
+          ? QuizFolder.rootId
+          : _folderStack.last.id;
 
-    _section =
-        widget.initialSection ??
-            (widget.folderId == QuizFolder.rootId
-                ? QuizLibrarySection.continueSection
-                : QuizLibrarySection.library);
+  void _openFolder(QuizFolder folder) {
+    setState(() {
+      _section = QuizLibrarySection.library;
+
+      if (_folderStack.isEmpty ||
+          _folderStack.last.id != folder.id) {
+        _folderStack.add(folder);
+      }
+    });
+  }
+
+  void _openBreadcrumb(int index) {
+    setState(() {
+      if (index < 0) {
+        _folderStack.clear();
+        _section = QuizLibrarySection.continueSection;
+      } else {
+        _folderStack.removeRange(
+          index + 1,
+          _folderStack.length,
+        );
+      }
+    });
   }
 
   @override
   Widget build(
       BuildContext context,
       ) {
+    final isRoot = _folderId == QuizFolder.rootId;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: SpeedDial(
@@ -129,7 +141,7 @@ class _QuizLibraryScreenState
                     .notifier,
               )
                   .createQuizFolder(
-                parentId: widget.folderId,
+                parentId: _folderId,
                 name: folderName,
               );
 
@@ -156,101 +168,14 @@ class _QuizLibraryScreenState
 
               const SizedBox(height: 12),
 
-              ref.watch(
-                quiz_library.folderPathProvider(
-                  widget.folderId,
-                ),
-              ).when(
-
-                loading: () =>
-                const SizedBox.shrink(),
-
-                error: (_, __) =>
-                const SizedBox.shrink(),
-
-                data: (path) {
-
-                  return Wrap(
-
-                    crossAxisAlignment:
-                    WrapCrossAlignment.center,
-
-                    spacing: 2,
-
-                    children: [
-
-                      TextButton.icon(
-
-                        onPressed: () {
-
-                          Navigator.pushAndRemoveUntil(
-
-                            context,
-
-                            MaterialPageRoute(
-                              builder: (_) => const QuizLibraryScreen(),
-                            ),
-
-                                (route) => false,
-
-                          );
-
-                        },
-
-                        icon: const Icon(
-                          Icons.home_outlined,
-                          size: 18,
-                        ),
-
-                        label: const Text(
-                          'Home',
-                        ),
-                      ),
-
-                      for (var i = 0;
-                      i < path.length;
-                      i++) ...[
-
-                        const Icon(
-                          Icons.chevron_right,
-                          size: 18,
-                        ),
-
-                        TextButton(
-
-                          onPressed: () {
-
-                            Navigator.pushAndRemoveUntil(
-
-                              context,
-
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    QuizLibraryScreen(
-                                      folderId: path[i].id,
-                                    ),
-                              ),
-
-                                  (route) => false,
-
-                            );
-
-                          },
-
-                          child: Text(
-                            path[i].name,
-                          ),
-
-                        ),
-
-                      ],
-
-                    ],
-
-                  );
-
-                },
-
+              CollapsibleBreadcrumb(
+                homeLabel: 'My Quizzes',
+                homeIcon: Icons.home_outlined,
+                segments: [
+                  for (final folder in _folderStack)
+                    folder.name,
+                ],
+                onPressed: _openBreadcrumb,
               ),
 
               const SizedBox(height: 12),
@@ -259,28 +184,27 @@ class _QuizLibraryScreenState
 
           const SizedBox(height: 24),
 
-        if (widget.folderId == QuizFolder.rootId) ...[
+        if (isRoot) ...[
           SegmentedButton<QuizLibrarySection>(
 
-            segments: [
+            segments: const [
 
-              if (widget.folderId == QuizFolder.rootId)
-                const ButtonSegment(
+              ButtonSegment(
 
-                  value:
-                  QuizLibrarySection.continueSection,
+                value:
+                QuizLibrarySection.continueSection,
 
-                  icon: Icon(
-                    Icons.play_circle_outline,
-                  ),
-
-                  label: Text(
-                    'Resume',
-                  ),
-
+                icon: Icon(
+                  Icons.play_circle_outline,
                 ),
 
-              const ButtonSegment(
+                label: Text(
+                  'Resume',
+                ),
+
+              ),
+
+              ButtonSegment(
 
                 value: QuizLibrarySection.library,
 
@@ -294,7 +218,7 @@ class _QuizLibraryScreenState
 
               ),
 
-              const ButtonSegment(
+              ButtonSegment(
 
                 value: QuizLibrarySection.trash,
 
@@ -334,7 +258,7 @@ class _QuizLibraryScreenState
 
           switch (
 
-          widget.folderId == QuizFolder.rootId
+          isRoot
               ? _section
               : QuizLibrarySection.library
 
@@ -347,7 +271,8 @@ class _QuizLibraryScreenState
             QuizLibrarySection.library =>
 
                 QuizLibrarySectionWidget(
-                  folderId: widget.folderId,
+                  folderId: _folderId,
+                  onOpenFolder: _openFolder,
                 ),
 
             QuizLibrarySection.trash =>

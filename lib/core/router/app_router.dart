@@ -3,6 +3,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/countdown/screens/countdown_screen.dart';
+import '../../features/data_sharing/screens/export_library_screen.dart';
+import '../../features/data_sharing/screens/import_library_screen.dart';
+import '../../features/data_sharing/screens/import_share_link_screen.dart';
+import '../../features/data_sharing/screens/share_hub_screen.dart';
 import '../../features/flashcards/screens/flashcard_library_screen.dart';
 import '../../features/grades/screens/home/grade_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
@@ -20,6 +24,21 @@ GoRouter appRouter(AppRouterRef ref) {
   final router = GoRouter(
     initialLocation: '/splash',
     redirect: (context, state) {
+      // Incoming `scholarmind://share/{id}` deep links arrive as the raw
+      // platform route (both on cold start and while already running) —
+      // go_router tries to match that whole URI as a location by default,
+      // which never matches any path-based route. Rewrite it to the actual
+      // in-app path before normal matching/auth redirects run.
+      if (state.uri.scheme == 'scholarmind') {
+        final segments = state.uri.pathSegments;
+
+        if (segments.isEmpty) {
+          return '/home';
+        }
+
+        return '/import/share/${segments.last}';
+      }
+
       final authState = ref.read(authStateProvider);
 
       if (authState.isLoading) {
@@ -95,7 +114,30 @@ GoRouter appRouter(AppRouterRef ref) {
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const AppearanceScreen(),
+            builder: (context, state) =>
+            const AppearanceScreen(),
+          ),
+          GoRoute(
+            path: '/share',
+            builder: (context, state) =>
+            const ShareHubScreen(),
+          ),
+          GoRoute(
+            path: '/export',
+            builder: (context, state) =>
+            const ExportLibraryScreen(),
+          ),
+          GoRoute(
+            path: '/import',
+            builder: (context, state) =>
+            const ImportLibraryScreen(),
+          ),
+          GoRoute(
+            path: '/import/share/:shareId',
+            builder: (context, state) =>
+                ImportShareLinkScreen(
+                  shareId: state.pathParameters['shareId']!,
+                ),
           ),
         ],
       ),

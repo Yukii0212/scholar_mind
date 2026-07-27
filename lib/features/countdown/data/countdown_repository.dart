@@ -33,6 +33,48 @@ class CountdownRepository {
     });
   }
 
+  Future<CountdownItem?> getCountdown({
+    required String userId,
+    required String countdownId,
+  }) async {
+    final snapshot = await _collection(userId).doc(countdownId).get();
+
+    if (!snapshot.exists) return null;
+
+    return CountdownItem.fromFirestore(snapshot);
+  }
+
+  Future<String> importCountdown({
+    required String userId,
+    required String title,
+    required CountdownType type,
+    required int priority,
+    required DateTime dueDate,
+    required String? description,
+    required bool deadlineExtendable,
+  }) async {
+    final now = DateTime.now();
+    final reference = _collection(userId).doc();
+
+    final item = CountdownItem(
+      id: reference.id,
+      title: title,
+      type: type,
+      priority: priority,
+      dueDate: dueDate,
+      description: description,
+      deadlineExtendable: deadlineExtendable,
+      isCompleted: false,
+      isHidden: false,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await reference.set(item.toFirestore());
+
+    return reference.id;
+  }
+
   Future<void> saveCountdown({
     required String userId,
     String? countdownId,

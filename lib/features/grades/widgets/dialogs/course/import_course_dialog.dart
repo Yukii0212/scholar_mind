@@ -71,12 +71,6 @@ class ImportCourseDialog extends ConsumerWidget {
                           );
                         }
 
-                        final personalCourses = courses
-                            .where(
-                              (course) => course.semesterId == null,
-                        )
-                            .toList();
-
                         return ListView(
                           children: [
                             for (final semester in semesters) ...[
@@ -129,37 +123,6 @@ class ImportCourseDialog extends ConsumerWidget {
                                 },
                               ),
                             ],
-
-                            if (personalCourses.isNotEmpty)
-                              ExpansionTile(
-                                initiallyExpanded: false,
-                                title: const Text(
-                                  'Personal Courses',
-                                ),
-                                children: [
-                                  for (final course
-                                  in personalCourses)
-                                    ListTile(
-                                      leading: const Icon(
-                                        Icons.menu_book_outlined,
-                                      ),
-                                      title: Text(course.name),
-                                      subtitle:
-                                      course.targetScore == null
-                                          ? null
-                                          : Text(
-                                        'Target Score: '
-                                            '${course.targetScore!.toStringAsFixed(0)}%',
-                                      ),
-                                      onTap: () {
-                                        Navigator.pop(
-                                          context,
-                                          course,
-                                        );
-                                      },
-                                    ),
-                                ],
-                              ),
                           ],
                         );
                       },

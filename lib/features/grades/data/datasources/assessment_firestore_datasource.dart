@@ -48,6 +48,35 @@ class AssessmentFirestoreDataSource {
     );
   }
 
+  Future<List<AssessmentEntryModel>> getEntries(
+      String courseId,
+      ) async {
+    final snapshot = await _collection(courseId)
+        .orderBy('createdAt')
+        .get();
+
+    return snapshot.docs
+        .map(AssessmentEntryModel.fromFirestore)
+        .toList();
+  }
+
+  Future<void> importEntry(
+      AssessmentEntryModel entry,
+      ) async {
+    final reference = _collection(entry.courseId).doc();
+    final now = DateTime.now();
+
+    await reference.set(
+      entry
+          .copyWith(
+        id: reference.id,
+        createdAt: now,
+        updatedAt: now,
+      )
+          .toFirestore(),
+    );
+  }
+
   Future<void> deleteEntry(
       String courseId,
       String entryId,

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class CourseModel {
   const CourseModel({
     required this.id,
+    required this.ownerId,
     required this.semesterId,
     required this.name,
     this.targetScore,
@@ -14,8 +15,11 @@ class CourseModel {
 
   final String id;
 
-  /// Null indicates this is a Personal Course.
-  final String? semesterId;
+  /// Empty for documents written before ownership tracking was added --
+  /// not yet backfilled. See CourseRepository.backfillOwnership.
+  final String ownerId;
+
+  final String semesterId;
 
   final String name;
 
@@ -39,7 +43,8 @@ class CourseModel {
 
     return CourseModel(
       id: doc.id,
-      semesterId: data['semesterId'] as String?,
+      ownerId: data['ownerId'] as String? ?? '',
+      semesterId: data['semesterId'] as String,
       name: data['name'] as String,
       targetScore:
       (data['targetScore'] as num?)
@@ -64,6 +69,7 @@ class CourseModel {
 
   Map<String, dynamic> toFirestore() {
     return {
+      'ownerId': ownerId,
       'semesterId': semesterId,
       'name': name,
       'targetScore': targetScore,
@@ -77,8 +83,8 @@ class CourseModel {
 
   CourseModel copyWith({
     String? id,
+    String? ownerId,
     String? semesterId,
-    bool clearSemesterId = false,
     String? name,
     double? targetScore,
     bool clearTargetScore = false,
@@ -93,9 +99,8 @@ class CourseModel {
   }) {
     return CourseModel(
       id: id ?? this.id,
-      semesterId: clearSemesterId
-          ? null
-          : semesterId ?? this.semesterId,
+      ownerId: ownerId ?? this.ownerId,
+      semesterId: semesterId ?? this.semesterId,
       name: name ?? this.name,
       targetScore:
       clearTargetScore

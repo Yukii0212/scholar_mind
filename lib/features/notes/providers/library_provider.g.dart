@@ -534,6 +534,22 @@ final allUploadedNotesProvider = StreamProvider<List<NoteItem>>.internal(
 );
 
 typedef AllUploadedNotesRef = StreamProviderRef<List<NoteItem>>;
+String _$allExportableNotesHash() =>
+    r'732571f56e104c87aadab49db34ddb69ad7fe61f';
+
+/// See also [allExportableNotes].
+@ProviderFor(allExportableNotes)
+final allExportableNotesProvider = StreamProvider<List<NoteItem>>.internal(
+  allExportableNotes,
+  name: r'allExportableNotesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$allExportableNotesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef AllExportableNotesRef = StreamProviderRef<List<NoteItem>>;
 String _$libraryActionControllerHash() =>
     r'ecd49356156b88be29afa72437df7c06bb1b1592';
 

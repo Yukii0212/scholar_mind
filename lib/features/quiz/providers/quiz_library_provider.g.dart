@@ -218,6 +218,20 @@ final favoriteQuizzesProvider =
 );
 
 typedef FavoriteQuizzesRef = AutoDisposeStreamProviderRef<List<QuizAttempt>>;
+String _$allQuizzesHash() => r'eef7c43eae72ea5678a5139e5bc160fcaf3011c6';
+
+/// See also [allQuizzes].
+@ProviderFor(allQuizzes)
+final allQuizzesProvider = StreamProvider<List<QuizAttempt>>.internal(
+  allQuizzes,
+  name: r'allQuizzesProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$allQuizzesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef AllQuizzesRef = StreamProviderRef<List<QuizAttempt>>;
 String _$archivedFoldersHash() => r'55948427584bf34c7ed8fd8c5f636a9c2dfb43ae';
 
 /// See also [archivedFolders].

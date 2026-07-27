@@ -1,0 +1,53 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../domain/models/export/export_module.dart';
+import '../providers/export_tree_provider.dart';
+import 'export_tree_tile.dart';
+
+class ExportModuleTree
+    extends ConsumerWidget {
+  const ExportModuleTree({
+    super.key,
+    required this.module,
+  });
+
+  final ExportModule module;
+
+  @override
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final tree = ref.watch(
+      exportTreeProvider(module),
+    );
+
+    return tree.when(
+      data: (nodes) {
+        return ListView.builder(
+          shrinkWrap: true,
+          physics:
+          const NeverScrollableScrollPhysics(),
+          itemCount: nodes.length,
+          itemBuilder: (context, index) {
+            return ExportTreeTile(
+              node: nodes[index],
+            );
+          },
+        );
+      },
+      loading:
+          () => const Center(
+        child:
+        CircularProgressIndicator(),
+      ),
+      error:
+          (e, _) => Center(
+        child: Text(
+          e.toString(),
+        ),
+      ),
+    );
+  }
+}

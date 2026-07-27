@@ -23,16 +23,13 @@ service cloud.firestore {
 
       match /folders/{folderId} {
         allow read, delete: if isOwner(userId);
-        allow create: if isOwner(userId)
+        allow create, update: if isOwner(userId)
           && validFolder(request.resource.data);
-        allow update: if isOwner(userId)
-          && validFolder(request.resource.data)
-          && request.resource.data.createdAt == resource.data.createdAt;
       }
 
       match /notes/{noteId} {
         allow read, delete: if isOwner(userId);
-        allow create: if isOwner(userId)
+        allow create, update: if isOwner(userId)
           && validNote(request.resource.data);
       }
 
@@ -67,6 +64,77 @@ service cloud.firestore {
             && validFlashcard(request.resource.data);
         }
       }
+
+      match /quiz_folders/{folderId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validQuizFolder(request.resource.data);
+      }
+
+      match /quizzes/{quizId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validQuiz(request.resource.data);
+      }
+
+      match /semesters/{semesterId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validSemester(request.resource.data);
+      }
+    }
+
+    // Grades: `courses` and `grading_components` are top-level collections
+    // with no owning-user path segment or field anywhere in the current
+    // data model (CourseModel/GradingComponentModel have no ownerId).
+    // They cannot be scoped to a specific owner via security rules alone
+    // without a data-model change, so they're left open to any signed-in
+    // user here -- this matches current (deployed) behavior, it is not a
+    // regression, but it is a known gap. A real fix needs an ownerId field
+    // added to both models plus a migration of existing documents.
+    // NOTE (pending -- do not deploy until confirmed): tightened from
+    // isSignedIn() to real per-owner checks now that Course/GradingComponent
+    // carry an ownerId field. Existing documents need
+    // GradesOwnershipBackfill (lib/features/grades/providers/
+    // grades_ownership_backfill_provider.dart) to have run at least once
+    // against the rebuilt app before this is deployed, or it will 403
+    // not-yet-migrated courses for their own owner.
+    match /courses/{courseId} {
+      allow read, delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
+      allow create, update: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && validCourse(request.resource.data);
+
+      match /assessmentEntries/{entryId} {
+        allow read, delete: if isSignedIn()
+          && get(/databases/$(database)/documents/courses/$(courseId))
+            .data.ownerId == request.auth.uid;
+        allow create, update: if isSignedIn()
+          && get(/databases/$(database)/documents/courses/$(courseId))
+            .data.ownerId == request.auth.uid
+          && validAssessmentEntry(request.resource.data);
+      }
+    }
+
+    match /grading_components/{componentId} {
+      allow read, delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
+      allow create, update: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && validGradingComponent(request.resource.data);
+    }
+
+    // Share links: readable by any signed-in user (the whole point is that
+    // someone else looks the id up to import it), but only the creator can
+    // create, modify or revoke their own link.
+    match /export_links/{shareId} {
+      allow get: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && validExportLink(request.resource.data);
+      allow update, delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
     }
 
     function validFolder(data) {
@@ -75,6 +143,8 @@ service cloud.firestore {
           'parentId',
           'isFavorite',
           'isArchived',
+          'isDeleted',
+          'deletedAt',
           'createdAt',
           'updatedAt'
         ])
@@ -83,6 +153,8 @@ service cloud.firestore {
           'parentId',
           'isFavorite',
           'isArchived',
+          'isDeleted',
+          'deletedAt',
           'createdAt',
           'updatedAt'
         ])
@@ -92,10 +164,18 @@ service cloud.firestore {
         && data.parentId is string
         && data.isFavorite is bool
         && data.isArchived is bool
+        && data.isDeleted is bool
+        && (data.deletedAt == null || data.deletedAt is timestamp)
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
 
+    // hasAll lists only the fields every note-creation path in the app
+    // guarantees (uploadNote / importInternalNote / importUploadedNote /
+    // createInternalNote don't all set the same fields -- e.g.
+    // createInternalNote omits updatedAt/cacheExpiresAt/lock* at creation,
+    // uploadNote omits isInternal/content). hasOnly is the union of every
+    // field any of those paths ever writes.
     function validNote(data) {
       return data.keys().hasAll([
           'name',
@@ -105,8 +185,10 @@ service cloud.firestore {
           'sizeBytes',
           'category',
           'source',
-          'createdAt',
-          'updatedAt'
+          'isFavorite',
+          'isDeleted',
+          'deletedAt',
+          'createdAt'
         ])
         && data.keys().hasOnly([
           'name',
@@ -116,8 +198,15 @@ service cloud.firestore {
           'sizeBytes',
           'category',
           'source',
-          'classroomCourseId',
-          'classroomMaterialId',
+          'isFavorite',
+          'isDeleted',
+          'isInternal',
+          'content',
+          'deletedAt',
+          'cacheExpiresAt',
+          'lockedBy',
+          'heartbeatAt',
+          'lockExpiresAt',
           'createdAt',
           'updatedAt'
         ])
@@ -127,27 +216,23 @@ service cloud.firestore {
         && data.storagePath is string
         && data.extension is string
         && data.sizeBytes is int
-        && data.sizeBytes > 0
+        && data.sizeBytes >= 0
         && data.sizeBytes < 10 * 1024 * 1024
         && data.category in [
           'lectureNotes',
           'selfStudyNotes',
           'pastYearQuestions'
         ]
-        && data.source in ['manual', 'classroom']
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
+        && data.source is string
+        && data.source.size() > 0
+        && data.isFavorite is bool
+        && data.isDeleted is bool
+        && data.createdAt is timestamp;
     }
 
     function validAppSettings(data) {
-      return data.keys().hasAll([
-          'selected_theme',
-          'updated_at'
-        ])
-        && data.keys().hasOnly([
-          'selected_theme',
-          'updated_at'
-        ])
+      return data.keys().hasAll(['selected_theme', 'updated_at'])
+        && data.keys().hasOnly(['selected_theme', 'updated_at'])
         && data.selected_theme in [
           'scholar_blue',
           'sakura_pink',
@@ -193,6 +278,7 @@ service cloud.firestore {
           'description',
           'deadlineExtendable',
           'isCompleted',
+          'isHidden',
           'createdAt',
           'updatedAt'
         ])
@@ -204,6 +290,7 @@ service cloud.firestore {
           'description',
           'deadlineExtendable',
           'isCompleted',
+          'isHidden',
           'createdAt',
           'updatedAt'
         ])
@@ -222,12 +309,11 @@ service cloud.firestore {
           'other'
         ]
         && data.priority is int
-        && data.priority >= 0
-        && data.priority <= 999
         && data.dueDate is timestamp
         && (data.description == null || data.description is string)
         && data.deadlineExtendable is bool
         && data.isCompleted is bool
+        && data.isHidden is bool
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -307,6 +393,256 @@ service cloud.firestore {
         && (data.backImageUrl == null || data.backImageUrl is string)
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
+    }
+
+    function validQuizFolder(data) {
+      return data.keys().hasAll([
+          'name',
+          'parentId',
+          'isFavorite',
+          'isArchived',
+          'isDeleted',
+          'deletedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'parentId',
+          'isFavorite',
+          'isArchived',
+          'isDeleted',
+          'deletedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.parentId is string
+        && data.isFavorite is bool
+        && data.isArchived is bool
+        && data.isDeleted is bool
+        && (data.deletedAt == null || data.deletedAt is timestamp)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Quiz attempts serialize their own dates as ISO-8601 strings
+    // (QuizAttempt.toJson()), not Firestore timestamps -- unlike almost
+    // everything else in this file.
+    function validQuiz(data) {
+      return data.keys().hasAll([
+          'id',
+          'status',
+          'name',
+          'folderId',
+          'createdAt',
+          'updatedAt',
+          'isFavorite',
+          'isArchived',
+          'isDeleted',
+          'startedAt',
+          'quiz',
+          'answers'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'status',
+          'name',
+          'folderId',
+          'createdAt',
+          'updatedAt',
+          'isFavorite',
+          'isArchived',
+          'isDeleted',
+          'deletedAt',
+          'startedAt',
+          'submittedAt',
+          'completedAt',
+          'quiz',
+          'answers'
+        ])
+        && data.id is string
+        && data.status in ['inProgress', 'grading', 'completed', 'archived']
+        && data.name is string
+        && data.folderId is string
+        && data.createdAt is string
+        && data.updatedAt is string
+        && data.isFavorite is bool
+        && data.isArchived is bool
+        && data.isDeleted is bool
+        && data.startedAt is string
+        && data.quiz is map
+        && data.answers is map;
+    }
+
+    function validSemester(data) {
+      return data.keys().hasAll([
+          'id',
+          'name',
+          'startDate',
+          'endDate',
+          'isCurrent',
+          'isManuallyEdited',
+          'isHidden',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'name',
+          'startDate',
+          'endDate',
+          'isCurrent',
+          'isManuallyEdited',
+          'isHidden',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string
+        && data.name is string
+        && data.name.size() > 0
+        && data.startDate is timestamp
+        && data.endDate is timestamp
+        && data.isCurrent is bool
+        && data.isManuallyEdited is bool
+        && data.isHidden is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // ownerId is optional here (rather than required) so the backfill
+    // migration's merge write -- which only sets ownerId on an existing,
+    // otherwise-already-valid document -- still validates during the
+    // transition window before every course has one. Actual write access
+    // is still gated by the ownerId match in the `courses` match block
+    // above, not by this function.
+    function validCourse(data) {
+      return data.keys().hasAll([
+          'semesterId',
+          'name',
+          'targetScore',
+          'minimumAcceptableScore',
+          'passingScore',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'semesterId',
+          'name',
+          'targetScore',
+          'minimumAcceptableScore',
+          'passingScore',
+          'createdAt',
+          'updatedAt'
+        ])
+        && (!('ownerId' in data) || data.ownerId is string)
+        && data.semesterId is string
+        && data.name is string
+        && data.name.size() > 0
+        && (data.targetScore == null || data.targetScore is number)
+        && (data.minimumAcceptableScore == null
+          || data.minimumAcceptableScore is number)
+        && data.passingScore is number
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validGradingComponent(data) {
+      return data.keys().hasAll([
+          'courseId',
+          'parentId',
+          'name',
+          'weight',
+          'order',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'courseId',
+          'parentId',
+          'name',
+          'weight',
+          'order',
+          'createdAt',
+          'updatedAt'
+        ])
+        && (!('ownerId' in data) || data.ownerId is string)
+        && data.courseId is string
+        && (data.parentId == null || data.parentId is string)
+        && data.name is string
+        && data.name.size() > 0
+        && data.weight is number
+        && data.order is int
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validAssessmentEntry(data) {
+      return data.keys().hasAll([
+          'courseId',
+          'componentId',
+          'type',
+          'score',
+          'denominator',
+          'percentage',
+          'interpretation',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'courseId',
+          'componentId',
+          'type',
+          'score',
+          'denominator',
+          'percentage',
+          'interpretation',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.courseId is string
+        && data.componentId is string
+        && data.type in ['actual', 'expected']
+        && data.score is number
+        && data.denominator is number
+        && data.percentage is number
+        && data.interpretation in [
+          'percentage',
+          'componentWeight',
+          'overallWeight',
+          'custom',
+          'ambiguous'
+        ]
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validExportLink(data) {
+      return data.keys().hasAll([
+          'ownerId',
+          'storagePath',
+          'createdAt',
+          'expiresAt',
+          'downloadCount',
+          'isRevoked'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'storagePath',
+          'createdAt',
+          'expiresAt',
+          'downloadCount',
+          'isRevoked'
+        ])
+        && data.ownerId is string
+        && data.storagePath is string
+        && (data.createdAt == null || data.createdAt is timestamp)
+        && (data.expiresAt == null || data.expiresAt is timestamp)
+        && data.downloadCount is int
+        && data.isRevoked is bool;
     }
   }
 }

@@ -2,12 +2,13 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 
-import '../../../core/services/device_id_service.dart';
-import '../domain/library_folder.dart';
-import '../domain/note_category.dart';
-import '../domain/note_item.dart';
-import '../services/file_cache_service.dart';
+import '../../../../core/services/device_id_service.dart';
+import '../../domain/library_folder.dart';
+import '../../domain/note_category.dart';
+import '../../domain/note_item.dart';
+import '../../services/file_cache_service.dart';
 
 class LibraryRepository {
   LibraryRepository(this._firestore, this._storage);
@@ -596,16 +597,54 @@ class LibraryRepository {
     });
   }
 
+  Future<NoteItem?> getNote({
+    required String userId,
+    required String noteId,
+  }) async {
+    final snapshot =
+    await _notes(userId)
+        .doc(noteId)
+        .get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return NoteItem.fromDocument(snapshot);
+  }
+
   Stream<List<NoteItem>> watchAllUploadedNotes(
       String userId,
       ) {
     return _notes(userId)
+        .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       final notes =
-      snapshot.docs.map(NoteItem.fromDocument).where((note) {
+      snapshot.docs
+          .map(NoteItem.fromDocument)
+          .where((note) {
         return !note.isInternal;
-      }).toList();
+      })
+          .toList();
+
+      notes.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+      );
+
+      return notes;
+    });
+  }
+
+  Stream<List<NoteItem>> watchAllExportableNotes(
+      String userId,
+      ) {
+    return _notes(userId)
+        .where('isDeleted', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      final notes =
+      snapshot.docs.map(NoteItem.fromDocument).toList();
 
       notes.sort(
             (a, b) => b.createdAt.compareTo(a.createdAt),
@@ -632,6 +671,58 @@ class LibraryRepository {
     });
   }
 
+  Future<LibraryFolder?> getFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    final snapshot = await _folders(userId)
+        .doc(folderId)
+        .get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return LibraryFolder.fromDocument(snapshot);
+  }
+
+  Future<List<LibraryFolder>> getChildFolders({
+    required String userId,
+    required String parentFolderId,
+  }) async {
+    final snapshot = await _folders(userId)
+        .where('parentId', isEqualTo: parentFolderId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isArchived', isEqualTo: false)
+        .get();
+
+    final folders =
+    snapshot.docs.map(LibraryFolder.fromDocument).toList();
+
+    folders.sort(_sortFolders);
+
+    return folders;
+  }
+
+  Future<List<NoteItem>> getNotesInFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    final snapshot = await _notes(userId)
+        .where('folderId', isEqualTo: folderId)
+        .where('isDeleted', isEqualTo: false)
+        .get();
+
+    final notes =
+    snapshot.docs.map(NoteItem.fromDocument).toList();
+
+    notes.sort(
+          (a, b) => b.createdAt.compareTo(a.createdAt),
+    );
+
+    return notes;
+  }
+
   Future<void> createFolder({
     required String userId,
     required String parentId,
@@ -653,6 +744,127 @@ class LibraryRepository {
       'createdAt': now,
       'updatedAt': now,
     });
+  }
+
+  Future<String> importFolder({
+    required String userId,
+    required String name,
+    required String parentId,
+    required bool isFavorite,
+  }) async {
+    final document = _folders(userId).doc();
+
+    final now = FieldValue.serverTimestamp();
+
+    ('Creating folder: $name');
+
+    await document.set({
+      'name': name,
+      'parentId': parentId,
+      'isFavorite': isFavorite,
+      'isArchived': false,
+      'isDeleted': false,
+      'deletedAt': null,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    ('Created folder ${document.id}');
+
+    return document.id;
+  }
+
+  Future<void> importInternalNote({
+    required String userId,
+    required String folderId,
+    required String name,
+    required String content,
+    required String category,
+    required bool isFavorite,
+  }) async {
+    final now = FieldValue.serverTimestamp();
+
+    await _notes(userId).add({
+      'name': name,
+      'folderId': folderId,
+
+      'storagePath': '',
+      'extension': 'md',
+      'sizeBytes': 0,
+
+      'isInternal': true,
+      'content': content,
+
+      'category': category,
+      'source': 'import',
+
+      'isFavorite': isFavorite,
+      'isDeleted': false,
+      'deletedAt': null,
+      'cacheExpiresAt': null,
+
+      'createdAt': now,
+      'updatedAt': now,
+
+      'lockedBy': null,
+      'heartbeatAt': null,
+      'lockExpiresAt': null,
+    });
+  }
+
+  Future<void> importUploadedNote({
+    required String userId,
+    required String folderId,
+    required String name,
+    required String extension,
+    required Uint8List fileBytes,
+    required String category,
+    required String source,
+    required bool isFavorite,
+  }) async {
+    final noteReference = _notes(userId).doc();
+    final safeName = name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final storagePath = 'users/$userId/notes/${noteReference.id}/$safeName';
+    final storageReference = _storage.ref(storagePath);
+
+    await storageReference.putData(
+      fileBytes,
+      SettableMetadata(contentType: _contentTypeFor(extension)),
+    );
+
+    final now = FieldValue.serverTimestamp();
+
+    try {
+      await noteReference.set({
+        'name': name,
+        'folderId': folderId,
+
+        'storagePath': storagePath,
+        'extension': extension,
+        'sizeBytes': fileBytes.length,
+
+        'isInternal': false,
+        'content': '',
+
+        'category': category,
+        'source': source,
+
+        'isFavorite': isFavorite,
+        'isDeleted': false,
+        'deletedAt': null,
+        'cacheExpiresAt': null,
+
+        'createdAt': now,
+        'updatedAt': now,
+
+        'lockedBy': null,
+        'heartbeatAt': null,
+        'lockExpiresAt': null,
+      });
+    } catch (_) {
+      await storageReference.delete();
+      rethrow;
+    }
   }
 
   Future<void> renameFolder({

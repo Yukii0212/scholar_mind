@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/providers/auth_provider.dart';
 import '../../data/datasources/course_firestore_datasource.dart';
 import '../../data/models/course_model.dart';
 import '../../data/repositories/course_repository.dart';
@@ -19,18 +20,15 @@ Provider<CourseRepository>(
 final courseStreamProvider =
 StreamProvider<List<CourseModel>>(
       (ref) {
-    return ref
-        .watch(courseRepositoryProvider)
-        .watchCourses();
-  },
-);
+    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
 
-final personalCourseProvider =
-StreamProvider<List<CourseModel>>(
-      (ref) {
+    if (userId == null) {
+      return const Stream.empty();
+    }
+
     return ref
         .watch(courseRepositoryProvider)
-        .watchPersonalCourses();
+        .watchCourses(userId);
   },
 );
 

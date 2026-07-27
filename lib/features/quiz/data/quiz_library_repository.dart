@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../domain/quiz_folder.dart';
 import '../domain/quiz_attempt.dart';
+import '../domain/quiz_response.dart';
 
 class QuizLibraryRepository {
   QuizLibraryRepository(this._firestore);
@@ -558,6 +559,24 @@ class QuizLibraryRepository {
     });
   }
 
+  Stream<List<QuizAttempt>> watchAllQuizzes(
+      String userId,
+      ) {
+    return _quizzes(userId)
+        .where('isDeleted', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      final quizzes =
+      snapshot.docs.map(QuizAttempt.fromDocument).toList();
+
+      quizzes.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+      );
+
+      return quizzes;
+    });
+  }
+
   Stream<List<QuizFolder>> watchAllFolders(
       String userId,
       ) {
@@ -575,7 +594,7 @@ class QuizLibraryRepository {
     });
   }
 
-  Future<void> createFolder({
+  Future<String> createFolder({
     required String userId,
     required String parentId,
     required String name,
@@ -585,8 +604,10 @@ class QuizLibraryRepository {
       throw ArgumentError('Folder name cannot be empty.');
     }
 
+    final reference = _folders(userId).doc();
     final now = FieldValue.serverTimestamp();
-    await _folders(userId).add({
+
+    await reference.set({
       'name': normalizedName,
       'parentId': parentId,
       'isFavorite': false,
@@ -596,6 +617,85 @@ class QuizLibraryRepository {
       'createdAt': now,
       'updatedAt': now,
     });
+
+    return reference.id;
+  }
+
+  Future<QuizAttempt?> getQuiz({
+    required String userId,
+    required String quizId,
+  }) async {
+    final snapshot = await _quizzes(userId).doc(quizId).get();
+
+    if (!snapshot.exists) return null;
+
+    return QuizAttempt.fromDocument(snapshot);
+  }
+
+  Future<QuizFolder?> getFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    final snapshot = await _folders(userId).doc(folderId).get();
+
+    if (!snapshot.exists) return null;
+
+    return QuizFolder.fromDocument(snapshot);
+  }
+
+  Future<List<QuizAttempt>> getQuizzesInFolder({
+    required String userId,
+    required String folderId,
+  }) async {
+    final snapshot = await _quizzes(userId)
+        .where('folderId', isEqualTo: folderId)
+        .where('isDeleted', isEqualTo: false)
+        .get();
+
+    final quizzes = snapshot.docs.map(QuizAttempt.fromDocument).toList();
+    quizzes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return quizzes;
+  }
+
+  Future<List<QuizFolder>> getChildFolders({
+    required String userId,
+    required String parentFolderId,
+  }) async {
+    final snapshot = await _folders(userId)
+        .where('parentId', isEqualTo: parentFolderId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isArchived', isEqualTo: false)
+        .get();
+
+    final folders = snapshot.docs.map(QuizFolder.fromDocument).toList();
+    folders.sort(_sortFolders);
+    return folders;
+  }
+
+  Future<String> importQuiz({
+    required String userId,
+    required String folderId,
+    required String name,
+    required QuizResponse quiz,
+  }) async {
+    final reference = _quizzes(userId).doc();
+    final now = DateTime.now();
+
+    final attempt = QuizAttempt(
+      id: reference.id,
+      quiz: quiz,
+      answers: const {},
+      status: QuizAttemptStatus.inProgress,
+      startedAt: now,
+      name: name,
+      folderId: folderId,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await reference.set(attempt.toJson());
+
+    return reference.id;
   }
 
   Future<void> renameFolder({

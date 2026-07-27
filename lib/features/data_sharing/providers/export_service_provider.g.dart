@@ -6,7 +6,7 @@ part of 'export_service_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$exportServiceHash() => r'edc220eae2ce95c4525795c2a7cb863536d31d1f';
+String _$exportServiceHash() => r'52b379144ad54efc5fd5cc85bece086c03371815';
 
 /// See also [exportService].
 @ProviderFor(exportService)

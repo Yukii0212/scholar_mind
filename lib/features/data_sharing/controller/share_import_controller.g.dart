@@ -7,7 +7,7 @@ part of 'share_import_controller.dart';
 // **************************************************************************
 
 String _$shareImportControllerHash() =>
-    r'3adbb239c2cbe86e40d71d5a0ba9cdc1ae914f3e';
+    r'3170469e37ed1c0ffee08bea57c956acc106a5c2';
 
 /// See also [ShareImportController].
 @ProviderFor(ShareImportController)

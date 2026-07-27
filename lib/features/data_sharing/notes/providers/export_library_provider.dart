@@ -18,7 +18,7 @@ Future<List<ExportModuleGroup>> exportLibrary(
   );
 
   final notes = await ref.watch(
-    allUploadedNotesProvider.future,
+    allExportableNotesProvider.future,
   );
 
   final items = <ExportItem>[

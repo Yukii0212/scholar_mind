@@ -535,3 +535,19 @@ class LibraryActionController extends _$LibraryActionController {
     }
   }
 }
+
+@Riverpod(keepAlive: true)
+Stream<List<NoteItem>> allExportableNotes(
+    AllExportableNotesRef ref,
+    ) {
+  final userId =
+      ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref
+      .watch(libraryRepositoryProvider)
+      .watchAllExportableNotes(userId);
+}

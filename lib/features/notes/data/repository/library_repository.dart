@@ -636,6 +636,24 @@ class LibraryRepository {
     });
   }
 
+  Stream<List<NoteItem>> watchAllExportableNotes(
+      String userId,
+      ) {
+    return _notes(userId)
+        .where('isDeleted', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      final notes =
+      snapshot.docs.map(NoteItem.fromDocument).toList();
+
+      notes.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+      );
+
+      return notes;
+    });
+  }
+
   Stream<List<LibraryFolder>> watchAllFolders(
       String userId,
       ) {

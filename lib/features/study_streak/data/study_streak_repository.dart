@@ -28,7 +28,8 @@ class StudyStreakRepository {
   Future<void> recordToday(String? userId) async {
     if (userId == null) return;
 
-    final today = _dateId(DateTime.now());
+    final now = DateTime.now();
+    final today = _dateId(now);
     final month = today.substring(0, 7);
 
     await _firestore.runTransaction((transaction) async {
@@ -36,23 +37,49 @@ class StudyStreakRepository {
       final snapshot = await transaction.get(reference);
       final current = StudyStreakSummary.fromFirestore(snapshot);
 
-      if (current.lastStudyDate == today) {
-        return;
-      }
+      final alreadyRecordedToday = current.lastStudyDate == today;
 
       final previousDate = current.lastStudyDate == null
           ? null
           : DateTime.tryParse(current.lastStudyDate!);
       final isConsecutive = previousDate != null &&
           _dateId(previousDate.add(const Duration(days: 1))) == today;
-      final currentStreak = isConsecutive ? current.currentStreak + 1 : 1;
+      final currentStreak = alreadyRecordedToday
+          ? current.currentStreak
+          : (isConsecutive ? current.currentStreak + 1 : 1);
+
+      // dailyActivity only started being recorded once this feature shipped,
+      // so an existing streak's earlier days are missing from the map even
+      // though they genuinely happened. Since a streak is by definition
+      // consecutive days ending on lastStudyDate, the whole range is safe to
+      // (re)derive and backfill here every time, not just on new days.
+      final dailyActivity = Map<String, bool>.of(current.dailyActivity);
+      final todayDate = DateTime(now.year, now.month, now.day);
+      for (var i = 0; i < currentStreak; i++) {
+        dailyActivity[_dateId(todayDate.subtract(Duration(days: i)))] = true;
+      }
+
+      if (alreadyRecordedToday) {
+        if (dailyActivity.length == current.dailyActivity.length) {
+          return;
+        }
+
+        transaction.set(
+          reference,
+          {
+            'dailyActivity': dailyActivity,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+        return;
+      }
+
       final longestStreak = currentStreak > current.longestStreak
           ? currentStreak
           : current.longestStreak;
       final monthlyActivity = Map<String, int>.of(current.monthlyActivity);
       monthlyActivity[month] = (monthlyActivity[month] ?? 0) + 1;
-      final dailyActivity = Map<String, bool>.of(current.dailyActivity);
-      dailyActivity[today] = true;
       final achievements = {
         ...current.achievements,
         for (final threshold in _achievementThresholds)

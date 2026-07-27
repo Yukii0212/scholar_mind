@@ -197,60 +197,72 @@ class _ActivityCalendarState extends State<_ActivityCalendar> {
       firstDayOfWeek: _firstDayOfWeek,
     );
 
-    return ScholarPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: ScholarSectionHeader(
-                  title: 'Activity Calendar',
-                  subtitle: _monthYear(_displayedMonth),
-                ),
-              ),
-              IconButton(
-                onPressed: () => _changeMonth(-1),
-                icon: const Icon(Icons.chevron_left_rounded),
-              ),
-              IconButton(
-                onPressed: () => _changeMonth(1),
-                icon: const Icon(Icons.chevron_right_rounded),
-              ),
-            ],
-          ),
-          const Gap(14),
-          Row(
-            children: _weekdayHeaders().map((weekday) {
-              return Expanded(
-                child: Center(
-                  child: Text(
-                    weekday,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: palette.textMuted,
-                          fontWeight: FontWeight.w700,
-                        ),
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+
+        if (velocity < -100) {
+          _changeMonth(1);
+        } else if (velocity > 100) {
+          _changeMonth(-1);
+        }
+      },
+      child: ScholarPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: ScholarSectionHeader(
+                    title: 'Activity Calendar',
+                    subtitle: _monthYear(_displayedMonth),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-          const Gap(10),
-          DashboardCalendarGrid(
-            days: days,
-            selectedDate: _selectedDate,
-            eventCountBuilder: (date) {
-              return widget.summary.dailyActivity[_dateId(date)] == true
-                  ? 1
-                  : 0;
-            },
-            onDateSelected: (date) {
-              setState(() {
-                _selectedDate = date;
-              });
-            },
-          ),
-        ],
+                IconButton(
+                  onPressed: () => _changeMonth(-1),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
+                IconButton(
+                  onPressed: () => _changeMonth(1),
+                  icon: const Icon(Icons.chevron_right_rounded),
+                ),
+              ],
+            ),
+            const Gap(14),
+            Row(
+              children: _weekdayHeaders().map((weekday) {
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      weekday,
+                      style:
+                          Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: palette.textMuted,
+                                fontWeight: FontWeight.w700,
+                              ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const Gap(10),
+            DashboardCalendarGrid(
+              days: days,
+              selectedDate: _selectedDate,
+              eventCountBuilder: (date) {
+                return widget.summary.dailyActivity[_dateId(date)] == true
+                    ? 1
+                    : 0;
+              },
+              onDateSelected: (date) {
+                setState(() {
+                  _selectedDate = date;
+                });
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

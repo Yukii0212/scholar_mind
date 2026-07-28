@@ -27,7 +27,13 @@ void showHelpTutorial(
     ),
   );
 
-  Overlay.of(context, rootOverlay: true).insert(entry);
+  // `Overlay.of(context, rootOverlay: true)` can resolve to a nested
+  // ShellRoute Navigator's own (body-scoped) overlay rather than the true
+  // app-root one, which both leaves the AppBar/bottom nav outside its paint
+  // area and shifts its local coordinate origin away from (0, 0) — throwing
+  // off every anchor rect, which is computed in true global coordinates.
+  // Going through the root Navigator explicitly avoids both problems.
+  Navigator.of(context, rootNavigator: true).overlay!.insert(entry);
 }
 
 class _HelpTutorial extends StatefulWidget {
@@ -92,6 +98,7 @@ class _HelpTutorialState extends State<_HelpTutorial> {
     final screenSize = MediaQuery.sizeOf(context);
     final isFirst = _index == 0;
     final isLast = _index == widget.steps.length - 1;
+    final highlightColor = context.scholarPalette.brandEnd;
 
     return Stack(
       children: [
@@ -101,7 +108,10 @@ class _HelpTutorialState extends State<_HelpTutorial> {
             onTap: widget.onDismiss,
             child: CustomPaint(
               size: screenSize,
-              painter: _SpotlightPainter(rect: _measuring ? null : _rect),
+              painter: _SpotlightPainter(
+                rect: _measuring ? null : _rect,
+                highlightColor: highlightColor,
+              ),
             ),
           ),
         ),
@@ -159,13 +169,21 @@ class _TutorialBubbleLayout extends StatelessWidget {
 }
 
 class _SpotlightPainter extends CustomPainter {
-  const _SpotlightPainter({required this.rect});
+  const _SpotlightPainter({
+    required this.rect,
+    required this.highlightColor,
+  });
 
   final Rect? rect;
+  final Color highlightColor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scrimPaint = Paint()..color = Colors.black.withValues(alpha: 0.6);
+    // Dark themes start close to black already, so a light scrim barely
+    // reads as "dimmed" — go heavier on the scrim and back it with a bright
+    // accent-colored ring around the cutout so the highlight is legible
+    // regardless of how dark the underlying UI already is.
+    final scrimPaint = Paint()..color = Colors.black.withValues(alpha: 0.82);
 
     if (rect == null) {
       canvas.drawRect(Offset.zero & size, scrimPaint);
@@ -173,19 +191,24 @@ class _SpotlightPainter extends CustomPainter {
     }
 
     final clearPaint = Paint()..blendMode = BlendMode.clear;
+    final rrect = RRect.fromRectAndRadius(rect!, const Radius.circular(12));
 
     canvas.saveLayer(Offset.zero & size, Paint());
     canvas.drawRect(Offset.zero & size, scrimPaint);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect!, const Radius.circular(12)),
-      clearPaint,
-    );
+    canvas.drawRRect(rrect, clearPaint);
     canvas.restore();
+
+    final ringPaint = Paint()
+      ..color = highlightColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+
+    canvas.drawRRect(rrect, ringPaint);
   }
 
   @override
   bool shouldRepaint(covariant _SpotlightPainter oldDelegate) =>
-      oldDelegate.rect != rect;
+      oldDelegate.rect != rect || oldDelegate.highlightColor != highlightColor;
 }
 
 class _TutorialBubble extends StatelessWidget {

@@ -45,7 +45,7 @@ class CourseTargetsCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const HelpAnchor(
-                    pageId: 'course-detail',
+                    pageId: 'course-analytics',
                     anchorId: 'required-score-calculator',
                     child: ScholarSectionHeader(
                       title: 'Required Score Calculator',
@@ -224,10 +224,44 @@ class _ScoreRequirementCard extends StatelessWidget {
                       ),
                 ),
               ),
+              const Gap(8),
+              // The goal itself, so "Target Score" reads as a labeled pair
+              // right here — the big number below is never mistaken for
+              // this value, since it's a different question entirely
+              // (what's needed on the one assessment left, not the goal).
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: (achievable
+                          ? palette.brandStart
+                          : Theme.of(context).colorScheme.error)
+                      .withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${target.toStringAsFixed(1)}%',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: achievable
+                            ? palette.brandEnd
+                            : Theme.of(context).colorScheme.error,
+                      ),
+                ),
+              ),
             ],
           ),
-          const Gap(14),
+          const Gap(16),
           if (achievable) ...[
+            Text(
+              'Needed in $component',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: palette.textMuted,
+                  ),
+            ),
+            const Gap(2),
             Align(
               alignment: Alignment.centerLeft,
               child: ConstrainedBox(
@@ -244,16 +278,9 @@ class _ScoreRequirementCard extends StatelessWidget {
                 ),
               ),
             ),
-            const Gap(6),
-            Text(
-              'Required in $component to achieve ${target.toStringAsFixed(1)}%',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: palette.textMuted,
-                  ),
-            ),
           ] else ...[
             Text(
-              'Target no longer achievable',
+              'No longer achievable',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                     fontWeight: FontWeight.w800,

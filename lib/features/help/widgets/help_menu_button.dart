@@ -32,32 +32,40 @@ class HelpMenuButton extends ConsumerWidget {
   }
 
   Future<void> _openMenu(BuildContext context, WidgetRef ref) async {
-    final topic = await showModalBottomSheet<HelpTopic>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => _HelpTopicSheet(
-          topics: topics,
-          scrollController: scrollController,
+    // Loops back to the topic list after each tutorial closes, so picking
+    // one doesn't end the whole help session — the user can work through
+    // several before dismissing the list itself (tap outside, back, or the
+    // sheet's own drag-down).
+    while (true) {
+      final topic = await showModalBottomSheet<HelpTopic>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) => DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => _HelpTopicSheet(
+            topics: topics,
+            scrollController: scrollController,
+          ),
         ),
-      ),
-    );
+      );
 
-    if (topic == null || !context.mounted) return;
+      if (topic == null || !context.mounted) return;
 
-    final registry = ref.read(helpAnchorRegistryProvider(pageId));
+      final registry = ref.read(helpAnchorRegistryProvider(pageId));
 
-    showHelpTutorial(
-      context,
-      steps: topic.steps,
-      resolveAnchor: registry.keyFor,
-      onDismiss: topic.onDismiss,
-    );
+      await showHelpTutorial(
+        context,
+        steps: topic.steps,
+        resolveAnchor: registry.keyFor,
+        onDismiss: topic.onDismiss,
+      );
+
+      if (!context.mounted) return;
+    }
   }
 }
 

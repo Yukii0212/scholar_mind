@@ -70,29 +70,43 @@ class SwipeCardsState extends State<SwipeCards> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            child: KeyedSubtree(
-              key: ValueKey(_currentIndex),
-              child: widget.items[_currentIndex].child,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
         _ViewSwitchBar(
           items: widget.items,
           currentIndex: _currentIndex,
           onSwipe: _switchBy,
           onSelected: showPage,
+        ),
+        const SizedBox(height: 14),
+        GestureDetector(
+          // Lets you swipe anywhere on the card itself, not just the
+          // switch bar above — the card's own content has no competing
+          // horizontal gesture, so this is unambiguous.
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
+
+            if (velocity < -100) {
+              _switchBy(1);
+            } else if (velocity > 100) {
+              _switchBy(-1);
+            }
+          },
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: KeyedSubtree(
+                key: ValueKey(_currentIndex),
+                child: widget.items[_currentIndex].child,
+              ),
+            ),
+          ),
         ),
       ],
     );

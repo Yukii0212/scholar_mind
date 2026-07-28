@@ -139,7 +139,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                       Column(
                         children: [
                           HelpAnchor(
-                            pageId: 'course-detail',
+                            pageId: 'course-analytics',
                             anchorId: 'target-score-field',
                             child: TextFormField(
                             controller: _targetController,
@@ -186,7 +186,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                           ),
                           const SizedBox(height: 16),
                           HelpAnchor(
-                            pageId: 'course-detail',
+                            pageId: 'course-analytics',
                             anchorId: 'minimum-acceptable-field',
                             child: TextFormField(
                             controller: _minimumController,
@@ -239,7 +239,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                           ),
                           const SizedBox(height: 16),
                           HelpAnchor(
-                            pageId: 'course-detail',
+                            pageId: 'course-analytics',
                             anchorId: 'passing-score-field',
                             child: TextFormField(
                             controller: _passingController,
@@ -309,7 +309,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                         ),
                         const SizedBox(height: 12),
                         HelpAnchor(
-                          pageId: 'course-detail',
+                          pageId: 'course-analytics',
                           anchorId: 'guaranteed-score',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +332,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                           ),
                           const SizedBox(height: 12),
                           HelpAnchor(
-                            pageId: 'course-detail',
+                            pageId: 'course-analytics',
                             anchorId: 'projected-score',
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,7 +355,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                         ),
                         const SizedBox(height: 12),
                         HelpAnchor(
-                          pageId: 'course-detail',
+                          pageId: 'course-analytics',
                           anchorId: 'maximum-achievable',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,7 +373,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                         ),
                         const SizedBox(height: 16),
                         HelpAnchor(
-                          pageId: 'course-detail',
+                          pageId: 'course-analytics',
                           anchorId: 'progress-towards-goal',
                           child: Builder(
                           builder: (context) {

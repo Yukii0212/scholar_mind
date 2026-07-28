@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -10,14 +11,19 @@ import '../domain/help_step.dart';
 /// A step with no anchor id, or whose anchor isn't currently mounted (e.g.
 /// a different page of a swipe carousel), shows a centered bubble with no
 /// cutout instead of failing.
-void showHelpTutorial(
+///
+/// Returns once the tutorial is dismissed (Done, the X button, or tapping
+/// outside), so callers can resume whatever they were doing before it —
+/// e.g. reopening a topic list to let the user pick another one.
+Future<void> showHelpTutorial(
   BuildContext context, {
   required List<HelpStep> steps,
   required GlobalKey? Function(String anchorId) resolveAnchor,
   VoidCallback? onDismiss,
 }) {
-  if (steps.isEmpty) return;
+  if (steps.isEmpty) return Future.value();
 
+  final completer = Completer<void>();
   late OverlayEntry entry;
 
   entry = OverlayEntry(
@@ -27,6 +33,7 @@ void showHelpTutorial(
       onDismiss: () {
         entry.remove();
         onDismiss?.call();
+        if (!completer.isCompleted) completer.complete();
       },
     ),
   );
@@ -38,6 +45,8 @@ void showHelpTutorial(
   // off every anchor rect, which is computed in true global coordinates.
   // Going through the root Navigator explicitly avoids both problems.
   Navigator.of(context, rootNavigator: true).overlay!.insert(entry);
+
+  return completer.future;
 }
 
 class _HelpTutorial extends StatefulWidget {

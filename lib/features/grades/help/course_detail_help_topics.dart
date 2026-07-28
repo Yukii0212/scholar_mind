@@ -11,6 +11,7 @@ import '../../help/domain/help_topic.dart';
 /// anything.
 List<HelpTopic> courseDetailHelpTopics({
   required Future<void> Function(int page) revealAnalyticsItem,
+  required void Function(bool) setProjectedScorePreview,
 }) {
   HelpStep step({
     required String description,
@@ -31,8 +32,8 @@ List<HelpTopic> courseDetailHelpTopics({
       steps: [
         step(
           description:
-              'The percentage you\'ve already locked in from graded work — '
-              'it can only go up as more results come in.',
+              'What you\'ve earned so far from graded assessments — it '
+              'only goes up as more of your work gets scored.',
           anchorId: 'guaranteed-score',
         ),
       ],
@@ -40,12 +41,17 @@ List<HelpTopic> courseDetailHelpTopics({
     HelpTopic(
       id: 'projected-score',
       title: 'What does "Projected Score" mean?',
+      onDismiss: () => setProjectedScorePreview(false),
       steps: [
-        step(
+        HelpStep(
           description:
               'Your expected final score once you\'ve entered "Expected" '
               'values for ungraded work — a forecast, not a guarantee.',
           anchorId: 'projected-score',
+          beforeShow: () async {
+            await revealAnalyticsItem(0);
+            setProjectedScorePreview(true);
+          },
         ),
       ],
     ),
@@ -56,7 +62,7 @@ List<HelpTopic> courseDetailHelpTopics({
         step(
           description:
               'The best possible final score if you scored 100% on '
-              'everything remaining — your ceiling.',
+              'everything remaining.',
           anchorId: 'maximum-achievable',
         ),
       ],
@@ -67,10 +73,9 @@ List<HelpTopic> courseDetailHelpTopics({
       steps: [
         step(
           description:
-              'Compares your current/projected score against your Target '
-              'Score (or your Passing Score, if you haven\'t set one) and '
-              'tells you whether you\'re on track, at risk, or already '
-              'there.',
+              'Border color tells you where you stand at a glance: green '
+              'means on track, amber means still possible but you\'ll need '
+              'to step up, red means no longer achievable.',
           anchorId: 'progress-towards-goal',
         ),
       ],
@@ -83,7 +88,7 @@ List<HelpTopic> courseDetailHelpTopics({
           description:
               'Type the final percentage you\'re personally aiming for. '
               'Leave it blank and we\'ll track your progress against your '
-              'Passing Score instead.',
+              'Passing Score — the minimum needed to pass — instead.',
           anchorId: 'target-score-field',
         ),
       ],
@@ -94,8 +99,7 @@ List<HelpTopic> courseDetailHelpTopics({
       steps: [
         step(
           description:
-              'An optional personal floor — the lowest score you\'d '
-              'tolerate before feeling you need to step in.',
+              'The lowest score you\'d personally accept for this course.',
           anchorId: 'minimum-acceptable-field',
         ),
       ],
@@ -106,9 +110,8 @@ List<HelpTopic> courseDetailHelpTopics({
       steps: [
         step(
           description:
-              'The minimum percentage required to pass this course. '
-              'Defaults to 50%, and you can change it — used to judge your '
-              'standing whenever you haven\'t set a Target Score.',
+              'The minimum percentage required to pass this course. You '
+              'can change it.',
           anchorId: 'passing-score-field',
         ),
       ],
@@ -119,9 +122,8 @@ List<HelpTopic> courseDetailHelpTopics({
       steps: [
         step(
           description:
-              'Once only one assessment is left ungraded or unestimated, '
-              'this shows exactly what you need to score on it to hit each '
-              'target.',
+              'Shows exactly what you need on your last remaining '
+              'assessment to hit each target.',
           anchorId: 'required-score-calculator',
           page: 1,
         ),

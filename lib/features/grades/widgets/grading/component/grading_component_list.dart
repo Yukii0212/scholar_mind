@@ -25,10 +25,11 @@ class GradingComponentList
 
     return Column(
       children: [
-        for (final component in components) ...[
+        for (var i = 0; i < components.length; i++) ...[
           GradingComponentCard(
-            key: ValueKey(component.id),
-            component: component,
+            key: ValueKey(components[i].id),
+            component: components[i],
+            isFirst: i == 0,
           ),
           const SizedBox(height: 12),
         ],

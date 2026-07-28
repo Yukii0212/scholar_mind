@@ -97,24 +97,49 @@ class _HelpTutorialState extends State<_HelpTutorial> {
     }
 
     final anchorId = step.anchorId;
-    final key = anchorId == null ? null : widget.resolveAnchor(anchorId);
-    final anchorContext = key?.currentContext;
 
-    if (anchorContext != null && mounted) {
-      await Scrollable.ensureVisible(
-        anchorContext,
-        duration: const Duration(milliseconds: 250),
-        alignment: 0.5,
-      );
+    Rect? measure() {
+      final key = anchorId == null ? null : widget.resolveAnchor(anchorId);
+      final box = key?.currentContext?.findRenderObject() as RenderBox?;
+      final attached = box != null && box.attached;
+      return attached ? (box.localToGlobal(Offset.zero) & box.size).inflate(8) : null;
     }
 
+    Future<void> scrollIntoView() async {
+      final key = anchorId == null ? null : widget.resolveAnchor(anchorId);
+      final anchorContext = key?.currentContext;
+
+      if (anchorContext != null && mounted) {
+        await Scrollable.ensureVisible(
+          anchorContext,
+          duration: const Duration(milliseconds: 250),
+          alignment: 0.5,
+        );
+      }
+    }
+
+    await scrollIntoView();
     if (!mounted) return;
 
-    final box = key?.currentContext?.findRenderObject() as RenderBox?;
-    final attached = box != null && box.attached;
+    var rect = measure();
+
+    // A step's beforeShow can switch to content that mounts for the first
+    // time right as we're about to measure (e.g. a page whose own data
+    // provider is still resolving its first snapshot) — its anchor can
+    // still shift position for a frame or two after our first look. Give
+    // it one more frame, then re-scroll and re-measure so the ring lands
+    // on where the anchor actually settles rather than a transient spot.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+
+    await scrollIntoView();
+    if (!mounted) return;
+
+    final resettled = measure();
+    if (resettled != null) rect = resettled;
 
     setState(() {
-      _rect = attached ? (box.localToGlobal(Offset.zero) & box.size).inflate(8) : null;
+      _rect = rect;
       _measuring = false;
     });
   }

@@ -55,18 +55,43 @@ class HelpMenuButton extends ConsumerWidget {
 
       if (topic == null || !context.mounted) return;
 
-      final registry = ref.read(helpAnchorRegistryProvider(pageId));
+      // Resolved fresh per lookup (not a registry reference captured once
+      // up front) so a step that switches pages mid-tutorial and mounts an
+      // anchor that didn't exist yet always lands in the same registry
+      // instance that anchor actually registered itself with.
+      GlobalKey? resolveAnchor(String anchorId) =>
+          ref.read(helpAnchorRegistryProvider(pageId)).keyFor(anchorId);
 
       await showHelpTutorial(
         context,
         steps: topic.steps,
-        resolveAnchor: registry.keyFor,
+        resolveAnchor: resolveAnchor,
         onDismiss: topic.onDismiss,
       );
 
       if (!context.mounted) return;
     }
   }
+}
+
+/// A synthetic topic that walks through every real topic's steps back to
+/// back, so "run everything" is just the existing stepper given a longer
+/// step list — no special-casing needed anywhere else. Each step's own
+/// `beforeShow` already runs as the user pages through, so per-step setup
+/// (switching tabs, revealing a card) keeps working exactly as it does for
+/// a single topic; every topic's `onDismiss` fires once the whole run
+/// closes, so nothing any of them opened is left behind.
+HelpTopic _allTopicsCombined(List<HelpTopic> topics) {
+  return HelpTopic(
+    id: '__all__',
+    title: 'All topics',
+    steps: [for (final topic in topics) ...topic.steps],
+    onDismiss: () {
+      for (final topic in topics) {
+        topic.onDismiss?.call();
+      }
+    },
+  );
 }
 
 class _HelpTopicSheet extends StatelessWidget {
@@ -110,6 +135,67 @@ class _HelpTopicSheet extends StatelessWidget {
               ),
             ),
           ),
+          if (topics.length > 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Material(
+                color: palette.brandStart.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => Navigator.pop(
+                    context,
+                    _allTopicsCombined(topics),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: palette.brandEnd.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.playlist_play_rounded,
+                          color: palette.brandEnd,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'All topics',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: palette.brandEnd,
+                                    ),
+                              ),
+                              Text(
+                                'Walk through everything, one after another',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: palette.textMuted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: palette.brandEnd,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Expanded(
             child: ListView.separated(
               controller: scrollController,

@@ -5,6 +5,7 @@ import '../../../../core/widgets/swipe_cards/swipe_card_item.dart';
 import '../../../../core/widgets/swipe_cards/swipe_cards.dart';
 import '../../../help/widgets/help_menu_button.dart';
 import '../../data/models/course_model.dart';
+import '../../help/course_analytics_preview_provider.dart';
 import '../../help/course_detail_help_topics.dart';
 import '../../providers/course/course_provider.dart';
 import '../../providers/grading/grading_provider.dart';
@@ -39,7 +40,7 @@ class CourseAnalyticsScreenState extends ConsumerState<CourseAnalyticsScreen> {
   /// once you're already here.
   Future<void> revealAnalyticsItem(int page) async {
     _swipeCardsKey.currentState?.showPage(page);
-    await Future<void>.delayed(const Duration(milliseconds: 260));
+    await Future<void>.delayed(const Duration(milliseconds: 400));
   }
 
   @override
@@ -59,6 +60,9 @@ class CourseAnalyticsScreenState extends ConsumerState<CourseAnalyticsScreen> {
             pageId: 'course-analytics',
             topics: courseDetailHelpTopics(
               revealAnalyticsItem: revealAnalyticsItem,
+              setProjectedScorePreview: (value) => ref
+                  .read(courseAnalyticsProjectedScorePreviewProvider.notifier)
+                  .state = value,
             ),
           ),
         ],

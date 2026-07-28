@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../../core/theme/app_design.dart';
+import '../../../../help/widgets/help_anchor.dart';
 import '../../../domain/grading/grading_component_draft.dart';
 import '../../../providers/grading/grading_structure_draft_provider.dart';
 import 'grading_component_header.dart';
@@ -13,9 +14,16 @@ class GradingComponentCard extends ConsumerStatefulWidget {
   const GradingComponentCard({
     super.key,
     required this.component,
+    this.isFirst = false,
   });
 
   final GradingComponentDraft component;
+
+  /// Only the first card in the list registers the help anchors below —
+  /// anchor ids must be unique per page, and this card repeats once per
+  /// component, so we spotlight one concrete example rather than every
+  /// instance.
+  final bool isFirst;
 
   @override
   ConsumerState<GradingComponentCard> createState() =>
@@ -76,7 +84,13 @@ class _GradingComponentCardState extends ConsumerState<GradingComponentCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            GradingComponentHeader(component: widget.component),
+            widget.isFirst
+                ? HelpAnchor(
+                    pageId: 'grading-structure',
+                    anchorId: 'component-header',
+                    child: GradingComponentHeader(component: widget.component),
+                  )
+                : GradingComponentHeader(component: widget.component),
             const Gap(14),
             GradingComponentWeightEditor(component: widget.component),
             if (children.isNotEmpty) ...[
@@ -100,11 +114,21 @@ class _GradingComponentCardState extends ConsumerState<GradingComponentCard> {
             const Gap(8),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _showAddSubcomponentDialog,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add Subcomponent'),
-              ),
+              child: widget.isFirst
+                  ? HelpAnchor(
+                      pageId: 'grading-structure',
+                      anchorId: 'add-subcomponent-button',
+                      child: TextButton.icon(
+                        onPressed: _showAddSubcomponentDialog,
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Add Subcomponent'),
+                      ),
+                    )
+                  : TextButton.icon(
+                      onPressed: _showAddSubcomponentDialog,
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Add Subcomponent'),
+                    ),
             ),
           ],
         ),

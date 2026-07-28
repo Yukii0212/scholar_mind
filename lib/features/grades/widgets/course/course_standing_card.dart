@@ -4,6 +4,7 @@ import 'package:scholar_mind/features/grades/services/calculation/course_calcula
 
 import '../../../help/widgets/help_anchor.dart';
 import '../../data/models/course_model.dart';
+import '../../help/course_analytics_preview_provider.dart';
 import '../../data/models/grading_component_model.dart';
 import '../../providers/assessment/assessment_provider.dart';
 import '../../providers/course/course_provider.dart';
@@ -91,6 +92,9 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
               components: widget.components,
               assessments: entries,
             );
+
+            final showProjectedScorePreview = summary.expectedEntries.isEmpty &&
+                ref.watch(courseAnalyticsProjectedScorePreviewProvider);
 
             final targetText = course.targetScore?.toStringAsFixed(0) ?? '';
 
@@ -343,6 +347,64 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                 ),
                                 Text(
                                   '${summary.projectedPercentage.toStringAsFixed(1)}%',
+                                  style: Theme.of(context).textTheme.headlineSmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ] else if (showProjectedScorePreview) ...[
+                          // No Expected values entered for this course yet,
+                          // so there's nothing real to show — but the help
+                          // tutorial still needs something to point at, so
+                          // show one illustrative, non-interactive example
+                          // instead of silently having nothing here. See
+                          // `course_analytics_preview_provider.dart`.
+                          const LinearProgressIndicator(value: 0.845),
+                          const SizedBox(height: 12),
+                          HelpAnchor(
+                            pageId: 'course-analytics',
+                            anchorId: 'projected-score',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Projected Score',
+                                      style:
+                                          Theme.of(context).textTheme.labelMedium,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.16),
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        'Example',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '84.5%',
                                   style: Theme.of(context).textTheme.headlineSmall,
                                 ),
                               ],

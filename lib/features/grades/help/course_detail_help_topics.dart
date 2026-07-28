@@ -2,20 +2,15 @@ import '../../help/domain/help_step.dart';
 import '../../help/domain/help_topic.dart';
 
 /// Help topics for the Course Detail screen
-/// (`lib/features/grades/screens/course/course_detail_screen.dart`),
-/// wired via that screen's own local AppBar. Anchors live in
-/// `lib/features/grades/widgets/course/course_standing_card.dart` (swipe
-/// page 0, "Overview") and `course_targets_card.dart` (swipe page 1,
-/// "Targets").
+/// (`lib/features/grades/screens/course/course_detail_screen.dart`).
 ///
-/// Every anchor below lives on the Analytics tab — `CurrentStandingCard`
-/// and `CourseTargetsCard` aren't even built while the Assessment tab is
-/// selected, a hard `if`/`else` in `course_detail_body.dart`, not a
-/// lazily-built carousel page — so every step switches to the right tab
-/// and swipe page via [showAnalyticsTab] before trying to spotlight
+/// Every anchor below lives inside `CurrentStandingCard` (swipe page 0,
+/// "Overview") or `CourseTargetsCard` (swipe page 1, "Targets"), on the
+/// Analytics tab (`lib/core/widgets/swipe_cards/`). [revealAnalyticsItem]
+/// switches to that tab and page before each step tries to spotlight
 /// anything.
 List<HelpTopic> courseDetailHelpTopics({
-  required void Function(int page) showAnalyticsTab,
+  required Future<void> Function(int page) revealAnalyticsItem,
 }) {
   HelpStep step({
     required String description,
@@ -25,7 +20,7 @@ List<HelpTopic> courseDetailHelpTopics({
     return HelpStep(
       description: description,
       anchorId: anchorId,
-      beforeShow: () => showAnalyticsTab(page),
+      beforeShow: () => revealAnalyticsItem(page),
     );
   }
 

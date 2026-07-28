@@ -19,7 +19,7 @@ List<HelpTopic> homeDashboardHelpTopics({
     return HelpStep(
       description: description,
       anchorId: 'course-standing-chip',
-      beforeShow: () => setStandingPreview(preview),
+      beforeShow: () async => setStandingPreview(preview),
     );
   }
 

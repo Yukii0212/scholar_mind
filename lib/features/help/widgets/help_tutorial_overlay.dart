@@ -79,11 +79,11 @@ class _HelpTutorialState extends State<_HelpTutorial> {
     final step = widget.steps[_index];
 
     if (step.beforeShow != null) {
-      step.beforeShow!();
-      // Give whatever state change beforeShow triggered (e.g. a tab switch)
-      // a frame to actually rebuild and lay out before we try to resolve
-      // and measure its anchor below.
-      await WidgetsBinding.instance.endOfFrame;
+      // beforeShow owns its own waiting (frames, animations) and is
+      // awaited to completion before we try to measure anything below, so
+      // by the time this returns the anchor should be in its final,
+      // settled position.
+      await step.beforeShow!();
       if (!mounted) return;
     }
 

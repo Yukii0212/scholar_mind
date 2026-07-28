@@ -37,15 +37,28 @@ class CourseDetailBodyState
 
   int _analyticsPage = 0;
 
-  /// Lets the help tutorial switch to the Analytics tab, and to the given
-  /// swipe-card [page] within it, before spotlighting something that only
-  /// lives there (`lib/features/grades/help/course_detail_help_topics.dart`).
-  void showAnalyticsTab(int page) {
+  final GlobalKey<SwipeCardsState> _swipeCardsKey =
+      GlobalKey<SwipeCardsState>();
+
+  /// Lets the help tutorial bring an Analytics-tab element into view before
+  /// spotlighting it: switches to the tab and the given swipe-card [page],
+  /// then waits for that switch's crossfade to finish so the anchor is
+  /// fully settled before it gets measured.
+  Future<void> revealAnalyticsItem(int page) async {
     if (!mounted) return;
+
     setState(() {
       _showAnalytics = true;
       _analyticsPage = page;
     });
+
+    // Let the tab-switch rebuild happen, then give the SwipeCards page
+    // crossfade (see SwipeCardsState.build) time to finish.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+
+    _swipeCardsKey.currentState?.showPage(page);
+    await Future<void>.delayed(const Duration(milliseconds: 260));
   }
 
   @override
@@ -237,9 +250,7 @@ class CourseDetailBodyState
                             data: (course) {
 
                               return SwipeCards(
-                                key: ValueKey(
-                                  '${widget.course.id}-${_showAnalytics}',
-                                ),
+                                key: _swipeCardsKey,
                                 initialIndex: _analyticsPage,
                                 items: [
 

@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class HelpStep {
   const HelpStep({
     required this.description,
@@ -15,9 +13,12 @@ class HelpStep {
   /// back to a centered, non-spotlit bubble for this step.
   final String? anchorId;
 
-  /// Run right before this step tries to resolve [anchorId] (and again each
-  /// time the user navigates back to this step), so a step whose element
-  /// lives behind some other piece of state — a tab, a toggle — can bring
-  /// it into view first instead of silently falling back to a plain bubble.
-  final VoidCallback? beforeShow;
+  /// Awaited right before this step tries to resolve [anchorId] (and again
+  /// each time the user navigates back to this step), so a step whose
+  /// element lives behind some other piece of state — a tab, a toggle, a
+  /// modal that needs opening — can bring it fully into view first instead
+  /// of silently falling back to a plain bubble. Do any waiting (frames,
+  /// animations) inside this callback itself; it's awaited to completion
+  /// before the anchor is measured.
+  final Future<void> Function()? beforeShow;
 }

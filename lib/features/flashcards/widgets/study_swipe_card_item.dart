@@ -8,7 +8,6 @@ class StudySwipeCardItem extends SwipeCardItem {
     required super.icon,
     required super.child,
     required this.onSkipped,
-    super.expandable = false,
   });
 
   final VoidCallback onSkipped;

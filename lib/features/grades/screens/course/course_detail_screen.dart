@@ -52,8 +52,9 @@ class _CourseDetailScreenState
           HelpMenuButton(
             pageId: 'course-detail',
             topics: courseDetailHelpTopics(
-              showAnalyticsTab: (page) =>
-                  _bodyKey.currentState?.showAnalyticsTab(page),
+              revealAnalyticsItem: (page) =>
+                  _bodyKey.currentState?.revealAnalyticsItem(page) ??
+                  Future.value(),
             ),
           ),
         ],

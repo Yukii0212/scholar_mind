@@ -10,9 +10,29 @@ const homeDashboardHelpTopics = <HelpTopic>[
     steps: [
       HelpStep(
         description:
-            'A quick-glance label per course: projected to hit your goal (or '
-            'pass, if you haven\'t set a personal target), still mathematically '
-            'able to, or falling short even in the best case.',
+            '"On Track": your current or projected score already meets '
+            'your goal — your Target Score if you set one, otherwise your '
+            'Passing Score.',
+        anchorId: 'course-standing-chip',
+      ),
+      HelpStep(
+        description:
+            '"At Risk": even scoring 100% on everything left wouldn\'t be '
+            'enough to reach your goal anymore — mathematically out of '
+            'reach.',
+        anchorId: 'course-standing-chip',
+      ),
+      HelpStep(
+        description:
+            '"Needs Work": every remaining assessment already has a score '
+            'or an estimate, and your projected score still falls short of '
+            'your goal. Still achievable, just not there yet.',
+        anchorId: 'course-standing-chip',
+      ),
+      HelpStep(
+        description:
+            '"No Data Yet": you haven\'t entered any scores for this '
+            'course, so there\'s nothing to project a standing from.',
         anchorId: 'course-standing-chip',
       ),
     ],

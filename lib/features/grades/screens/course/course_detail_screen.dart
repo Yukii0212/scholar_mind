@@ -48,10 +48,13 @@ class _CourseDetailScreenState
           error: (_, __) => Text(widget.course.name),
           data: (course) => Text(course.name),
         ),
-        actions: const [
+        actions: [
           HelpMenuButton(
             pageId: 'course-detail',
-            topics: courseDetailHelpTopics,
+            topics: courseDetailHelpTopics(
+              showAnalyticsTab: (page) =>
+                  _bodyKey.currentState?.showAnalyticsTab(page),
+            ),
           ),
         ],
       ),

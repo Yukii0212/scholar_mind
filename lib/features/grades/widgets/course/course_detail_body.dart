@@ -35,6 +35,19 @@ class CourseDetailBodyState
 
   bool _showAnalytics = false;
 
+  int _analyticsPage = 0;
+
+  /// Lets the help tutorial switch to the Analytics tab, and to the given
+  /// swipe-card [page] within it, before spotlighting something that only
+  /// lives there (`lib/features/grades/help/course_detail_help_topics.dart`).
+  void showAnalyticsTab(int page) {
+    if (!mounted) return;
+    setState(() {
+      _showAnalytics = true;
+      _analyticsPage = page;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -227,6 +240,7 @@ class CourseDetailBodyState
                                 key: ValueKey(
                                   '${widget.course.id}-${_showAnalytics}',
                                 ),
+                                initialIndex: _analyticsPage,
                                 items: [
 
                                   SwipeCardItem(

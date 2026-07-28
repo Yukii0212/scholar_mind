@@ -543,9 +543,22 @@ class _SwipeCardsState
 
                             ClipRect(
                               child: AbsorbPointer(
-                                child: widget
-                                    .items[index]
-                                    .child,
+                                // AbsorbPointer already blocks user
+                                // interaction (so drag gestures stay owned
+                                // by the page swiper), but wrapping the
+                                // clipped preview in a scroll view still
+                                // gives Scrollable.ensureVisible something
+                                // to work with — used by the help tutorial
+                                // to reach anchors below this card's
+                                // collapsed height without needing the
+                                // user to tap into the expanded view first.
+                                child: SingleChildScrollView(
+                                  physics:
+                                  const NeverScrollableScrollPhysics(),
+                                  child: widget
+                                      .items[index]
+                                      .child,
+                                ),
                               ),
                             ),
 

@@ -65,11 +65,22 @@ class _HelpTutorialState extends State<_HelpTutorial> {
   Future<void> _prepareStep() async {
     setState(() => _measuring = true);
 
-    final anchorId = widget.steps[_index].anchorId;
+    final step = widget.steps[_index];
+
+    if (step.beforeShow != null) {
+      step.beforeShow!();
+      // Give whatever state change beforeShow triggered (e.g. a tab switch)
+      // a frame to actually rebuild and lay out before we try to resolve
+      // and measure its anchor below.
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+    }
+
+    final anchorId = step.anchorId;
     final key = anchorId == null ? null : widget.resolveAnchor(anchorId);
     final anchorContext = key?.currentContext;
 
-    if (anchorContext != null) {
+    if (anchorContext != null && mounted) {
       await Scrollable.ensureVisible(
         anchorContext,
         duration: const Duration(milliseconds: 250),

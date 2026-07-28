@@ -11,6 +11,8 @@ import '../../../core/providers/theme_provider.dart';
 import '../../../core/services/background_sync_service.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../help/help_route_topics.dart';
+import '../../help/widgets/help_menu_button.dart';
 import '../../countdown/domain/countdown_item.dart';
 import '../../countdown/providers/countdown_provider.dart';
 import '../../countdown/screens/countdown_crud_screen.dart';
@@ -112,6 +114,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         leading: null,
         title: const ScholarBrand(compact: true),
         actions: [
+          HelpMenuButton(
+            pageId: location,
+            topics: helpTopicsForRoute(location),
+          ),
           _UserAvatar(
             user: user,
             onTap: () => context.go('/profile'),

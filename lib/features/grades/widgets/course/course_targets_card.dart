@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../core/theme/app_design.dart';
+import '../../../help/widgets/help_anchor.dart';
 import '../../data/models/course_model.dart';
 import '../../providers/assessment/assessment_provider.dart';
 import '../../providers/grading/grading_provider.dart';
@@ -43,9 +44,13 @@ class CourseTargetsCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const ScholarSectionHeader(
-                    title: 'Required Score Calculator',
-                    subtitle: 'One remaining assessment prediction',
+                  const HelpAnchor(
+                    pageId: 'course-detail',
+                    anchorId: 'required-score-calculator',
+                    child: ScholarSectionHeader(
+                      title: 'Required Score Calculator',
+                      subtitle: 'One remaining assessment prediction',
+                    ),
                   ),
                   const Gap(18),
                   if (!summary.canCalculateRequiredScore)

@@ -6,6 +6,7 @@ import '../../../../core/theme/app_design.dart';
 import '../../../grades/providers/semester/semester_statistics_provider.dart';
 import '../../../grades/services/calculation/course_calculation_summary.dart';
 import '../../../grades/widgets/course/course_actions.dart';
+import '../../../help/widgets/help_anchor.dart';
 
 const _maxCoursesShown = 4;
 
@@ -47,7 +48,7 @@ class SemesterPanel extends StatelessWidget {
           else ...[
             for (var i = 0; i < shown.length; i++) ...[
               if (i > 0) const Gap(8),
-              _CourseRow(priority: shown[i]),
+              _CourseRow(priority: shown[i], isFirst: i == 0),
             ],
             if (remaining > 0) ...[
               const Gap(10),
@@ -67,16 +68,23 @@ class SemesterPanel extends StatelessWidget {
 }
 
 class _CourseRow extends StatelessWidget {
-  const _CourseRow({required this.priority});
+  const _CourseRow({required this.priority, required this.isFirst});
 
   final SemesterCoursePriority priority;
+
+  /// Only the first shown row registers the `course-standing-chip` help
+  /// anchor — anchor ids must be unique per page, and this chip repeats
+  /// once per course, so we spotlight one concrete example rather than
+  /// every instance.
+  final bool isFirst;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.scholarPalette;
     final summary = priority.summary;
-    final target = priority.course.targetScore;
-    final standing = _standingFor(context, summary, target);
+    final effectiveTarget =
+        priority.course.targetScore ?? priority.course.passingScore;
+    final standing = _standingFor(context, summary, effectiveTarget);
 
     return Material(
       color: Colors.transparent,
@@ -119,7 +127,16 @@ class _CourseRow extends StatelessWidget {
                 ),
               ),
               const Gap(8),
-              _StandingChip(label: standing.$1, color: standing.$2),
+              isFirst
+                  ? HelpAnchor(
+                      pageId: '/home',
+                      anchorId: 'course-standing-chip',
+                      child: _StandingChip(
+                        label: standing.$1,
+                        color: standing.$2,
+                      ),
+                    )
+                  : _StandingChip(label: standing.$1, color: standing.$2),
             ],
           ),
         ),
@@ -130,16 +147,12 @@ class _CourseRow extends StatelessWidget {
   static (String, Color) _standingFor(
     BuildContext context,
     CourseCalculationSummary summary,
-    double? target,
+    double target,
   ) {
     final palette = context.scholarPalette;
 
     if (!summary.hasAnyScores) {
       return ('No data yet', palette.textMuted);
-    }
-
-    if (target == null) {
-      return ('On track', palette.success);
     }
 
     if (!summary.isAchievable(target)) {

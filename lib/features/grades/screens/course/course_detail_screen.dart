@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../help/widgets/help_menu_button.dart';
 import '../../data/models/course_model.dart';
+import '../../help/course_detail_help_topics.dart';
 import '../../providers/course/course_provider.dart';
 import '../../providers/grading/grading_provider.dart';
 import '../../widgets/course/course_detail_body.dart';
@@ -46,6 +48,12 @@ class _CourseDetailScreenState
           error: (_, __) => Text(widget.course.name),
           data: (course) => Text(course.name),
         ),
+        actions: const [
+          HelpMenuButton(
+            pageId: 'course-detail',
+            topics: courseDetailHelpTopics,
+          ),
+        ],
       ),
       body: CourseDetailBody(
         key: _bodyKey,

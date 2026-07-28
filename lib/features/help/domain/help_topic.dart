@@ -1,19 +1,18 @@
+import 'help_step.dart';
+
 class HelpTopic {
   const HelpTopic({
     required this.id,
     required this.title,
-    required this.description,
-    this.anchorId,
+    required this.steps,
   });
 
   final String id;
 
   final String title;
 
-  final String description;
-
-  /// Id of the [HelpAnchor] this topic should spotlight, looked up in the
-  /// same page's [HelpAnchorRegistry]. Null for purely conceptual topics
-  /// that have no single on-screen element to highlight.
-  final String? anchorId;
+  /// The tutorial for this topic, walked through in order with Back/Next
+  /// controls. Almost always one step; use more when a question is best
+  /// answered by highlighting several elements in sequence.
+  final List<HelpStep> steps;
 }

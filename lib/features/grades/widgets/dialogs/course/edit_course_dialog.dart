@@ -83,7 +83,7 @@ class _EditCourseDialogState
 
     if (!mounted) return;
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override
@@ -166,7 +166,7 @@ class _EditCourseDialogState
                       return;
                     }
 
-                    Navigator.pop(context);
+                    Navigator.pop(context, false);
                   },
                   child: const Text('Cancel'),
                 ),

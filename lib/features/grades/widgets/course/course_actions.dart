@@ -133,18 +133,20 @@ class CourseActions {
       return;
     }
 
-    await showDialog(
+    final saved = await showDialog<bool>(
       context: context,
       builder: (_) =>
           EditCourseDialog(
             course: copiedCourse,
             isImport: true,
+            deleteOnCancel: true,
             title:
             'Review Copied Course',
           ),
     );
 
-    if (!context.mounted) {
+    if (saved != true ||
+        !context.mounted) {
       return;
     }
 

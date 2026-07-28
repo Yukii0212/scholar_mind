@@ -282,8 +282,8 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
 
                             final isConfigured = target != null;
 
-                            final hasExpectedScores =
-                                summary.expectedEntries.isNotEmpty;
+                            final fullyForecasted =
+                                summary.isFullyForecasted;
 
                             final targetAchieved = isConfigured &&
                                 summary.guaranteedPercentage >= target;
@@ -317,7 +317,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
 
                               message =
                                   'Congratulations! You have already achieved your target score.';
-                            } else if (hasExpectedScores) {
+                            } else if (fullyForecasted) {
                               if (projectedOnTrack) {
                                 borderColor = Colors.green;
 
@@ -402,7 +402,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                                             .start,
                                                     children: [
                                                       Text(
-                                                        hasExpectedScores
+                                                        fullyForecasted
                                                             ? 'Projected Final Score'
                                                             : 'Maximum Achievable',
                                                         style: Theme.of(context)
@@ -411,7 +411,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                                       ),
                                                       const SizedBox(height: 4),
                                                       Text(
-                                                        hasExpectedScores
+                                                        fullyForecasted
                                                             ? '${summary.projectedPercentage.toStringAsFixed(1)}%'
                                                             : '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
                                                         style: Theme.of(context)
@@ -508,9 +508,14 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Text(
-                                    'If your expected scores are accurate, '
-                                    'your final course score will be approximately '
-                                    '${summary.projectedPercentage.toStringAsFixed(1)}%.',
+                                    summary.remainingComponents.isEmpty
+                                        ? 'If your expected scores are accurate, '
+                                            'your final course score will be approximately '
+                                            '${summary.projectedPercentage.toStringAsFixed(1)}%.'
+                                        : 'If your expected scores are accurate, you are on pace for '
+                                            '${summary.projectedPercentage.toStringAsFixed(1)}% '
+                                            'from graded and expected work so far. The assessments below '
+                                            'are still to be decided.',
                                   ),
                                 ),
                               ),
@@ -552,7 +557,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                               ),
                               const SizedBox(height: 16),
                             ],
-                            if (!summary.hasScores &&
+                            if (!summary.hasAnyScores &&
                                 summary.remainingComponents.isEmpty)
                               const Text(
                                 'Start by entering the marks you have already received.',

@@ -132,21 +132,27 @@ class _AssessmentEntryDialogState
   Widget build(BuildContext context) {
     final palette = context.scholarPalette;
 
-    return AlertDialog(
-      scrollable: true,
-      title: Text(
-        widget.isPrediction
-            ? 'Expected Score'
-            : 'Actual Score',
-      ),
-
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 440),
-        child: Column(
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment:
           CrossAxisAlignment.start,
           children: [
+
+            Text(
+              widget.isPrediction
+                  ? 'Expected Score'
+                  : 'Actual Score',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall,
+            ),
+
+            const Gap(8),
 
             Text(
               widget.existingEntry == null
@@ -158,7 +164,7 @@ class _AssessmentEntryDialogState
                   : 'Update your score.',
               style: Theme.of(context)
                   .textTheme
-                  .titleMedium,
+                  .bodyMedium,
             ),
 
             const Gap(20),
@@ -307,152 +313,159 @@ class _AssessmentEntryDialogState
                   .bodySmall
                   ?.copyWith(color: palette.textMuted),
             ),
+
+            const Gap(24),
+
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed:
+                _interpretation == null ||
+                    !_interpretation!.isValid ||
+                    (_interpretation!
+                        .requiresConfirmation &&
+                        _selectedInterpretation ==
+                            null)
+                    ? null
+                    : () async {
+
+                  final now =
+                  DateTime.now();
+
+                  final repository = ref.read(
+                    assessmentRepositoryProvider,
+                  );
+
+                  final model =
+                  AssessmentEntryModel(
+                    id:
+                    '${widget.componentId}_${widget.isPrediction ? 'expected' : 'actual'}',
+                    courseId:
+                    widget.courseId,
+                    componentId:
+                    widget.componentId,
+                    type:
+                    widget.isPrediction
+                        ? AssessmentType.expected
+                        : AssessmentType.actual,
+                    score: double.parse(
+                      _scoreController.text,
+                    ),
+                    denominator:
+                    double.parse(
+                      _denominatorController.text,
+                    ),
+                    percentage:
+                    _interpretation!
+                        .percentage,
+                    interpretation:
+                    _selectedInterpretation ??
+                        _interpretation!
+                            .interpretation,
+                    createdAt: now,
+                    updatedAt: now,
+                  );
+
+                  await repository.saveEntry(
+                    model,
+                  );
+
+                  if (context.mounted) {
+                    Navigator.pop(
+                      context,
+                    );
+                  }
+                },
+                child: const Text(
+                  'Save',
+                ),
+              ),
+            ),
+
+            const Gap(8),
+
+            SizedBox(
+              width: double.infinity,
+              child: widget.existingEntry != null
+                  ? TextButton(
+                onPressed: () async {
+
+                  final confirmed =
+                  await showDialog<bool>(
+                    context: context,
+                    builder: (context) =>
+                        AlertDialog(
+                          title:
+                          const Text(
+                            'Delete Score?',
+                          ),
+                          content:
+                          const Text(
+                            'This score will be removed from this assessment.',
+                          ),
+                          actions: [
+
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(
+                                  context,
+                                  false,
+                                );
+                              },
+                              child: const Text(
+                                'Cancel',
+                              ),
+                            ),
+
+                            FilledButton(
+                              onPressed: () {
+                                Navigator.pop(
+                                  context,
+                                  true,
+                                );
+                              },
+                              child: const Text(
+                                'Delete',
+                              ),
+                            ),
+                          ],
+                        ),
+                  );
+
+                  if (confirmed != true) {
+                    return;
+                  }
+
+                  await ref
+                      .read(
+                    assessmentRepositoryProvider,
+                  )
+                      .deleteEntry(
+                    widget.courseId,
+                    widget.existingEntry!.id,
+                  );
+
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text(
+                  'Delete',
+                ),
+              )
+                  : TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'Cancel',
+                ),
+              ),
+            ),
           ],
+          ),
         ),
       ),
-
-      actions: [
-
-        if (widget.existingEntry != null)
-          TextButton(
-            onPressed: () async {
-
-              final confirmed =
-              await showDialog<bool>(
-                context: context,
-                builder: (context) =>
-                    AlertDialog(
-                      title:
-                      const Text(
-                        'Delete Score?',
-                      ),
-                      content:
-                      const Text(
-                        'This score will be removed from this assessment.',
-                      ),
-                      actions: [
-
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(
-                              context,
-                              false,
-                            );
-                          },
-                          child: const Text(
-                            'Cancel',
-                          ),
-                        ),
-
-                        FilledButton(
-                          onPressed: () {
-                            Navigator.pop(
-                              context,
-                              true,
-                            );
-                          },
-                          child: const Text(
-                            'Delete',
-                          ),
-                        ),
-                      ],
-                    ),
-              );
-
-              if (confirmed != true) {
-                return;
-              }
-
-              await ref
-                  .read(
-                assessmentRepositoryProvider,
-              )
-                  .deleteEntry(
-                widget.courseId,
-                widget.existingEntry!.id,
-              );
-
-              if (context.mounted) {
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(
-              'Delete',
-            ),
-          )
-        else
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Cancel',
-            ),
-          ),
-
-        FilledButton(
-          onPressed:
-          _interpretation == null ||
-              !_interpretation!.isValid ||
-              (_interpretation!
-                  .requiresConfirmation &&
-                  _selectedInterpretation ==
-                      null)
-              ? null
-              : () async {
-
-            final now =
-            DateTime.now();
-
-            final repository = ref.read(
-              assessmentRepositoryProvider,
-            );
-
-            final model =
-            AssessmentEntryModel(
-              id:
-              '${widget.componentId}_${widget.isPrediction ? 'expected' : 'actual'}',
-              courseId:
-              widget.courseId,
-              componentId:
-              widget.componentId,
-              type:
-              widget.isPrediction
-                  ? AssessmentType.expected
-                  : AssessmentType.actual,
-              score: double.parse(
-                _scoreController.text,
-              ),
-              denominator:
-              double.parse(
-                _denominatorController.text,
-              ),
-              percentage:
-              _interpretation!
-                  .percentage,
-              interpretation:
-              _selectedInterpretation ??
-                  _interpretation!
-                      .interpretation,
-              createdAt: now,
-              updatedAt: now,
-            );
-
-            await repository.saveEntry(
-              model,
-            );
-
-            if (context.mounted) {
-              Navigator.pop(
-                context,
-              );
-            }
-          },
-          child: const Text(
-            'Save',
-          ),
-        ),
-      ],
     );
   }
 
@@ -465,7 +478,6 @@ class _AssessmentEntryDialogState
             label: widget.isPrediction
                 ? 'Expected score'
                 : 'Actual score',
-            icon: Icons.edit_note_rounded,
           ),
         ),
         const Gap(12),
@@ -473,7 +485,6 @@ class _AssessmentEntryDialogState
           child: _scoreField(
             controller: _denominatorController,
             label: 'Out of',
-            icon: Icons.percent_rounded,
           ),
         ),
       ],
@@ -483,7 +494,6 @@ class _AssessmentEntryDialogState
   Widget _scoreField({
     required TextEditingController controller,
     required String label,
-    required IconData icon,
   }) {
     return TextField(
       controller: controller,
@@ -491,7 +501,7 @@ class _AssessmentEntryDialogState
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
       ),
     );
   }

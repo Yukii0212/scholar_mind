@@ -76,6 +76,16 @@ class CourseCalculationSummary {
 
   bool get hasExpectedScores => expectedEntries.isNotEmpty;
 
+  bool get hasAnyScores => hasScores || hasExpectedScores;
+
+  // projectedPercentage silently treats any component with neither an
+  // actual nor an expected score as worth 0%. It only represents a real
+  // forecast of the final grade once every component has been accounted
+  // for — otherwise it understates the true ceiling (see
+  // maximumPossiblePercentage) and must not be presented as "the"
+  // projected outcome.
+  bool get isFullyForecasted => hasExpectedScores && remainingComponents.isEmpty;
+
   bool get canCalculateRequiredScore => remainingTargets.length == 1;
 
   CourseCalculationTarget? get remainingTarget =>

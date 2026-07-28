@@ -106,9 +106,11 @@ class _CourseRow extends StatelessWidget {
                     ),
                     const Gap(3),
                     Text(
-                      summary.hasScores
-                          ? 'Projected ${summary.projectedPercentage.toStringAsFixed(0)}%'
-                          : 'No scores recorded yet',
+                      !summary.hasAnyScores
+                          ? 'No scores recorded yet'
+                          : summary.isFullyForecasted
+                              ? 'Projected ${summary.projectedPercentage.toStringAsFixed(0)}%'
+                              : 'Up to ${summary.maximumPossiblePercentage.toStringAsFixed(0)}% possible',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: palette.textMuted,
                           ),
@@ -132,7 +134,7 @@ class _CourseRow extends StatelessWidget {
   ) {
     final palette = context.scholarPalette;
 
-    if (!summary.hasScores) {
+    if (!summary.hasAnyScores) {
       return ('No data yet', palette.textMuted);
     }
 
@@ -144,11 +146,18 @@ class _CourseRow extends StatelessWidget {
       return ('At risk', Theme.of(context).colorScheme.error);
     }
 
-    if (summary.projectedPercentage >= target) {
-      return ('On track', palette.success);
+    // Only call out "Needs work" once every component has a score to
+    // forecast from. Otherwise projectedPercentage understates courses
+    // that still have real, untouched opportunity remaining, and a
+    // partial forecast being below target doesn't mean the course is
+    // off track — isAchievable already confirmed the target is still
+    // reachable above.
+    if (summary.isFullyForecasted &&
+        summary.projectedPercentage < target) {
+      return ('Needs work', palette.warning);
     }
 
-    return ('Needs work', palette.warning);
+    return ('On track', palette.success);
   }
 }
 

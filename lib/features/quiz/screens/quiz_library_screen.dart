@@ -64,6 +64,19 @@ class _QuizLibraryScreenState
     });
   }
 
+  String get _title => switch (_section) {
+        QuizLibrarySection.continueSection => 'Resume',
+        QuizLibrarySection.library => 'Quiz Library',
+        QuizLibrarySection.trash => 'Trash',
+      };
+
+  String get _subtitle => switch (_section) {
+        QuizLibrarySection.continueSection =>
+          'Quizzes waiting to be finished',
+        QuizLibrarySection.library => 'Organize and access all your quizzes',
+        QuizLibrarySection.trash => 'Deleted quizzes',
+      };
+
   @override
   Widget build(
       BuildContext context,
@@ -161,9 +174,11 @@ class _QuizLibraryScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              const ScholarSectionHeader(
-                title: 'Quiz Library',
-                subtitle: 'Organize and access all your quizzes',
+              ScholarSectionHeader(
+                title: isRoot ? _title : 'Quiz Library',
+                subtitle: isRoot
+                    ? _subtitle
+                    : 'Organize and access all your quizzes',
               ),
 
               const SizedBox(height: 12),
@@ -185,7 +200,11 @@ class _QuizLibraryScreenState
           const SizedBox(height: 24),
 
         if (isRoot) ...[
-          SegmentedButton<QuizLibrarySection>(
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<QuizLibrarySection>(
+
+            showSelectedIcon: false,
 
             segments: const [
 
@@ -198,9 +217,7 @@ class _QuizLibraryScreenState
                   Icons.play_circle_outline,
                 ),
 
-                label: Text(
-                  'Resume',
-                ),
+                tooltip: 'Resume',
 
               ),
 
@@ -212,9 +229,7 @@ class _QuizLibraryScreenState
                   Icons.folder_outlined,
                 ),
 
-                label: Text(
-                  'Library',
-                ),
+                tooltip: 'Library',
 
               ),
 
@@ -226,9 +241,7 @@ class _QuizLibraryScreenState
                   Icons.delete_outline,
                 ),
 
-                label: Text(
-                  'Trash',
-                ),
+                tooltip: 'Trash',
 
               ),
 
@@ -250,6 +263,7 @@ class _QuizLibraryScreenState
 
             },
 
+          ),
           ),
 
           const SizedBox(height: 20),

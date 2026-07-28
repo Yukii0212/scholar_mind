@@ -56,6 +56,7 @@ class HelpMenuButton extends ConsumerWidget {
       context,
       steps: topic.steps,
       resolveAnchor: registry.keyFor,
+      onDismiss: topic.onDismiss,
     );
   }
 }

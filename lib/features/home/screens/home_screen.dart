@@ -13,6 +13,7 @@ import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../help/help_route_topics.dart';
 import '../../help/widgets/help_menu_button.dart';
+import '../help/standing_chip_preview_provider.dart';
 import '../../countdown/domain/countdown_item.dart';
 import '../../countdown/providers/countdown_provider.dart';
 import '../../countdown/screens/countdown_crud_screen.dart';
@@ -116,7 +117,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           HelpMenuButton(
             pageId: location,
-            topics: helpTopicsForRoute(location),
+            topics: helpTopicsForRoute(
+              location,
+              setStandingPreview: (preview) => ref
+                  .read(standingChipPreviewProvider.notifier)
+                  .state = preview,
+            ),
           ),
           _UserAvatar(
             user: user,

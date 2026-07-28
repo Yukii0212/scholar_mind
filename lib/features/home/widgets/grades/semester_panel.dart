@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,6 +8,7 @@ import '../../../grades/providers/semester/semester_statistics_provider.dart';
 import '../../../grades/services/calculation/course_calculation_summary.dart';
 import '../../../grades/widgets/course/course_actions.dart';
 import '../../../help/widgets/help_anchor.dart';
+import '../../help/standing_chip_preview_provider.dart';
 
 const _maxCoursesShown = 4;
 
@@ -131,9 +133,19 @@ class _CourseRow extends StatelessWidget {
                   ? HelpAnchor(
                       pageId: '/home',
                       anchorId: 'course-standing-chip',
-                      child: _StandingChip(
-                        label: standing.$1,
-                        color: standing.$2,
+                      child: Consumer(
+                        builder: (context, ref, _) {
+                          final preview =
+                              ref.watch(standingChipPreviewProvider);
+                          final effective = preview == null
+                              ? standing
+                              : _previewFor(preview, context);
+
+                          return _StandingChip(
+                            label: effective.$1,
+                            color: effective.$2,
+                          );
+                        },
                       ),
                     )
                   : _StandingChip(label: standing.$1, color: standing.$2),
@@ -156,7 +168,7 @@ class _CourseRow extends StatelessWidget {
     }
 
     if (!summary.isAchievable(target)) {
-      return ('At risk', Theme.of(context).colorScheme.error);
+      return ('Not achievable', Theme.of(context).colorScheme.error);
     }
 
     // Only call out "Needs work" once every component has a score to
@@ -171,6 +183,23 @@ class _CourseRow extends StatelessWidget {
     }
 
     return ('On track', palette.success);
+  }
+
+  static (String, Color) _previewFor(
+    StandingPreview preview,
+    BuildContext context,
+  ) {
+    final palette = context.scholarPalette;
+
+    return switch (preview) {
+      StandingPreview.onTrack => ('On track', palette.success),
+      StandingPreview.notAchievable => (
+          'Not achievable',
+          Theme.of(context).colorScheme.error,
+        ),
+      StandingPreview.needsWork => ('Needs work', palette.warning),
+      StandingPreview.noData => ('No data yet', palette.textMuted),
+    };
   }
 }
 

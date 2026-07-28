@@ -14,6 +14,7 @@ void showHelpTutorial(
   BuildContext context, {
   required List<HelpStep> steps,
   required GlobalKey? Function(String anchorId) resolveAnchor,
+  VoidCallback? onDismiss,
 }) {
   if (steps.isEmpty) return;
 
@@ -23,7 +24,10 @@ void showHelpTutorial(
     builder: (_) => _HelpTutorial(
       steps: steps,
       resolveAnchor: resolveAnchor,
-      onDismiss: () => entry.remove(),
+      onDismiss: () {
+        entry.remove();
+        onDismiss?.call();
+      },
     ),
   );
 
@@ -59,7 +63,14 @@ class _HelpTutorialState extends State<_HelpTutorial> {
   @override
   void initState() {
     super.initState();
-    _prepareStep();
+    // _prepareStep can run a step's beforeShow callback, which may call
+    // setState on a widget elsewhere in the tree (e.g. switching a tab on
+    // the screen behind this overlay). Doing that synchronously here would
+    // happen while the framework is still in the middle of building this
+    // very overlay entry, which throws — defer to after this frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _prepareStep();
+    });
   }
 
   Future<void> _prepareStep() async {

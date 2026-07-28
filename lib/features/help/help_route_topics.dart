@@ -1,4 +1,5 @@
 import '../home/help/home_dashboard_help_topics.dart';
+import '../home/help/standing_chip_preview_provider.dart';
 import 'domain/help_topic.dart';
 
 /// Help topics for pages reachable through the shared shell AppBar
@@ -11,9 +12,14 @@ import 'domain/help_topic.dart';
 /// `/import/share/:shareId`) includes the interpolated value, so a future
 /// topic set for a route like that needs a prefix match rather than exact
 /// equality. Not needed yet since no such route has topics below.
-const _shellRouteTopics = <String, List<HelpTopic>>{
-  '/home': homeDashboardHelpTopics,
-};
-
-List<HelpTopic> helpTopicsForRoute(String location) =>
-    _shellRouteTopics[location] ?? const [];
+List<HelpTopic> helpTopicsForRoute(
+  String location, {
+  required void Function(StandingPreview?) setStandingPreview,
+}) {
+  switch (location) {
+    case '/home':
+      return homeDashboardHelpTopics(setStandingPreview: setStandingPreview);
+    default:
+      return const [];
+  }
+}

@@ -167,6 +167,8 @@ class _HelpTutorialState extends State<_HelpTutorial> {
               painter: _SpotlightPainter(
                 rect: _measuring ? null : _rect,
                 highlightColor: highlightColor,
+                scrimOpacity: widget.steps[_index].scrimOpacity,
+                showHighlightRing: widget.steps[_index].showHighlightRing,
               ),
             ),
           ),
@@ -179,6 +181,7 @@ class _HelpTutorialState extends State<_HelpTutorial> {
               stepNumber: _index + 1,
               stepCount: widget.steps.length,
               description: widget.steps[_index].description,
+              colorLegend: widget.steps[_index].colorLegend,
               onClose: widget.onDismiss,
               onBack: isFirst ? null : () => _goTo(_index - 1),
               onNext: isLast ? null : () => _goTo(_index + 1),
@@ -203,23 +206,62 @@ class _TutorialBubbleLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bubbleWidth = math.min(340.0, screenSize.width - 32);
+    // Only the horizontal position used to be clamped to the screen — the
+    // vertical side picked above/below purely from which half of the
+    // screen the anchor sat in, with no regard for the bubble's actual
+    // height or for system insets (status bar, notch, gesture/nav bar).
+    // An anchor near an edge, or a bubble tall enough not to fit in
+    // whichever half got picked, could render partly or fully off-screen
+    // — this happens on any device, not just small ones; a small screen
+    // just leaves less room to get away with it unnoticed. Constrain to
+    // the actual safe viewport on every side, size the bubble to what's
+    // available in the direction it's placed, and let its content scroll
+    // internally as the last resort instead of overflowing the screen.
+    final safeArea = MediaQuery.paddingOf(context);
+    const margin = 16.0;
+
+    const safeLeft = margin;
+    final safeTop = safeArea.top + margin;
+    final safeRight = screenSize.width - safeArea.right - margin;
+    final safeBottom = screenSize.height - safeArea.bottom - margin;
+
+    final bubbleWidth = math.min(340.0, safeRight - safeLeft);
 
     if (rect == null) {
-      return Center(
-        child: SizedBox(width: bubbleWidth, child: child),
+      return Positioned(
+        left: safeLeft,
+        top: safeTop,
+        right: screenSize.width - safeRight,
+        bottom: screenSize.height - safeBottom,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: bubbleWidth,
+              maxHeight: safeBottom - safeTop,
+            ),
+            child: SingleChildScrollView(child: child),
+          ),
+        ),
       );
     }
 
-    final showBelow = rect!.center.dy < screenSize.height / 2;
-    final left = rect!.left.clamp(16.0, screenSize.width - bubbleWidth - 16);
+    final spaceBelow = safeBottom - rect!.bottom - margin;
+    final spaceAbove = rect!.top - safeTop - margin;
+    final showBelow = spaceBelow >= spaceAbove;
+    final maxBubbleHeight =
+        math.max(120.0, showBelow ? spaceBelow : spaceAbove);
+
+    final left = rect!.left.clamp(safeLeft, safeRight - bubbleWidth);
 
     return Positioned(
       left: left,
       width: bubbleWidth,
-      top: showBelow ? rect!.bottom + 16 : null,
-      bottom: showBelow ? null : screenSize.height - rect!.top + 16,
-      child: child,
+      top: showBelow ? rect!.bottom + margin : null,
+      bottom: showBelow ? null : screenSize.height - rect!.top + margin,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxBubbleHeight),
+        child: SingleChildScrollView(child: child),
+      ),
     );
   }
 }
@@ -228,18 +270,19 @@ class _SpotlightPainter extends CustomPainter {
   const _SpotlightPainter({
     required this.rect,
     required this.highlightColor,
+    required this.scrimOpacity,
+    required this.showHighlightRing,
   });
 
   final Rect? rect;
   final Color highlightColor;
+  final double scrimOpacity;
+  final bool showHighlightRing;
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Dark themes start close to black already, so a light scrim barely
-    // reads as "dimmed" — go heavier on the scrim and back it with a bright
-    // accent-colored ring around the cutout so the highlight is legible
-    // regardless of how dark the underlying UI already is.
-    final scrimPaint = Paint()..color = Colors.black.withValues(alpha: 0.82);
+    final scrimPaint = Paint()
+      ..color = Colors.black.withValues(alpha: scrimOpacity);
 
     if (rect == null) {
       canvas.drawRect(Offset.zero & size, scrimPaint);
@@ -254,17 +297,22 @@ class _SpotlightPainter extends CustomPainter {
     canvas.drawRRect(rrect, clearPaint);
     canvas.restore();
 
-    final ringPaint = Paint()
-      ..color = highlightColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+    if (showHighlightRing) {
+      final ringPaint = Paint()
+        ..color = highlightColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3;
 
-    canvas.drawRRect(rrect, ringPaint);
+      canvas.drawRRect(rrect, ringPaint);
+    }
   }
 
   @override
   bool shouldRepaint(covariant _SpotlightPainter oldDelegate) =>
-      oldDelegate.rect != rect || oldDelegate.highlightColor != highlightColor;
+      oldDelegate.rect != rect ||
+      oldDelegate.highlightColor != highlightColor ||
+      oldDelegate.scrimOpacity != scrimOpacity ||
+      oldDelegate.showHighlightRing != showHighlightRing;
 }
 
 class _TutorialBubble extends StatelessWidget {
@@ -272,6 +320,7 @@ class _TutorialBubble extends StatelessWidget {
     required this.stepNumber,
     required this.stepCount,
     required this.description,
+    required this.colorLegend,
     required this.onClose,
     required this.onBack,
     required this.onNext,
@@ -281,6 +330,7 @@ class _TutorialBubble extends StatelessWidget {
   final int stepNumber;
   final int stepCount;
   final String description;
+  final List<HelpColorLegendEntry>? colorLegend;
   final VoidCallback onClose;
   final VoidCallback? onBack;
   final VoidCallback? onNext;
@@ -337,6 +387,36 @@ class _TutorialBubble extends StatelessWidget {
               description,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            if (colorLegend != null && colorLegend!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              for (final entry in colorLegend!)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: entry.color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          entry.label,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
             const SizedBox(height: 14),
             Row(
               children: [

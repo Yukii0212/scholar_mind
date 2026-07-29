@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import '../../../../core/theme/app_design.dart';
 import '../../../help/widgets/help_anchor.dart';
 import '../../data/models/course_model.dart';
+import '../../help/course_analytics_preview_provider.dart';
 import '../../providers/assessment/assessment_provider.dart';
 import '../../providers/grading/grading_provider.dart';
 import '../../services/calculation/course_calculation_service.dart';
@@ -40,29 +41,49 @@ class CourseTargetsCard extends ConsumerWidget {
               assessments: assessments,
             );
 
+            final showRequiredScorePreview =
+                !summary.canCalculateRequiredScore &&
+                    ref.watch(courseAnalyticsRequiredScorePreviewProvider);
+
             return ScholarPanel(
-              child: Column(
+              child: HelpAnchor(
+                pageId: 'course-analytics',
+                anchorId: 'required-score-calculator',
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const HelpAnchor(
-                    pageId: 'course-analytics',
-                    anchorId: 'required-score-calculator',
-                    child: ScholarSectionHeader(
-                      title: 'Required Score Calculator',
-                      subtitle: 'One remaining assessment prediction',
-                    ),
+                  const ScholarSectionHeader(
+                    title: 'Required Score Calculator',
+                    subtitle: 'One remaining assessment prediction',
                   ),
                   const Gap(18),
                   if (!summary.canCalculateRequiredScore)
-                    _InformationCard(
-                      icon: Icons.auto_awesome_outlined,
-                      title: summary.remainingTargets.isEmpty
-                          ? 'No open assessment to calculate'
-                          : 'More information required',
-                      message: summary.remainingTargets.isEmpty
-                          ? 'Leave one assessment without an Actual or Expected score to calculate what you need there.'
-                          : 'Add Expected scores for all but one remaining assessment to unlock personalized predictions.',
-                    )
+                    if (showRequiredScorePreview)
+                      // No real calculation available for this course yet,
+                      // but the help tutorial still needs something to
+                      // point at — show one illustrative, non-interactive
+                      // example instead of silently having nothing here.
+                      // See `course_analytics_preview_provider.dart`.
+                      const _ScoreRequirementCard(
+                        title: 'Target Score',
+                        icon: Icons.flag_outlined,
+                        target: 80,
+                        requiredScore: 92.3,
+                        component: 'Finals',
+                        achievable: true,
+                        maximumPossible: 100,
+                        isExample: true,
+                      )
+                    else
+                      _InformationCard(
+                        icon: Icons.auto_awesome_outlined,
+                        title: summary.remainingTargets.isEmpty
+                            ? 'No open assessment to calculate'
+                            : 'More information required',
+                        message: summary.remainingTargets.isEmpty
+                            ? 'Leave one assessment without an Actual or Expected score to calculate what you need there.'
+                            : 'Add Expected scores for all but one remaining assessment to unlock personalized predictions.',
+                      )
                   else ...[
                     if (course.targetScore != null)
                       _ScoreRequirementCard(
@@ -106,6 +127,7 @@ class CourseTargetsCard extends ConsumerWidget {
                     ),
                   ],
                 ],
+                ),
               ),
             );
           },
@@ -181,6 +203,7 @@ class _ScoreRequirementCard extends StatelessWidget {
     required this.component,
     required this.achievable,
     required this.maximumPossible,
+    this.isExample = false,
   });
 
   final String title;
@@ -190,6 +213,7 @@ class _ScoreRequirementCard extends StatelessWidget {
   final String component;
   final bool achievable;
   final double maximumPossible;
+  final bool isExample;
 
   @override
   Widget build(BuildContext context) {
@@ -215,13 +239,46 @@ class _ScoreRequirementCard extends StatelessWidget {
               Icon(icon, color: palette.brandEnd),
               const Gap(10),
               Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
                       ),
+                    ),
+                    if (isExample) ...[
+                      const Gap(8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Example',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const Gap(8),

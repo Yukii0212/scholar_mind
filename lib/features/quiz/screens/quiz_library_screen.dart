@@ -180,20 +180,6 @@ class _QuizLibraryScreenState
                 subtitle: isRoot
                     ? _subtitle
                     : 'Organize and access all your quizzes',
-                trailing: isRoot
-                    ? IconButton(
-                        icon: const Icon(Icons.flag_outlined),
-                        tooltip: 'Flagged Questions',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const QuizFeedbackScreen(),
-                            ),
-                          );
-                        },
-                      )
-                    : null,
               ),
 
               const SizedBox(height: 12),
@@ -309,6 +295,32 @@ class _QuizLibraryScreenState
             const QuizTrashSection(),
 
           },
+
+          if (isRoot) ...[
+            const SizedBox(height: 24),
+            Center(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.outline,
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outline.withValues(
+                          alpha: 0.4,
+                        ),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const QuizFeedbackScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.flag_outlined, size: 16),
+                label: const Text('Flagged Questions'),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 100),
         ],

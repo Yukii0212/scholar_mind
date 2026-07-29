@@ -9,7 +9,6 @@ import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
 import '../providers/quiz_feedback_provider.dart';
 import '../services/quiz_result_pdf_exporter.dart';
-import 'quiz_feedback_screen.dart';
 
 class QuizResultScreen
     extends ConsumerStatefulWidget {
@@ -273,18 +272,6 @@ class _QuizResultScreenState
           'Quiz Results',
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.flag_outlined),
-            tooltip: 'Flagged Questions',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const QuizFeedbackScreen(),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: _exporting
                 ? const SizedBox(

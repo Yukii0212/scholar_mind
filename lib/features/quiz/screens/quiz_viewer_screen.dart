@@ -185,46 +185,8 @@ class _QuizViewerScreenState
     setState(() {});
   }
 
-  int get _answeredQuestions {
-    var answered = 0;
-
-    for (var i = 0;
-    i < quiz.questions.length;
-    i++) {
-      final answer =
-      ref
-          .read(
-        quizAttemptProvider,
-      )
-          ?.answers[i];
-
-      if (answer == null) {
-        continue;
-      }
-
-      final question =
-      quiz.questions[i];
-
-      switch (question.type) {
-        case QuestionType.multipleChoice:
-        case QuestionType.trueFalse:
-          if (answer.selectedOptionIndex != null) {
-            answered++;
-          }
-          break;
-
-        case QuestionType.openEnded:
-          if ((answer.openEndedAnswer ?? '')
-              .trim()
-              .isNotEmpty) {
-            answered++;
-          }
-          break;
-      }
-    }
-
-    return answered;
-  }
+  int get _answeredQuestions =>
+      ref.read(quizAttemptProvider)?.answeredCount ?? 0;
 
   @override
   Widget build(BuildContext context) {

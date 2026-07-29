@@ -14,6 +14,7 @@ import 'package:scholar_mind/features/quiz/screens/generate_quiz_screen.dart';
 import '../widgets/quiz_continue_section.dart';
 import '../widgets/quiz_library_section_widget.dart';
 import '../widgets/quiz_trash_section.dart';
+import 'quiz_feedback_screen.dart';
 
 class QuizLibraryScreen
     extends ConsumerStatefulWidget {
@@ -179,6 +180,20 @@ class _QuizLibraryScreenState
                 subtitle: isRoot
                     ? _subtitle
                     : 'Organize and access all your quizzes',
+                trailing: isRoot
+                    ? IconButton(
+                        icon: const Icon(Icons.flag_outlined),
+                        tooltip: 'Flagged Questions',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const QuizFeedbackScreen(),
+                            ),
+                          );
+                        },
+                      )
+                    : null,
               ),
 
               const SizedBox(height: 12),

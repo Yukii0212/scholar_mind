@@ -86,4 +86,19 @@ class NoteItem {
   final String? lockedBy;
   final DateTime? heartbeatAt;
   final DateTime? lockExpiresAt;
+
+  /// [name] with its extension guaranteed present. Uploaded files should
+  /// always carry `.extension`, but a rename made before that was
+  /// enforced could have stripped it — this repairs the effective
+  /// filename wherever the file is actually cached or opened, without
+  /// needing a data migration for notes renamed before the fix.
+  String get displayFileName {
+    if (isInternal || extension.isEmpty) return name;
+
+    final suffix = '.$extension';
+
+    return name.toLowerCase().endsWith(suffix.toLowerCase())
+        ? name
+        : '$name$suffix';
+  }
 }

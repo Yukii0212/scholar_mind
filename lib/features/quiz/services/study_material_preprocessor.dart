@@ -31,7 +31,7 @@ class StudyMaterialPreprocessor {
 
       final file = await FileCacheService.getFile(
         storagePath: note.storagePath,
-        fileName: note.name,
+        fileName: note.displayFileName,
       );
 
       final text = switch (note.extension.toLowerCase()) {

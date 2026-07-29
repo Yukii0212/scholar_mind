@@ -39,7 +39,7 @@ class _CreateQuizFolderDialogState
         const InputDecoration(
           labelText: 'Folder name',
           hintText:
-          'Networking',
+          'File name',
         ),
         onSubmitted: (_) => _submit(),
       ),

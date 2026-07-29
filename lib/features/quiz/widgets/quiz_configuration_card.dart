@@ -563,6 +563,68 @@ class QuizConfigurationCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: false,
+                  label: Text('Balanced'),
+                  icon: Icon(Icons.check_circle_outline),
+                ),
+                ButtonSegment(
+                  value: true,
+                  label: Text('Custom'),
+                  icon: Icon(Icons.tune),
+                ),
+              ],
+              selected: {questionTypeWeight.isCustom},
+              onSelectionChanged: (selection) async {
+                final selectedCustom = selection.first;
+
+                if (selectedCustom == questionTypeWeight.isCustom) {
+                  return;
+                }
+
+                if (selectedCustom) {
+                  onQuestionTypeWeightChanged(
+                    _equalWeights(questionTypes),
+                  );
+                  return;
+                }
+
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text(
+                      'Switch to Balanced Distribution?',
+                    ),
+                    content: const Text(
+                      'Your custom question distribution will be replaced with the recommended balanced distribution.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pop(dialogContext, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () =>
+                            Navigator.pop(dialogContext, true),
+                        child: const Text('Switch'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  onQuestionTypeWeightChanged(
+                    questionTypeWeight.copyWith(isCustom: false),
+                  );
+                }
+              },
+            ),
+
+            const SizedBox(height: 8),
+
             AnimatedSwitcher(
               duration: const Duration(
                 milliseconds: 250,
@@ -581,129 +643,23 @@ class QuizConfigurationCard extends StatelessWidget {
                 );
               },
               child: !questionTypeWeight.isCustom
-                  ? Column(
-                  key: const ValueKey(
-                    'balanced',
-                  ),
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
-                  children: [
-              Chip(
-                backgroundColor:
-                Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
-                avatar: const Icon(
-                  Icons.check_circle_outline,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Balanced (Recommended)',
-                ),
-              ),
-
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () {
-                    onQuestionTypeWeightChanged(
-                      _equalWeights(
-                        questionTypes,
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Customize',
-                  ),
-                ),
-              ),
-                  ],
-              )
-                  : Column(
-                key: const ValueKey(
-                  'custom',
-                ),
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
-              Chip(
-                backgroundColor:
-                Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
-                avatar: const Icon(
-                  Icons.tune,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Custom',
-                ),
-              ),
-
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () async {
-                    final discard =
-                    await showDialog<bool>(
-                      context: context,
-                      builder:
-                          (dialogContext) =>
-                          AlertDialog(
-                            title: const Text(
-                              'Discard Custom Distribution?',
-                            ),
-                            content: const Text(
-                              'Your custom question distribution will be discarded and ScholarMind will use the recommended balanced distribution instead.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(
-                                    dialogContext,
-                                    false,
-                                  );
-                                },
-                                child: const Text(
-                                  'Cancel',
-                                ),
-                              ),
-                              FilledButton(
-                                onPressed: () {
-                                  Navigator.pop(
-                                    dialogContext,
-                                    true,
-                                  );
-                                },
-                                child: const Text(
-                                  'Discard',
-                                ),
-                              ),
-                            ],
+                  ? Text(
+                      key: const ValueKey('balanced'),
+                      'Balanced distribution is recommended for most quizzes.',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
                           ),
-                    );
-
-                    if (discard == true) {
-                      onQuestionTypeWeightChanged(
-                        questionTypeWeight.copyWith(
-                          isCustom: false,
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text(
-                    'Discard',
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              ..._buildQuestionTypeSliders(
-                context,
-              ),
-                ],
-              ),
+                    )
+                  : Column(
+                      key: const ValueKey('custom'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _buildQuestionTypeSliders(context),
+                    ),
             ),
 
             TextFormField(

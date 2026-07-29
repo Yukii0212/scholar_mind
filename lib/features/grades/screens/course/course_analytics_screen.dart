@@ -63,6 +63,9 @@ class CourseAnalyticsScreenState extends ConsumerState<CourseAnalyticsScreen> {
               setProjectedScorePreview: (value) => ref
                   .read(courseAnalyticsProjectedScorePreviewProvider.notifier)
                   .state = value,
+              setRequiredScorePreview: (value) => ref
+                  .read(courseAnalyticsRequiredScorePreviewProvider.notifier)
+                  .state = value,
             ),
           ),
         ],

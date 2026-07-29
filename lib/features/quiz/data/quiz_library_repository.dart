@@ -152,11 +152,16 @@ class QuizLibraryRepository {
         .where('folderId', isEqualTo: parentFolderId)
         .get();
 
+    // Quiz documents serialize their dates as ISO-8601 strings (see
+    // validQuiz() in firestore.rules), not Firestore Timestamps like
+    // everything else here -- a Timestamp write is rejected by the rule.
+    final nowIso = DateTime.now().toIso8601String();
+
     for (final quiz in quizzes.docs) {
       await quiz.reference.update({
         'isDeleted': true,
-        'deletedAt': now,
-        'updatedAt': now,
+        'deletedAt': nowIso,
+        'updatedAt': nowIso,
       });
     }
   }
@@ -206,7 +211,9 @@ class QuizLibraryRepository {
       await quiz.reference.update({
         'isDeleted': false,
         'deletedAt': null,
-        'updatedAt': FieldValue.serverTimestamp(),
+        // Quiz documents serialize dates as ISO-8601 strings (see
+        // validQuiz() in firestore.rules) -- a Timestamp write is rejected.
+        'updatedAt': DateTime.now().toIso8601String(),
       });
     }
   }
@@ -216,10 +223,15 @@ class QuizLibraryRepository {
     required String quizId,
   }) {
 
+    final nowIso = DateTime.now().toIso8601String();
+
+    // Quiz documents serialize dates as ISO-8601 strings (see validQuiz()
+    // in firestore.rules), not Firestore Timestamps -- a Timestamp write
+    // here is rejected by the rule.
     return _quizzes(userId).doc(quizId).update({
       'isDeleted': true,
-      'deletedAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
+      'deletedAt': nowIso,
+      'updatedAt': nowIso,
     });
   }
 
@@ -230,7 +242,7 @@ class QuizLibraryRepository {
     return _quizzes(userId).doc(quizId).update({
       'isDeleted': false,
       'deletedAt': null,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedAt': DateTime.now().toIso8601String(),
     });
   }
 
@@ -302,7 +314,7 @@ class QuizLibraryRepository {
 
     await _quizzes(userId).doc(quizId).update({
       'name': normalizedName,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedAt': DateTime.now().toIso8601String(),
     });
   }
 
@@ -334,7 +346,7 @@ class QuizLibraryRepository {
 
     await _quizzes(userId).doc(quizId).update({
       'folderId': destinationFolderId,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedAt': DateTime.now().toIso8601String(),
     });
   }
 
@@ -414,7 +426,7 @@ class QuizLibraryRepository {
   }) {
     return _quizzes(userId).doc(quizId).update({
       'isFavorite': isFavorite,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'updatedAt': DateTime.now().toIso8601String(),
     });
   }
 

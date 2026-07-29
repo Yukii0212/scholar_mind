@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart' hide ShareResult;
 
 import '../providers/quiz_attempt_provider.dart';
 
 import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
+import '../services/quiz_result_pdf_exporter.dart';
 
 class QuizResultScreen
     extends ConsumerStatefulWidget {
@@ -28,6 +30,39 @@ class _QuizResultScreenState
     extends ConsumerState<QuizResultScreen> {
 
   late final List<bool> _expanded;
+
+  bool _exporting = false;
+
+  Future<void> _exportPdf(
+    QuizResponse quiz,
+    Map<int, QuizAnswer> answers,
+  ) async {
+    setState(() => _exporting = true);
+
+    try {
+      final file = await const QuizResultPdfExporter().export(
+        quiz: quiz,
+        answers: answers,
+      );
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'My results for "${quiz.title}" on ScholarMind.',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not export PDF: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _exporting = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -165,6 +200,21 @@ class _QuizResultScreenState
         title: const Text(
           'Quiz Results',
         ),
+        actions: [
+          IconButton(
+            icon: _exporting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.ios_share_rounded),
+            tooltip: 'Export as PDF',
+            onPressed: _exporting
+                ? null
+                : () => _exportPdf(widget.quiz, answers),
+          ),
+        ],
       ),
       body: ListView(
         padding:

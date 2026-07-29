@@ -38,6 +38,19 @@ INSTRUCTIONS
 
 $instructions
 ==========================
+PRIORITY ORDER
+==========================
+
+When sources conflict, resolve them in this order:
+
+1. The user's Extra Instructions (in INSTRUCTIONS above) — these are an
+   explicit, deliberate request. Follow them even if they push against the
+   defaults below.
+2. The Past Year Questions section, if present.
+3. Lecture Notes.
+4. General knowledge of the subject.
+
+==========================
 QUESTION STYLE
 ==========================
 
@@ -49,8 +62,19 @@ Treat them as the primary reference for:
 - question style
 - lecturer expectations
 - difficulty
+- topic scope — every generated question should fall within the subject
+  areas the past-year paper actually covers, not just the first few
 
-Use lecture notes primarily to determine WHAT concepts should be assessed.
+A single past-year paper is usually short relative to the number of
+questions requested. Once you've drawn what you can directly from it,
+keep generating within the SAME topics and scope it establishes, using
+lecture notes to fill in supporting detail — do not drift into unrelated
+topics from the lecture notes just because the past-year paper ran out of
+material to imitate.
+
+Use lecture notes primarily to determine WHAT concepts should be assessed,
+constrained to topics the past-year paper (when provided) has established
+as in-scope.
 
 Never copy past-year questions verbatim.
 

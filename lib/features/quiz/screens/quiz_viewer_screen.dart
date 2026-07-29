@@ -312,6 +312,10 @@ class _QuizViewerScreenState
 
                         return TextField(
                           controller: controller,
+                          minLines: 4,
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
+                          textInputAction: TextInputAction.newline,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Enter your answer...',

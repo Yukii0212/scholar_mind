@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../core/theme/app_design.dart';
+import '../../../help/widgets/help_anchor.dart';
 import '../../data/models/course_model.dart';
 import '../../providers/assessment/assessment_provider.dart';
 import '../../providers/grading/grading_provider.dart';
@@ -43,9 +44,13 @@ class CourseTargetsCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const ScholarSectionHeader(
-                    title: 'Required Score Calculator',
-                    subtitle: 'One remaining assessment prediction',
+                  const HelpAnchor(
+                    pageId: 'course-analytics',
+                    anchorId: 'required-score-calculator',
+                    child: ScholarSectionHeader(
+                      title: 'Required Score Calculator',
+                      subtitle: 'One remaining assessment prediction',
+                    ),
                   ),
                   const Gap(18),
                   if (!summary.canCalculateRequiredScore)
@@ -219,10 +224,44 @@ class _ScoreRequirementCard extends StatelessWidget {
                       ),
                 ),
               ),
+              const Gap(8),
+              // The goal itself, so "Target Score" reads as a labeled pair
+              // right here — the big number below is never mistaken for
+              // this value, since it's a different question entirely
+              // (what's needed on the one assessment left, not the goal).
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: (achievable
+                          ? palette.brandStart
+                          : Theme.of(context).colorScheme.error)
+                      .withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${target.toStringAsFixed(1)}%',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: achievable
+                            ? palette.brandEnd
+                            : Theme.of(context).colorScheme.error,
+                      ),
+                ),
+              ),
             ],
           ),
-          const Gap(14),
+          const Gap(16),
           if (achievable) ...[
+            Text(
+              'Needed in $component',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: palette.textMuted,
+                  ),
+            ),
+            const Gap(2),
             Align(
               alignment: Alignment.centerLeft,
               child: ConstrainedBox(
@@ -239,16 +278,9 @@ class _ScoreRequirementCard extends StatelessWidget {
                 ),
               ),
             ),
-            const Gap(6),
-            Text(
-              'Required in $component to achieve ${target.toStringAsFixed(1)}%',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: palette.textMuted,
-                  ),
-            ),
           ] else ...[
             Text(
-              'Target no longer achievable',
+              'No longer achievable',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                     fontWeight: FontWeight.w800,

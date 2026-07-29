@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/models/share/share_expiry.dart';
 import '../domain/models/share/share_result.dart';
-import '../providers/export_controller.dart';
+import '../providers/export/export_controller.dart';
 import '../widgets/screen/share/share_link_view.dart';
 import '../widgets/screen/share/share_qr_view.dart';
 

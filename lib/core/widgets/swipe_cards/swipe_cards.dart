@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_design.dart';
 import 'swipe_card_item.dart';
-import 'swipe_card_selector.dart';
 
+/// Shows one of [items] at a time, at its natural full height, switched via
+/// a labeled bar beneath it (tap a label, or swipe the bar) — matching the
+/// dashboard's countdown/calendar switcher
+/// (`lib/features/home/widgets/countdown/dashboard_countdown_carousel.dart`).
+///
+/// Deliberately does not clip or collapse a page's content: an earlier
+/// version showed a fixed-height preview you tapped to expand into a full
+/// screen, which silently hid overflowing content instead of surfacing it,
+/// and made programmatically bringing a specific element into view (for
+/// the help tutorial) fight several layers of carousel-internal state.
+/// Showing the real content directly avoids both problems.
 class SwipeCards extends StatefulWidget {
   const SwipeCards({
     super.key,
@@ -18,629 +29,185 @@ class SwipeCards extends StatefulWidget {
   final ValueChanged<int>? onPageChanged;
 
   @override
-  State<SwipeCards> createState() =>
-      _SwipeCardsState();
+  State<SwipeCards> createState() => SwipeCardsState();
 }
 
-class _SwipeCardsState
-    extends State<SwipeCards>
-    with TickerProviderStateMixin {
-
-  static const int _virtualMiddle = 1000000;
-
-  late PageController
-  _pageController;
-
-  PageController?
-  _expandedPageController;
-
-  late int _virtualIndex;
-
+class SwipeCardsState extends State<SwipeCards> {
   late int _currentIndex;
-
-  bool _showSwipeHint = true;
-
-  bool _expanded = false;
-
-  Future<void> _showExpandedCard(
-      int initialVirtualIndex,
-      ) async {
-
-    _expandedPageController =
-        PageController(
-          initialPage:
-          initialVirtualIndex,
-          viewportFraction: 1,
-        );
-
-    setState(() {
-      _expanded = true;
-    });
-
-    await showGeneralDialog(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: true,
-      barrierLabel: 'Dismiss',
-      barrierColor: Colors.black,
-      transitionDuration:
-      const Duration(
-        milliseconds: 250,
-      ),
-      pageBuilder:
-          (_, __, ___) {
-
-        return Material(
-          color: Colors.transparent,
-          child: GestureDetector(
-            behavior:
-            HitTestBehavior.opaque,
-            onTap: () {
-              Navigator.of(_).pop();
-            },
-            child: SafeArea(
-              child: Center(
-                child: GestureDetector(
-                  onTap: () {},
-                  child:
-                  FractionallySizedBox(
-                    widthFactor: 0.92,
-                    heightFactor: 0.92,
-                    child: Material(
-                      elevation: 16,
-                      borderRadius:
-                      BorderRadius.circular(
-                        24,
-                      ),
-                      clipBehavior:
-                      Clip.antiAlias,
-                      child:
-                      _buildExpandedPager(
-                        _expandedPageController!,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder:
-          (
-          context,
-          animation,
-          secondaryAnimation,
-          child,
-          ) {
-
-        return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale:
-            CurvedAnimation(
-              parent: animation,
-              curve:
-              Curves.easeOutCubic,
-            ),
-            child: child,
-          ),
-        );
-      },
-    );
-
-    if (_expandedPageController != null) {
-
-      final page =
-          _expandedPageController!
-              .page
-              ?.round() ??
-              _virtualIndex;
-
-      _virtualIndex = page;
-
-      _currentIndex =
-          page %
-              widget.items.length;
-
-      _pageController.jumpToPage(
-        page,
-      );
-
-      _expandedPageController!
-          .dispose();
-
-      _expandedPageController =
-      null;
-    }
-
-    if (mounted) {
-      setState(() {
-        _expanded = false;
-      });
-    }
-  }
 
   @override
   void initState() {
     super.initState();
-
-    _virtualIndex =
-        _virtualMiddle +
-            widget.initialIndex;
-
-    _currentIndex =
-        widget.initialIndex;
-
-    _pageController =
-        PageController(
-          initialPage: _virtualIndex,
-          viewportFraction: 0.90,
-        );
+    _currentIndex = widget.initialIndex;
   }
 
   @override
-  void didUpdateWidget(
-      covariant SwipeCards oldWidget,
-      ) {
+  void didUpdateWidget(covariant SwipeCards oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.items != widget.items ||
-        oldWidget.initialIndex !=
-            widget.initialIndex) {
-
-      _virtualIndex =
-          _virtualMiddle +
-              widget.initialIndex;
-
-      _currentIndex =
-          widget.initialIndex;
-
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-
-        _pageController.jumpToPage(
-          _virtualIndex,
-        );
-      });
+    if (oldWidget.initialIndex != widget.initialIndex &&
+        widget.initialIndex != _currentIndex) {
+      setState(() => _currentIndex = widget.initialIndex);
     }
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  /// Switches directly to [index]. Used by the help tutorial to bring a
+  /// specific card into view before spotlighting something inside it.
+  void showPage(int index) {
+    if (index == _currentIndex) return;
+    setState(() => _currentIndex = index);
+    widget.onPageChanged?.call(_currentIndex);
   }
 
-  Future<void> _showSelector() async {
-    await showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (_) {
-        return SwipeCardSelector(
-          items: widget.items,
-          currentIndex: _currentIndex,
-          onSelected: (index) {
-
-            final target =
-                _virtualIndex -
-                    _currentIndex +
-                    index;
-
-            _pageController.animateToPage(
-              target,
-              duration:
-              const Duration(
-                milliseconds: 300,
-              ),
-              curve:
-              Curves.easeInOut,
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildExpandedPager(
-      PageController controller,
-      ) {
-
-    return PageView.builder(
-      controller: controller,
-      padEnds: false,
-
-      onPageChanged:
-          (virtualIndex) {
-
-        setState(() {
-
-          _virtualIndex =
-              virtualIndex;
-
-          _currentIndex =
-              virtualIndex %
-                  widget.items.length;
-        });
-
-        widget.onPageChanged
-            ?.call(
-          _currentIndex,
-        );
-      },
-
-      itemBuilder:
-          (
-          context,
-          virtualIndex,
-          ) {
-
-        final index =
-            virtualIndex %
-                widget.items.length;
-
-        return Padding(
-            padding:
-            const EdgeInsets.all(
-              20,
-            ),
-            child:
-            NotificationListener<
-                ScrollNotification>(
-              onNotification: (_) => true,
-              child:
-              SingleChildScrollView(
-                physics:
-                const BouncingScrollPhysics(
-                  parent:
-                  AlwaysScrollableScrollPhysics(),
-                ),
-            child:
-            widget
-                .items[index]
-                .child,
-              ),
-            ),
-        );
-      },
-    );
-  }
-
-  Widget _buildIndicator(
-      BuildContext context) {
-    return Row(
-      mainAxisAlignment:
-      MainAxisAlignment.center,
-      children: List.generate(
-        widget.items.length,
-            (index) {
-          final selected =
-              index == _currentIndex;
-
-          return AnimatedContainer(
-            duration:
-            const Duration(
-              milliseconds: 250,
-            ),
-            margin:
-            const EdgeInsets
-                .symmetric(
-              horizontal: 4,
-            ),
-            width:
-            selected ? 18 : 8,
-            height: 8,
-            decoration:
-            BoxDecoration(
-              color: selected
-                  ? Theme.of(
-                  context)
-                  .colorScheme
-                  .primary
-                  : Theme.of(
-                  context)
-                  .dividerColor,
-              borderRadius:
-              BorderRadius
-                  .circular(99),
-            ),
-          );
-        },
-      ),
-    );
+  void _switchBy(int delta) {
+    final next =
+        (_currentIndex + delta + widget.items.length) % widget.items.length;
+    showPage(next);
   }
 
   @override
   Widget build(BuildContext context) {
-    final current =
-    widget.items[_currentIndex];
-
     return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment
-          .stretch,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _ViewSwitchBar(
+          items: widget.items,
+          currentIndex: _currentIndex,
+          onSwipe: _switchBy,
+          onSelected: showPage,
+        ),
+        const SizedBox(height: 14),
+        GestureDetector(
+          // Lets you swipe anywhere on the card itself, not just the
+          // switch bar above — the card's own content has no competing
+          // horizontal gesture, so this is unambiguous.
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
 
-        Row(
+            if (velocity < -100) {
+              _switchBy(1);
+            } else if (velocity > 100) {
+              _switchBy(-1);
+            }
+          },
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: KeyedSubtree(
+                key: ValueKey(_currentIndex),
+                child: widget.items[_currentIndex].child,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ViewSwitchBar extends StatelessWidget {
+  const _ViewSwitchBar({
+    required this.items,
+    required this.currentIndex,
+    required this.onSwipe,
+    required this.onSelected,
+  });
+
+  final List<SwipeCardItem> items;
+  final int currentIndex;
+  final ValueChanged<int> onSwipe;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.scholarPalette;
+
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+
+        if (velocity < -100) {
+          onSwipe(1);
+        } else if (velocity > 100) {
+          onSwipe(-1);
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        decoration: BoxDecoration(
+          color: palette.panelStrong.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: palette.stroke.withValues(alpha: 0.6)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-
-            Icon(current.icon),
-
-            const SizedBox(
-                width: 12),
-
-            Expanded(
-              child: Text(
-                current.title,
-                style: Theme.of(
-                    context)
-                    .textTheme
-                    .titleLarge,
+            for (var i = 0; i < items.length; i++)
+              _SwitchBarItem(
+                item: items[i],
+                selected: i == currentIndex,
+                onTap: () => onSelected(i),
               ),
-            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-            AnimatedOpacity(
-              opacity:
-              _expanded
-                  ? 0
-                  : 1,
-              duration:
-              const Duration(
-                milliseconds: 200,
-              ),
-              child: Text(
-                '${_currentIndex + 1} / ${widget.items.length}',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium,
-              ),
-            ),
+class _SwitchBarItem extends StatelessWidget {
+  const _SwitchBarItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
 
-            IconButton(
-              onPressed:
-              _showSelector,
-              icon: const Icon(
-                Icons.view_headline,
-              ),
-              tooltip:
-              'Browse Analytics',
+  final SwipeCardItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.scholarPalette;
+    final color = selected
+        ? Theme.of(context).colorScheme.primary
+        : palette.textMuted;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.16)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(item.icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              item.title,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
             ),
           ],
         ),
-
-        const SizedBox(
-            height: 8),
-
-        AnimatedOpacity(
-          opacity:
-          _expanded
-              ? 0
-              : 1,
-          duration:
-          const Duration(
-            milliseconds: 200,
-          ),
-          child:
-          _buildIndicator(
-            context,
-          ),
-        ),
-
-        const SizedBox(
-            height: 8),
-
-        AnimatedOpacity(
-          opacity:
-          !_expanded &&
-              _showSwipeHint
-              ? 1
-              : 0,
-          duration:
-          const Duration(
-            milliseconds: 350,
-          ),
-          child: const Padding(
-            padding:
-            EdgeInsets.only(
-              bottom: 12,
-            ),
-            child: Text(
-              '← Swipe for more analytics →',
-              textAlign:
-              TextAlign.center,
-            ),
-          ),
-        ),
-
-    SizedBox(
-    height: 420,
-    child: ClipRect(
-    child: IgnorePointer(
-    ignoring: _expanded,
-    child: PageView.builder(
-            controller:
-            _pageController,
-
-      onPageChanged:
-          (virtualIndex) {
-
-        _virtualIndex =
-            virtualIndex;
-
-              setState(() {
-
-                _virtualIndex =
-                    virtualIndex;
-
-                _currentIndex =
-                    virtualIndex %
-                        widget.items.length;
-
-                _showSwipeHint =
-                false;
-              });
-
-              widget.onPageChanged
-                  ?.call(
-                _currentIndex,
-              );
-            },
-
-            itemBuilder:
-                (
-                context,
-                virtualIndex,
-                ) {
-
-              final index =
-                  virtualIndex %
-                      widget.items.length;
-
-              return Padding(
-                padding:
-                EdgeInsets.symmetric(
-                  horizontal:
-                  _expanded
-                      ? 0
-                      : 6,
-                ),
-                child:
-                AnimatedScale(
-                  duration:
-                  const Duration(
-                    milliseconds:
-                    250,
-                  ),
-                  curve:
-                  Curves.easeOut,
-                  scale:
-                  !_expanded &&
-                      index ==
-                          _currentIndex
-                      ? 1
-                      : 0.96,
-                  child: GestureDetector(
-                    behavior:
-                    HitTestBehavior.opaque,
-                    onTap:
-                    widget
-                        .items[index]
-                        .expandable
-                        ? () => _showExpandedCard(
-                      virtualIndex,
-                    )
-                        : null,
-                    child: Hero(
-                      tag: 'swipe-card-$index',
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-
-                            ClipRect(
-                              child: AbsorbPointer(
-                                child: widget
-                                    .items[index]
-                                    .child,
-                              ),
-                            ),
-
-                            if (!_expanded)
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                height: 160,
-                                child: IgnorePointer(
-                                  child: DecoratedBox(
-                                    decoration:
-                                    BoxDecoration(
-                                      gradient:
-                                      LinearGradient(
-                                        begin:
-                                        Alignment.topCenter,
-                                        end:
-                                        Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.transparent,
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .surface,
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .surface,
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                            if (!_expanded)
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                bottom: 48,
-                                child: IgnorePointer(
-                                  child: Column(
-                                    mainAxisSize:
-                                    MainAxisSize.min,
-                                    children: [
-
-                                      Icon(
-                                        Icons.open_in_full,
-                                        size: 28,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                      ),
-
-                                      const SizedBox(
-                                        height: 12,
-                                      ),
-
-                                      Text(
-                                        'Tap to expand',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                          fontWeight:
-                                          FontWeight.bold,
-                                        ),
-                                      ),
-
-                                      const SizedBox(
-                                        height: 4,
-                                      ),
-
-                                      Text(
-                                        'View full analytics',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-    ),
-    ),
-    ),
-    ),
-      ],
+      ),
     );
   }
 }

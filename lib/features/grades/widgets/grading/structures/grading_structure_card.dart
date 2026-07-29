@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../../core/theme/app_design.dart';
+import '../../../../help/widgets/help_anchor.dart';
+import '../../../help/grading_structure_preview_provider.dart';
 import '../../../providers/grading/grading_structure_draft_provider.dart';
 import '../../dialogs/grading/grading_component_dialog.dart';
 import '../component/grading_component_list.dart';
@@ -18,6 +20,8 @@ class GradingStructureCard extends ConsumerWidget {
       (sum, component) => sum + component.weight,
     );
     final isBalanced = (total - 100).abs() < 0.001;
+    final showExample = draft.components.isEmpty &&
+        ref.watch(gradingStructureHelpPreviewProvider);
 
     return ScholarPanel(
       child: Column(
@@ -31,26 +35,32 @@ class GradingStructureCard extends ConsumerWidget {
             trailing: _BalanceBadge(isBalanced: isBalanced),
           ),
           const Gap(18),
-          if (draft.components.isEmpty)
+          if (showExample)
+            const _ExampleComponentCard()
+          else if (draft.components.isEmpty)
             const _EmptyStructure()
           else
             GradingComponentList(components: draft.components),
           const Gap(18),
-          FilledButton.icon(
-            onPressed: () async {
-              final name = await showDialog<String>(
-                context: context,
-                builder: (_) => const GradingComponentDialog(),
-              );
+          HelpAnchor(
+            pageId: 'grading-structure',
+            anchorId: 'add-component-button',
+            child: FilledButton.icon(
+              onPressed: () async {
+                final name = await showDialog<String>(
+                  context: context,
+                  builder: (_) => const GradingComponentDialog(),
+                );
 
-              if (name == null) return;
+                if (name == null) return;
 
-              ref
-                  .read(gradingStructureDraftProvider.notifier)
-                  .addComponent(name: name);
-            },
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Add Component'),
+                ref
+                    .read(gradingStructureDraftProvider.notifier)
+                    .addComponent(name: name);
+              },
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add Component'),
+            ),
           ),
           const Gap(18),
           _AdvancedControls(
@@ -70,6 +80,137 @@ class GradingStructureCard extends ConsumerWidget {
                   .read(gradingStructureDraftProvider.notifier)
                   .resetDistribution();
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A non-interactive stand-in for a real `GradingComponentCard`, shown only
+/// while the "What is a Component?"/"What is a Subcomponent?" help
+/// tutorial is on a step that needs one and the user's own structure is
+/// still empty — see `grading_structure_help_topics.dart`. Reuses the same
+/// anchor ids those steps already target, so nothing else needs to change
+/// once a real component exists and this stops being shown.
+class _ExampleComponentCard extends StatelessWidget {
+  const _ExampleComponentCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.scholarPalette;
+
+    return ScholarPanel(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.brandStart.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Example',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: palette.brandEnd,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const Gap(10),
+          HelpAnchor(
+            pageId: 'grading-structure',
+            anchorId: 'component-header',
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Assignments',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Text(
+                  '40%',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: palette.textMuted,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const Gap(16),
+          Divider(color: palette.stroke),
+          const Gap(10),
+          ScholarSectionHeader(
+            title: 'Subcomponents',
+            subtitle: '2 example items inside this component',
+          ),
+          const Gap(4),
+          const _ExampleSubcomponentRow(name: 'Homework', weight: 50),
+          Divider(height: 1, color: palette.stroke),
+          const _ExampleSubcomponentRow(name: 'Quizzes', weight: 50),
+          const Gap(8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: HelpAnchor(
+              pageId: 'grading-structure',
+              anchorId: 'add-subcomponent-button',
+              child: TextButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add Subcomponent'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExampleSubcomponentRow extends StatelessWidget {
+  const _ExampleSubcomponentRow({
+    required this.name,
+    required this.weight,
+  });
+
+  final String name;
+  final int weight;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.scholarPalette;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(
+            Icons.subdirectory_arrow_right_rounded,
+            size: 18,
+            color: palette.textMuted,
+          ),
+          const Gap(8),
+          Expanded(
+            child: Text(
+              name,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          Text(
+            '$weight%',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: palette.textMuted,
+                ),
           ),
         ],
       ),

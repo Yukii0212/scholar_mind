@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/models/export/export_module.dart';
-import '../providers/export_summary_provider.dart';
+import '../providers/export/export_summary_provider.dart';
 import '../notes/widgets/export_module_tree.dart';
 import '../widgets/screen/library/export_flat_item_list.dart';
 import '../widgets/screen/library/export_grouped_item_list.dart';

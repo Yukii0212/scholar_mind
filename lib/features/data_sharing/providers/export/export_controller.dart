@@ -1,10 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:scholar_mind/features/data_sharing/providers/share_link_service_provider.dart';
-import 'package:scholar_mind/features/data_sharing/providers/share_upload_service_provider.dart';
+import 'package:scholar_mind/features/data_sharing/providers/share/share_link_service_provider.dart';
+import 'package:scholar_mind/features/data_sharing/providers/share/share_upload_service_provider.dart';
 import 'package:uuid/uuid.dart';
 
-import '../domain/models/share/share_expiry.dart';
-import '../domain/models/share/share_result.dart';
+import '../../domain/models/share/share_expiry.dart';
+import '../../domain/models/share/share_result.dart';
 import 'export_request_provider.dart';
 import 'export_service_provider.dart';
 

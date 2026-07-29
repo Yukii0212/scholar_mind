@@ -39,96 +39,102 @@ class _DashboardCalendarPageState
       firstDayOfWeek: _firstDayOfWeek,
     );
 
-    return ScholarPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _monthYear(_displayedMonth),
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _displayedMonth = DateTime(
-                      _displayedMonth.year,
-                      _displayedMonth.month - 1,
-                    );
-                  });
-                },
-                icon: const Icon(Icons.chevron_left_rounded),
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _displayedMonth = DateTime(
-                      _displayedMonth.year,
-                      _displayedMonth.month + 1,
-                    );
-                  });
-                },
-                icon: const Icon(Icons.chevron_right_rounded),
-              ),
-            ],
-          ),
-          const Gap(16),
-          Row(
-            children: _weekdayHeaders().map((weekday) {
-              return Expanded(
-                child: Center(
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+
+        if (velocity < -100) {
+          _changeMonth(1);
+        } else if (velocity > 100) {
+          _changeMonth(-1);
+        }
+      },
+      child: ScholarPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
                   child: Text(
-                    weekday,
+                    _monthYear(_displayedMonth),
                     style: Theme.of(context)
                         .textTheme
-                        .labelMedium
+                        .titleMedium
                         ?.copyWith(
-                      color: palette.textMuted,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-          const Gap(10),
-          DashboardCalendarGrid(
-            days: days,
-            selectedDate: _selectedDate,
-            eventCountBuilder: (date) {
-              final count = countdowns.where((item) {
-                if (item.isCompleted) return false;
+                IconButton(
+                  onPressed: () => _changeMonth(-1),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
+                IconButton(
+                  onPressed: () => _changeMonth(1),
+                  icon: const Icon(Icons.chevron_right_rounded),
+                ),
+              ],
+            ),
+            const Gap(16),
+            Row(
+              children: _weekdayHeaders().map((weekday) {
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      weekday,
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelMedium
+                          ?.copyWith(
+                        color: palette.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const Gap(10),
+            DashboardCalendarGrid(
+              days: days,
+              selectedDate: _selectedDate,
+              eventCountBuilder: (date) {
+                final count = countdowns.where((item) {
+                  if (item.isCompleted) return false;
 
-                return _isSameDate(item.dueDate, date);
-              }).length;
+                  return _isSameDate(item.dueDate, date);
+                }).length;
 
-              if (count == 0) return 0;
-              if (count == 1) return 1;
+                if (count == 0) return 0;
+                if (count == 1) return 1;
 
-              return 2;
-            },
-            onDateSelected: (date) {
-              setState(() {
-                _selectedDate = date;
-              });
+                return 2;
+              },
+              onDateSelected: (date) {
+                setState(() {
+                  _selectedDate = date;
+                });
 
-              _showEventsSheet(
-                context,
-                date,
-              );
-            },
-          ),
-        ],
+                _showEventsSheet(
+                  context,
+                  date,
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  void _changeMonth(int delta) {
+    setState(() {
+      _displayedMonth = DateTime(
+        _displayedMonth.year,
+        _displayedMonth.month + delta,
+      );
+    });
   }
 
   List<DateTime?> _buildCalendarDays({

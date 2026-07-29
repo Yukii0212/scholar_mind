@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../services/share_link_service.dart';
+import '../../services/share_link_service.dart';
 
 part 'share_link_service_provider.g.dart';
 

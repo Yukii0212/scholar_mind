@@ -45,11 +45,17 @@ Extra instructions: ${extraInstructions.trim().isEmpty ? 'None.' : extraInstruct
 Rules:
 1. Every flashcard must be answerable using only the supplied study material.
 2. Do not invent facts.
-3. Keep the front concise and question-like.
-4. Keep the back clear, useful, and teach the concept.
-5. Use markdown where it improves readability.
-6. Never reference page numbers, slide numbers, images, or "the notes".
-7. Return ONLY valid JSON.
+3. Only cover the core concepts, definitions, relationships, and facts a
+   student would actually need to know for an exam or to understand the
+   topic. Prioritize what an instructor would consider important.
+4. Skip trivial, incidental, or one-off details (e.g. a specific number
+   used only in an illustrative example, formatting artifacts, or an
+   offhand aside) unless it is itself the concept being tested.
+5. Keep the front concise and question-like.
+6. Keep the back clear, useful, and teach the concept.
+7. Use markdown where it improves readability.
+8. Never reference page numbers, slide numbers, images, or "the notes".
+9. Return ONLY valid JSON.
 
 JSON format:
 

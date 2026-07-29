@@ -27,7 +27,7 @@ class DashboardCalendarGrid extends StatelessWidget {
         crossAxisCount: 7,
         crossAxisSpacing: 6,
         mainAxisSpacing: 6,
-        childAspectRatio: .82,
+        childAspectRatio: .68,
       ),
       itemBuilder: (context, index) {
         final day = days[index];

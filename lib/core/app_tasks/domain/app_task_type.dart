@@ -16,4 +16,6 @@ enum AppTaskType {
   shareImport,
 
   sync,
+
+  bulkDelete,
 }

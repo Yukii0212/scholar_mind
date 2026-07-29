@@ -35,7 +35,7 @@ class DashboardCalendarDay extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(
             horizontal: 4,
-            vertical: 6,
+            vertical: 4,
           ),
           decoration: BoxDecoration(
             color: isSelected
@@ -49,6 +49,7 @@ class DashboardCalendarDay extends StatelessWidget {
             ),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 '${date!.day}',
@@ -57,11 +58,11 @@ class DashboardCalendarDay extends StatelessWidget {
                     .labelLarge
                     ?.copyWith(
                   fontWeight: FontWeight.w700,
+                  height: 1,
                 ),
               ),
-              const Spacer(),
               SizedBox(
-                height: 12,
+                height: 8,
                 child: _EventIndicator(
                   eventCount: eventCount,
                 ),

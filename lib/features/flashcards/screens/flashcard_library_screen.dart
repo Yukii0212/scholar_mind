@@ -110,10 +110,6 @@ class _LibrarySummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalCards = decks.fold<int>(0, (sum, deck) => sum + deck.cardCount);
-    final aiDecks = decks
-        .where((deck) =>
-            deck.generationMethod == FlashcardGenerationMethod.aiGenerated)
-        .length;
 
     return ScholarPanel(
       child: LayoutBuilder(
@@ -122,7 +118,6 @@ class _LibrarySummary extends StatelessWidget {
           final tiles = [
             _SummaryTile(Icons.layers_outlined, 'Decks', '${decks.length}'),
             _SummaryTile(Icons.style_outlined, 'Cards', '$totalCards'),
-            _SummaryTile(Icons.auto_awesome_outlined, 'AI Decks', '$aiDecks'),
           ];
 
           if (narrow) {

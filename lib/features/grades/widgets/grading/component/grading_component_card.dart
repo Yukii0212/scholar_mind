@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../../core/theme/app_design.dart';
+import '../../../../help/widgets/help_anchor.dart';
 import '../../../domain/grading/grading_component_draft.dart';
 import '../../../providers/grading/grading_structure_draft_provider.dart';
 import 'grading_component_header.dart';
@@ -13,9 +14,16 @@ class GradingComponentCard extends ConsumerStatefulWidget {
   const GradingComponentCard({
     super.key,
     required this.component,
+    this.isFirst = false,
   });
 
   final GradingComponentDraft component;
+
+  /// Only the first card in the list registers the help anchors below —
+  /// anchor ids must be unique per page, and this card repeats once per
+  /// component, so we spotlight one concrete example rather than every
+  /// instance.
+  final bool isFirst;
 
   @override
   ConsumerState<GradingComponentCard> createState() =>
@@ -76,7 +84,13 @@ class _GradingComponentCardState extends ConsumerState<GradingComponentCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            GradingComponentHeader(component: widget.component),
+            widget.isFirst
+                ? HelpAnchor(
+                    pageId: 'grading-structure',
+                    anchorId: 'component-header',
+                    child: GradingComponentHeader(component: widget.component),
+                  )
+                : GradingComponentHeader(component: widget.component),
             const Gap(14),
             GradingComponentWeightEditor(component: widget.component),
             if (children.isNotEmpty) ...[
@@ -87,23 +101,34 @@ class _GradingComponentCardState extends ConsumerState<GradingComponentCard> {
                 title: 'Subcomponents',
                 subtitle: '${children.length} items inside this component',
               ),
-              const Gap(10),
-              ...children.map(
-                (child) => GradingSubcomponentRow(
-                  key: ValueKey(child.id),
-                  component: child,
+              const Gap(4),
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) Divider(height: 1, color: palette.stroke),
+                GradingSubcomponentRow(
+                  key: ValueKey(children[i].id),
+                  component: children[i],
                 ),
-              ),
+              ],
               _SubcomponentSummary(component: widget.component),
             ],
             const Gap(8),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _showAddSubcomponentDialog,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add Subcomponent'),
-              ),
+              child: widget.isFirst
+                  ? HelpAnchor(
+                      pageId: 'grading-structure',
+                      anchorId: 'add-subcomponent-button',
+                      child: TextButton.icon(
+                        onPressed: _showAddSubcomponentDialog,
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Add Subcomponent'),
+                      ),
+                    )
+                  : TextButton.icon(
+                      onPressed: _showAddSubcomponentDialog,
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Add Subcomponent'),
+                    ),
             ),
           ],
         ),
@@ -129,7 +154,9 @@ class _SubcomponentSummary extends StatelessWidget {
     final hasIncompleteWeights = component.children.any(
       (child) => child.weight <= 0 || child.name.trim().isEmpty,
     );
-    final valid = total == 100 || total == component.weight;
+    final isRelative = (total - 100).abs() < 0.01;
+    final valid =
+        isRelative || (total - component.weight).abs() < 0.01;
 
     final (message, color, icon) = hasIncompleteWeights
         ? (
@@ -139,7 +166,7 @@ class _SubcomponentSummary extends StatelessWidget {
           )
         : valid
             ? (
-                total == 100
+                isRelative
                     ? 'Using relative weighting inside ${component.name}.'
                     : 'Using final course weighting.',
                 palette.success,
@@ -151,24 +178,18 @@ class _SubcomponentSummary extends StatelessWidget {
                 Icons.warning_amber_rounded,
               );
 
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.42)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 18),
-          const Gap(8),
+          Icon(icon, color: color, size: 16),
+          const Gap(6),
           Expanded(
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: color,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
           ),

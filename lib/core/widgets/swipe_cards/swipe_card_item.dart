@@ -5,7 +5,6 @@ class SwipeCardItem {
     required this.title,
     required this.icon,
     required this.child,
-    this.expandable = true,
   });
 
   final String title;
@@ -13,6 +12,4 @@ class SwipeCardItem {
   final IconData icon;
 
   final Widget child;
-
-  final bool expandable;
 }

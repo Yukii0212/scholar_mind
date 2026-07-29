@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:scholar_mind/features/auth/providers/auth_provider.dart';
 
-import '../domain/models/export/export_request.dart';
+import '../../domain/models/export/export_request.dart';
 import 'export_selection_provider.dart';
 
 part 'export_request_provider.g.dart';

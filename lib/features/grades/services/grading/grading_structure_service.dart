@@ -67,7 +67,10 @@ class GradingStructureService {
         );
 
         return component.copyWith(
-          children: children,
+          children: _balanceChildren(
+            children,
+            autoBalance: draft.autoBalance,
+          ),
         );
       }).toList(),
     );
@@ -115,13 +118,18 @@ class GradingStructureService {
       ) {
     return draft.copyWith(
       components: draft.components.map((component) {
+        final children = component.children
+            .where(
+              (child) =>
+          child.id != componentId,
+        )
+            .toList();
+
         return component.copyWith(
-          children: component.children
-              .where(
-                (child) =>
-            child.id != componentId,
-          )
-              .toList(),
+          children: _balanceChildren(
+            children,
+            autoBalance: draft.autoBalance,
+          ),
         );
       }).toList(),
     );
@@ -309,19 +317,64 @@ class GradingStructureService {
       }) {
     return draft.copyWith(
       components: draft.components.map((component) {
-        return component.copyWith(
-          children: component.children.map((child) {
-            if (child.id != componentId) {
-              return child;
-            }
+        final index = component.children.indexWhere(
+              (child) => child.id == componentId,
+        );
 
-            return child.copyWith(
-              weight: weight,
-            );
-          }).toList(),
+        if (index == -1) {
+          return component;
+        }
+
+        final values = component.children
+            .map((child) => child.weight)
+            .toList();
+
+        values[index] = weight;
+
+        if (!draft.autoBalance) {
+          return component.copyWith(
+            children: [
+              for (var i = 0; i < component.children.length; i++)
+                component.children[i].copyWith(
+                  weight: values[i],
+                ),
+            ],
+          );
+        }
+
+        final balanced = DistributionBalancer.rebalanceAfterEdit(
+          values: values,
+          editedIndex: index,
+        );
+
+        return component.copyWith(
+          children: [
+            for (var i = 0; i < component.children.length; i++)
+              component.children[i].copyWith(
+                weight: balanced[i],
+              ),
+          ],
         );
       }).toList(),
     );
+  }
+
+  static List<GradingComponentDraft> _balanceChildren(
+      List<GradingComponentDraft> children, {
+        required bool autoBalance,
+      }) {
+    if (!autoBalance || children.isEmpty) {
+      return children;
+    }
+
+    final balanced = DistributionBalancer.equalise(
+      itemCount: children.length,
+    );
+
+    return [
+      for (var i = 0; i < children.length; i++)
+        children[i].copyWith(weight: balanced[i]),
+    ];
   }
 
   static bool validate(
@@ -351,8 +404,8 @@ class GradingStructureService {
         return false;
       }
 
-      if (total != 100 &&
-          total != component.weight) {
+      if ((total - 100).abs() > 0.01 &&
+          (total - component.weight).abs() > 0.01) {
         return false;
       }
     }

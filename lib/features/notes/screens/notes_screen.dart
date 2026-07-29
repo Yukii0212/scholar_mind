@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:gap/gap.dart';
 
+import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/services/app_task_controller.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../data/repository/library_repository.dart';
 
 import '../domain/library_folder.dart';
@@ -255,17 +260,29 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     if (confirmed != true) return;
 
-    final success = await ref
-        .read(
-          libraryActionControllerProvider.notifier,
-        )
-        .permanentlyDeleteAll();
+    final userId = ref.read(firebaseAuthProvider).currentUser?.uid;
+    if (userId == null) return;
+
+    final repository = ref.read(libraryRepositoryProvider);
+    final taskController = ref.read(appTaskControllerProvider);
+
+    unawaited(
+      taskController.run<void>(
+        id: 'notes_bulk_delete',
+        type: AppTaskType.bulkDelete,
+        title: 'Emptying Notes trash',
+        task: (progress) => repository.permanentlyDeleteAll(
+          userId: userId,
+        ),
+      ),
+    );
 
     if (!mounted) return;
 
-    _showResult(
-      success,
-      successMessage: 'Trash emptied.',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Emptying trash in the background.'),
+      ),
     );
   }
 

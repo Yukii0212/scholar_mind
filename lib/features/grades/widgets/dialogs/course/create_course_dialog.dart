@@ -23,6 +23,8 @@ class _CreateCourseDialogState
   final _nameController = TextEditingController();
   final _targetScoreController =
   TextEditingController();
+  final _passingScoreController =
+  TextEditingController(text: '50');
 
   final _formKey = GlobalKey<FormState>();
 
@@ -32,6 +34,7 @@ class _CreateCourseDialogState
   void dispose() {
     _nameController.dispose();
     _targetScoreController.dispose();
+    _passingScoreController.dispose();
     super.dispose();
   }
 
@@ -62,6 +65,11 @@ class _CreateCourseDialogState
         _targetScoreController.text
             .trim(),
       ),
+      passingScore:
+      double.tryParse(
+        _passingScoreController.text.trim(),
+      ) ??
+          50,
       createdAt: now,
       updatedAt: now,
     );
@@ -161,6 +169,39 @@ class _CreateCourseDialogState
 
                     if (score < 0 || score > 100) {
                       return 'Target score must be between 0% and 100%.';
+                    }
+
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _passingScoreController,
+                  decoration: const InputDecoration(
+                    labelText: 'Passing Score',
+                    hintText: 'Example: 50',
+                    suffixText: '%',
+                    border: OutlineInputBorder(),
+                    errorMaxLines: 2,
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a passing score.';
+                    }
+
+                    final score = double.tryParse(value.trim());
+
+                    if (score == null) {
+                      return 'Please enter a valid number.';
+                    }
+
+                    if (score < 0 || score > 100) {
+                      return 'Passing score must be between 0% and 100%.';
                     }
 
                     return null;

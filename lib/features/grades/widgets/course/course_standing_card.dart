@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scholar_mind/features/grades/services/calculation/course_calculation_service.dart';
 
+import '../../../help/widgets/help_anchor.dart';
 import '../../data/models/course_model.dart';
+import '../../help/course_analytics_preview_provider.dart';
 import '../../data/models/grading_component_model.dart';
 import '../../providers/assessment/assessment_provider.dart';
 import '../../providers/course/course_provider.dart';
@@ -31,6 +33,8 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
 
   late final TextEditingController _minimumController;
 
+  late final TextEditingController _passingController;
+
   @override
   void initState() {
     super.initState();
@@ -38,12 +42,15 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
     _targetController = TextEditingController();
 
     _minimumController = TextEditingController();
+
+    _passingController = TextEditingController();
   }
 
   @override
   void dispose() {
     _targetController.dispose();
     _minimumController.dispose();
+    _passingController.dispose();
     super.dispose();
   }
 
@@ -86,6 +93,9 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
               assessments: entries,
             );
 
+            final showProjectedScorePreview = summary.expectedEntries.isEmpty &&
+                ref.watch(courseAnalyticsProjectedScorePreviewProvider);
+
             final targetText = course.targetScore?.toStringAsFixed(0) ?? '';
 
             if (_targetController.text != targetText) {
@@ -97,6 +107,12 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
 
             if (_minimumController.text != minimumText) {
               _minimumController.text = minimumText;
+            }
+
+            final passingText = course.passingScore.toStringAsFixed(0);
+
+            if (_passingController.text != passingText) {
+              _passingController.text = passingText;
             }
 
             return Card(
@@ -126,7 +142,10 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                       const SizedBox(height: 16),
                       Column(
                         children: [
-                          TextFormField(
+                          HelpAnchor(
+                            pageId: 'course-analytics',
+                            anchorId: 'target-score-field',
+                            child: TextFormField(
                             controller: _targetController,
                             decoration: const InputDecoration(
                               labelText: 'Target Score',
@@ -167,9 +186,13 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                 ),
                               );
                             },
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          TextFormField(
+                          HelpAnchor(
+                            pageId: 'course-analytics',
+                            anchorId: 'minimum-acceptable-field',
+                            child: TextFormField(
                             controller: _minimumController,
                             decoration: const InputDecoration(
                               labelText: 'Minimum Acceptable',
@@ -216,6 +239,56 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                 ),
                               );
                             },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          HelpAnchor(
+                            pageId: 'course-analytics',
+                            anchorId: 'passing-score-field',
+                            child: TextFormField(
+                            controller: _passingController,
+                            decoration: const InputDecoration(
+                              labelText: 'Passing Score',
+                              suffixText: '%',
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            onFieldSubmitted: (_) async {
+                              final repository = ref.read(
+                                courseRepositoryProvider,
+                              );
+
+                              final value = double.tryParse(
+                                _passingController.text,
+                              );
+
+                              if (value == null ||
+                                  value < 0 ||
+                                  value > 100) {
+                                ScaffoldMessenger.of(
+                                  context,
+                                ).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Passing Score must be between 0% and 100%.',
+                                    ),
+                                  ),
+                                );
+
+                                _passingController.text =
+                                    course.passingScore.toStringAsFixed(0);
+
+                                return;
+                              }
+
+                              await repository.updateCourse(
+                                course.copyWith(
+                                  passingScore: value,
+                                ),
+                              );
+                            },
+                            ),
                           ),
                         ],
                       ),
@@ -239,13 +312,22 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                           value: summary.guaranteedPercentage / 100,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Current Score',
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        Text(
-                          '${summary.guaranteedPercentage.toStringAsFixed(1)}%',
-                          style: Theme.of(context).textTheme.headlineSmall,
+                        HelpAnchor(
+                          pageId: 'course-analytics',
+                          anchorId: 'guaranteed-score',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Current Score',
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
+                              Text(
+                                '${summary.guaranteedPercentage.toStringAsFixed(1)}%',
+                                style: Theme.of(context).textTheme.headlineSmall,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 20),
                         if (summary.expectedEntries.isNotEmpty) ...[
@@ -253,13 +335,80 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                             value: summary.projectedPercentage / 100,
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            'Projected Score',
-                            style: Theme.of(context).textTheme.labelMedium,
+                          HelpAnchor(
+                            pageId: 'course-analytics',
+                            anchorId: 'projected-score',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Projected Score',
+                                  style: Theme.of(context).textTheme.labelMedium,
+                                ),
+                                Text(
+                                  '${summary.projectedPercentage.toStringAsFixed(1)}%',
+                                  style: Theme.of(context).textTheme.headlineSmall,
+                                ),
+                              ],
+                            ),
                           ),
-                          Text(
-                            '${summary.projectedPercentage.toStringAsFixed(1)}%',
-                            style: Theme.of(context).textTheme.headlineSmall,
+                          const SizedBox(height: 20),
+                        ] else if (showProjectedScorePreview) ...[
+                          // No Expected values entered for this course yet,
+                          // so there's nothing real to show — but the help
+                          // tutorial still needs something to point at, so
+                          // show one illustrative, non-interactive example
+                          // instead of silently having nothing here. See
+                          // `course_analytics_preview_provider.dart`.
+                          const LinearProgressIndicator(value: 0.845),
+                          const SizedBox(height: 12),
+                          HelpAnchor(
+                            pageId: 'course-analytics',
+                            anchorId: 'projected-score',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Projected Score',
+                                      style:
+                                          Theme.of(context).textTheme.labelMedium,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.16),
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        'Example',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '84.5%',
+                                  style: Theme.of(context).textTheme.headlineSmall,
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 20),
                         ],
@@ -267,34 +416,51 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                           value: summary.maximumPossiblePercentage / 100,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Maximum Achievable Score',
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        Text(
-                          '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
-                          style: Theme.of(context).textTheme.headlineSmall,
+                        HelpAnchor(
+                          pageId: 'course-analytics',
+                          anchorId: 'maximum-achievable',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Maximum Achievable Score',
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
+                              Text(
+                                '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
+                                style: Theme.of(context).textTheme.headlineSmall,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 16),
-                        Builder(
+                        HelpAnchor(
+                          pageId: 'course-analytics',
+                          anchorId: 'progress-towards-goal',
+                          child: Builder(
                           builder: (context) {
-                            final target = course.targetScore;
+                            // When no personal Target Score has been set,
+                            // fall back to the course's Passing Score so
+                            // this card always tracks progress against a
+                            // real threshold instead of showing nothing.
+                            final effectiveTarget =
+                                course.targetScore ?? course.passingScore;
 
-                            final isConfigured = target != null;
+                            final usingPassingFallback =
+                                course.targetScore == null;
 
-                            final hasExpectedScores =
-                                summary.expectedEntries.isNotEmpty;
+                            final fullyForecasted =
+                                summary.isFullyForecasted;
 
-                            final targetAchieved = isConfigured &&
-                                summary.guaranteedPercentage >= target;
+                            final targetAchieved = summary.guaranteedPercentage >=
+                                effectiveTarget;
 
-                            final projectedOnTrack = isConfigured &&
-                                summary.projectedPercentage >= target;
+                            final projectedOnTrack =
+                                summary.projectedPercentage >= effectiveTarget;
 
-                            final targetStillPossible = isConfigured &&
-                                summary.isAchievable(
-                                  target,
-                                );
+                            final targetStillPossible = summary.isAchievable(
+                              effectiveTarget,
+                            );
 
                             late final Color borderColor;
 
@@ -302,45 +468,43 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
 
                             late final String message;
 
-                            if (!isConfigured) {
-                              borderColor =
-                                  Theme.of(context).colorScheme.outline;
-
-                              icon = Icons.info_outline;
-
-                              message =
-                                  'Set a Target Score to begin tracking your progress.';
-                            } else if (targetAchieved) {
+                            if (targetAchieved) {
                               borderColor = Colors.green;
 
                               icon = Icons.verified;
 
-                              message =
-                                  'Congratulations! You have already achieved your target score.';
-                            } else if (hasExpectedScores) {
+                              message = usingPassingFallback
+                                  ? 'Congratulations! You have already secured enough to pass this course.'
+                                  : 'Congratulations! You have already achieved your target score.';
+                            } else if (fullyForecasted) {
                               if (projectedOnTrack) {
                                 borderColor = Colors.green;
 
                                 icon = Icons.check_circle;
 
-                                message =
-                                    'Based on your expected scores, you are currently on track to achieve your target score.';
+                                message = usingPassingFallback
+                                    ? 'Based on your expected scores, you are currently on track to pass this course.'
+                                    : 'Based on your expected scores, you are currently on track to achieve your target score.';
                               } else if (targetStillPossible) {
                                 borderColor = Colors.amber;
 
                                 icon = Icons.warning_amber_rounded;
 
-                                message =
-                                    'Based on your expected scores, you are currently below your target score.\n\n'
-                                    'You will need to outperform your expected scores to reach your goal.';
+                                message = usingPassingFallback
+                                    ? 'Based on your expected scores, you are currently below the passing threshold.\n\n'
+                                        'You will need to outperform your expected scores to pass this course.'
+                                    : 'Based on your expected scores, you are currently below your target score.\n\n'
+                                        'You will need to outperform your expected scores to reach your goal.';
                               } else {
                                 borderColor = Colors.red;
 
                                 icon = Icons.cancel_outlined;
 
-                                message =
-                                    'Even with perfect scores from the remaining assessments, '
-                                    'your target score is no longer achievable.';
+                                message = usingPassingFallback
+                                    ? 'Even with perfect scores from the remaining assessments, '
+                                        'you will not be able to pass this course.'
+                                    : 'Even with perfect scores from the remaining assessments, '
+                                        'your target score is no longer achievable.';
                               }
                             } else {
                               if (targetStillPossible) {
@@ -348,15 +512,17 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
 
                                 icon = Icons.check_circle;
 
-                                message =
-                                    'Your target score is still achievable.';
+                                message = usingPassingFallback
+                                    ? 'Passing this course is still achievable.'
+                                    : 'Your target score is still achievable.';
                               } else {
                                 borderColor = Colors.red;
 
                                 icon = Icons.cancel_outlined;
 
-                                message =
-                                    'Your target score is no longer achievable.';
+                                message = usingPassingFallback
+                                    ? 'Passing this course is no longer achievable.'
+                                    : 'Your target score is no longer achievable.';
                               }
                             }
 
@@ -390,8 +556,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                           ),
                                           const SizedBox(height: 8),
                                           Text(message),
-                                          if (isConfigured &&
-                                              !targetAchieved) ...[
+                                          if (!targetAchieved) ...[
                                             const SizedBox(height: 16),
                                             Row(
                                               children: [
@@ -402,7 +567,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                                             .start,
                                                     children: [
                                                       Text(
-                                                        hasExpectedScores
+                                                        fullyForecasted
                                                             ? 'Projected Final Score'
                                                             : 'Maximum Achievable',
                                                         style: Theme.of(context)
@@ -411,7 +576,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                                       ),
                                                       const SizedBox(height: 4),
                                                       Text(
-                                                        hasExpectedScores
+                                                        fullyForecasted
                                                             ? '${summary.projectedPercentage.toStringAsFixed(1)}%'
                                                             : '${summary.maximumPossiblePercentage.toStringAsFixed(1)}%',
                                                         style: Theme.of(context)
@@ -429,14 +594,16 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                                             .start,
                                                     children: [
                                                       Text(
-                                                        'Target Score',
+                                                        usingPassingFallback
+                                                            ? 'Passing Score'
+                                                            : 'Target Score',
                                                         style: Theme.of(context)
                                                             .textTheme
                                                             .labelMedium,
                                                       ),
                                                       const SizedBox(height: 4),
                                                       Text(
-                                                        '${target.toStringAsFixed(1)}%',
+                                                        '${effectiveTarget.toStringAsFixed(1)}%',
                                                         style: Theme.of(context)
                                                             .textTheme
                                                             .titleMedium,
@@ -455,6 +622,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                               ),
                             );
                           },
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Column(
@@ -508,9 +676,14 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Text(
-                                    'If your expected scores are accurate, '
-                                    'your final course score will be approximately '
-                                    '${summary.projectedPercentage.toStringAsFixed(1)}%.',
+                                    summary.remainingComponents.isEmpty
+                                        ? 'If your expected scores are accurate, '
+                                            'your final course score will be approximately '
+                                            '${summary.projectedPercentage.toStringAsFixed(1)}%.'
+                                        : 'If your expected scores are accurate, you are on pace for '
+                                            '${summary.projectedPercentage.toStringAsFixed(1)}% '
+                                            'from graded and expected work so far. The assessments below '
+                                            'are still to be decided.',
                                   ),
                                 ),
                               ),
@@ -552,7 +725,7 @@ class _CurrentStandingCardState extends ConsumerState<CurrentStandingCard> {
                               ),
                               const SizedBox(height: 16),
                             ],
-                            if (!summary.hasScores &&
+                            if (!summary.hasAnyScores &&
                                 summary.remainingComponents.isEmpty)
                               const Text(
                                 'Start by entering the marks you have already received.',

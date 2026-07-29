@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../providers/export_selection_count_provider.dart';
+import '../../../providers/export/export_selection_count_provider.dart';
 
 class ExportBottomBar
     extends ConsumerWidget {

@@ -51,6 +51,13 @@ The weighting is a target distribution.
 If a question type is not selected,
 its weighting MUST be treated as 0%.
 
+Content Guidance
+
+Prioritize the core concepts, definitions, and relationships a student
+needs to understand the material or do well on an exam.
+Avoid testing trivial or incidental details (e.g. a number used only in
+a one-off example) unless that detail is itself the concept being taught.
+
 Extra Instructions
 
 ${extraInstructions.length >= 5 ? extraInstructions : 'None.'}

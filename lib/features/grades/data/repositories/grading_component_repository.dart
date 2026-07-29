@@ -17,6 +17,10 @@ class GradingComponentRepository {
       ) {
     return _dataSource.collection
         .where(
+      'ownerId',
+      isEqualTo: _dataSource.currentUserId,
+    )
+        .where(
       'courseId',
       isEqualTo: courseId,
     )
@@ -83,6 +87,10 @@ class GradingComponentRepository {
     final existing =
     await _dataSource.collection
         .where(
+      'ownerId',
+      isEqualTo: ownerId,
+    )
+        .where(
       'courseId',
       isEqualTo: courseId,
     )
@@ -114,6 +122,10 @@ class GradingComponentRepository {
       ) async {
     final snapshot =
     await _dataSource.collection
+        .where(
+      'ownerId',
+      isEqualTo: _dataSource.currentUserId,
+    )
         .where(
       'courseId',
       isEqualTo: courseId,

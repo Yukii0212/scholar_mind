@@ -27,6 +27,7 @@ class _EditCourseDialogState
     extends ConsumerState<EditCourseDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _targetScoreController;
+  late final TextEditingController _passingScoreController;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -45,12 +46,17 @@ class _EditCourseDialogState
           ?.toStringAsFixed(0) ??
           '',
     );
+
+    _passingScoreController = TextEditingController(
+      text: widget.course.passingScore.toStringAsFixed(0),
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _targetScoreController.dispose();
+    _passingScoreController.dispose();
     super.dispose();
   }
 
@@ -75,6 +81,11 @@ class _EditCourseDialogState
         _targetScoreController.text
             .trim(),
       ),
+      passingScore:
+      double.tryParse(
+        _passingScoreController.text.trim(),
+      ) ??
+          widget.course.passingScore,
     );
 
     await ref
@@ -83,7 +94,7 @@ class _EditCourseDialogState
 
     if (!mounted) return;
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override
@@ -142,6 +153,42 @@ class _EditCourseDialogState
                   ),
                 ),
 
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _passingScoreController,
+                  decoration: const InputDecoration(
+                    labelText: 'Passing Score',
+                    suffixText: '%',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType:
+                  const TextInputType
+                      .numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value == null ||
+                        value.trim().isEmpty) {
+                      return 'Please enter a passing score.';
+                    }
+
+                    final score = double.tryParse(
+                      value.trim(),
+                    );
+
+                    if (score == null) {
+                      return 'Please enter a valid number.';
+                    }
+
+                    if (score < 0 || score > 100) {
+                      return 'Passing score must be between 0% and 100%.';
+                    }
+
+                    return null;
+                  },
+                ),
+
                 const SizedBox(height: 24),
 
                 FilledButton(
@@ -166,7 +213,7 @@ class _EditCourseDialogState
                       return;
                     }
 
-                    Navigator.pop(context);
+                    Navigator.pop(context, false);
                   },
                   child: const Text('Cancel'),
                 ),

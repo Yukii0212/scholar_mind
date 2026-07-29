@@ -100,6 +100,10 @@ class FolderCard extends StatelessWidget {
                 case LibraryItemAction.permanentDelete:
                   onPermanentDelete();
                   return;
+                case LibraryItemAction.openWith:
+                  // Folders have no file to open with an external app;
+                  // this menu item is never built for a folder.
+                  return;
               }
             },
             itemBuilder: (context) {

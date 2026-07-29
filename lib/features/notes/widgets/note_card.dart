@@ -18,6 +18,7 @@ class NoteCard extends StatelessWidget {
     required this.isTrashSection,
     required this.onRestore,
     required this.onPermanentDelete,
+    required this.onOpenWith,
   });
 
   final bool isTrashSection;
@@ -30,6 +31,7 @@ class NoteCard extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onPermanentDelete;
   final VoidCallback onDelete;
+  final VoidCallback onOpenWith;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,7 @@ class NoteCard extends StatelessWidget {
           color: fileColor,
         ),
         title: Text(
-          note.name,
+          note.displayFileName,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontWeight: FontWeight.w700),
@@ -101,6 +103,10 @@ class NoteCard extends StatelessWidget {
                   case LibraryItemAction.permanentDelete:
                     onPermanentDelete();
                     return;
+
+                  case LibraryItemAction.openWith:
+                    onOpenWith();
+                    return;
                 }
               },
               itemBuilder: (context) {
@@ -118,6 +124,11 @@ class NoteCard extends StatelessWidget {
                 }
 
                 return [
+                  if (!note.isInternal)
+                    const PopupMenuItem(
+                      value: LibraryItemAction.openWith,
+                      child: Text('Open with'),
+                    ),
                   const PopupMenuItem(
                     value: LibraryItemAction.rename,
                     child: Text('Rename'),

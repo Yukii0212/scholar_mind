@@ -17,6 +17,7 @@ import '../domain/note_item.dart';
 import '../domain/library_enums.dart';
 
 import '../providers/library_provider.dart';
+import '../services/file_cache_service.dart';
 
 import '../widgets/library_header.dart';
 import '../widgets/error_state.dart';
@@ -164,6 +165,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                               onRestore: () => _restoreNote(note),
                               onPermanentDelete: () =>
                                   _permanentlyDeleteNote(note),
+                              onOpenWith: () => _openNoteWith(note),
                             );
                           }).toList() ??
                           const [],
@@ -444,6 +446,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 isTrashSection: _section == LibrarySection.trash,
                 onRestore: () => _restoreNote(items[index]),
                 onPermanentDelete: () => _permanentlyDeleteNote(items[index]),
+                onOpenWith: () => _openNoteWith(items[index]),
               ),
             ),
           ),
@@ -675,8 +678,26 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Future<void> _renameNote(
     NoteItem note,
   ) async {
+    // Uploaded files keep a locked extension so renaming can't produce a
+    // file the OS/other apps no longer recognise — only the base name is
+    // editable. Internal notes have no extension and are unaffected.
+    final hasLockedExtension =
+        !note.isInternal && note.extension.isNotEmpty;
+
+    final extensionSuffix = '.${note.extension}';
+
+    final baseName = hasLockedExtension &&
+            note.name.toLowerCase().endsWith(
+                  extensionSuffix.toLowerCase(),
+                )
+        ? note.name.substring(
+            0,
+            note.name.length - extensionSuffix.length,
+          )
+        : note.name;
+
     final controller = TextEditingController(
-      text: note.name,
+      text: baseName,
     );
 
     final name = await showDialog<String>(
@@ -687,8 +708,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Note name',
+              suffixText:
+                  hasLockedExtension ? extensionSuffix : null,
             ),
           ),
           actions: [
@@ -703,7 +726,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 if (value.isNotEmpty) {
                   Navigator.pop(
                     dialogContext,
-                    value,
+                    hasLockedExtension
+                        ? '$value$extensionSuffix'
+                        : value,
                   );
                 }
               },
@@ -726,6 +751,14 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         );
 
     if (!mounted) return;
+
+    if (success && note.storagePath.isNotEmpty) {
+      await FileCacheService.renameCachedFile(
+        storagePath: note.storagePath,
+        oldFileName: note.name,
+        newFileName: name,
+      );
+    }
 
     _showResult(
       success,
@@ -884,13 +917,19 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
+  Future<void> _openNoteWith(NoteItem note) async {
+    if (note.isInternal) return;
+
+    await FileOpenService.openExternally(note);
+  }
+
   Future<void> _openNote(NoteItem note) async {
     if (_section == LibrarySection.trash) {
       return;
     }
 
     if (!note.isInternal) {
-      await FileOpenService.openUploadedFile(note);
+      await FileOpenService.openUploadedFile(context, note);
       return;
     }
 

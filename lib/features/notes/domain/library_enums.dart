@@ -14,4 +14,5 @@ enum LibraryItemAction {
   trash,
   restore,
   permanentDelete,
+  openWith,
 }

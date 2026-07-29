@@ -35,9 +35,13 @@ class FileCacheService {
     return directory;
   }
 
-  static Future<File> _cacheFile(
+  // Each note gets its own subdirectory, named from its (immutable)
+  // storagePath, so the cached file itself can keep a clean, human-readable
+  // name — this is what external apps show as the file/window title when
+  // opening it, and it must stay in sync with the note's current display
+  // name rather than leaking internal storage-path plumbing into it.
+  static Future<Directory> _noteCacheDirectory(
       String storagePath,
-      String fileName,
       ) async {
     final directory =
     await _cacheDirectory();
@@ -45,12 +49,59 @@ class FileCacheService {
     final safeStorage =
     storagePath.replaceAll('/', '_');
 
-    return File(
+    final noteDirectory = Directory(
       path.join(
         directory.path,
-        '${safeStorage}_$fileName',
+        safeStorage,
       ),
     );
+
+    if (!noteDirectory.existsSync()) {
+      noteDirectory.createSync(
+        recursive: true,
+      );
+    }
+
+    return noteDirectory;
+  }
+
+  static Future<File> _cacheFile(
+      String storagePath,
+      String fileName,
+      ) async {
+    final noteDirectory =
+    await _noteCacheDirectory(storagePath);
+
+    return File(
+      path.join(
+        noteDirectory.path,
+        fileName,
+      ),
+    );
+  }
+
+  /// Renames a note's cached file in place (no re-download) so a rename
+  /// stays immediately reflected locally instead of orphaning the old
+  /// cache entry until the next background sync re-fetches it under the
+  /// new name.
+  static Future<void> renameCachedFile({
+    required String storagePath,
+    required String oldFileName,
+    required String newFileName,
+  }) async {
+    if (oldFileName == newFileName) return;
+
+    final oldFile = await _cacheFile(storagePath, oldFileName);
+
+    if (!await oldFile.exists()) return;
+
+    final newFile = await _cacheFile(storagePath, newFileName);
+
+    if (await newFile.exists()) {
+      await newFile.delete();
+    }
+
+    await oldFile.rename(newFile.path);
   }
 
   static Future<bool> exists(
@@ -131,7 +182,7 @@ class FileCacheService {
 
       final cached = await exists(
         note.storagePath,
-        note.name,
+        note.displayFileName,
       );
 
       if (cached) {
@@ -141,7 +192,7 @@ class FileCacheService {
       try {
         await downloadFromFirebase(
           storagePath: note.storagePath,
-          fileName: note.name,
+          fileName: note.displayFileName,
         );
       } catch (_) {
       }
@@ -167,7 +218,7 @@ class FileCacheService {
       ) async {
     final cached = await exists(
       note.storagePath,
-      note.name,
+      note.displayFileName,
     );
 
     if (cached) {
@@ -176,7 +227,7 @@ class FileCacheService {
 
     await downloadFromFirebase(
       storagePath: note.storagePath,
-      fileName: note.name,
+      fileName: note.displayFileName,
     );
   }
 
@@ -185,7 +236,7 @@ class FileCacheService {
       ) async {
     await delete(
       storagePath: note.storagePath,
-      fileName: note.name,
+      fileName: note.displayFileName,
     );
   }
 }

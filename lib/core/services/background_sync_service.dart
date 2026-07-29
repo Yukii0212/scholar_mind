@@ -104,7 +104,7 @@ class BackgroundSyncService {
       final exists =
       await FileCacheService.exists(
         note.storagePath,
-        note.name,
+        note.displayFileName,
       );
 
       if (!exists) {

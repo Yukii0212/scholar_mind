@@ -90,9 +90,22 @@ class _ImportShareLinkScreenState
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => context.go('/home'),
-                  child: const Text('Go to Home'),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () {
+                        setState(() => _error = null);
+                        _resolve();
+                      },
+                      child: const Text('Try Again'),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton(
+                      onPressed: () => context.go('/home'),
+                      child: const Text('Go to Home'),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -12,9 +12,11 @@ service firebase.storage {
 
     // Shared export archives: readable by any signed-in user (that's how
     // another user's import flow fetches the archive.json for a share
-    // link), but only the owner can upload/overwrite/delete their own.
-    // Capped higher than a single note (50MB) since one archive can bundle
-    // several notes' embedded file bytes together, not just one file.
+    // link, plus each note's own file underneath .../files/), but only
+    // the owner can upload/overwrite/delete their own. archive.json
+    // itself stays small (references, not file bytes); this cap is really
+    // about the individual file objects under .../files/, so it's set
+    // above the per-note upload cap below rather than at it.
     match /users/{userId}/shared_exports/{shareId}/{allPaths=**} {
       allow read: if isSignedIn();
       allow delete: if isOwner(userId);

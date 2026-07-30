@@ -195,29 +195,28 @@ class _ActionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScholarPanel(
-      padding: EdgeInsets.zero,
-      child: Row(
-        children: [
-          Expanded(
-            child: ListTile(
-              leading: const ScholarIconBadge(icon: Icons.play_arrow_rounded),
-              title: const Text('Start Study Session'),
-              subtitle: const Text('Review cards one by one'),
-              enabled: cards.isNotEmpty,
-              onTap: cards.isEmpty
-                  ? null
-                  : () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => FlashcardStudySessionScreen(
-                            deck: deck,
-                            cards: cards,
-                          ),
-                        ),
-                      ),
-            ),
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: cards.isEmpty
+            ? null
+            : () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => FlashcardStudySessionScreen(
+                      deck: deck,
+                      cards: cards,
+                    ),
+                  ),
+                ),
+        icon: const Icon(Icons.play_arrow_rounded),
+        label: const Text('Start Study Session'),
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
           ),
-        ],
+        ),
       ),
     );
   }

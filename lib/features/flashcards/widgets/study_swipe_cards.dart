@@ -6,10 +6,17 @@ class StudySwipeCards extends StatefulWidget {
   const StudySwipeCards({
     super.key,
     required this.item,
+    required this.hintText,
     this.enabled = true,
   });
 
   final StudySwipeCardItem item;
+
+  /// Shown above the card, e.g. "Swipe either way to skip" on the
+  /// question or "Swipe right: I knew it • Swipe left: Didn't know it"
+  /// on the answer — meaning changes with which side is showing, so the
+  /// caller supplies it rather than this widget hardcoding one label.
+  final String hintText;
 
   final bool enabled;
 
@@ -60,7 +67,15 @@ class _StudySwipeCardsState
           AnimationStatus.completed &&
           _animatingAway) {
 
-        widget.item.onSkipped();
+        // `_animateDismiss` only ever flips the magnitude of `_offset.dx`
+        // toward +/-700, preserving its sign — so it's still a reliable
+        // read of which way the card was actually swiped once the fling
+        // animation finishes.
+        if (_offset.dx >= 0) {
+          widget.item.onSwipeRight();
+        } else {
+          widget.item.onSwipeLeft();
+        }
 
         _offset = Offset.zero;
 
@@ -143,12 +158,12 @@ class _StudySwipeCardsState
           opacity: widget.enabled ? 1 : 0,
           duration:
           const Duration(milliseconds: 250),
-          child: const Padding(
-            padding: EdgeInsets.only(
+          child: Padding(
+            padding: const EdgeInsets.only(
               bottom: 12,
             ),
             child: Text(
-              '← Swipe to skip',
+              widget.hintText,
               textAlign: TextAlign.center,
             ),
           ),

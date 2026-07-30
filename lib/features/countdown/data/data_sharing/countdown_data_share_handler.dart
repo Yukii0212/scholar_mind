@@ -66,6 +66,7 @@ class CountdownDataShareHandler
   Future<List<ShareResource>> export({
     required String userId,
     required List<String> resourceIds,
+    required String shareId,
   }) async {
     final collected = await _collector.collect(
       userId: userId,

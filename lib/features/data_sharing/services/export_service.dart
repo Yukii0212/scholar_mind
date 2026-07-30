@@ -22,8 +22,9 @@ class ExportService {
   final ArchiveBuilderService _archiveBuilderService;
 
   Future<ShareArchive> export(
-      ExportRequest request,
-      ) async {
+      ExportRequest request, {
+        required String shareId,
+      }) async {
     final List<ShareResource> resources = [];
 
     final Map<DataShareHandler, Set<String>>
@@ -63,6 +64,7 @@ class ExportService {
       await entry.key.export(
         userId: request.userId,
         resourceIds: entry.value.toList(),
+        shareId: shareId,
       );
 
       resources.addAll(exported);

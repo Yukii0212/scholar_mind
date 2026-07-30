@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/preferences/quiz_navigation_preferences.dart';
 import '../providers/quiz_attempt_provider.dart';
 import '../providers/quiz_feedback_provider.dart';
 
@@ -8,6 +9,8 @@ import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
 import '../domain/quiz_question.dart';
 import '../domain/quiz_response.dart';
+import 'quiz_navigation_preference_screen.dart';
+import 'quiz_question_overview_screen.dart';
 import 'quiz_result_screen.dart';
 import '../domain/quiz_attempt.dart';
 
@@ -45,6 +48,12 @@ class _QuizViewerScreenState
 
   bool _saving = false;
 
+  QuizNavigationStyle? _navigationStyle;
+
+  final PageController _pageController = PageController();
+
+  int _currentPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -63,7 +72,45 @@ class _QuizViewerScreenState
           .restoreAttempt(
         attempt: widget.attempt,
       );
+
+      await _resolveNavigationStyle();
     });
+  }
+
+  Future<void> _resolveNavigationStyle() async {
+    var style = await QuizNavigationPreferences.getStyle();
+
+    if (style == null) {
+      if (!mounted) return;
+
+      style = await Navigator.of(context).push<QuizNavigationStyle>(
+        MaterialPageRoute(
+          builder: (_) => const QuizNavigationPreferenceScreen(),
+          fullscreenDialog: true,
+        ),
+      );
+    }
+
+    if (!mounted) return;
+
+    setState(() => _navigationStyle = style ?? QuizNavigationStyle.scroll);
+  }
+
+  void _jumpToQuestion(int index) {
+    if (_navigationStyle == QuizNavigationStyle.swipe) {
+      _pageController.jumpToPage(index);
+      return;
+    }
+
+    final context = _questionKeys[index]?.currentContext;
+
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 250),
+        alignment: 0.0,
+      );
+    }
   }
 
   @override
@@ -195,7 +242,7 @@ class _QuizViewerScreenState
       quizAttemptProvider,
     );
 
-    if (currentAttempt == null) {
+    if (currentAttempt == null || _navigationStyle == null) {
 
       return const Scaffold(
         body: Center(
@@ -236,6 +283,24 @@ class _QuizViewerScreenState
         title:
         const Text('Generated Quiz'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view_rounded),
+            tooltip: 'Question overview',
+            onPressed: () async {
+              final target = await Navigator.of(context).push<int>(
+                MaterialPageRoute(
+                  builder: (_) => QuizQuestionOverviewScreen(
+                    quiz: quiz,
+                    answers: answers,
+                  ),
+                ),
+              );
+
+              if (target == null || !mounted) return;
+
+              _jumpToQuestion(target);
+            },
+          ),
           if (_saving)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
@@ -250,16 +315,121 @@ class _QuizViewerScreenState
         ],
       ),
       body: SafeArea(
-        child: Column(
-            children: [
+        child: _navigationStyle == QuizNavigationStyle.swipe
+            ? _buildSwipeBody(answers)
+            : _buildScrollBody(answers),
+      ),
+        ),
+    );
+  }
+
+  Widget _buildScrollBody(Map<int, QuizAnswer> answers) {
+    return Column(
+      children: [
         Expanded(
-        child: ListView.builder(
-        padding:
-        const EdgeInsets.all(20),
-        itemCount:
-        quiz.questions.length,
-        itemBuilder:
-            (context, index) {
+          child: ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: quiz.questions.length,
+            itemBuilder: (context, index) =>
+                _buildQuestionCard(context, index, answers),
+          ),
+        ),
+        SafeArea(
+          top: false,
+          minimum: const EdgeInsets.all(16),
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
+            icon: const Icon(Icons.check_circle),
+            label: const Text('Submit Quiz'),
+            onPressed: _submitQuiz,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSwipeBody(Map<int, QuizAnswer> answers) {
+    final lastIndex = quiz.questions.length - 1;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: (_currentPage + 1) / quiz.questions.length,
+                  minHeight: 6,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Question ${_currentPage + 1} of ${quiz.questions.length}',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: quiz.questions.length,
+            onPageChanged: (index) => setState(() => _currentPage = index),
+            itemBuilder: (context, index) => SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: _buildQuestionCard(context, index, answers),
+            ),
+          ),
+        ),
+        SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Row(
+            children: [
+              if (_currentPage > 0)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _pageController.previousPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    ),
+                    icon: const Icon(Icons.chevron_left_rounded),
+                    label: const Text('Back'),
+                  ),
+                ),
+              if (_currentPage > 0) const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: _currentPage >= lastIndex
+                    ? FilledButton.icon(
+                        icon: const Icon(Icons.check_circle),
+                        label: const Text('Submit Quiz'),
+                        onPressed: _submitQuiz,
+                      )
+                    : FilledButton.icon(
+                        onPressed: () => _pageController.nextPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOut,
+                        ),
+                        icon: const Icon(Icons.chevron_right_rounded),
+                        label: const Text('Next'),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuestionCard(
+    BuildContext context,
+    int index,
+    Map<int, QuizAnswer> answers,
+  ) {
           final question =
           quiz.questions[index];
 
@@ -448,8 +618,14 @@ class _QuizViewerScreenState
                         return TextField(
                           controller: controller,
                           focusNode: focusNode,
-                          minLines: 4,
-                          maxLines: null,
+                          // Bounded rather than unbounded (was
+                          // minLines: 4, maxLines: null) — an ever-growing
+                          // field is what pushes the question off-screen
+                          // as the user types; capped, it scrolls
+                          // internally instead, so the question above it
+                          // stays put.
+                          minLines: 3,
+                          maxLines: 3,
                           keyboardType: TextInputType.multiline,
                           textInputAction: TextInputAction.newline,
                           textCapitalization: TextCapitalization.sentences,
@@ -571,29 +747,6 @@ class _QuizViewerScreenState
               ),
             ),
           );
-        },
-        ),
-        ),
-
-              SafeArea(
-                top: false,
-                minimum: const EdgeInsets.all(16),
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  icon: const Icon(Icons.check_circle),
-                  label: const Text(
-                    'Submit Quiz',
-                  ),
-                  onPressed: _submitQuiz,
-                ),
-              ),
-            ],
-        ),
-      ),
-        ),
-    );
   }
 
   @override
@@ -608,6 +761,8 @@ class _QuizViewerScreenState
     for (final focusNode in _openEndedFocusNodes.values) {
       focusNode.dispose();
     }
+
+    _pageController.dispose();
 
     super.dispose();
   }

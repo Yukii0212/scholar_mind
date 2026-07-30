@@ -10,6 +10,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/preferences/export_preferences.dart';
+import '../../../core/preferences/quiz_navigation_preferences.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -174,6 +175,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 } else {
                                   await ExportPreferences.dismissSwipeHint();
                                 }
+
+                                if (context.mounted) {
+                                  setState(() {});
+                                }
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.swipe_rounded),
+                        title: const Text('Quiz navigation'),
+                        subtitle: const Text(
+                          'How you move between quiz questions',
+                        ),
+                        trailing: FutureBuilder<QuizNavigationStyle?>(
+                          future: QuizNavigationPreferences.getStyle(),
+                          builder: (context, snapshot) {
+                            final style = snapshot.data ??
+                                QuizNavigationStyle.scroll;
+
+                            return DropdownButton<QuizNavigationStyle>(
+                              value: style,
+                              underline: const SizedBox.shrink(),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: QuizNavigationStyle.scroll,
+                                  child: Text('Scroll'),
+                                ),
+                                DropdownMenuItem(
+                                  value: QuizNavigationStyle.swipe,
+                                  child: Text('Swipe'),
+                                ),
+                              ],
+                              onChanged: (value) async {
+                                if (value == null) return;
+
+                                await QuizNavigationPreferences.setStyle(
+                                  value,
+                                );
 
                                 if (context.mounted) {
                                   setState(() {});

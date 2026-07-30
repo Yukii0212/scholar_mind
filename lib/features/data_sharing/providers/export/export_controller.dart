@@ -27,11 +27,11 @@ class ExportController
       return null;
     }
 
+    final shareId = const Uuid().v4();
+
     final archive = await ref
         .read(exportServiceProvider)
-        .export(request);
-
-    final shareId = const Uuid().v4();
+        .export(request, shareId: shareId);
 
     final storagePath = await ref
         .read(

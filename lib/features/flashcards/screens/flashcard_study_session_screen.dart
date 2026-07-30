@@ -34,7 +34,14 @@ class FlashcardStudySessionScreen extends ConsumerStatefulWidget {
 
 class _FlashcardStudySessionScreenState
     extends ConsumerState<FlashcardStudySessionScreen> {
-  late final List<Flashcard> _queue;
+  // Cards missed (skipped/almost/didn't-know) only come back once the rest
+  // of the *current* round has been gone through, not appended to an
+  // ever-growing single queue — a card only ever waits behind the cards
+  // still ahead of it in this round, never behind every other miss too.
+  late List<Flashcard> _roundQueue;
+  final List<Flashcard> _missedThisRound = [];
+  var _roundNumber = 1;
+
   var _currentIndex = 0;
   var _showAnswer = false;
   var _reviewed = 0;
@@ -42,21 +49,29 @@ class _FlashcardStudySessionScreenState
   var _needsReview = 0;
   var _completed = false;
 
+  // Progress is "how much of the whole deck is mastered", not "how far
+  // through the current round" — stable across rounds instead of tracking
+  // a denominator that used to grow every time a card was missed.
+  final Set<String> _knownCardIds = {};
+  final Set<int> _milestonesShown = {};
+  late final int _totalCards;
+
   @override
   void initState() {
     super.initState();
 
-    _queue = [...widget.cards];
-    _queue.shuffle(Random());
+    _totalCards = widget.cards.length;
+    _roundQueue = [...widget.cards]..shuffle(Random());
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.scholarPalette;
-    final current = _completed || _queue.isEmpty ? null : _queue[_currentIndex];
-    final progress = _queue.isEmpty
+    final current =
+        _completed || _roundQueue.isEmpty ? null : _roundQueue[_currentIndex];
+    final progress = _totalCards == 0
         ? 0.0
-        : (_reviewed / _queue.length).clamp(0, 1).toDouble();
+        : (_knownCardIds.length / _totalCards).clamp(0, 1).toDouble();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -84,6 +99,7 @@ class _FlashcardStudySessionScreenState
                         reviewed: _reviewed,
                         known: _known,
                         needsReview: _needsReview,
+                        totalCards: _totalCards,
                       )
                     : Column(
                         children: [
@@ -100,7 +116,7 @@ class _FlashcardStudySessionScreenState
                                     ),
                                     const Gap(12),
                                     Text(
-                                      '${_currentIndex + 1}/${_queue.length}',
+                                      '${(progress * 100).round()}%',
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelLarge
@@ -109,6 +125,22 @@ class _FlashcardStudySessionScreenState
                                     ),
                                   ],
                                 ),
+                                if (_roundNumber > 1) ...[
+                                  const Gap(8),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Round $_roundNumber • '
+                                      '${_roundQueue.length} card'
+                                      '${_roundQueue.length == 1 ? '' : 's'} '
+                                      "you're still working on",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(color: palette.textMuted),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -116,12 +148,24 @@ class _FlashcardStudySessionScreenState
                           if (current != null)
                             Expanded(
                               child: StudySwipeCards(
-                                enabled: !_showAnswer,
+                                enabled: true,
+                                hintText: _showAnswer
+                                    ? 'Swipe right: I knew it  •  '
+                                        "Swipe left: Didn't know it"
+                                    : 'Swipe either way to skip',
                                 item: StudySwipeCardItem(
                                   title: 'Flashcard',
                                   icon: Icons.style_rounded,
-                                  onSkipped: () =>
-                                      _evaluate(_SelfEvaluation.skipped),
+                                  onSwipeLeft: () => _evaluate(
+                                    _showAnswer
+                                        ? _SelfEvaluation.didntKnow
+                                        : _SelfEvaluation.skipped,
+                                  ),
+                                  onSwipeRight: () => _evaluate(
+                                    _showAnswer
+                                        ? _SelfEvaluation.knewIt
+                                        : _SelfEvaluation.skipped,
+                                  ),
                                   child: GestureDetector(
                                     onTap: () => setState(
                                           () => _showAnswer = !_showAnswer,
@@ -160,8 +204,10 @@ class _FlashcardStudySessionScreenState
                                               const Gap(22),
                                               Text(
                                                 _showAnswer
-                                                    ? 'Choose how well you knew it'
-                                                    : 'Tap to reveal • Swipe to skip',
+                                                    ? 'Choose how well you knew it, '
+                                                        'or swipe'
+                                                    : 'Tap to reveal • Swipe either '
+                                                        'way to skip',
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodySmall
@@ -193,22 +239,11 @@ class _FlashcardStudySessionScreenState
   }
 
   void _evaluate(_SelfEvaluation evaluation) {
-    final current = _queue[_currentIndex];
+    final current = _roundQueue[_currentIndex];
 
     if (evaluation == _SelfEvaluation.skipped) {
-      _queue.add(current);
-
-      if (_currentIndex >= _queue.length - 1) {
-        setState(() => _completed = true);
-        _recordSession();
-        return;
-      }
-
-      setState(() {
-        _currentIndex++;
-        _showAnswer = false;
-      });
-
+      _missedThisRound.add(current);
+      _advance();
       return;
     }
 
@@ -216,21 +251,75 @@ class _FlashcardStudySessionScreenState
 
     if (evaluation == _SelfEvaluation.knewIt) {
       _known++;
+      _knownCardIds.add(current.id);
     } else {
       _needsReview++;
-      _queue.add(current);
+      _missedThisRound.add(current);
     }
 
-    if (_currentIndex >= _queue.length - 1) {
+    _advance();
+  }
+
+  /// Moves to the next card in the current round, or — if the round just
+  /// ran out — either finishes the session (nothing was missed) or starts
+  /// a new round made up of just what was missed. A card only ever comes
+  /// back after the rest of *this* round, never behind everything else.
+  void _advance() {
+    if (_currentIndex < _roundQueue.length - 1) {
+      setState(() {
+        _currentIndex++;
+        _showAnswer = false;
+      });
+
+      _maybeShowMilestone();
+      return;
+    }
+
+    if (_missedThisRound.isEmpty) {
       setState(() => _completed = true);
       _recordSession();
       return;
     }
 
     setState(() {
-      _currentIndex++;
+      _roundQueue = [..._missedThisRound]..shuffle(Random());
+      _missedThisRound.clear();
+      _currentIndex = 0;
       _showAnswer = false;
+      _roundNumber++;
     });
+
+    _maybeShowMilestone();
+  }
+
+  void _maybeShowMilestone() {
+    if (_totalCards == 0) return;
+
+    final percent = (_knownCardIds.length / _totalCards * 100).round();
+
+    for (final threshold in const [25, 50, 75]) {
+      if (percent >= threshold && _milestonesShown.add(threshold)) {
+        _showMilestoneToast(threshold);
+      }
+    }
+  }
+
+  void _showMilestoneToast(int threshold) {
+    final message = switch (threshold) {
+      25 => "Quarter of the way there — keep going!",
+      50 => "Halfway there — you've got this.",
+      75 => 'Almost done — final stretch!',
+      _ => null,
+    };
+
+    if (message == null || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _finish() async {
@@ -340,32 +429,132 @@ class _CompletionPanel extends StatelessWidget {
     required this.reviewed,
     required this.known,
     required this.needsReview,
+    required this.totalCards,
   });
 
   final int reviewed;
   final int known;
   final int needsReview;
+  final int totalCards;
+
+  int get _masteryPercent =>
+      totalCards == 0 ? 0 : ((known / totalCards) * 100).round();
+
+  (String, String) get _headline {
+    final percent = _masteryPercent;
+
+    if (percent >= 100) {
+      return ('Deck mastered!', "Every card in this deck — you knew it all.");
+    }
+
+    if (percent >= 75) {
+      return ('Great work!', "You're close to mastering this deck.");
+    }
+
+    if (percent >= 50) {
+      return ('Solid session!', 'Over half the deck is sticking.');
+    }
+
+    return ('Nice start!', 'Keep at it — it gets easier each round.');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.scholarPalette;
+    final (headline, subtitle) = _headline;
+
     return ScholarPanel(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const ScholarIconBadge(icon: Icons.check_circle_outline, size: 62),
+          const ScholarIconBadge(icon: Icons.emoji_events_outlined, size: 62),
           const Gap(14),
           Text(
-            'Session Complete',
+            headline,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
           ),
-          const Gap(12),
-          Text('$reviewed reviewed - $known known - $needsReview need review'),
-          const Gap(18),
+          const Gap(6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: palette.textMuted,
+                ),
+          ),
+          const Gap(20),
+          Text(
+            '$_masteryPercent%',
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: palette.brandEnd,
+                ),
+          ),
+          Text(
+            'mastered',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: palette.textMuted,
+                ),
+          ),
+          const Gap(20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _StatChip(
+                icon: Icons.check_circle_outline,
+                label: '$known known',
+                color: palette.success,
+              ),
+              const Gap(12),
+              _StatChip(
+                icon: Icons.refresh_rounded,
+                label: '$needsReview to revisit',
+                color: palette.warning,
+              ),
+            ],
+          ),
+          const Gap(20),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const Gap(6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
           ),
         ],
       ),

@@ -4,6 +4,7 @@ class QuizAnswer {
     this.openEndedAnswer = '',
     this.markedForReview = false,
     this.guessed = false,
+    this.notImportant = false,
     this.aiReviewPending = false,
     this.aiScore,
     this.aiMaxScore,
@@ -18,6 +19,11 @@ class QuizAnswer {
 
   final bool guessed;
 
+  /// Excluded from scoring on the results screen -- see
+  /// QuizFeedbackRepository for the separate, persisted "Not Important"
+  /// feedback this is paired with when the user flags a question.
+  final bool notImportant;
+
   final bool aiReviewPending;
 
   final int? aiScore;
@@ -31,6 +37,7 @@ class QuizAnswer {
     String? openEndedAnswer,
     bool? markedForReview,
     bool? guessed,
+    bool? notImportant,
     bool? aiReviewPending,
     int? aiScore,
     int? aiMaxScore,
@@ -52,6 +59,10 @@ class QuizAnswer {
       guessed:
       guessed ??
           this.guessed,
+
+      notImportant:
+      notImportant ??
+          this.notImportant,
 
       aiReviewPending:
       aiReviewPending ??
@@ -80,6 +91,8 @@ class QuizAnswer {
       markedForReview,
       'guessed':
       guessed,
+      'notImportant':
+      notImportant,
       'aiReviewPending':
       aiReviewPending,
       'aiScore':
@@ -111,6 +124,11 @@ class QuizAnswer {
 
       guessed:
       json['guessed']
+      as bool? ??
+          false,
+
+      notImportant:
+      json['notImportant']
       as bool? ??
           false,
 

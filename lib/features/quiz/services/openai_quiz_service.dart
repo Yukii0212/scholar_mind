@@ -38,23 +38,63 @@ INSTRUCTIONS
 
 $instructions
 ==========================
+PRIORITY ORDER
+==========================
+
+When sources conflict, resolve them in this order:
+
+1. The user's Extra Instructions (in INSTRUCTIONS above) — these are an
+   explicit, deliberate request. Follow them even if they push against the
+   defaults below.
+2. The Past Year Questions section, if present.
+3. Lecture Notes.
+4. General knowledge of the subject.
+
+==========================
 QUESTION STYLE
 ==========================
 
 If past-year papers are provided:
 
-Treat them as the primary reference for:
-- wording
-- structure
-- question style
-- lecturer expectations
+Treat them as the primary reference for, and ONLY for:
+- structure (how a question is put together)
+- phrasing conventions and command verbs (e.g. "Identify", "Compare",
+  "Justify", "Construct a table")
+- lecturer expectations (how much detail, what "done well" looks like)
 - difficulty
+- topic scope — every generated question should fall within the subject
+  areas the past-year paper actually covers, not just the first few
 
-Use lecture notes primarily to determine WHAT concepts should be assessed.
+Do NOT treat a past-year question's specific wording, scenario, or
+example as something to reuse. A rewritten or lightly reworded version of
+a past-year question is still a copy — it is NOT acceptable, even if
+individual words are changed. Every generated question must be
+independently writable by someone who only knows the concept, without
+ever having seen the past-year paper. Test this by asking yourself: "if
+I changed the numbers/scenario/subject of this question, would it still
+obviously be the same past-year question?" — if yes, discard it and
+write a genuinely different question about the same concept instead
+(different angle: application to a new scenario, comparison, cause and
+effect, a "what would happen if" variant, etc).
 
-Never copy past-year questions verbatim.
+A single past-year paper is usually short relative to the number of
+questions requested. Once you've covered the concepts it directly raises,
+keep generating within the SAME topic scope using lecture notes for
+supporting detail and NEW scenarios/angles for each question — do not
+drift into unrelated topics the lecture notes cover but the past-year
+paper does not.
 
-Generate NEW questions that imitate the lecturer's assessment style.
+If, after applying the anti-copying rule above, there genuinely isn't
+enough distinct material to reach the requested question count without
+duplicating or thinly rewording a past-year question, generate fewer
+questions instead (see RULES, below) — a shorter quiz beats a padded one.
+
+Use lecture notes primarily to determine WHAT concepts should be assessed,
+constrained to topics the past-year paper (when provided) has established
+as in-scope.
+
+Generate NEW questions that imitate the lecturer's assessment style, not
+the past-year paper's specific content.
 
 ==========================
 FORMATTING
@@ -76,7 +116,7 @@ RULES
 
 1. Generate UP TO the requested number of questions.
 
-2. If there is insufficient study material, generate fewer questions instead of inventing facts or repeating the same concept.
+2. If there is insufficient study material, generate fewer questions instead of inventing facts, repeating the same concept, or reusing/rewording a past-year question to hit the requested count.
 
 3. Every question MUST be answerable using ONLY the supplied study material.
 

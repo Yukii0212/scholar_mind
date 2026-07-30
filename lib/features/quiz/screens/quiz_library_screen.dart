@@ -14,6 +14,7 @@ import 'package:scholar_mind/features/quiz/screens/generate_quiz_screen.dart';
 import '../widgets/quiz_continue_section.dart';
 import '../widgets/quiz_library_section_widget.dart';
 import '../widgets/quiz_trash_section.dart';
+import 'quiz_feedback_screen.dart';
 
 class QuizLibraryScreen
     extends ConsumerStatefulWidget {
@@ -294,6 +295,32 @@ class _QuizLibraryScreenState
             const QuizTrashSection(),
 
           },
+
+          if (isRoot) ...[
+            const SizedBox(height: 24),
+            Center(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.outline,
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outline.withValues(
+                          alpha: 0.4,
+                        ),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const QuizFeedbackScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.flag_outlined, size: 16),
+                label: const Text('Flagged Questions'),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 100),
         ],

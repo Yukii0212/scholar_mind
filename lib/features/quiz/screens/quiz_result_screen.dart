@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart' hide ShareResult;
 
 import '../providers/quiz_attempt_provider.dart';
 
 import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
+import '../providers/quiz_feedback_provider.dart';
+import '../services/quiz_result_pdf_exporter.dart';
 
 class QuizResultScreen
     extends ConsumerStatefulWidget {
@@ -28,6 +31,124 @@ class _QuizResultScreenState
     extends ConsumerState<QuizResultScreen> {
 
   late final List<bool> _expanded;
+
+  bool _exporting = false;
+
+  Future<void> _flagNotImportant(int index, String questionText, QuestionType type) async {
+    final reasonController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Mark as Not Important?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This question won\'t count toward your score, and future '
+                'quizzes will try to avoid asking similar ones.',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: reasonController,
+                autofocus: true,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Why? (optional)',
+                  hintText: 'e.g. too trivial, off-syllabus, already know this',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Mark'),
+            ),
+          ],
+        );
+      },
+    );
+
+    final reason = reasonController.text;
+    reasonController.dispose();
+
+    if (confirmed != true || !mounted) return;
+
+    final currentAnswers = ref.read(quizAttemptProvider)?.answers ?? widget.answers;
+
+    final updated = (currentAnswers[index] ?? const QuizAnswer()).copyWith(
+      notImportant: true,
+    );
+
+    ref.read(quizAttemptProvider.notifier).updateAnswer(
+          questionIndex: index,
+          answer: updated,
+        );
+
+    await ref.read(quizFeedbackActionControllerProvider.notifier).flagQuestion(
+          questionText: questionText,
+          questionType: type.toJson(),
+          reason: reason,
+        );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Marked as not important -- excluded from your score.')),
+    );
+  }
+
+  void _unflagNotImportant(int index) {
+    final currentAnswers = ref.read(quizAttemptProvider)?.answers ?? widget.answers;
+
+    final updated = (currentAnswers[index] ?? const QuizAnswer()).copyWith(
+      notImportant: false,
+    );
+
+    ref.read(quizAttemptProvider.notifier).updateAnswer(
+          questionIndex: index,
+          answer: updated,
+        );
+  }
+
+  Future<void> _exportPdf(
+    QuizResponse quiz,
+    Map<int, QuizAnswer> answers,
+  ) async {
+    setState(() => _exporting = true);
+
+    try {
+      final file = await const QuizResultPdfExporter().export(
+        quiz: quiz,
+        answers: answers,
+      );
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'My results for "${quiz.title}" on ScholarMind.',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not export PDF: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _exporting = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -83,34 +204,34 @@ class _QuizResultScreenState
     final total =
         widget.quiz.questions.length;
 
-    final objectiveTotal =
-        widget.quiz.questions
-            .where(
-              (question) =>
-          question.type !=
-              QuestionType.openEnded,
-        )
-            .length;
-
+    var objectiveTotal = 0;
     var correct = 0;
+    var openEndedCount = 0;
+    var essayScore = 0;
+    var essayMax = 0;
 
     for (var i = 0; i < total; i++) {
-      final answer =
-      answers[i];
+      final answer = answers[i];
 
-      if (answer == null) {
+      // Excluded from every count below -- see _flagNotImportant/
+      // _unflagNotImportant.
+      if (answer?.notImportant == true) {
         continue;
       }
 
-      final question =
-      widget.quiz.questions[i];
+      final question = widget.quiz.questions[i];
 
-      if (question.type ==
-          QuestionType.openEnded) {
+      if (question.type == QuestionType.openEnded) {
+        openEndedCount++;
+        essayScore += answer?.aiScore ?? 0;
+        essayMax += answer?.aiMaxScore ?? 0;
         continue;
       }
 
-      if (question.correctAnswerIndex != null &&
+      objectiveTotal++;
+
+      if (answer != null &&
+          question.correctAnswerIndex != null &&
           answer.selectedOptionIndex ==
               question.correctAnswerIndex) {
         correct++;
@@ -125,27 +246,12 @@ class _QuizResultScreenState
         100)
         .round();
 
-    final openEndedCount =
-        widget.quiz.questions
-            .where(
-              (question) =>
-          question.type ==
-              QuestionType.openEnded,
-        )
-            .length;
-
     final pendingReview =
     answers.values.any(
-          (answer) => answer.aiReviewPending,
+          (answer) =>
+      !answer.notImportant &&
+          answer.aiReviewPending,
     );
-
-    var essayScore = 0;
-    var essayMax = 0;
-
-    for (final answer in answers.values) {
-      essayScore += answer.aiScore ?? 0;
-      essayMax += answer.aiMaxScore ?? 0;
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -165,6 +271,21 @@ class _QuizResultScreenState
         title: const Text(
           'Quiz Results',
         ),
+        actions: [
+          IconButton(
+            icon: _exporting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.ios_share_rounded),
+            tooltip: 'Export as PDF',
+            onPressed: _exporting
+                ? null
+                : () => _exportPdf(widget.quiz, answers),
+          ),
+        ],
       ),
       body: ListView(
         padding:
@@ -241,6 +362,8 @@ class _QuizResultScreenState
                       answer?.selectedOptionIndex ==
                           question.correctAnswerIndex;
 
+              final excluded = answer?.notImportant == true;
+
               return Card(
                 margin:
                 const EdgeInsets.only(
@@ -251,7 +374,9 @@ class _QuizResultScreenState
                   initiallyExpanded:
                   _expanded[index],
 
-                  leading: question.type ==
+                  leading: excluded
+                      ? const Icon(Icons.flag_outlined)
+                      : question.type ==
                       QuestionType
                           .openEnded
                       ? const Icon(
@@ -267,7 +392,9 @@ class _QuizResultScreenState
                   ),
 
                   title: Text(
-                    'Question ${index + 1}',
+                    excluded
+                        ? 'Question ${index + 1} (Excluded from grading)'
+                        : 'Question ${index + 1}',
                   ),
 
                   subtitle:
@@ -376,6 +503,31 @@ class _QuizResultScreenState
                           ),
                         ],
                       ),
+
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8, bottom: 4),
+                        child: TextButton.icon(
+                          onPressed: excluded
+                              ? () => _unflagNotImportant(index)
+                              : () => _flagNotImportant(
+                                    index,
+                                    question.question,
+                                    question.type,
+                                  ),
+                          icon: Icon(
+                            excluded
+                                ? Icons.undo_rounded
+                                : Icons.flag_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            excluded ? 'Include in Grading' : 'Not Important',
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );

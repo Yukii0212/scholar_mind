@@ -62,6 +62,20 @@ Extra Instructions
 
 ${extraInstructions.length >= 5 ? extraInstructions : 'None.'}
 
+${request.avoidedQuestionsText.trim().isEmpty ? '' : '''
+Previously Flagged As Not Important
+
+The user has marked the following past questions as "Not Important" from
+earlier quizzes. Do not ask these questions again, and avoid generating
+near-duplicates or questions that test the exact same narrow fact. Where
+a reason is given, treat it as an explicit content preference and respect
+it for this generation too (e.g. if flagged as "off-syllabus", avoid that
+whole topic; if "too trivial", prefer a deeper question on the same
+concept instead of skipping it entirely).
+
+${request.avoidedQuestionsText.trim()}
+'''}
+
 Return ONLY valid JSON.
 
 {

@@ -215,8 +215,7 @@ class QuizContinueSection extends ConsumerWidget {
                                           }
 
                                           return QuizResultScreen(
-                                            quiz: item.quiz,
-                                            answers: item.answers,
+                                            attempt: item,
                                           );
                                         },
                                       ),

@@ -5,6 +5,7 @@ class QuizAnswer {
     this.markedForReview = false,
     this.guessed = false,
     this.notImportant = false,
+    this.notImportantFeedbackId,
     this.aiReviewPending = false,
     this.aiScore,
     this.aiMaxScore,
@@ -24,6 +25,13 @@ class QuizAnswer {
   /// feedback this is paired with when the user flags a question.
   final bool notImportant;
 
+  /// The id of the QuizFeedbackEntry document created when this question
+  /// was flagged, so un-flagging it (before submitting, or from the
+  /// results screen) can delete that entry too -- without this, un-
+  /// flagging only cleared the local exclusion-from-grading and left the
+  /// persisted feedback entry behind forever.
+  final String? notImportantFeedbackId;
+
   final bool aiReviewPending;
 
   final int? aiScore;
@@ -38,6 +46,8 @@ class QuizAnswer {
     bool? markedForReview,
     bool? guessed,
     bool? notImportant,
+    String? notImportantFeedbackId,
+    bool clearNotImportantFeedbackId = false,
     bool? aiReviewPending,
     int? aiScore,
     int? aiMaxScore,
@@ -63,6 +73,10 @@ class QuizAnswer {
       notImportant:
       notImportant ??
           this.notImportant,
+
+      notImportantFeedbackId: clearNotImportantFeedbackId
+          ? null
+          : notImportantFeedbackId ?? this.notImportantFeedbackId,
 
       aiReviewPending:
       aiReviewPending ??
@@ -93,6 +107,8 @@ class QuizAnswer {
       guessed,
       'notImportant':
       notImportant,
+      'notImportantFeedbackId':
+      notImportantFeedbackId,
       'aiReviewPending':
       aiReviewPending,
       'aiScore':
@@ -131,6 +147,10 @@ class QuizAnswer {
       json['notImportant']
       as bool? ??
           false,
+
+      notImportantFeedbackId:
+      json['notImportantFeedbackId']
+      as String?,
 
       aiReviewPending:
       json['aiReviewPending']

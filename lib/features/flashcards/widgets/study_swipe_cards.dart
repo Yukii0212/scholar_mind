@@ -165,6 +165,41 @@ class _StudySwipeCardsState
       ..forward();
   }
 
+  /// A colored wash directly ON the card's face (not hidden behind its
+  /// opaque background), growing with drag distance -- a halo placed
+  /// behind an opaque card is mostly invisible except for a thin sliver
+  /// at the edges, which is exactly why the first version of this was too
+  /// subtle to see. Painted on top instead (ignoring pointer events so it
+  /// doesn't block the drag/tap underneath), it reads instantly the way
+  /// Tinder's does.
+  Widget _buildColorOverlay() {
+    final isRight = _offset.dx > 0;
+
+    final color = isRight ? widget.rightColor : widget.leftColor;
+
+    if (color == null || _offset.dx == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final intensity =
+        (_offset.dx.abs() / _dismissThreshold).clamp(0.0, 1.0).toDouble();
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: color.withValues(alpha: 0.38 * intensity),
+            border: Border.all(
+              color: color.withValues(alpha: (0.5 + 0.5 * intensity)),
+              width: 5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStamp() {
     final isRight = _offset.dx > 0;
 
@@ -283,6 +318,7 @@ class _StudySwipeCardsState
                       clipBehavior: Clip.none,
                       children: [
                         widget.item.child,
+                        _buildColorOverlay(),
                         _buildStamp(),
                       ],
                     ),

@@ -1,8 +1,10 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../../../core/preferences/quiz_navigation_preferences.dart';
 import '../providers/quiz_attempt_provider.dart';
 import '../providers/quiz_feedback_provider.dart';
@@ -100,19 +102,47 @@ class _QuizViewerScreenState
 
   void _jumpToQuestion(int index) {
     if (_navigationStyle == QuizNavigationStyle.swipe) {
-      _pageController.jumpToPage(index);
+      // Setting _currentPage directly rather than relying on
+      // PageView.onPageChanged firing off jumpToPage() -- a
+      // programmatic jump (no user gesture driving it) doesn't reliably
+      // dispatch the same scroll notifications an actual swipe does, so
+      // onPageChanged can silently not fire, leaving the "Question X of
+      // Y" label (and everything else keyed off _currentPage) stuck on
+      // the old page even once the jump itself lands. Deferred a frame
+      // since this runs right after popping the overview screen's
+      // route, before this frame's layout/attachment has necessarily
+      // settled.
+      setState(() => _currentPage = index);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _pageController.jumpToPage(index);
+      });
+
       return;
     }
 
-    final context = _questionKeys[index]?.currentContext;
+    // Deferred a frame for the same reason as the swipe branch above --
+    // this runs synchronously right after popping the overview screen's
+    // route, before that pop's transition/layout has settled, and
+    // Scrollable.ensureVisible needs the target's finished, stable
+    // geometry to calculate a correct scroll offset. Re-resolving
+    // currentContext after the frame too, rather than capturing it now,
+    // since the context available before the frame settles isn't
+    // guaranteed to be the same (attached) one after.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-    if (context != null) {
-      Scrollable.ensureVisible(
-        context,
-        duration: const Duration(milliseconds: 250),
-        alignment: 0.0,
-      );
-    }
+      final context = _questionKeys[index]?.currentContext;
+
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 250),
+          alignment: 0.0,
+        );
+      }
+    });
   }
 
   @override
@@ -156,27 +186,29 @@ class _QuizViewerScreenState
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Mark as Not Important?'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'This question won\'t count toward your score, and future '
-                'quizzes will try to avoid asking similar ones.',
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: reasonController,
-                autofocus: true,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Why? (optional)',
-                  hintText:
-                      'e.g. too trivial, off-syllabus, already know this',
-                  border: OutlineInputBorder(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'This question won\'t count toward your score, and future '
+                  'quizzes will try to avoid asking similar ones.',
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: reasonController,
+                  autofocus: true,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Why? (optional)',
+                    hintText:
+                        'e.g. too trivial, off-syllabus, already know this',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -192,23 +224,21 @@ class _QuizViewerScreenState
       },
     );
 
+    // Not disposed here -- the dialog's pop transition can still be
+    // animating when this Future resolves, and EditableText/TextField
+    // still reference the controller until it's actually unmounted.
+    // Disposing it out from under a still-mounted TextField is what threw
+    // the '_dependents.isEmpty' assertion. It's a short-lived, listener-free
+    // controller (same as this app's other one-off dialog controllers,
+    // e.g. the rename dialogs), so leaving it to be garbage collected is
+    // the safe, established pattern here.
     final reason = reasonController.text;
-    reasonController.dispose();
 
     if (confirmed != true || !mounted) return;
 
-    final answers = ref.read(quizAttemptProvider)?.answers ?? {};
-
-    final updated = (answers[index] ?? const QuizAnswer()).copyWith(
-      notImportant: true,
-    );
-
-    ref.read(quizAttemptProvider.notifier).updateAnswer(
-          questionIndex: index,
-          answer: updated,
-        );
-
-    await ref.read(quizFeedbackActionControllerProvider.notifier).flagQuestion(
+    final feedbackId = await ref
+        .read(quizFeedbackActionControllerProvider.notifier)
+        .flagQuestion(
           questionText: question.question,
           questionType: question.type.toJson(),
           reason: reason,
@@ -216,14 +246,11 @@ class _QuizViewerScreenState
 
     if (!mounted) return;
 
-    setState(() {});
-  }
-
-  void _unflagNotImportant(int index) {
     final answers = ref.read(quizAttemptProvider)?.answers ?? {};
 
     final updated = (answers[index] ?? const QuizAnswer()).copyWith(
-      notImportant: false,
+      notImportant: true,
+      notImportantFeedbackId: feedbackId,
     );
 
     ref.read(quizAttemptProvider.notifier).updateAnswer(
@@ -232,6 +259,31 @@ class _QuizViewerScreenState
         );
 
     setState(() {});
+  }
+
+  Future<void> _unflagNotImportant(int index) async {
+    final answers = ref.read(quizAttemptProvider)?.answers ?? {};
+    final current = answers[index];
+
+    final updated = (current ?? const QuizAnswer()).copyWith(
+      notImportant: false,
+      clearNotImportantFeedbackId: true,
+    );
+
+    ref.read(quizAttemptProvider.notifier).updateAnswer(
+          questionIndex: index,
+          answer: updated,
+        );
+
+    setState(() {});
+
+    final feedbackId = current?.notImportantFeedbackId;
+
+    if (feedbackId != null) {
+      await ref
+          .read(quizFeedbackActionControllerProvider.notifier)
+          .deleteFeedback(feedbackId);
+    }
   }
 
   int get _answeredQuestions =>
@@ -285,22 +337,30 @@ class _QuizViewerScreenState
         title:
         const Text('Generated Quiz'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.grid_view_rounded),
-            tooltip: 'Question overview',
-            onPressed: () async {
-              final target = await Navigator.of(context).push<int>(
+          // Labeled rather than a bare icon -- an unlabeled grid glyph in
+          // a quiz's AppBar reads ambiguously (does this leave the quiz?
+          // lose my progress?) to someone seeing it for the first time.
+          // "Questions" with a list icon reads as "jump to a question"
+          // on its own, no tooltip-hunting required.
+          TextButton.icon(
+            icon: const Icon(Icons.format_list_numbered_rounded),
+            label: const Text('Questions'),
+            onPressed: () {
+              Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => QuizQuestionOverviewScreen(
                     quiz: quiz,
                     answers: answers,
+                    onSelectQuestion: (index) {
+                      Navigator.of(context).pop();
+
+                      if (!mounted) return;
+
+                      _jumpToQuestion(index);
+                    },
                   ),
                 ),
               );
-
-              if (target == null || !mounted) return;
-
-              _jumpToQuestion(target);
             },
           ),
           if (_saving)
@@ -329,11 +389,28 @@ class _QuizViewerScreenState
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
+          // A plain Column in a SingleChildScrollView, not a ListView --
+          // even built eagerly (not .builder), ListView/SliverList only
+          // *lays out* children near the current viewport/cache extent.
+          // A GlobalKey's currentContext goes non-null as soon as its
+          // Element is built, which eager building does guarantee, but
+          // Scrollable.ensureVisible also needs a laid-out RenderObject
+          // (a size, a paint transform) to compute a target offset --
+          // which a far-offscreen sliver child never gets until something
+          // scrolls it into range first. Chicken-and-egg, and no amount
+          // of frame-deferral fixes it, which is why jumping to a distant
+          // question kept silently doing nothing. Column has no such
+          // culling: every child is always laid out. A quiz tops out at
+          // 30 questions (see quiz_configuration_card.dart), so the cost
+          // of that is negligible.
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            itemCount: quiz.questions.length,
-            itemBuilder: (context, index) =>
-                _buildQuestionCard(context, index, answers),
+            child: Column(
+              children: [
+                for (var index = 0; index < quiz.questions.length; index++)
+                  _buildQuestionCard(context, index, answers),
+              ],
+            ),
           ),
         ),
         SafeArea(
@@ -380,8 +457,19 @@ class _QuizViewerScreenState
             controller: _pageController,
             itemCount: quiz.questions.length,
             onPageChanged: (index) => setState(() => _currentPage = index),
+            // One widget per page -- the same _buildQuestionCard used in
+            // scroll mode, question and answer together in a single
+            // scrollable Card, rather than splitting them into separate
+            // widgets. That split was meant to keep the question in view
+            // while the keyboard was open, but it introduced its own
+            // regression (the answer area's own nested scrollable ate
+            // vertical drag gestures instead of letting the page scroll),
+            // and per-page keyboard visibility is already handled the
+            // same way scroll mode handles it -- see
+            // _scrollQuestionIntoView, wired to the same open-ended
+            // FocusNodes this card uses internally.
             itemBuilder: (context, index) => SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: _buildQuestionCard(context, index, answers),
             ),
           ),
@@ -427,6 +515,28 @@ class _QuizViewerScreenState
     );
   }
 
+  Widget _buildQuestionHeader(
+    BuildContext context,
+    int index,
+    QuizQuestion question,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Question ${index + 1}',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          question.question,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
   Widget _buildQuestionCard(
     BuildContext context,
     int index,
@@ -452,50 +562,24 @@ class _QuizViewerScreenState
                 CrossAxisAlignment
                     .start,
                 children: [
-                  Text(
-                    'Question ${index + 1}',
-                    style:
-                    Theme.of(context)
-                        .textTheme
-                        .titleMedium,
-                  ),
-
-                  const SizedBox(
-                    height: 12,
-                  ),
-
-                  Text(
-                    question.question,
-                    style:
-                    const TextStyle(
-                      fontWeight:
-                      FontWeight.bold,
-                    ),
-                  ),
+                  _buildQuestionHeader(context, index, question),
 
                   const SizedBox(
                     height: 20,
                   ),
 
-                  if (question.type == QuestionType.openEnded)
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: math.min(
-                          320.0,
-                          MediaQuery.sizeOf(context).height * 0.4,
-                        ),
-                      ),
-                      child: SingleChildScrollView(
-                        child: _buildAnswerControls(
-                          context,
-                          index,
-                          question,
-                          answers,
-                        ),
-                      ),
-                    )
-                  else
-                    _buildAnswerControls(context, index, question, answers),
+                  // No inner ConstrainedBox/SingleChildScrollView here even
+                  // for open-ended -- that was a second vertical scrollable
+                  // nested inside the outer one wrapping this whole card
+                  // (see _buildScrollBody/_buildSwipeBody), and touches
+                  // anywhere over it got claimed by the inner (usually
+                  // non-scrolling, since the field is only 3 lines) one
+                  // instead of bubbling up, which is what made the page
+                  // feel unscrollable near the answer area. The outer
+                  // scrollable already covers this; the TextField itself
+                  // is already height-capped (minLines/maxLines: 3) so it
+                  // can't grow unbounded either way.
+                  _buildAnswerControls(context, index, question, answers),
                 ],
               ),
             ),
@@ -854,22 +938,65 @@ class _QuizViewerScreenState
       return;
     }
 
-    await ref
-        .read(
-      quizAttemptProvider.notifier,
-    )
-        .startGrading();
+    final notifier = ref.read(quizAttemptProvider.notifier);
 
-    await Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => QuizResultScreen(
-          quiz: quiz,
-          answers: ref.read(
-            quizAttemptProvider,
-          )!.answers,
+    final hasOpenEnded = quiz.questions.any(
+      (question) => question.type == QuestionType.openEnded,
+    );
+
+    if (!hasOpenEnded) {
+      // Nothing to wait on -- grading an objective-only quiz is
+      // instant (no AI round-trip), so show results right away.
+      await notifier.startGrading();
+
+      if (!mounted) return;
+
+      await Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => QuizResultScreen(
+            attempt: ref.read(quizAttemptProvider)!,
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    // Open-ended answers need an AI review that can take real time, and
+    // showing the results screen immediately used to mean landing on a
+    // "0/0, pending review" screen the instant you submit. Route the
+    // whole grading pass through the app task bar instead -- it keeps
+    // running even if this screen is left, and the user finds out via
+    // the Resume/Continue list once it's done (see QuizResultScreen's
+    // own resume-if-stuck check for what happens if the app is closed
+    // before that finishes too).
+    final attemptId = attempt.id;
+    final quizTitle = quiz.title;
+
+    unawaited(
+      ref.read(appTaskControllerProvider).run<void>(
+        id: 'quiz_grading_$attemptId',
+        type: AppTaskType.quizGrading,
+        title: 'Grading "$quizTitle"',
+        task: (progress) async {
+          progress('Grading your open-ended answers...');
+          await notifier.startGrading();
+        },
+      ),
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Grading your open-ended answers -- find this quiz under '
+          '"Continue" once it\'s ready.',
         ),
       ),
     );
+
+    Navigator.of(context).pop();
   }
 }

@@ -32,16 +32,19 @@ class QuizFeedbackActionController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
-  Future<void> flagQuestion({
+  /// Returns the created feedback entry's id (or null if not signed in),
+  /// so the caller can hang onto it and delete this exact entry again if
+  /// the question is un-flagged later.
+  Future<String?> flagQuestion({
     required String questionText,
     required String questionType,
     String? reason,
   }) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
-    if (userId == null) return;
+    if (userId == null) return null;
 
-    await ref.read(quizFeedbackRepositoryProvider).addFeedback(
+    return ref.read(quizFeedbackRepositoryProvider).addFeedback(
           userId: userId,
           questionText: questionText,
           questionType: questionType,

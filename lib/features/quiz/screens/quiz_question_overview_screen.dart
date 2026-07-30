@@ -7,17 +7,22 @@ import '../domain/quiz_response.dart';
 
 /// Lists every question with its current in-progress status (answered,
 /// unanswered, marked as a guess, or flagged for review) and lets the
-/// user jump straight to one — pops with the chosen index, which the
-/// viewer uses to scroll/page to that question.
+/// user jump straight to one. Calls [onSelectQuestion] directly (rather
+/// than popping with a result for the caller to await) -- routing this
+/// through Navigator.push<int>()'s result Future turned out not to
+/// reliably deliver the tapped index back to the quiz screen; a plain
+/// callback the row invokes itself sidesteps that path entirely.
 class QuizQuestionOverviewScreen extends StatelessWidget {
   const QuizQuestionOverviewScreen({
     super.key,
     required this.quiz,
     required this.answers,
+    required this.onSelectQuestion,
   });
 
   final QuizResponse quiz;
   final Map<int, QuizAnswer> answers;
+  final ValueChanged<int> onSelectQuestion;
 
   bool _isAnswered(int index) {
     final question = quiz.questions[index];
@@ -44,17 +49,20 @@ class QuizQuestionOverviewScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final answer = answers[index];
           final answered = _isAnswered(index);
+          final notImportant = answer?.notImportant == true;
 
-          final (icon, color) = answered
-              ? (Icons.check_circle_outline, palette.success)
-              : (Icons.radio_button_unchecked, palette.textMuted);
+          final (icon, color) = notImportant
+              ? (Icons.flag_outlined, palette.textMuted)
+              : answered
+                  ? (Icons.check_circle_outline, palette.success)
+                  : (Icons.radio_button_unchecked, palette.textMuted);
 
           return Material(
             color: palette.panelStrong.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: () => Navigator.of(context).pop(index),
+              onTap: () => onSelectQuestion(index),
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Row(
@@ -84,6 +92,13 @@ class QuizQuestionOverviewScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (answer?.notImportant == true) ...[
+                      const SizedBox(width: 8),
+                      _StatusBadge(
+                        label: 'Not Important',
+                        color: palette.textMuted,
+                      ),
+                    ],
                     if (answer?.guessed == true) ...[
                       const SizedBox(width: 8),
                       _StatusBadge(

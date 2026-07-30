@@ -511,8 +511,7 @@ class QuizLibrarySectionWidget
                                               }
 
                                               return QuizResultScreen(
-                                                quiz: item.quiz,
-                                                answers: item.answers,
+                                                attempt: item,
                                               );
 
                                             },

@@ -24,13 +24,17 @@ class QuizFeedbackRepository {
         );
   }
 
-  Future<void> addFeedback({
+  /// Returns the created document's id, so the caller can remember which
+  /// feedback entry belongs to which answer -- needed to delete the right
+  /// one again if the question is un-flagged later (see
+  /// QuizAnswer.notImportantFeedbackId).
+  Future<String> addFeedback({
     required String userId,
     required String questionText,
     required String questionType,
     String? reason,
-  }) {
-    return _feedback(userId).add({
+  }) async {
+    final doc = await _feedback(userId).add({
       'questionText': questionText,
       'questionType': questionType,
       'reason': (reason == null || reason.trim().isEmpty)
@@ -38,6 +42,8 @@ class QuizFeedbackRepository {
           : reason.trim(),
       'createdAt': FieldValue.serverTimestamp(),
     });
+
+    return doc.id;
   }
 
   Future<void> deleteFeedback({

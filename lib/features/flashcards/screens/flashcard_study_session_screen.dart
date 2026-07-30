@@ -49,6 +49,15 @@ class _FlashcardStudySessionScreenState
   var _needsReview = 0;
   var _completed = false;
 
+  // Scoped to the round currently in progress, reset every time a new
+  // round starts -- what the round-complete summary reports on, since
+  // _known/_needsReview above are running totals across every round.
+  // (How many were known this round is just roundSize - missed, so no
+  // separate counter for that.)
+  var _roundAlmost = 0;
+  var _roundDidntKnow = 0;
+  var _roundSkipped = 0;
+
   // Progress is "how much of the whole deck is mastered", not "how far
   // through the current round" — stable across rounds instead of tracking
   // a denominator that used to grow every time a card was missed.
@@ -69,9 +78,18 @@ class _FlashcardStudySessionScreenState
     final palette = context.scholarPalette;
     final current =
         _completed || _roundQueue.isEmpty ? null : _roundQueue[_currentIndex];
-    final progress = _totalCards == 0
+
+    // Tracks movement through the round actually in front of the user right
+    // now -- ticks up on every single card, skip included, so it visibly
+    // moves as they go rather than sitting frozen through a run of misses.
+    // Deliberately the ONLY number shown here -- an earlier version also
+    // showed lifetime deck mastery alongside it, but two numbers moving at
+    // different rates just reads as confusing mid-session. Mastery still
+    // has its place, just on the completion screen once the session is
+    // actually over (see _CompletionPanel).
+    final roundProgress = _roundQueue.isEmpty
         ? 0.0
-        : (_knownCardIds.length / _totalCards).clamp(0, 1).toDouble();
+        : (_currentIndex / _roundQueue.length).clamp(0, 1).toDouble();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -110,13 +128,13 @@ class _FlashcardStudySessionScreenState
                                   children: [
                                     Expanded(
                                       child: LinearProgressIndicator(
-                                        value: progress,
+                                        value: roundProgress,
                                         minHeight: 8,
                                       ),
                                     ),
                                     const Gap(12),
                                     Text(
-                                      '${(progress * 100).round()}%',
+                                      '$_currentIndex/${_roundQueue.length}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelLarge
@@ -249,6 +267,7 @@ class _FlashcardStudySessionScreenState
     final current = _roundQueue[_currentIndex];
 
     if (evaluation == _SelfEvaluation.skipped) {
+      _roundSkipped++;
       _missedThisRound.add(current);
       _advance();
       return;
@@ -262,15 +281,22 @@ class _FlashcardStudySessionScreenState
     } else {
       _needsReview++;
       _missedThisRound.add(current);
+
+      if (evaluation == _SelfEvaluation.almost) {
+        _roundAlmost++;
+      } else {
+        _roundDidntKnow++;
+      }
     }
 
     _advance();
   }
 
   /// Moves to the next card in the current round, or — if the round just
-  /// ran out — either finishes the session (nothing was missed) or starts
-  /// a new round made up of just what was missed. A card only ever comes
-  /// back after the rest of *this* round, never behind everything else.
+  /// ran out — either finishes the session (nothing was missed) or shows
+  /// the round summary so the user decides whether to revise what was
+  /// missed. A card only ever comes back after the rest of *this* round,
+  /// never behind everything else.
   void _advance() {
     if (_currentIndex < _roundQueue.length - 1) {
       setState(() {
@@ -288,12 +314,60 @@ class _FlashcardStudySessionScreenState
       return;
     }
 
+    _showRoundSummary();
+  }
+
+  /// A round just ended with cards left over -- rather than silently
+  /// starting the next round, tell the user what happened this round
+  /// (knew it / almost / didn't know / skipped) and let them choose to
+  /// revise the leftovers now or stop here.
+  Future<void> _showRoundSummary() async {
+    final roundSize = _roundQueue.length;
+    final missedCount = _missedThisRound.length;
+    final knewCount = roundSize - missedCount;
+
+    final revise = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Round $_roundNumber Complete'),
+          content: Text(
+            '$knewCount / $roundSize you knew.\n'
+            '$_roundDidntKnow didn\'t know, $_roundAlmost almost knew'
+            '${_roundSkipped > 0 ? ', $_roundSkipped skipped' : ''}.\n\n'
+            'Want to revise the $missedCount you missed?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Finish Here'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Revise Now'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) return;
+
+    if (revise != true) {
+      setState(() => _completed = true);
+      _recordSession();
+      return;
+    }
+
     setState(() {
       _roundQueue = [..._missedThisRound]..shuffle(Random());
       _missedThisRound.clear();
       _currentIndex = 0;
       _showAnswer = false;
       _roundNumber++;
+      _roundAlmost = 0;
+      _roundDidntKnow = 0;
+      _roundSkipped = 0;
     });
 
     _maybeShowMilestone();
@@ -340,12 +414,22 @@ class _FlashcardStudySessionScreenState
   Future<void> _recordSession() async {
     final userId = ref.read(authStateProvider).valueOrNull?.uid;
     if (userId == null) return;
+
+    // Cards never marked "Knew It" across any round -- the ones worth
+    // surfacing later as persistently troublesome, as opposed to ones
+    // that just needed a second pass this session.
+    final missedCardIds = widget.cards
+        .map((card) => card.id)
+        .where((id) => !_knownCardIds.contains(id))
+        .toList();
+
     await ref.read(flashcardRepositoryProvider).recordSession(
           userId: userId,
           deckId: widget.deck.id,
           reviewed: _reviewed,
           known: _known,
           needsReview: _needsReview,
+          missedCardIds: missedCardIds,
         );
   }
 }

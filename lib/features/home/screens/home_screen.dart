@@ -11,6 +11,8 @@ import '../../../core/providers/theme_provider.dart';
 import '../../../core/services/background_sync_service.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../data_sharing/screens/import_library_screen.dart';
+import '../../data_sharing/screens/qr_scanner_screen.dart';
 import '../../help/help_route_topics.dart';
 import '../../help/widgets/help_menu_button.dart';
 import '../help/standing_chip_preview_provider.dart';
@@ -390,12 +392,41 @@ class _QuickAccessGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const actions = [
-      _QuickAction('Notes', Icons.description_rounded, '/notes'),
-      _QuickAction('Quiz', Icons.bolt_rounded, '/quiz'),
-      _QuickAction('Grades', Icons.bar_chart_rounded, '/grades'),
-      _QuickAction('Flashcards', Icons.style_rounded, '/flashcards'),
-      _QuickAction('Share', Icons.ios_share_rounded, '/share'),
+    final actions = [
+      const _QuickAction(
+        'Notes',
+        Icons.description_rounded,
+        route: '/notes',
+      ),
+      const _QuickAction('Quiz', Icons.bolt_rounded, route: '/quiz'),
+      const _QuickAction('Grades', Icons.bar_chart_rounded, route: '/grades'),
+      const _QuickAction(
+        'Flashcards',
+        Icons.style_rounded,
+        route: '/flashcards',
+      ),
+      const _QuickAction('Share', Icons.ios_share_rounded, route: '/share'),
+      _QuickAction(
+        'Scan QR',
+        Icons.qr_code_scanner_rounded,
+        onTap: (context) async {
+          final scanned = await Navigator.of(context).push<String>(
+            MaterialPageRoute(
+              builder: (_) => const QrScannerScreen(),
+            ),
+          );
+
+          if (scanned == null || !context.mounted) return;
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ImportLibraryScreen(
+                initialShareInput: scanned,
+              ),
+            ),
+          );
+        },
+      ),
     ];
 
     return ScholarPanel(
@@ -417,7 +448,9 @@ class _QuickAccessGrid extends StatelessWidget {
               final action = actions[index];
               return ScholarPanel(
                 padding: const EdgeInsets.all(12),
-                onTap: () => context.go(action.route),
+                onTap: () => action.onTap != null
+                    ? action.onTap!(context)
+                    : context.go(action.route!),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -901,9 +934,19 @@ class _NavItem {
 }
 
 class _QuickAction {
-  const _QuickAction(this.label, this.icon, this.route);
+  const _QuickAction(this.label, this.icon, {this.route, this.onTap})
+      : assert(
+          route != null || onTap != null,
+          'A quick action needs either a route or a custom onTap.',
+        );
 
   final String label;
   final IconData icon;
-  final String route;
+
+  /// Simple named-route navigation — most actions just go here.
+  final String? route;
+
+  /// For actions that need to do something other than `context.go(route)`
+  /// (e.g. the QR scanner, which pushes a camera screen first).
+  final void Function(BuildContext context)? onTap;
 }

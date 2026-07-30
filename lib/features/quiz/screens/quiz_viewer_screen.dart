@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -475,6 +477,41 @@ class _QuizViewerScreenState
                     height: 20,
                   ),
 
+                  if (question.type == QuestionType.openEnded)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: math.min(
+                          320.0,
+                          MediaQuery.sizeOf(context).height * 0.4,
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        child: _buildAnswerControls(
+                          context,
+                          index,
+                          question,
+                          answers,
+                        ),
+                      ),
+                    )
+                  else
+                    _buildAnswerControls(context, index, question, answers),
+                ],
+              ),
+            ),
+          );
+  }
+
+  Widget _buildAnswerControls(
+    BuildContext context,
+    int index,
+    QuizQuestion question,
+    Map<int, QuizAnswer> answers,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
                   if (question.type ==
                       QuestionType
                           .multipleChoice)
@@ -743,11 +780,10 @@ class _QuizViewerScreenState
                     ),
                     secondary: const Icon(Icons.flag_outlined),
                   ),
-                ],
-              ),
-            ),
-          );
+      ],
+    );
   }
+
 
   @override
   void dispose() {

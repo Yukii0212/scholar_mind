@@ -69,6 +69,7 @@ class QuizDataShareHandler
     required String userId,
     required List<String> resourceIds,
     required String shareId,
+    void Function(String message)? onProgress,
   }) async {
     final collected = await _collector.collect(
       userId: userId,

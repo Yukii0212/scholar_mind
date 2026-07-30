@@ -24,6 +24,7 @@ class ExportService {
   Future<ShareArchive> export(
       ExportRequest request, {
         required String shareId,
+        void Function(String message)? onProgress,
       }) async {
     final List<ShareResource> resources = [];
 
@@ -65,10 +66,13 @@ class ExportService {
         userId: request.userId,
         resourceIds: entry.value.toList(),
         shareId: shareId,
+        onProgress: onProgress,
       );
 
       resources.addAll(exported);
     }
+
+    onProgress?.call('Preparing archive...');
 
     return _archiveBuilderService.build(
       resources,

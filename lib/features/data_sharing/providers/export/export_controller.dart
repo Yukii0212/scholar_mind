@@ -18,6 +18,8 @@ class ExportController
 
   Future<ShareResult?> generateShare({
     required ShareExpiry expiry,
+    String? shareId,
+    void Function(String message)? onProgress,
   }) async {
     final request = ref.read(
       exportRequestProvider,
@@ -27,11 +29,17 @@ class ExportController
       return null;
     }
 
-    final shareId = const Uuid().v4();
+    final resolvedShareId = shareId ?? const Uuid().v4();
 
     final archive = await ref
         .read(exportServiceProvider)
-        .export(request, shareId: shareId);
+        .export(
+      request,
+      shareId: resolvedShareId,
+      onProgress: onProgress,
+    );
+
+    onProgress?.call('Uploading share archive...');
 
     final storagePath = await ref
         .read(
@@ -39,9 +47,11 @@ class ExportController
     )
         .uploadArchive(
       userId: request.userId,
-      shareId: shareId,
+      shareId: resolvedShareId,
       archive: archive,
     );
+
+    onProgress?.call('Finalizing share link...');
 
     return ref
         .read(

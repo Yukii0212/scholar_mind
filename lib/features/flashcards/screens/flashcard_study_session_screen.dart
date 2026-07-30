@@ -153,6 +153,13 @@ class _FlashcardStudySessionScreenState
                                     ? 'Swipe right: I knew it  •  '
                                         "Swipe left: Didn't know it"
                                     : 'Swipe either way to skip',
+                                leftLabel: _showAnswer ? "DIDN'T KNOW" : null,
+                                leftColor: _showAnswer
+                                    ? Theme.of(context).colorScheme.error
+                                    : null,
+                                rightLabel: _showAnswer ? 'KNEW IT' : null,
+                                rightColor:
+                                    _showAnswer ? palette.success : null,
                                 item: StudySwipeCardItem(
                                   title: 'Flashcard',
                                   icon: Icons.style_rounded,

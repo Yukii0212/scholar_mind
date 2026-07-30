@@ -9,7 +9,13 @@ import 'qr_scanner_screen.dart';
 class ImportLibraryScreen extends ConsumerStatefulWidget {
   const ImportLibraryScreen({
     super.key,
+    this.initialShareInput,
   });
+
+  /// Pre-fills the input field and immediately triggers the import, for
+  /// entry points that already have a link/code in hand (e.g. a "Scan QR"
+  /// quick action) rather than expecting the user to paste one here.
+  final String? initialShareInput;
 
   @override
   ConsumerState<ImportLibraryScreen> createState() =>
@@ -21,6 +27,21 @@ class _ImportLibraryScreenState
   final _controller = TextEditingController();
 
   bool _isImporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final initialInput = widget.initialShareInput;
+
+    if (initialInput != null && initialInput.isNotEmpty) {
+      _controller.text = initialInput;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _import();
+      });
+    }
+  }
 
   @override
   void dispose() {

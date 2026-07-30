@@ -22,6 +22,11 @@ abstract class DataShareHandler {
     // where to copy those files to, so they can be referenced by path
     // from the archive instead of embedding their bytes inline.
     required String shareId,
+    // Optional human-readable progress updates surfaced to the user while
+    // this handler's export runs — most handlers are fast enough not to
+    // need it, but ones that do per-item network work (e.g. notes copying
+    // files) can report incremental progress through it.
+    void Function(String message)? onProgress,
   });
 
   Future<void> import({

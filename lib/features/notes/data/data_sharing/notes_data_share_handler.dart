@@ -73,7 +73,10 @@ class NotesDataShareHandler
     required String userId,
     required List<String> resourceIds,
     required String shareId,
+    void Function(String message)? onProgress,
   }) async {
+    onProgress?.call('Collecting notes and folders...');
+
     final collected =
     await _collector.collect(
       userId: userId,
@@ -94,6 +97,8 @@ class NotesDataShareHandler
     // one archive blob. Still bounded to a handful in flight at once so a
     // folder with many files doesn't fire dozens of concurrent
     // download+upload pairs simultaneously.
+    final total = collected.resources.length;
+
     final resources = await _mapInBatches(
       collected.resources,
       (resource) => _exportMapper.toResource(
@@ -102,6 +107,8 @@ class NotesDataShareHandler
         shareId: shareId,
       ),
       batchSize: 4,
+      onBatchComplete: (done) =>
+          onProgress?.call('Copied $done of $total items'),
     );
 
 
@@ -264,12 +271,14 @@ Future<List<R>> _mapInBatches<T, R>(
   List<T> items,
   Future<R> Function(T) mapper, {
   required int batchSize,
+  void Function(int done)? onBatchComplete,
 }) async {
   final results = <R>[];
 
   for (var i = 0; i < items.length; i += batchSize) {
     final batch = items.skip(i).take(batchSize);
     results.addAll(await Future.wait(batch.map(mapper)));
+    onBatchComplete?.call(results.length);
   }
 
   return results;

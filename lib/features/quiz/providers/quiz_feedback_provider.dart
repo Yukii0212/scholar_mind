@@ -1,0 +1,73 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../auth/providers/auth_provider.dart';
+import '../data/quiz_feedback_repository.dart';
+import '../domain/quiz_feedback_entry.dart';
+
+final quizFeedbackRepositoryProvider = Provider<QuizFeedbackRepository>((ref) {
+  return QuizFeedbackRepository(FirebaseFirestore.instance);
+});
+
+final quizFeedbackProvider =
+    StreamProvider.autoDispose<List<QuizFeedbackEntry>>((ref) {
+  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+
+  if (userId == null) {
+    return const Stream.empty();
+  }
+
+  return ref.watch(quizFeedbackRepositoryProvider).watchFeedback(userId);
+});
+
+final quizFeedbackActionControllerProvider =
+    AsyncNotifierProvider<QuizFeedbackActionController, void>(
+  QuizFeedbackActionController.new,
+);
+
+class QuizFeedbackActionController extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {}
+
+  /// Returns the created feedback entry's id (or null if not signed in),
+  /// so the caller can hang onto it and delete this exact entry again if
+  /// the question is un-flagged later.
+  Future<String?> flagQuestion({
+    required String questionText,
+    required String questionType,
+    String? reason,
+  }) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) return null;
+
+    return ref.read(quizFeedbackRepositoryProvider).addFeedback(
+          userId: userId,
+          questionText: questionText,
+          questionType: questionType,
+          reason: reason,
+        );
+  }
+
+  Future<void> deleteFeedback(String feedbackId) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) return;
+
+    await ref.read(quizFeedbackRepositoryProvider).deleteFeedback(
+          userId: userId,
+          feedbackId: feedbackId,
+        );
+  }
+
+  Future<void> clearAll() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) return;
+
+    await ref.read(quizFeedbackRepositoryProvider).clearAllFeedback(userId);
+  }
+}

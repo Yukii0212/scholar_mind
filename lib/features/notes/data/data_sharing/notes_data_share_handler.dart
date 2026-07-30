@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../../../data_sharing/domain/models/share/share_resource.dart';
@@ -73,7 +72,11 @@ class NotesDataShareHandler
   Future<List<ShareResource>> export({
     required String userId,
     required List<String> resourceIds,
+    required String shareId,
+    void Function(String message)? onProgress,
   }) async {
+    onProgress?.call('Collecting notes and folders...');
+
     final collected =
     await _collector.collect(
       userId: userId,
@@ -88,8 +91,24 @@ class NotesDataShareHandler
       );
     }
 
-    final resources = await Future.wait(
-      collected.resources.map(_exportMapper.toResource),
+    // Each note with a file is now copied to its own object under this
+    // share (see NotesExportMapper._note), one at a time per mapper call,
+    // rather than every file's full bytes ending up embedded together in
+    // one archive blob. Still bounded to a handful in flight at once so a
+    // folder with many files doesn't fire dozens of concurrent
+    // download+upload pairs simultaneously.
+    final total = collected.resources.length;
+
+    final resources = await _mapInBatches(
+      collected.resources,
+      (resource) => _exportMapper.toResource(
+        resource,
+        userId: userId,
+        shareId: shareId,
+      ),
+      batchSize: 4,
+      onBatchComplete: (done) =>
+          onProgress?.call('Copied $done of $total items'),
     );
 
 
@@ -211,9 +230,17 @@ class NotesDataShareHandler
             isFavorite: payload['isFavorite'] as bool? ?? false,
           );
         } else {
-          final fileBytesBase64 = payload['fileBytes'] as String?;
+          final fileStoragePath = payload['fileStoragePath'] as String?;
 
-          if (fileBytesBase64 == null) {
+          if (fileStoragePath == null) {
+            continue;
+          }
+
+          final fileBytes = await FirebaseStorage.instance
+              .ref(fileStoragePath)
+              .getData();
+
+          if (fileBytes == null) {
             continue;
           }
 
@@ -222,7 +249,7 @@ class NotesDataShareHandler
             folderId: targetFolderId,
             name: resource.metadata.displayName,
             extension: payload['extension'] as String,
-            fileBytes: base64Decode(fileBytesBase64),
+            fileBytes: fileBytes,
             category: payload['category'] as String,
             source: payload['source'] as String,
             isFavorite: payload['isFavorite'] as bool? ?? false,
@@ -233,4 +260,26 @@ class NotesDataShareHandler
       }
     }
   }
+}
+
+/// Applies [mapper] to [items] [batchSize] at a time, waiting for each
+/// batch to finish before starting the next — unlike a single unbounded
+/// `Future.wait(items.map(mapper))`, this keeps at most [batchSize]
+/// mapper calls (and whatever memory each one holds, e.g. downloaded file
+/// bytes) in flight simultaneously.
+Future<List<R>> _mapInBatches<T, R>(
+  List<T> items,
+  Future<R> Function(T) mapper, {
+  required int batchSize,
+  void Function(int done)? onBatchComplete,
+}) async {
+  final results = <R>[];
+
+  for (var i = 0; i < items.length; i += batchSize) {
+    final batch = items.skip(i).take(batchSize);
+    results.addAll(await Future.wait(batch.map(mapper)));
+    onBatchComplete?.call(results.length);
+  }
+
+  return results;
 }

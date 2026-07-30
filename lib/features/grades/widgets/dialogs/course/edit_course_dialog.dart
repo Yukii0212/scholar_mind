@@ -108,7 +108,8 @@ class _EditCourseDialogState
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
-            child: Column(
+            child: SingleChildScrollView(
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
@@ -218,6 +219,7 @@ class _EditCourseDialogState
                   child: const Text('Cancel'),
                 ),
               ],
+              ),
             ),
           ),
         ),

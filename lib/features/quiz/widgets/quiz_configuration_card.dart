@@ -10,6 +10,7 @@ class QuizConfigurationCard extends StatelessWidget {
   const QuizConfigurationCard({
     super.key,
     required this.questionCount,
+    required this.materialCharacterCount,
     required this.assessmentMode,
     required this.difficulty,
     required this.minimumBloomsLevel,
@@ -28,6 +29,14 @@ class QuizConfigurationCard extends StatelessWidget {
   });
 
   final int questionCount;
+
+  /// Total character count across all selected, processed study
+  /// materials. Used only to warn when it looks thin relative to
+  /// [questionCount] -- generating that many genuinely distinct questions
+  /// from very little source material tends to produce near-duplicates or
+  /// reworded past-year questions instead.
+  final int materialCharacterCount;
+
   final AssessmentMode assessmentMode;
   final QuizDifficulty difficulty;
   final BloomsLevel minimumBloomsLevel;
@@ -113,6 +122,42 @@ class QuizConfigurationCard extends StatelessWidget {
                 }
               },
             ),
+
+            const SizedBox(height: 6),
+
+            Text(
+              'This is a maximum -- fewer questions may be generated if '
+              'that keeps quality higher than padding out to the full count.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+            ),
+
+            if (materialCharacterCount > 0 &&
+                materialCharacterCount < questionCount * 400) ...[
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Your selected materials look thin for $questionCount '
+                      'questions -- add more material or lower the count to '
+                      'avoid repeated or reworded questions.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
 
             const SizedBox(height: 20),
 

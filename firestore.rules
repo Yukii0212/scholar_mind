@@ -63,6 +63,15 @@ service cloud.firestore {
           allow create, update: if isOwner(userId)
             && validFlashcard(request.resource.data);
         }
+
+        match /sessions/{sessionId} {
+          allow read, delete: if isOwner(userId);
+          allow create: if isOwner(userId)
+            && validFlashcardSession(request.resource.data);
+          // Session records are a per-attempt log, not something you
+          // edit after the fact.
+          allow update: if false;
+        }
       }
 
       match /quiz_folders/{folderId} {
@@ -75,6 +84,17 @@ service cloud.firestore {
         allow read, delete: if isOwner(userId);
         allow create, update: if isOwner(userId)
           && validQuiz(request.resource.data);
+      }
+
+      // Questions the user flagged as "Not important" from a completed
+      // quiz -- unbounded (the user can keep everything they've ever
+      // flagged, not just a recent slice), used both to show them what
+      // they've flagged and to steer future generations away from
+      // similar questions.
+      match /quizFeedback/{feedbackId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validQuizFeedback(request.resource.data);
       }
 
       match /semesters/{semesterId} {
@@ -398,6 +418,28 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function validFlashcardSession(data) {
+      return data.keys().hasAll([
+          'reviewed',
+          'known',
+          'needsReview',
+          'missedCardIds',
+          'completedAt'
+        ])
+        && data.keys().hasOnly([
+          'reviewed',
+          'known',
+          'needsReview',
+          'missedCardIds',
+          'completedAt'
+        ])
+        && data.reviewed is int
+        && data.known is int
+        && data.needsReview is int
+        && data.missedCardIds is list
+        && data.completedAt is timestamp;
+    }
+
     function validQuizFolder(data) {
       return data.keys().hasAll([
           'name',
@@ -477,6 +519,18 @@ service cloud.firestore {
         && data.startedAt is string
         && data.quiz is map
         && data.answers is map;
+    }
+
+    function validQuizFeedback(data) {
+      return data.keys().hasAll(['questionText', 'questionType', 'createdAt'])
+        && data.keys().hasOnly(
+          ['questionText', 'questionType', 'reason', 'createdAt']
+        )
+        && data.questionText is string
+        && data.questionText.size() > 0
+        && data.questionType is string
+        && (data.reason == null || data.reason is string)
+        && data.createdAt is timestamp;
     }
 
     function validSemester(data) {

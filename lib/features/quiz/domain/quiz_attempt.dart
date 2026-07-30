@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'question_type.dart';
 import 'quiz_answer.dart';
 import 'quiz_response.dart';
 
@@ -59,6 +60,34 @@ class QuizAttempt {
   final bool isDeleted;
 
   final DateTime? deletedAt;
+
+  /// How many questions have a genuinely meaningful answer -- NOT
+  /// `answers.length`, which only reflects how many indices have ever been
+  /// touched (an MC/TF selection or open-ended text that was later cleared
+  /// still leaves its key in the map with a null/empty value). Mirrors
+  /// QuizViewerScreen's own per-question "answered" check so the progress
+  /// shown before opening a quiz (e.g. in the Resume list) matches what
+  /// opening it actually shows.
+  int get answeredCount {
+    var answered = 0;
+
+    for (var i = 0; i < quiz.questions.length; i++) {
+      final answer = answers[i];
+
+      if (answer == null) continue;
+
+      switch (quiz.questions[i].type) {
+        case QuestionType.multipleChoice:
+        case QuestionType.trueFalse:
+          if (answer.selectedOptionIndex != null) answered++;
+        case QuestionType.openEnded:
+          if (answer.openEndedAnswer.trim().isNotEmpty) answered++;
+      }
+    }
+
+    return answered;
+  }
+
   QuizAttempt copyWith({
     Map<int, QuizAnswer>? answers,
     QuizAttemptStatus? status,

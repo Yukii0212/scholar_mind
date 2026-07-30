@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/providers/auth_provider.dart';
 import '../../notes/domain/note_item.dart';
 import '../../notes/providers/library_provider.dart';
 
+import '../data/quiz_feedback_repository.dart';
+import '../providers/quiz_feedback_provider.dart';
 import '../domain/processing_status.dart';
 import '../domain/assessment_mode.dart';
 import '../domain/blooms_level.dart';
@@ -136,6 +139,14 @@ class _QuizScreenState
 
               QuizConfigurationCard(
                 questionCount: _questionCount,
+                materialCharacterCount: _processedLectureNotes.values.fold(
+                      0,
+                      (sum, m) => sum + m.text.length,
+                    ) +
+                    _processedPastYearQuestions.values.fold(
+                      0,
+                      (sum, m) => sum + m.text.length,
+                    ),
                 assessmentMode: _assessmentMode,
                 difficulty: _difficulty,
                 minimumBloomsLevel: _minimumBloomsLevel,
@@ -414,9 +425,11 @@ class _QuizScreenState
       context,
       MaterialPageRoute(
         builder: (_) =>
-        const StudyMaterialPickerScreen(
+        StudyMaterialPickerScreen(
           type: StudyMaterialType
               .pastYearQuestions,
+          initialSelection:
+          _selectedPastYearQuestions,
         ),
       ),
     );
@@ -450,6 +463,15 @@ class _QuizScreenState
               _processedLectureNotes.values
                   .map((e) => e.note)
                   .toList(),
+              onAddMore: (current) => Navigator.push<Set<String>>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => StudyMaterialPickerScreen(
+                    type: StudyMaterialType.lectureNotes,
+                    initialSelection: current,
+                  ),
+                ),
+              ),
             ),
       ),
     );
@@ -483,6 +505,15 @@ class _QuizScreenState
                   .values
                   .map((e) => e.note)
                   .toList(),
+              onAddMore: (current) => Navigator.push<Set<String>>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => StudyMaterialPickerScreen(
+                    type: StudyMaterialType.pastYearQuestions,
+                    initialSelection: current,
+                  ),
+                ),
+              ),
             ),
       ),
     );
@@ -666,6 +697,27 @@ class _QuizScreenState
 
     if (!mounted) return;
 
+    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+
+    var avoidedQuestionsText = '';
+
+    if (userId != null) {
+      try {
+        final feedback = await ref
+            .read(quizFeedbackRepositoryProvider)
+            .recentFeedbackForPrompt(userId);
+
+        avoidedQuestionsText =
+            QuizFeedbackRepository.formatForPrompt(feedback);
+      } catch (_) {
+        // Feedback is a nice-to-have for generation quality, not a
+        // requirement -- if it can't be fetched, generate without it
+        // rather than blocking the user.
+      }
+    }
+
+    if (!mounted) return;
+
     final request =
     QuizGenerationRequest(
       studyContext: _studyContext!,
@@ -679,6 +731,7 @@ class _QuizScreenState
       _questionTypeWeight,
       extraInstructions:
       _extraInstructions,
+      avoidedQuestionsText: avoidedQuestionsText,
     );
 
     final taskController =

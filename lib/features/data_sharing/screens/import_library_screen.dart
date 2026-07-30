@@ -4,11 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controller/share_import_controller.dart';
 import 'import_preview_screen.dart';
+import 'qr_scanner_screen.dart';
 
 class ImportLibraryScreen extends ConsumerStatefulWidget {
   const ImportLibraryScreen({
     super.key,
+    this.initialShareInput,
   });
+
+  /// Pre-fills the input field and immediately triggers the import, for
+  /// entry points that already have a link/code in hand (e.g. a "Scan QR"
+  /// quick action) rather than expecting the user to paste one here.
+  final String? initialShareInput;
 
   @override
   ConsumerState<ImportLibraryScreen> createState() =>
@@ -20,6 +27,21 @@ class _ImportLibraryScreenState
   final _controller = TextEditingController();
 
   bool _isImporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final initialInput = widget.initialShareInput;
+
+    if (initialInput != null && initialInput.isNotEmpty) {
+      _controller.text = initialInput;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _import();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -114,6 +136,22 @@ class _ImportLibraryScreenState
     return input;
   }
 
+  Future<void> _scanQrCode() async {
+    final scanned = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const QrScannerScreen(),
+      ),
+    );
+
+    if (scanned == null || !mounted) {
+      return;
+    }
+
+    _controller.text = scanned;
+
+    await _import();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,6 +159,13 @@ class _ImportLibraryScreenState
         title: const Text(
           'Import Materials',
         ),
+        actions: [
+          IconButton(
+            onPressed: _isImporting ? null : _scanQrCode,
+            icon: const Icon(Icons.qr_code_scanner_rounded),
+            tooltip: 'Scan QR code',
+          ),
+        ],
       ),
       body: SafeArea(
         child: ListView(
@@ -184,7 +229,8 @@ class _ImportLibraryScreenState
                       ),
                       const SelectableText(
                         '• Share ID\n'
-                            '• ScholarMind share link',
+                            '• ScholarMind share link\n'
+                            '• Scan a share QR code (top right)',
                       ),
                     ],
                   ),

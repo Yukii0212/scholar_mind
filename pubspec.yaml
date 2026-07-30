@@ -52,6 +52,7 @@ dependencies:
   gal: ^2.3.1
   webview_flutter: ^4.14.1
   flutter_displaymode: ^0.7.0
+  mobile_scanner: ^7.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

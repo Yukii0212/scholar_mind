@@ -7,11 +7,20 @@ class SelectionManagerScreen extends StatefulWidget {
     super.key,
     required this.title,
     required this.selectedNotes,
+    required this.onAddMore,
   });
 
   final String title;
 
   final List<NoteItem> selectedNotes;
+
+  /// Opens the full material picker (browsing the whole library, not just
+  /// what's already selected) seeded with the current selection, and
+  /// returns the updated selection -- or null if the user backed out
+  /// without changing anything. This screen only ever sees the notes
+  /// already selected, so adding anything new has to go through this.
+  final Future<Set<String>?> Function(Set<String> currentSelection)
+  onAddMore;
 
   @override
   State<SelectionManagerScreen> createState() =>
@@ -30,6 +39,19 @@ class _SelectionManagerScreenState
     _selectedIds = widget.selectedNotes
         .map((e) => e.id)
         .toSet();
+  }
+
+  Future<void> _addMore() async {
+    final updated = await widget.onAddMore(_selectedIds);
+
+    if (updated == null || !mounted) {
+      return;
+    }
+
+    // This screen only ever knows the NoteItems it was handed, so it can't
+    // render a name for anything newly added -- hand the merged selection
+    // straight back to the caller instead of trying to reflect it here.
+    Navigator.pop(context, updated);
   }
 
   void _toggle(NoteItem note) {
@@ -63,35 +85,44 @@ class _SelectionManagerScreenState
               const EdgeInsets.all(16),
               children: [
 
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.tonalIcon(
-                    icon: Icon(
-                      allSelected
-                          ? Icons.deselect
-                          : Icons.select_all,
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add More'),
+                      onPressed: _addMore,
                     ),
-                    label: Text(
-                      allSelected
-                          ? 'Deselect All'
-                          : 'Select All',
+                    FilledButton.tonalIcon(
+                      icon: Icon(
+                        allSelected
+                            ? Icons.deselect
+                            : Icons.select_all,
+                      ),
+                      label: Text(
+                        allSelected
+                            ? 'Deselect All'
+                            : 'Select All',
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (allSelected) {
+                            _selectedIds.clear();
+                          } else {
+                            _selectedIds
+                              ..clear()
+                              ..addAll(
+                                allNotes.map(
+                                      (e) => e.id,
+                                ),
+                              );
+                          }
+                        });
+                      },
                     ),
-                    onPressed: () {
-                      setState(() {
-                        if (allSelected) {
-                          _selectedIds.clear();
-                        } else {
-                          _selectedIds
-                            ..clear()
-                            ..addAll(
-                              allNotes.map(
-                                    (e) => e.id,
-                              ),
-                            );
-                        }
-                      });
-                    },
-                  ),
+                  ],
                 ),
 
                 const SizedBox(height: 20),

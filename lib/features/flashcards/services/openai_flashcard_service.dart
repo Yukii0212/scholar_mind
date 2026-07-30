@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:openai_dart/openai_dart.dart';
 
+import '../../quiz/domain/assessment_mode.dart';
+import '../../quiz/domain/blooms_level.dart';
+import '../../quiz/domain/quiz_difficulty.dart';
 import '../domain/flashcard_models.dart';
 
 class OpenAIFlashcardService {
@@ -11,7 +14,10 @@ class OpenAIFlashcardService {
   Future<GeneratedFlashcardDeck> generateFlashcards({
     required String studyContext,
     required int cardCount,
-    required String difficulty,
+    required AssessmentMode assessmentMode,
+    required QuizDifficulty difficulty,
+    required BloomsLevel minimumBloomsLevel,
+    required BloomsLevel maximumBloomsLevel,
     required String extraInstructions,
   }) async {
     final apiKey = dotenv.env['OPENAI_API_KEY'];
@@ -39,7 +45,27 @@ INSTRUCTIONS
 ==========================
 
 Generate UP TO $cardCount flashcards.
-Difficulty: $difficulty.
+
+${assessmentMode == AssessmentMode.informal ? '''
+Assessment Style
+
+Informal Practice
+
+Difficulty: ${difficulty.toPrompt()}.
+''' : '''
+Assessment Style
+
+Formal Assessment
+
+Generate flashcards that assess Bloom's Cognitive Levels C${minimumBloomsLevel.level} through C${maximumBloomsLevel.level}.
+
+Every flashcard MUST primarily assess one cognitive level within this range -- a C1 card tests recall of a fact or definition, a C4 card might ask the student to compare or analyze, and so on.
+
+Do not generate flashcards below C${minimumBloomsLevel.level}.
+
+Do not generate flashcards above C${maximumBloomsLevel.level}.
+'''}
+
 Extra instructions: ${extraInstructions.trim().isEmpty ? 'None.' : extraInstructions.trim()}
 
 Rules:

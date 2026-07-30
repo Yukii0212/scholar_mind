@@ -1,6 +1,8 @@
 enum AppTaskType {
   quizGeneration,
 
+  quizGrading,
+
   googleClassroomImport,
 
   googleDriveImport,

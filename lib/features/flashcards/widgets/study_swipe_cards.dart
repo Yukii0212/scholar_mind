@@ -6,12 +6,35 @@ class StudySwipeCards extends StatefulWidget {
   const StudySwipeCards({
     super.key,
     required this.item,
+    required this.hintText,
     this.enabled = true,
+    this.leftLabel,
+    this.leftColor,
+    this.rightLabel,
+    this.rightColor,
   });
 
   final StudySwipeCardItem item;
 
+  /// Shown above the card, e.g. "Swipe either way to skip" on the
+  /// question or "Swipe right: I knew it • Swipe left: Didn't know it"
+  /// on the answer — meaning changes with which side is showing, so the
+  /// caller supplies it rather than this widget hardcoding one label.
+  final String hintText;
+
   final bool enabled;
+
+  /// When both a label and a color are given for a direction, dragging
+  /// that way reveals a Tinder-style stamp (label in that color, fading
+  /// in with drag distance) confirming what letting go there will do —
+  /// text alone ("swipe left/right") isn't a clear enough affordance on
+  /// its own for what each direction actually means. Leave both null for
+  /// a direction that has no distinct outcome to preview (e.g. skip,
+  /// which means the same thing either way).
+  final String? leftLabel;
+  final Color? leftColor;
+  final String? rightLabel;
+  final Color? rightColor;
 
   @override
   State<StudySwipeCards> createState() =>
@@ -60,7 +83,15 @@ class _StudySwipeCardsState
           AnimationStatus.completed &&
           _animatingAway) {
 
-        widget.item.onSkipped();
+        // `_animateDismiss` only ever flips the magnitude of `_offset.dx`
+        // toward +/-700, preserving its sign — so it's still a reliable
+        // read of which way the card was actually swiped once the fling
+        // animation finishes.
+        if (_offset.dx >= 0) {
+          widget.item.onSwipeRight();
+        } else {
+          widget.item.onSwipeLeft();
+        }
 
         _offset = Offset.zero;
 
@@ -134,6 +165,87 @@ class _StudySwipeCardsState
       ..forward();
   }
 
+  /// A colored wash directly ON the card's face (not hidden behind its
+  /// opaque background), growing with drag distance -- a halo placed
+  /// behind an opaque card is mostly invisible except for a thin sliver
+  /// at the edges, which is exactly why the first version of this was too
+  /// subtle to see. Painted on top instead (ignoring pointer events so it
+  /// doesn't block the drag/tap underneath), it reads instantly the way
+  /// Tinder's does.
+  Widget _buildColorOverlay() {
+    final isRight = _offset.dx > 0;
+
+    final color = isRight ? widget.rightColor : widget.leftColor;
+
+    if (color == null || _offset.dx == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final intensity =
+        (_offset.dx.abs() / _dismissThreshold).clamp(0.0, 1.0).toDouble();
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: color.withValues(alpha: 0.38 * intensity),
+            border: Border.all(
+              color: color.withValues(alpha: (0.5 + 0.5 * intensity)),
+              width: 5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStamp() {
+    final isRight = _offset.dx > 0;
+
+    final label = isRight ? widget.rightLabel : widget.leftLabel;
+    final color = isRight ? widget.rightColor : widget.leftColor;
+
+    if (label == null || color == null || _offset.dx == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final opacity =
+        (_offset.dx.abs() / _dismissThreshold).clamp(0.0, 1.0).toDouble();
+
+    return Positioned(
+      top: 20,
+      left: isRight ? null : 20,
+      right: isRight ? 20 : null,
+      child: Opacity(
+        opacity: opacity,
+        child: Transform.rotate(
+          angle: isRight ? -0.2 : 0.2,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(color: color, width: 3),
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w900,
+                fontSize: 20,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -143,12 +255,12 @@ class _StudySwipeCardsState
           opacity: widget.enabled ? 1 : 0,
           duration:
           const Duration(milliseconds: 250),
-          child: const Padding(
-            padding: EdgeInsets.only(
+          child: Padding(
+            padding: const EdgeInsets.only(
               bottom: 12,
             ),
             child: Text(
-              '← Swipe to skip',
+              widget.hintText,
               textAlign: TextAlign.center,
             ),
           ),
@@ -202,8 +314,14 @@ class _StudySwipeCardsState
                   offset: _offset,
                   child: Transform.rotate(
                     angle: _rotation,
-                    child:
-                    widget.item.child,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        widget.item.child,
+                        _buildColorOverlay(),
+                        _buildStamp(),
+                      ],
+                    ),
                   ),
                 ),
               ),

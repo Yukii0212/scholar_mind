@@ -152,7 +152,7 @@ class QuizContinueSection extends ConsumerWidget {
                               switch (item.status) {
 
                                 QuizAttemptStatus.inProgress =>
-                                '${item.answers.length}'
+                                '${item.answeredCount}'
                                     ' / '
                                     '${item.quiz.questions.length}'
                                     ' Questions Answered',
@@ -215,8 +215,7 @@ class QuizContinueSection extends ConsumerWidget {
                                           }
 
                                           return QuizResultScreen(
-                                            quiz: item.quiz,
-                                            answers: item.answers,
+                                            attempt: item,
                                           );
                                         },
                                       ),

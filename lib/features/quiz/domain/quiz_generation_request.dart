@@ -15,9 +15,16 @@ class QuizGenerationRequest {
     required this.questionTypes,
     required this.extraInstructions,
     required this.questionTypeWeight,
+    this.avoidedQuestionsText = '',
   });
 
   final String studyContext;
+
+  /// Formatted text describing questions the user previously marked "Not
+  /// Important" (see QuizFeedbackEntry/QuizFeedbackRepository), so the
+  /// generator can steer away from similar ones. Empty if the user has no
+  /// flagged questions, or none could be fetched.
+  final String avoidedQuestionsText;
 
   final int questionCount;
 

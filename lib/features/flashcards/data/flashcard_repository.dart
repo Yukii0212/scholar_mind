@@ -21,6 +21,13 @@ class FlashcardRepository {
     return _decks(userId).doc(deckId).collection('cards');
   }
 
+  CollectionReference<Map<String, dynamic>> _sessions(
+    String userId,
+    String deckId,
+  ) {
+    return _decks(userId).doc(deckId).collection('sessions');
+  }
+
   Stream<List<FlashcardDeck>> watchDecks(String? userId) {
     if (userId == null) return Stream.value(const []);
 
@@ -225,14 +232,40 @@ class FlashcardRepository {
     required int reviewed,
     required int known,
     required int needsReview,
-  }) {
-    return _decks(userId).doc(deckId).update({
+    List<String> missedCardIds = const [],
+  }) async {
+    await _decks(userId).doc(deckId).update({
       'sessionsCompleted': FieldValue.increment(1),
       'cardsReviewed': FieldValue.increment(reviewed),
       'knownCards': FieldValue.increment(known),
       'needsReviewCards': FieldValue.increment(needsReview),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
     });
+
+    // A per-session record (not just the deck's running totals above) so
+    // which specific cards keep coming back missed can be surfaced later,
+    // the same way quiz feedback tracks specific flagged questions rather
+    // than just an aggregate count.
+    await _sessions(userId, deckId).add({
+      'reviewed': reviewed,
+      'known': known,
+      'needsReview': needsReview,
+      'missedCardIds': missedCardIds,
+      'completedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Newest-first session history for a deck -- e.g. to find cards that
+  /// keep showing up in missedCardIds across sessions.
+  Stream<List<Map<String, dynamic>>> watchSessions(
+    String userId,
+    String deckId,
+  ) {
+    return _sessions(userId, deckId)
+        .orderBy('completedAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
   Future<void> _refreshDeckMetadata(String userId, String deckId) async {

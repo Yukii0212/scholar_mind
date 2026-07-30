@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_design.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../home/widgets/countdown/dashboard_calendar_grid.dart';
 import '../domain/study_streak_summary.dart';
 import '../providers/study_streak_provider.dart';
@@ -13,6 +15,8 @@ class StudyStreakScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(studyStreakSummaryProvider);
+    final accountCreated =
+        ref.watch(authStateProvider).valueOrNull?.metadata.creationTime;
 
     return SafeArea(
       top: false,
@@ -34,7 +38,10 @@ class StudyStreakScreen extends ConsumerWidget {
                     subtitle: 'Your daily ScholarMind check-in progress',
                   ),
                   const Gap(16),
-                  _StreakHero(summary: summary),
+                  _StreakHero(
+                    summary: summary,
+                    accountCreated: accountCreated,
+                  ),
                   const Gap(16),
                   _ActivityCalendar(summary: summary),
                   const Gap(16),
@@ -75,9 +82,13 @@ class StudyStreakScreen extends ConsumerWidget {
 }
 
 class _StreakHero extends StatelessWidget {
-  const _StreakHero({required this.summary});
+  const _StreakHero({
+    required this.summary,
+    required this.accountCreated,
+  });
 
   final StudyStreakSummary summary;
+  final DateTime? accountCreated;
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +138,16 @@ class _StreakHero extends StatelessWidget {
                         color: palette.textMuted,
                       ),
                 ),
+                if (accountCreated != null) ...[
+                  const Gap(4),
+                  Text(
+                    'Member since '
+                    '${DateFormat('MMM d, yyyy').format(accountCreated!)}.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: palette.textMuted,
+                        ),
+                  ),
+                ],
                 const Gap(16),
                 Wrap(
                   spacing: 10,

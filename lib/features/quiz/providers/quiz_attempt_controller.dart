@@ -67,12 +67,37 @@ class QuizAttemptController
     _markDirty();
   }
 
+  /// Fully awaits the entire grading pipeline (open-ended AI review
+  /// included), rather than firing it off unawaited -- callers decide
+  /// whether to await this directly (objective-only quizzes, where it
+  /// resolves almost instantly) or run it through AppTaskController
+  /// (quizzes with open-ended questions, where the AI round-trip can take
+  /// real time and the caller wants it to keep going even if the quiz
+  /// screen is left).
   Future<void> startGrading() async {
     if (state == null) {
       return;
     }
 
+    // Marked pending BEFORE saving so that if grading is interrupted
+    // (app closed mid-review), the persisted attempt correctly shows
+    // which open-ended answers still need a real AI review, rather than
+    // silently defaulting to "already reviewed" with a 0 score -- this is
+    // also what lets a stuck attempt be detected and resumed later (see
+    // quiz_result_screen.dart's resume-if-stuck check).
+    final markedAnswers = Map<int, QuizAnswer>.from(state!.answers);
+
+    state!.quiz.questions.asMap().forEach((index, question) {
+      if (question.type == QuestionType.openEnded) {
+        markedAnswers[index] =
+            (markedAnswers[index] ?? const QuizAnswer()).copyWith(
+          aiReviewPending: true,
+        );
+      }
+    });
+
     state = state!.copyWith(
+      answers: markedAnswers,
       status: QuizAttemptStatus.grading,
       submittedAt: DateTime.now(),
     );
@@ -81,9 +106,7 @@ class QuizAttemptController
 
     await saveNow();
 
-    unawaited(
-      _evaluateOpenEnded(),
-    );
+    await _evaluateOpenEnded();
   }
 
   Future<void> _evaluateOpenEnded() async {

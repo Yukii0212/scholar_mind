@@ -2,10 +2,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../domain/models/share/share_expiry.dart';
+import '../domain/models/share/share_link_record.dart';
 import '../domain/models/share/share_result.dart';
 
 class ShareLinkService {
   const ShareLinkService();
+
+  Stream<List<ShareLinkRecord>> watchMyLinks(String ownerId) {
+    return FirebaseFirestore.instance
+        .collection('export_links')
+        .where('ownerId', isEqualTo: ownerId)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(ShareLinkRecord.fromFirestore)
+              .toList(),
+        );
+  }
 
   Future<ShareResult> createLink({
     required String ownerId,

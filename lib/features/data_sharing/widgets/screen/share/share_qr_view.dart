@@ -194,7 +194,18 @@ class _ShareQrViewState extends State<ShareQrView> {
             const SizedBox(height: 16),
             Text(
               'Scan to import these study materials',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Use your phone's camera app, or ScholarMind's own "
+              "scanner (Import > the QR icon) to scan this code.",
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
             ),
             const SizedBox(height: 20),
             Row(

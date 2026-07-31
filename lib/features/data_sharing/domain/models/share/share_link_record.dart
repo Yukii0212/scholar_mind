@@ -10,6 +10,7 @@ class ShareLinkRecord {
     required this.createdAt,
     required this.expiresAt,
     required this.downloadCount,
+    required this.isRevoked,
   });
 
   final String shareId;
@@ -17,6 +18,7 @@ class ShareLinkRecord {
   final DateTime? createdAt;
   final DateTime? expiresAt;
   final int downloadCount;
+  final bool isRevoked;
 
   Uri get shareUrl => Uri.parse('scholarmind://share/$shareId');
 
@@ -34,6 +36,7 @@ class ShareLinkRecord {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
       downloadCount: data['downloadCount'] as int? ?? 0,
+      isRevoked: data['isRevoked'] as bool? ?? false,
     );
   }
 }

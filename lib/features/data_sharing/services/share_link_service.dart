@@ -22,6 +22,13 @@ class ShareLinkService {
         );
   }
 
+  Future<void> revokeLink(String shareId) {
+    return FirebaseFirestore.instance
+        .collection('export_links')
+        .doc(shareId)
+        .update({'isRevoked': true});
+  }
+
   Future<ShareResult> createLink({
     required String ownerId,
     required String storagePath,

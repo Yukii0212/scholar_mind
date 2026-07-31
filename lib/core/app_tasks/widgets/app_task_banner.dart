@@ -69,6 +69,13 @@ class AppTaskBanner extends ConsumerWidget {
                 },
                 child: InkWell(
                   onTap: () {
+                    final onOpen = task.onOpen;
+
+                    if (onOpen != null) {
+                      onOpen(context, task);
+                      return;
+                    }
+
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) =>

@@ -2,19 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/app_tasks/domain/app_task.dart';
 import '../../../core/app_tasks/domain/app_task_status.dart';
 import '../../../core/app_tasks/domain/app_task_type.dart';
 import '../../../core/app_tasks/providers/app_task_provider.dart';
+import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../domain/models/share/share_expiry.dart';
 import '../domain/models/share/share_result.dart';
 import '../providers/export/export_controller.dart';
 import '../providers/export/export_statistics_provider.dart';
 import '../services/export_time_estimate.dart';
-import 'my_shared_links_screen.dart';
 import '../widgets/screen/share/share_link_view.dart';
 import '../widgets/screen/share/share_qr_view.dart';
 
@@ -58,6 +59,18 @@ class _ShareScreenState
           shareId: shareId,
           onProgress: progress,
         ),
+        onOpen: (context, task) {
+          if (task.status == AppTaskStatus.completed) {
+            context.push('/share/links');
+            return;
+          }
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const AppTaskDetailsScreen(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -120,14 +133,10 @@ class _ShareScreenState
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const MySharedLinksScreen(),
-                ),
-              );
+              context.push('/share/links');
             },
             icon: const Icon(Icons.history_rounded),
-            tooltip: 'My shared links',
+            tooltip: 'Shared links',
           ),
           if (hasShare)
             TextButton.icon(
@@ -138,7 +147,7 @@ class _ShareScreenState
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,8 +240,8 @@ class _ShareScreenState
                 Text(
                   'You can leave this screen while your link '
                   'is generating — it keeps working in the '
-                  'background and you can check progress or '
-                  'find it later from the history icon above.',
+                  'background, and you can find it afterward '
+                  'under Share > Shared Links.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context)
                             .textTheme
@@ -271,7 +280,8 @@ class _ShareScreenState
 
               const SizedBox(height: 24),
 
-              Expanded(
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.55,
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: _selectedIndex == 0

@@ -450,6 +450,39 @@ class QuizContinueSection extends ConsumerWidget {
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
                                   icon: const Icon(
+                                    Icons.visibility_off_outlined,
+                                  ),
+                                  label: const Text(
+                                    'Remove from Continue',
+                                  ),
+                                  onPressed: () async {
+                                    await ref
+                                        .read(
+                                      quiz_library.quizLibraryActionControllerProvider.notifier,
+                                    )
+                                        .toggleQuizArchived(item);
+
+                                    if (!context.mounted) return;
+
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          '"${item.name}" removed from Continue. '
+                                          'It\'s still in your Library.',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  icon: const Icon(
                                     Icons.delete_outline,
                                   ),
                                   label: const Text(

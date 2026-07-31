@@ -149,7 +149,15 @@ service cloud.firestore {
     // someone else looks the id up to import it), but only the creator can
     // create, modify or revoke their own link.
     match /export_links/{shareId} {
+      // get vs list are separate grants under "read" -- get is for
+      // looking up one link by an id someone was given (the whole point
+      // of sharing), open to any signed-in user since they don't own it.
+      // list is a query (My Shared Links' watchMyLinks(), filtered by
+      // ownerId) and needs its own grant, scoped so a user can only list
+      // their own links, not enumerate everyone's.
       allow get: if isSignedIn();
+      allow list: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
         && validExportLink(request.resource.data);

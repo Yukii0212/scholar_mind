@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/app_tasks/domain/app_task_status.dart';
 import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 
 import '../providers/google_classroom_provider.dart';
@@ -425,6 +428,18 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
               );
             },
             onProgress: progress,
+          );
+        },
+        onOpen: (context, task) {
+          if (task.status == AppTaskStatus.completed) {
+            context.push('/notes');
+            return;
+          }
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const AppTaskDetailsScreen(),
+            ),
           );
         },
       ),

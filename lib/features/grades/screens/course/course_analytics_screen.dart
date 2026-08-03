@@ -84,32 +84,43 @@ class CourseAnalyticsScreenState extends ConsumerState<CourseAnalyticsScreen> {
             return liveCourse.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, __) => const SizedBox(),
-              data: (course) => SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: SwipeCards(
-                  key: _swipeCardsKey,
-                  items: [
-                    SwipeCardItem(
-                      title: 'Overview',
-                      icon: Icons.analytics_outlined,
-                      child: CurrentStandingCard(
-                        course: course,
-                        courseId: course.id,
-                        components: components,
-                      ),
+              data: (course) => LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: SwipeCards(
+                      key: _swipeCardsKey,
+                      // Floors the swipe area at the viewport's available
+                      // height, so a short page (e.g. Targets, when it's
+                      // just a couple of lines) is swipeable everywhere
+                      // below it too, not only on the card itself — a
+                      // taller page still grows past this and the
+                      // SingleChildScrollView above scrolls normally.
+                      minContentHeight: constraints.maxHeight,
+                      items: [
+                        SwipeCardItem(
+                          title: 'Overview',
+                          icon: Icons.analytics_outlined,
+                          child: CurrentStandingCard(
+                            course: course,
+                            courseId: course.id,
+                            components: components,
+                          ),
+                        ),
+                        SwipeCardItem(
+                          title: 'Targets',
+                          icon: Icons.flag_outlined,
+                          child: CourseTargetsCard(course: course),
+                        ),
+                        SwipeCardItem(
+                          title: 'Predictions',
+                          icon: Icons.insights_outlined,
+                          child: CoursePredictionCard(course: course),
+                        ),
+                      ],
                     ),
-                    SwipeCardItem(
-                      title: 'Targets',
-                      icon: Icons.flag_outlined,
-                      child: CourseTargetsCard(course: course),
-                    ),
-                    SwipeCardItem(
-                      title: 'Predictions',
-                      icon: Icons.insights_outlined,
-                      child: CoursePredictionCard(course: course),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             );
           },

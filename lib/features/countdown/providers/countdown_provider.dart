@@ -18,7 +18,7 @@ final upcomingCountdownsProvider = Provider<List<CountdownItem>>((ref) {
   final countdowns = ref.watch(countdownsProvider).valueOrNull ?? const [];
 
   final upcoming = countdowns
-      .where((item) => !item.isCompleted)
+      .where((item) => !item.isEffectivelyCompleted)
       .toList();
 
   upcoming.sort((a, b) {

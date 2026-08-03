@@ -703,6 +703,44 @@ class QuizLibrarySectionWidget
 
                                   const SizedBox(height: 8),
 
+                                  // Only in-progress/grading quizzes ever
+                                  // show up in Continue in the first place,
+                                  // so this only needs to appear for those
+                                  // -- toggling it for a completed quiz
+                                  // wouldn't do anything observable.
+                                  if (item.status ==
+                                          QuizAttemptStatus.inProgress ||
+                                      item.status ==
+                                          QuizAttemptStatus.grading)
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        icon: Icon(
+                                          item.isArchived
+                                              ? Icons.visibility_outlined
+                                              : Icons.visibility_off_outlined,
+                                        ),
+                                        label: Text(
+                                          item.isArchived
+                                              ? 'Restore to Continue'
+                                              : 'Remove from Continue',
+                                        ),
+                                        onPressed: () async {
+                                          await ref
+                                              .read(
+                                            quiz_library.quizLibraryActionControllerProvider.notifier,
+                                          )
+                                              .toggleQuizArchived(item);
+                                        },
+                                      ),
+                                    ),
+
+                                  if (item.status ==
+                                          QuizAttemptStatus.inProgress ||
+                                      item.status ==
+                                          QuizAttemptStatus.grading)
+                                    const SizedBox(height: 8),
+
                                   SizedBox(
                                     width: double.infinity,
                                     child: OutlinedButton.icon(

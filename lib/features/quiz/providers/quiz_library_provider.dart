@@ -398,6 +398,18 @@ class QuizLibraryActionController extends _$QuizLibraryActionController {
     });
   }
 
+  Future<bool> toggleQuizArchived(
+      QuizAttempt quiz,
+      ) {
+    return _run((userId, repository) {
+      return repository.setQuizArchived(
+        userId: userId,
+        quizId: quiz.id,
+        isArchived: !quiz.isArchived,
+      );
+    });
+  }
+
   Future<bool> setQuizFolderArchived(QuizFolder folder, bool value) {
     return _run((userId, repository) {
       return repository.setFolderArchived(

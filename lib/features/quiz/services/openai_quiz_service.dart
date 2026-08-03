@@ -275,11 +275,23 @@ Quiz Title Rules
       final prompt = '''
 You are ScholarMind's AI Marker.
 
-Evaluate each student's answer.
+Evaluate each student's answer against its sampleAnswer.
 
-Return ONLY valid JSON.
+Grading rules:
+- Grade on content coverage against the sampleAnswer, not exact wording.
+- Award partial credit proportionally. For a question asking for multiple items/points (e.g.
+  "list the five X" or "name three Y"), the score MUST be
+  (number of correct, distinct items the student gave) / (number of items the sampleAnswer
+  contains) × maxScore, rounded to the nearest whole number — do not fail the whole answer for
+  one missing or incorrect item.
+- The numeric score MUST be consistent with your own feedback: if your feedback states the
+  student got N out of M required items correct, the score must equal that same proportion of
+  maxScore, not a lower number.
+- Use maxScore 5 unless the question text specifies a different number of items/points, in which
+  case maxScore should equal that number.
+- A completely blank or entirely irrelevant answer scores 0.
 
-Each item MUST contain:
+Return ONLY valid JSON, one object per question, in this exact shape:
 
 [
   {
@@ -290,7 +302,7 @@ Each item MUST contain:
   }
 ]
 
-Questions:
+Questions (each has question, sampleAnswer, studentAnswer):
 
 ${jsonEncode(answers)}
 ''';

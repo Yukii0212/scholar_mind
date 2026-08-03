@@ -39,6 +39,18 @@ class ShareHubScreen extends StatelessWidget {
                 context.push('/import');
               },
             ),
+            const SizedBox(
+              height: 16,
+            ),
+            _ShareOptionCard(
+              icon: Icons.history_rounded,
+              title: 'Shared Links',
+              subtitle:
+              'View, reuse, or revoke links you\'ve generated.',
+              onTap: () {
+                context.push('/share/links');
+              },
+            ),
           ],
         ),
       ),

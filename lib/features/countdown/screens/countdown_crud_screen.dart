@@ -49,8 +49,10 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
   late CountdownType _type;
   late DateTime _dueDate;
   late bool _deadlineExtendable;
+  late bool _isCompleted;
 
   var _saving = false;
+  var _togglingCompletion = false;
 
   @override
   void initState() {
@@ -87,6 +89,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
           const Duration(days: 7),
         );
     _deadlineExtendable = initial?.deadlineExtendable ?? false;
+    _isCompleted = initial?.isCompleted ?? false;
   }
 
   @override
@@ -127,6 +130,35 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                         dueDate: _dueDate,
                         priority: int.tryParse(_priorityController.text) ?? 100,
                       ),
+                      if (isEditing) ...[
+                        const Gap(12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _togglingCompletion
+                                ? null
+                                : _toggleCompleted,
+                            icon: _togglingCompletion
+                                ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : Icon(
+                              _isCompleted
+                                  ? Icons.undo
+                                  : Icons.check_circle_outline,
+                            ),
+                            label: Text(
+                              _isCompleted
+                                  ? 'Mark as Active'
+                                  : 'Mark as Completed',
+                            ),
+                          ),
+                        ),
+                      ],
                       const Gap(16),
                       LayoutBuilder(
                         builder: (context, constraints) {
@@ -236,6 +268,40 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
       Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _toggleCompleted() async {
+    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final countdownId = widget.initial?.id;
+
+    if (userId == null || countdownId == null) return;
+
+    final next = !_isCompleted;
+
+    setState(() {
+      _isCompleted = next;
+      _togglingCompletion = true;
+    });
+
+    try {
+      await ref.read(countdownRepositoryProvider).markCompleted(
+            userId: userId,
+            countdownId: countdownId,
+            completed: next,
+          );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCompleted = !next);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not update completion status: $e'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _togglingCompletion = false);
     }
   }
 }

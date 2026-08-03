@@ -79,6 +79,17 @@ class CountdownItem {
     return end.difference(start).inDays;
   }
 
+  // Whether this should be treated as completed right now, independent of
+  // whether the persisted `isCompleted` flag has caught up yet.
+  // CountdownRepository.watchCountdowns writes `isCompleted: true` back to
+  // Firestore for exactly this case (overdue, non-extendable) as a
+  // best-effort background sync, but the UI shouldn't wait on that
+  // round-trip to show the right status — the business rule itself is
+  // enough to know it's done. An extendable deadline that's overdue stays
+  // "overdue" rather than auto-completing, per the same rule.
+  bool get isEffectivelyCompleted =>
+      isCompleted || (!deadlineExtendable && daysRemaining < 0);
+
   factory CountdownItem.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {

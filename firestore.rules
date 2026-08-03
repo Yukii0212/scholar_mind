@@ -161,7 +161,14 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
         && validExportLink(request.resource.data);
-      allow update, delete: if isSignedIn()
+      // Owners can update/revoke their own link freely. Importers aren't
+      // owners, but still need to be able to record that they imported one
+      // -- scoped narrowly so that write can only ever bump downloadCount
+      // by exactly one and can't touch anything else on the doc.
+      allow update: if (isSignedIn()
+          && resource.data.ownerId == request.auth.uid)
+        || isDownloadCountIncrement();
+      allow delete: if isSignedIn()
         && resource.data.ownerId == request.auth.uid;
     }
 
@@ -685,6 +692,12 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function isDownloadCountIncrement() {
+      return isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloadCount'])
+        && request.resource.data.downloadCount == resource.data.downloadCount + 1;
+    }
+
     function validExportLink(data) {
       return data.keys().hasAll([
           'ownerId',
@@ -692,7 +705,8 @@ service cloud.firestore {
           'createdAt',
           'expiresAt',
           'downloadCount',
-          'isRevoked'
+          'isRevoked',
+          'resourceCounts'
         ])
         && data.keys().hasOnly([
           'ownerId',
@@ -700,10 +714,12 @@ service cloud.firestore {
           'createdAt',
           'expiresAt',
           'downloadCount',
-          'isRevoked'
+          'isRevoked',
+          'resourceCounts'
         ])
         && data.ownerId is string
         && data.storagePath is string
+        && data.resourceCounts is map
         && (data.createdAt == null || data.createdAt is timestamp)
         && (data.expiresAt == null || data.expiresAt is timestamp)
         && data.downloadCount is int

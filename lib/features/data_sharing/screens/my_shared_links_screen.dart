@@ -6,8 +6,7 @@ import '../domain/models/share/share_link_record.dart';
 import '../domain/models/share/share_result.dart';
 import '../providers/share/my_share_links_provider.dart';
 import '../providers/share/share_link_service_provider.dart';
-import '../widgets/screen/share/share_link_view.dart';
-import '../widgets/screen/share/share_qr_view.dart';
+import 'view_shared_link_screen.dart';
 
 class MySharedLinksScreen extends ConsumerWidget {
   const MySharedLinksScreen({super.key});
@@ -25,7 +24,13 @@ class MySharedLinksScreen extends ConsumerWidget {
         error: (error, _) => Center(
           child: Text('Unable to load shared links: $error'),
         ),
-        data: (links) {
+        data: (allLinks) {
+          // Expired links have nothing left to do — they can't be
+          // imported from anymore, so surfacing them just adds noise
+          // to a list meant for finding and reusing an active link.
+          final links =
+              allLinks.where((link) => !link.isExpired).toList();
+
           if (links.isEmpty) {
             return Center(
               child: Padding(
@@ -40,7 +45,7 @@ class MySharedLinksScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No shared links yet',
+                      'No active shared links',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
@@ -77,36 +82,31 @@ class _ShareLinkTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final inactive = link.isRevoked || link.isExpired;
-
-    final status = link.isRevoked
-        ? 'Revoked'
-        : link.isExpired
-            ? 'Expired'
-            : 'Active';
-
     final createdLabel = link.createdAt == null
         ? 'Unknown date'
-        : DateFormat("MMM d, yyyy 'at' h:mm a")
-        .format(link.createdAt!.toLocal());
+        : DateFormat('MMM d, yyyy').format(link.createdAt!.toLocal());
 
-    final statusParts = <String>[
-      status,
-      if (!link.isRevoked && link.expiresAt != null)
-        'expires ${DateFormat('MMM d, yyyy').format(link.expiresAt!.toLocal())}',
+    final metaParts = <String>[
+      link.isRevoked ? 'Revoked' : 'Active',
+      'Generated $createdLabel',
       '${link.downloadCount} import${link.downloadCount == 1 ? '' : 's'}',
     ];
 
     return Card(
       child: ListTile(
         leading: Icon(
-          inactive ? Icons.link_off_rounded : Icons.link_rounded,
-          color: inactive
+          link.isRevoked ? Icons.link_off_rounded : Icons.link_rounded,
+          color: link.isRevoked
               ? Theme.of(context).colorScheme.outline
               : Theme.of(context).colorScheme.primary,
         ),
-        title: Text('Created $createdLabel'),
-        subtitle: Text(statusParts.join(' • ')),
+        title: Text(
+          link.contentsSummary,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        subtitle: Text(metaParts.join(' • ')),
         trailing: PopupMenuButton<String>(
           onSelected: (value) {
             if (value == 'view') {
@@ -181,47 +181,13 @@ class _ShareLinkTile extends ConsumerWidget {
       shareUrl: link.shareUrl,
       storagePath: link.storagePath,
       expiresAt: link.expiresAt,
+      resourceCounts: link.resourceCounts,
     );
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return DefaultTabController(
-              length: 2,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    const TabBar(
-                      tabs: [
-                        Tab(icon: Icon(Icons.qr_code), text: 'QR Code'),
-                        Tab(icon: Icon(Icons.link), text: 'Link'),
-                      ],
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: TabBarView(
-                          children: [
-                            ShareQrView(share: share),
-                            ShareLinkView(share: share),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ViewSharedLinkScreen(share: share),
+      ),
     );
   }
 }

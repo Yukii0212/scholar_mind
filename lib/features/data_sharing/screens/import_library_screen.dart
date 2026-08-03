@@ -86,6 +86,7 @@ class _ImportLibraryScreenState
         MaterialPageRoute(
           builder: (_) => ImportPreviewScreen(
             archive: archive,
+            shareId: shareId,
           ),
         ),
       );

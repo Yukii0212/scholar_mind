@@ -16,6 +16,7 @@ import '../domain/models/share/share_result.dart';
 import '../providers/export/export_controller.dart';
 import '../providers/export/export_statistics_provider.dart';
 import '../services/export_time_estimate.dart';
+import '../widgets/screen/share/share_contents_banner.dart';
 import '../widgets/screen/share/share_link_view.dart';
 import '../widgets/screen/share/share_qr_view.dart';
 
@@ -250,6 +251,11 @@ class _ShareScreenState
                             ?.withValues(alpha: 0.6),
                       ),
                 ),
+              ],
+
+              if (hasShare) ...[
+                const SizedBox(height: 24),
+                ShareContentsBanner(share: _share!),
               ],
 
               const SizedBox(height: 24),

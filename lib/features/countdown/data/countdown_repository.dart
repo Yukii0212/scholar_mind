@@ -1,11 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../domain/countdown_item.dart';
 
 class CountdownRepository {
-  const CountdownRepository(this._firestore);
+  CountdownRepository(this._firestore);
 
   final FirebaseFirestore _firestore;
+
+  // Auto-complete ids currently being written. Firestore's snapshot
+  // listener re-fires on a write's own local-cache echo (and again once
+  // the server confirms it) — without this guard, each of those echoes
+  // re-evaluates _shouldAutoComplete against a snapshot where the write
+  // hasn't landed yet and fires *another* markCompleted call, which is
+  // what produced the constant jitter: the item flips between the active
+  // and completed sections on every one of those cycles, and if a write
+  // ever fails to stick, the cycle never converges.
+  final Set<String> _autoCompleting = {};
 
   CollectionReference<Map<String, dynamic>> _collection(String userId) {
     return _firestore.collection('users').doc(userId).collection('countdowns');
@@ -16,14 +27,29 @@ class CountdownRepository {
 
     return _collection(userId).snapshots().map((snapshot) {
       final items = snapshot.docs.map(CountdownItem.fromFirestore).toList();
+
       for (final item in items.where(_shouldAutoComplete)) {
-        markCompleted(userId: userId, countdownId: item.id, completed: true);
+        if (!_autoCompleting.add(item.id)) {
+          continue;
+        }
+
+        markCompleted(
+          userId: userId,
+          countdownId: item.id,
+          completed: true,
+        ).catchError((Object error) {
+          debugPrint(
+            'Auto-complete failed for countdown ${item.id}: $error',
+          );
+        }).whenComplete(() {
+          _autoCompleting.remove(item.id);
+        });
       }
 
       return items
         ..sort((a, b) {
-          if (a.isCompleted != b.isCompleted) {
-            return a.isCompleted ? 1 : -1;
+          if (a.isEffectivelyCompleted != b.isEffectivelyCompleted) {
+            return a.isEffectivelyCompleted ? 1 : -1;
           }
 
           final priority = b.priority.compareTo(a.priority);

@@ -23,7 +23,7 @@ class CompletedSection extends ConsumerWidget {
       data: (items) {
         final completed = items
             .where(
-              (item) => item.isCompleted && !item.isHidden,
+              (item) => item.isEffectivelyCompleted && !item.isHidden,
         )
             .toList();
 

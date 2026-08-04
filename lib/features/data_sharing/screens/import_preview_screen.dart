@@ -9,14 +9,21 @@ import '../controller/share_import_controller.dart';
 import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_archive.dart';
 import '../domain/models/share/share_resource.dart';
+import '../providers/share/share_link_service_provider.dart';
 
 class ImportPreviewScreen extends ConsumerStatefulWidget {
   const ImportPreviewScreen({
     required this.archive,
+    required this.shareId,
     super.key,
   });
 
   final ShareArchive archive;
+
+  // The share this archive was imported from — used only to record that
+  // an import happened (see _import's incrementDownloadCount call), never
+  // to re-fetch anything.
+  final String shareId;
 
   @override
   ConsumerState<ImportPreviewScreen> createState() =>
@@ -87,6 +94,18 @@ class _ImportPreviewScreenState
               result.errors.join('\n'),
             );
           }
+
+          unawaited(
+            ref
+                .read(shareLinkServiceProvider)
+                .incrementDownloadCount(widget.shareId)
+                .catchError((Object error) {
+              debugPrint(
+                'Could not record import for '
+                '${widget.shareId}: $error',
+              );
+            }),
+          );
 
           return result;
         },

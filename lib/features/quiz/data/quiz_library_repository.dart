@@ -430,6 +430,20 @@ class QuizLibraryRepository {
     });
   }
 
+  /// Hides a quiz from the Continue/Resume list without touching its
+  /// data or status -- the quiz still shows up normally in its folder
+  /// under Library either way, this only affects watchActiveQuizzes.
+  Future<void> setQuizArchived({
+    required String userId,
+    required String quizId,
+    required bool isArchived,
+  }) {
+    return _quizzes(userId).doc(quizId).update({
+      'isArchived': isArchived,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
   Future<void> permanentlyDeleteFolder({
     required String userId,
     required String folderId,
@@ -541,10 +555,11 @@ class QuizLibraryRepository {
           .map(QuizAttempt.fromDocument)
           .where(
             (quiz) =>
-        quiz.status ==
+        !quiz.isArchived &&
+        (quiz.status ==
             QuizAttemptStatus.inProgress ||
             quiz.status ==
-                QuizAttemptStatus.grading,
+                QuizAttemptStatus.grading),
       )
           .toList();
 

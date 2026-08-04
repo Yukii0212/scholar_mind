@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/models/share/share_expiry.dart';
 import '../../domain/models/share/share_result.dart';
+import '../../services/share_resource_summary.dart';
 import 'export_request_provider.dart';
 import 'export_service_provider.dart';
 
@@ -61,6 +62,7 @@ class ExportController
       ownerId: request.userId,
       storagePath: storagePath,
       expiry: expiry,
+      resourceCounts: summarizeResources(archive.resources),
     );
   }
 }

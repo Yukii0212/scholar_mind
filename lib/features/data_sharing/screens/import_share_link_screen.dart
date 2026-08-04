@@ -50,6 +50,7 @@ class _ImportShareLinkScreenState
         MaterialPageRoute(
           builder: (_) => ImportPreviewScreen(
             archive: archive,
+            shareId: widget.shareId,
           ),
         ),
       );

@@ -24,6 +24,10 @@ lib/debug/openai_stub.dart
 # Environment variables
 .env
 
+#System Documentation
+FYP_System_Documentation.md
+design_document.md
+
 # Flutter/Dart
 .dart_tool/
 .flutter-plugins

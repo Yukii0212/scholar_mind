@@ -91,7 +91,7 @@ class _CountdownSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = items.where((item) => !item.isCompleted).toList();
+    final active = items.where((item) => !item.isEffectivelyCompleted).toList();
     final urgent = active.where((item) => item.daysRemaining <= 3).length;
     final exams = active
         .where(

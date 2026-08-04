@@ -6,6 +6,7 @@ import '../../features/countdown/screens/countdown_screen.dart';
 import '../../features/data_sharing/screens/export_library_screen.dart';
 import '../../features/data_sharing/screens/import_library_screen.dart';
 import '../../features/data_sharing/screens/import_share_link_screen.dart';
+import '../../features/data_sharing/screens/my_shared_links_screen.dart';
 import '../../features/data_sharing/screens/share_hub_screen.dart';
 import '../../features/flashcards/screens/flashcard_library_screen.dart';
 import '../../features/grades/screens/home/grade_home_screen.dart';
@@ -131,6 +132,11 @@ GoRouter appRouter(AppRouterRef ref) {
             path: '/import',
             builder: (context, state) =>
             const ImportLibraryScreen(),
+          ),
+          GoRoute(
+            path: '/share/links',
+            builder: (context, state) =>
+            const MySharedLinksScreen(),
           ),
           GoRoute(
             path: '/import/share/:shareId',

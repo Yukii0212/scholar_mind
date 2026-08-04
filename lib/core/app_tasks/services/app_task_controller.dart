@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/app_task.dart';
@@ -19,6 +20,7 @@ class AppTaskController {
     required Future<T> Function(
         void Function(String message) progress,
         ) task,
+    void Function(BuildContext context, AppTask task)? onOpen,
   }) async {
     final notifier =
     _ref.read(appTaskProvider.notifier);
@@ -31,6 +33,7 @@ class AppTaskController {
         title: title,
         message: '',
         isCollapsed: false,
+        onOpen: onOpen,
       ),
     );
 

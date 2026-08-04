@@ -20,6 +20,7 @@ class SwipeCards extends StatefulWidget {
     required this.items,
     this.initialIndex = 0,
     this.onPageChanged,
+    this.minContentHeight = 0,
   });
 
   final List<SwipeCardItem> items;
@@ -27,6 +28,15 @@ class SwipeCards extends StatefulWidget {
   final int initialIndex;
 
   final ValueChanged<int>? onPageChanged;
+
+  /// Floor for the swipeable area's height, independent of how tall the
+  /// current page's own content is — pass the surrounding viewport's
+  /// available height so a short page (e.g. one that's just a couple of
+  /// lines of text) is still swipeable everywhere below it, not only on
+  /// the card itself. Defaults to 0 (no floor — the original
+  /// content-hugging behavior) for callers that don't have a viewport
+  /// height handy.
+  final double minContentHeight;
 
   @override
   State<SwipeCards> createState() => SwipeCardsState();
@@ -77,33 +87,44 @@ class SwipeCardsState extends State<SwipeCards> {
           onSelected: showPage,
         ),
         const SizedBox(height: 14),
-        GestureDetector(
-          // Lets you swipe anywhere on the card itself, not just the
-          // switch bar above — the card's own content has no competing
-          // horizontal gesture, so this is unambiguous.
-          onHorizontalDragEnd: (details) {
-            final velocity = details.primaryVelocity ?? 0;
+        ConstrainedBox(
+          // Floors the swipeable area's height at minContentHeight,
+          // independent of the current page's own content height — a
+          // regular (non-flex) constraint, so this is safe even though
+          // the ancestor (a SingleChildScrollView) gives unbounded
+          // height here; Expanded would not be, and would crash.
+          constraints: BoxConstraints(minHeight: widget.minContentHeight),
+          child: GestureDetector(
+            // opaque, not the default deferToChild, so a swipe anywhere
+            // in the padded-out space below/around a short card's
+            // natural content is still caught — not just on the card
+            // itself, which would otherwise leave a dead zone the
+            // height of whatever room a shorter page doesn't fill.
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragEnd: (details) {
+              final velocity = details.primaryVelocity ?? 0;
 
-            if (velocity < -100) {
-              _switchBy(1);
-            } else if (velocity > 100) {
-              _switchBy(-1);
-            }
-          },
-          child: AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            alignment: Alignment.topCenter,
-            child: AnimatedSwitcher(
+              if (velocity < -100) {
+                _switchBy(1);
+              } else if (velocity > 100) {
+                _switchBy(-1);
+              }
+            },
+            child: AnimatedSize(
               duration: const Duration(milliseconds: 250),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: KeyedSubtree(
-                key: ValueKey(_currentIndex),
-                child: widget.items[_currentIndex].child,
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: KeyedSubtree(
+                  key: ValueKey(_currentIndex),
+                  child: widget.items[_currentIndex].child,
+                ),
               ),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:share_plus/share_plus.dart' hide ShareResult;
 import '../../../core/app_tasks/domain/app_task_status.dart';
 import '../../../core/app_tasks/domain/app_task_type.dart';
 import '../../../core/app_tasks/providers/app_task_provider.dart';
+import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../providers/quiz_attempt_provider.dart';
 
@@ -150,17 +152,46 @@ class _QuizResultScreenState
   ) async {
     setState(() => _exporting = true);
 
-    try {
-      final file = await const QuizResultPdfExporter().export(
-        quiz: quiz,
-        answers: answers,
-      );
+    File file;
 
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          text: 'My results for "${quiz.title}" on ScholarMind.',
-        ),
+    try {
+      // Building the PDF is a bounded, app-driven operation, so it goes
+      // through the same background-task system as everything else that
+      // might take a while -- if it's slow, the progress banner shows it
+      // and the user can navigate away instead of staring at this button.
+      file = await ref.read(appTaskControllerProvider).run<File>(
+        id: 'quiz_pdf_export_${widget.attempt.id}',
+        type: AppTaskType.documentProcessing,
+        title: 'Preparing "${quiz.title}" for sharing',
+        task: (progress) async {
+          progress('Generating PDF...');
+
+          return const QuizResultPdfExporter().export(
+            quiz: quiz,
+            answers: answers,
+          );
+        },
+        onOpen: (context, task) {
+          final payload = task.payload;
+
+          if (task.status == AppTaskStatus.completed && payload is File) {
+            unawaited(
+              SharePlus.instance.share(
+                ShareParams(
+                  files: [XFile(payload.path)],
+                  text: 'My results for "${quiz.title}" on ScholarMind.',
+                ),
+              ),
+            );
+            return;
+          }
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const AppTaskDetailsScreen(),
+            ),
+          );
+        },
       );
     } catch (e) {
       if (!mounted) return;
@@ -168,11 +199,24 @@ class _QuizResultScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not export PDF: $e')),
       );
+      return;
     } finally {
       if (mounted) {
         setState(() => _exporting = false);
       }
     }
+
+    if (!mounted) return;
+
+    // The PDF is ready and _exporting has already been reset above -- the
+    // OS share sheet's own wait is indefinite and user-driven, so it's
+    // deliberately not covered by the button's loading state.
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        text: 'My results for "${quiz.title}" on ScholarMind.',
+      ),
+    );
   }
 
   @override

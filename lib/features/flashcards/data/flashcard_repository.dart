@@ -248,7 +248,7 @@ class FlashcardRepository {
     await _refreshSetMetadata(userId, setId);
   }
 
-  Future<void> saveGeneratedSet({
+  Future<String> saveGeneratedSet({
     required String userId,
     required GeneratedFlashcardSet generated,
     required List<String> tags,
@@ -304,6 +304,8 @@ class FlashcardRepository {
     );
 
     await batch.commit();
+
+    return setId;
   }
 
   Future<void> deleteCard({

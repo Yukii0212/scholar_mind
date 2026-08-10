@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../../core/app_tasks/domain/app_task_status.dart';
 import '../../../core/app_tasks/domain/app_task_type.dart';
+import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -25,6 +27,7 @@ import '../providers/flashcard_provider.dart';
 import '../services/openai_flashcard_service.dart';
 import '../widgets/flashcard_configuration_card.dart';
 import '../widgets/flashcard_folder_picker_dialog.dart';
+import 'flashcard_set_detail_screen.dart';
 
 class GenerateFlashcardsScreen extends ConsumerStatefulWidget {
   const GenerateFlashcardsScreen({super.key});
@@ -472,7 +475,7 @@ class _GenerateFlashcardsScreenState
     final studyContext = _studyContext!;
 
     unawaited(
-      taskController.run<void>(
+      taskController.run<String>(
         id: 'flashcard_generation',
         type: AppTaskType.flashcardGeneration,
         title: 'Generating Flashcards',
@@ -489,7 +492,7 @@ class _GenerateFlashcardsScreenState
             extraInstructions: extraInstructions,
           );
 
-          await repository.saveGeneratedSet(
+          return repository.saveGeneratedSet(
             userId: userId,
             generated: generated,
             tags: tags,
@@ -501,6 +504,22 @@ class _GenerateFlashcardsScreenState
             onProgress: progress,
           );
         },
+        onOpen: (context, task) {
+          if (task.status != AppTaskStatus.completed) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AppTaskDetailsScreen(),
+              ),
+            );
+            return;
+          }
+
+          final setId = task.payload as String?;
+
+          if (setId == null) return;
+
+          unawaited(_openGeneratedSet(context, setId));
+        },
       ),
     );
 
@@ -509,5 +528,23 @@ class _GenerateFlashcardsScreenState
     }
 
     Navigator.of(context).pop();
+  }
+
+  Future<void> _openGeneratedSet(BuildContext context, String setId) async {
+    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+
+    if (userId == null) return;
+
+    final set = await ref
+        .read(flashcardRepositoryProvider)
+        .getSet(userId: userId, setId: setId);
+
+    if (!context.mounted || set == null) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FlashcardSetDetailScreen(flashcardSet: set),
+      ),
+    );
   }
 }

@@ -21,6 +21,11 @@ final flashcardsProvider =
   return ref.watch(flashcardRepositoryProvider).watchCards(userId, setId);
 });
 
+final flashcardActiveSetsProvider = StreamProvider<List<FlashcardSet>>((ref) {
+  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  return ref.watch(flashcardRepositoryProvider).watchActiveSets(userId);
+});
+
 final flashcardSetsInFolderProvider =
     StreamProvider.family<List<FlashcardSet>, String>((ref, folderId) {
   final userId = ref.watch(authStateProvider).valueOrNull?.uid;
@@ -143,6 +148,16 @@ class FlashcardLibraryActionController extends StateNotifier<AsyncValue<void>> {
     return _run(
       (userId, repository) =>
           repository.permanentlyDeleteFolder(userId: userId, folderId: folder.id),
+    );
+  }
+
+  Future<bool> toggleSetArchived(FlashcardSet set) {
+    return _run(
+      (userId, repository) => repository.setSetArchived(
+        userId: userId,
+        setId: set.id,
+        isArchived: !set.isArchived,
+      ),
     );
   }
 

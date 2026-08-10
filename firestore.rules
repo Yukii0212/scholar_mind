@@ -375,6 +375,7 @@ service cloud.firestore {
           'knownCards',
           'needsReviewCards',
           'folderId',
+          'isArchived',
           'isDeleted',
           'deletedAt',
           'deletedAsCascade',
@@ -393,6 +394,7 @@ service cloud.firestore {
           'knownCards',
           'needsReviewCards',
           'folderId',
+          'isArchived',
           'isDeleted',
           'deletedAt',
           'deletedAsCascade',
@@ -412,6 +414,7 @@ service cloud.firestore {
         && data.knownCards is int
         && data.needsReviewCards is int
         && data.folderId is string
+        && data.isArchived is bool
         && data.isDeleted is bool
         && (data.deletedAt == null || data.deletedAt is timestamp)
         && data.deletedAsCascade is bool

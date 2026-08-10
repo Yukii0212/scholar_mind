@@ -71,6 +71,39 @@ class FlashcardRepository {
     });
   }
 
+  /// Sets that have never had a completed study session -- the flashcard
+  /// analogue of a quiz attempt that's inProgress/grading rather than
+  /// completed. Flashcard sessions aren't persisted mid-way (only a
+  /// completed session is ever written), so "never studied yet" is the
+  /// closest equivalent signal to "still needs finishing." isArchived lets
+  /// the user manually dismiss one from this list without it counting as
+  /// having been studied.
+  Stream<List<FlashcardSet>> watchActiveSets(String? userId) {
+    if (userId == null) return Stream.value(const []);
+
+    return _sets(userId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isArchived', isEqualTo: false)
+        .where('sessionsCompleted', isEqualTo: 0)
+        .snapshots()
+        .map((snapshot) {
+      final sets = snapshot.docs.map(FlashcardSet.fromFirestore).toList();
+      sets.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      return sets;
+    });
+  }
+
+  Future<void> setSetArchived({
+    required String userId,
+    required String setId,
+    required bool isArchived,
+  }) {
+    return _sets(userId).doc(setId).update({
+      'isArchived': isArchived,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Stream<List<Flashcard>> watchCards(String? userId, String setId) {
     if (userId == null) return Stream.value(const []);
 
@@ -146,6 +179,7 @@ class FlashcardRepository {
         'folderId': folderId ??
             existingData?['folderId'] as String? ??
             FlashcardFolder.rootId,
+        'isArchived': existingData?['isArchived'] as bool? ?? false,
         'isDeleted': existingData?['isDeleted'] as bool? ?? false,
         'deletedAt': existingData?['deletedAt'],
         'deletedAsCascade':

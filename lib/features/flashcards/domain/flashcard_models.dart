@@ -33,6 +33,7 @@ class FlashcardSet {
     required this.knownCards,
     required this.needsReviewCards,
     required this.folderId,
+    required this.isArchived,
     required this.isDeleted,
     required this.deletedAt,
     required this.deletedAsCascade,
@@ -52,6 +53,11 @@ class FlashcardSet {
   final int knownCards;
   final int needsReviewCards;
   final String folderId;
+
+  // "Removed from Continue" -- hides a never-studied set from the Continue
+  // tab without touching it otherwise (still fully visible in Library).
+  // Mirrors QuizAttempt.isArchived.
+  final bool isArchived;
   final bool isDeleted;
   final DateTime? deletedAt;
 
@@ -82,6 +88,7 @@ class FlashcardSet {
       knownCards: data['knownCards'] as int? ?? 0,
       needsReviewCards: data['needsReviewCards'] as int? ?? 0,
       folderId: data['folderId'] as String? ?? FlashcardFolder.rootId,
+      isArchived: data['isArchived'] as bool? ?? false,
       isDeleted: data['isDeleted'] as bool? ?? false,
       deletedAt: data['deletedAt'] != null
           ? (data['deletedAt'] as Timestamp).toDate()

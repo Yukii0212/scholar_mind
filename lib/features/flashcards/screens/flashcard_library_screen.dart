@@ -7,6 +7,7 @@ import '../../../core/widgets/collapsible_breadcrumb.dart';
 import '../domain/flashcard_folder.dart';
 import '../domain/flashcard_library_section.dart';
 import '../providers/flashcard_provider.dart';
+import '../widgets/flashcard_continue_section.dart';
 import '../widgets/flashcard_folder_dialogs.dart';
 import '../widgets/flashcard_library_section_widget.dart';
 import '../widgets/flashcard_trash_section.dart';
@@ -25,7 +26,7 @@ class _FlashcardLibraryScreenState
     extends ConsumerState<FlashcardLibraryScreen> {
   final List<FlashcardFolder> _folderStack = [];
 
-  FlashcardLibrarySection _section = FlashcardLibrarySection.library;
+  FlashcardLibrarySection _section = FlashcardLibrarySection.continueSection;
 
   String get _folderId =>
       _folderStack.isEmpty ? FlashcardFolder.rootId : _folderStack.last.id;
@@ -44,11 +45,26 @@ class _FlashcardLibraryScreenState
     setState(() {
       if (index < 0) {
         _folderStack.clear();
+        _section = FlashcardLibrarySection.continueSection;
       } else {
         _folderStack.removeRange(index + 1, _folderStack.length);
       }
     });
   }
+
+  String get _title => switch (_section) {
+        FlashcardLibrarySection.continueSection => 'Continue',
+        FlashcardLibrarySection.library => 'Flashcards',
+        FlashcardLibrarySection.trash => 'Trash',
+      };
+
+  String get _subtitle => switch (_section) {
+        FlashcardLibrarySection.continueSection =>
+          'Flashcard sets waiting to be studied',
+        FlashcardLibrarySection.library =>
+          'Create sets, revise quickly, and generate from notes',
+        FlashcardLibrarySection.trash => 'Deleted flashcard sets',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -109,15 +125,9 @@ class _FlashcardLibraryScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ScholarSectionHeader(
-                title: isRoot
-                    ? (_section == FlashcardLibrarySection.trash
-                        ? 'Trash'
-                        : 'Flashcards')
-                    : 'Flashcards',
+                title: isRoot ? _title : 'Flashcards',
                 subtitle: isRoot
-                    ? (_section == FlashcardLibrarySection.trash
-                        ? 'Deleted flashcard sets'
-                        : 'Create sets, revise quickly, and generate from notes')
+                    ? _subtitle
                     : 'Create sets, revise quickly, and generate from notes',
               ),
 
@@ -145,14 +155,19 @@ class _FlashcardLibraryScreenState
                 showSelectedIcon: false,
                 segments: const [
                   ButtonSegment(
+                    value: FlashcardLibrarySection.continueSection,
+                    icon: Icon(Icons.play_circle_outline),
+                    tooltip: 'Continue',
+                  ),
+                  ButtonSegment(
                     value: FlashcardLibrarySection.library,
                     icon: Icon(Icons.folder_outlined),
-                    label: Text('Library'),
+                    tooltip: 'Library',
                   ),
                   ButtonSegment(
                     value: FlashcardLibrarySection.trash,
                     icon: Icon(Icons.delete_outline),
-                    label: Text('Trash'),
+                    tooltip: 'Trash',
                   ),
                 ],
                 selected: {_section},
@@ -165,6 +180,8 @@ class _FlashcardLibraryScreenState
           ],
 
           switch (isRoot ? _section : FlashcardLibrarySection.library) {
+            FlashcardLibrarySection.continueSection =>
+              const FlashcardContinueSection(),
             FlashcardLibrarySection.library => FlashcardLibrarySectionWidget(
                 folderId: _folderId,
                 onOpenFolder: _openFolder,

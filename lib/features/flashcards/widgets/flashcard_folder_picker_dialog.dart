@@ -2,35 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
-import '../domain/quiz_folder.dart';
-import '../providers/quiz_library_provider.dart' as quiz_library;
-import 'quiz_folder_dialogs.dart';
+import '../domain/flashcard_folder.dart';
+import '../providers/flashcard_provider.dart';
+import 'flashcard_folder_dialogs.dart';
 
 /// Picks a destination folder by drilling down one level at a time,
-/// matching how the study material picker (`StudyMaterialPickerScreen`)
-/// browses folders -- not by indenting an ever-deepening tree, which used
-/// to squeeze folder names down to almost nothing (or an unreadable
-/// ellipsis) once a few levels deep. "Move Here" always targets whichever
-/// folder is currently being viewed.
-class QuizFolderPickerDialog extends ConsumerStatefulWidget {
-  const QuizFolderPickerDialog({
+/// matching QuizFolderPickerDialog. Also lets the user create a new
+/// folder inline, right from wherever they're currently browsing, instead
+/// of forcing them to cancel out, create the folder elsewhere, then come
+/// back and select it.
+class FlashcardFolderPickerDialog extends ConsumerStatefulWidget {
+  const FlashcardFolderPickerDialog({
     super.key,
     required this.folders,
     this.excludeFolderId,
   });
 
-  final List<QuizFolder> folders;
+  final List<FlashcardFolder> folders;
   final String? excludeFolderId;
 
   @override
-  ConsumerState<QuizFolderPickerDialog> createState() =>
-      _QuizFolderPickerDialogState();
+  ConsumerState<FlashcardFolderPickerDialog> createState() =>
+      _FlashcardFolderPickerDialogState();
 }
 
-class _QuizFolderPickerDialogState
-    extends ConsumerState<QuizFolderPickerDialog> {
-  late List<QuizFolder> _folders;
-  final List<QuizFolder> _stack = [];
+class _FlashcardFolderPickerDialogState
+    extends ConsumerState<FlashcardFolderPickerDialog> {
+  late List<FlashcardFolder> _folders;
+  final List<FlashcardFolder> _stack = [];
   bool _creating = false;
 
   @override
@@ -40,12 +39,12 @@ class _QuizFolderPickerDialogState
   }
 
   String get _currentFolderId =>
-      _stack.isEmpty ? QuizFolder.rootId : _stack.last.id;
+      _stack.isEmpty ? FlashcardFolder.rootId : _stack.last.id;
 
   String get _currentFolderName =>
-      _stack.isEmpty ? 'My Quizzes' : _stack.last.name;
+      _stack.isEmpty ? 'My Flashcards' : _stack.last.name;
 
-  List<QuizFolder> get _children {
+  List<FlashcardFolder> get _children {
     final children = _folders
         .where(
           (folder) =>
@@ -64,7 +63,7 @@ class _QuizFolderPickerDialogState
   Future<void> _createFolder() async {
     final name = await showDialog<String>(
       context: context,
-      builder: (_) => const CreateQuizFolderDialog(),
+      builder: (_) => const CreateFlashcardFolderDialog(),
     );
 
     if (name == null) return;
@@ -75,25 +74,26 @@ class _QuizFolderPickerDialogState
     setState(() => _creating = true);
 
     try {
-      final newFolderId = await ref
-          .read(quiz_library.quizLibraryRepositoryProvider)
-          .createFolder(userId: userId, parentId: _currentFolderId, name: name);
+      final newFolderId = await ref.read(flashcardRepositoryProvider).createFolder(
+            userId: userId,
+            parentId: _currentFolderId,
+            name: name,
+          );
 
       final refreshed =
-          await ref.refresh(quiz_library.allFoldersProvider.future);
+          await ref.refresh(flashcardAllFoldersProvider.future);
 
       if (!mounted) return;
 
       final newFolder = refreshed.firstWhere(
         (folder) => folder.id == newFolderId,
-        orElse: () => QuizFolder(
+        orElse: () => FlashcardFolder(
           id: newFolderId,
           name: name,
           parentId: _currentFolderId,
-          isFavorite: false,
-          isArchived: false,
           isDeleted: false,
           deletedAt: null,
+          deletedAsCascade: false,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         ),

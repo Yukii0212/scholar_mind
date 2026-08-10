@@ -1,0 +1,4 @@
+enum FlashcardLibrarySection {
+  library,
+  trash,
+}

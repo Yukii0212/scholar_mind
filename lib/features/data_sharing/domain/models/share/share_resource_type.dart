@@ -1,7 +1,10 @@
 enum ShareResourceType {
   note('note'),
   noteFolder('note_folder'),
-  flashcardDeck('flashcard_deck'),
+  // Dart identifier renamed (Deck -> Set) alongside the rest of the
+  // Flashcards module; the underlying value stays 'flashcard_deck' so
+  // already-generated archives and stored share records keep resolving.
+  flashcardSet('flashcard_deck'),
   flashcard('flashcard'),
   quiz('quiz'),
   quizFolder('quiz_folder'),
@@ -33,7 +36,7 @@ extension ShareResourceTypeLabel on ShareResourceType {
     final singular = switch (this) {
       ShareResourceType.note => 'note',
       ShareResourceType.noteFolder => 'folder',
-      ShareResourceType.flashcardDeck => 'flashcard deck',
+      ShareResourceType.flashcardSet => 'flashcard set',
       ShareResourceType.flashcard => 'flashcard',
       ShareResourceType.quiz => 'quiz',
       ShareResourceType.quizFolder => 'quiz folder',

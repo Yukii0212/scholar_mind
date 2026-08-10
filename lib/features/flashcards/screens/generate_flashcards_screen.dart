@@ -20,9 +20,11 @@ import '../../quiz/domain/study_material_type.dart';
 import '../../quiz/screens/selection_manager_screen.dart';
 import '../../quiz/services/study_material_preprocessor.dart';
 import '../../quiz/widgets/study_materials_card.dart';
+import '../domain/flashcard_folder.dart';
 import '../providers/flashcard_provider.dart';
 import '../services/openai_flashcard_service.dart';
 import '../widgets/flashcard_configuration_card.dart';
+import '../widgets/flashcard_folder_picker_dialog.dart';
 
 class GenerateFlashcardsScreen extends ConsumerStatefulWidget {
   const GenerateFlashcardsScreen({super.key});
@@ -48,6 +50,9 @@ class _GenerateFlashcardsScreenState
 
   final Map<String, ProcessedStudyMaterial> _processedLectureNotes = {};
   final Map<String, ProcessedStudyMaterial> _processedPastYearQuestions = {};
+
+  String _destinationFolderId = FlashcardFolder.rootId;
+  String _destinationFolderName = 'My Flashcards';
 
   String? _studyContext;
 
@@ -156,7 +161,7 @@ class _GenerateFlashcardsScreenState
                           TextField(
                             controller: _tagsController,
                             decoration: const InputDecoration(
-                              labelText: 'Deck tags',
+                              labelText: 'Set tags',
                               helperText: 'Separate tags with commas',
                               prefixIcon: Icon(Icons.sell_outlined),
                             ),
@@ -164,6 +169,48 @@ class _GenerateFlashcardsScreenState
                         ],
                       ),
                     ),
+                    const Gap(16),
+
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.folder),
+                        title: const Text('Destination'),
+                        subtitle: Text(_destinationFolderName),
+                        trailing: TextButton(
+                          onPressed: () async {
+                            final folders = await ref
+                                .read(flashcardAllFoldersProvider.future);
+
+                            if (!context.mounted) return;
+
+                            final folderId = await showDialog<String>(
+                              context: context,
+                              builder: (_) => FlashcardFolderPickerDialog(
+                                folders: folders,
+                              ),
+                            );
+
+                            if (folderId == null) return;
+
+                            final folderName =
+                                folderId == FlashcardFolder.rootId
+                                    ? 'My Flashcards'
+                                    : folders
+                                        .firstWhere(
+                                          (folder) => folder.id == folderId,
+                                        )
+                                        .name;
+
+                            setState(() {
+                              _destinationFolderId = folderId;
+                              _destinationFolderName = folderName;
+                            });
+                          },
+                          child: const Text('Change'),
+                        ),
+                      ),
+                    ),
+
                     const Gap(18),
                     SizedBox(
                       width: double.infinity,
@@ -442,7 +489,7 @@ class _GenerateFlashcardsScreenState
             extraInstructions: extraInstructions,
           );
 
-          await repository.saveGeneratedDeck(
+          await repository.saveGeneratedSet(
             userId: userId,
             generated: generated,
             tags: tags,
@@ -450,6 +497,7 @@ class _GenerateFlashcardsScreenState
                 selectedNotes.map((e) => e.name).join(', '),
             description:
                 'Generated from ${selectedNotes.length} study material(s).',
+            folderId: _destinationFolderId,
             onProgress: progress,
           );
         },

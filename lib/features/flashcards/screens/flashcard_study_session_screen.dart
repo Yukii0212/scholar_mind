@@ -20,11 +20,11 @@ enum _SelfEvaluation {
 class FlashcardStudySessionScreen extends ConsumerStatefulWidget {
   const FlashcardStudySessionScreen({
     super.key,
-    required this.deck,
+    required this.flashcardSet,
     required this.cards,
   });
 
-  final FlashcardDeck deck;
+  final FlashcardSet flashcardSet;
   final List<Flashcard> cards;
 
   @override
@@ -425,7 +425,7 @@ class _FlashcardStudySessionScreenState
 
     await ref.read(flashcardRepositoryProvider).recordSession(
           userId: userId,
-          deckId: widget.deck.id,
+          setId: widget.flashcardSet.id,
           reviewed: _reviewed,
           known: _known,
           needsReview: _needsReview,
@@ -535,15 +535,15 @@ class _CompletionPanel extends StatelessWidget {
     final percent = _masteryPercent;
 
     if (percent >= 100) {
-      return ('Deck mastered!', "Every card in this deck — you knew it all.");
+      return ('Set mastered!', "Every flashcard in this set — you knew it all.");
     }
 
     if (percent >= 75) {
-      return ('Great work!', "You're close to mastering this deck.");
+      return ('Great work!', "You're close to mastering this set.");
     }
 
     if (percent >= 50) {
-      return ('Solid session!', 'Over half the deck is sticking.');
+      return ('Solid session!', 'Over half the set is sticking.');
     }
 
     return ('Nice start!', 'Keep at it — it gets easier each round.');

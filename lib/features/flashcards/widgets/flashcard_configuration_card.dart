@@ -50,7 +50,7 @@ class FlashcardConfigurationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Deck Configuration',
+              'Set Configuration',
               style: Theme.of(context).textTheme.titleLarge,
             ),
 
@@ -246,7 +246,7 @@ class FlashcardConfigurationCard extends StatelessWidget {
               SizedBox(height: 8),
               Text(
                 'Recommended for everyday revision.\n\n'
-                'ScholarMind estimates the overall difficulty of the deck '
+                'ScholarMind estimates the overall difficulty of the set '
                 'using Easy, Medium, Hard or Mixed.',
               ),
               SizedBox(height: 20),

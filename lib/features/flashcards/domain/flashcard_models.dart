@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'flashcard_folder.dart';
+
 enum FlashcardGenerationMethod {
   manual,
   aiGenerated;
@@ -17,8 +19,8 @@ enum FlashcardGenerationMethod {
   }
 }
 
-class FlashcardDeck {
-  const FlashcardDeck({
+class FlashcardSet {
+  const FlashcardSet({
     required this.id,
     required this.name,
     required this.tags,
@@ -30,6 +32,10 @@ class FlashcardDeck {
     required this.cardsReviewed,
     required this.knownCards,
     required this.needsReviewCards,
+    required this.folderId,
+    required this.isDeleted,
+    required this.deletedAt,
+    required this.deletedAsCascade,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -45,17 +51,23 @@ class FlashcardDeck {
   final int cardsReviewed;
   final int knownCards;
   final int needsReviewCards;
+  final String folderId;
+  final bool isDeleted;
+  final DateTime? deletedAt;
+
+  // See FlashcardFolder.deletedAsCascade -- same meaning, same reason.
+  final bool deletedAsCascade;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  factory FlashcardDeck.fromFirestore(
+  factory FlashcardSet.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final data = doc.data() ?? const <String, dynamic>{};
 
-    return FlashcardDeck(
+    return FlashcardSet(
       id: doc.id,
-      name: data['name'] as String? ?? 'Untitled Deck',
+      name: data['name'] as String? ?? 'Untitled Set',
       tags: (data['tags'] as List<dynamic>? ?? const [])
           .map((tag) => tag.toString())
           .toList(),
@@ -69,6 +81,12 @@ class FlashcardDeck {
       cardsReviewed: data['cardsReviewed'] as int? ?? 0,
       knownCards: data['knownCards'] as int? ?? 0,
       needsReviewCards: data['needsReviewCards'] as int? ?? 0,
+      folderId: data['folderId'] as String? ?? FlashcardFolder.rootId,
+      isDeleted: data['isDeleted'] as bool? ?? false,
+      deletedAt: data['deletedAt'] != null
+          ? (data['deletedAt'] as Timestamp).toDate()
+          : null,
+      deletedAsCascade: data['deletedAsCascade'] as bool? ?? false,
       createdAt: _readDate(data['createdAt']),
       updatedAt: _readDate(data['updatedAt']),
     );
@@ -116,8 +134,8 @@ class Flashcard {
   }
 }
 
-class GeneratedFlashcardDeck {
-  const GeneratedFlashcardDeck({
+class GeneratedFlashcardSet {
+  const GeneratedFlashcardSet({
     required this.title,
     required this.cards,
   });
@@ -125,8 +143,8 @@ class GeneratedFlashcardDeck {
   final String title;
   final List<GeneratedFlashcard> cards;
 
-  factory GeneratedFlashcardDeck.fromJson(Map<String, dynamic> json) {
-    return GeneratedFlashcardDeck(
+  factory GeneratedFlashcardSet.fromJson(Map<String, dynamic> json) {
+    return GeneratedFlashcardSet(
       title: json['title'] as String? ?? 'Generated Flashcards',
       cards: (json['cards'] as List<dynamic>? ?? const [])
           .map(

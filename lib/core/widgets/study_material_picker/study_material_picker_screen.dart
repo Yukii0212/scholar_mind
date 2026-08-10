@@ -1,5 +1,9 @@
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import '../../../features/notes/data/repository/library_repository.dart';
+import '../../../features/notes/domain/note_category.dart';
 import '../../../features/notes/providers/library_provider.dart';
+import '../../../features/notes/widgets/category_dialog.dart';
 import '../../../features/quiz/domain/quiz_folder.dart';
 import '../../../features/quiz/domain/study_material_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,6 +100,95 @@ class _StudyMaterialPickerScreenState
     });
   }
 
+  /// Uploads files straight from the device into the current library
+  /// folder, then selects them, so generation isn't gated on having
+  /// uploaded material to Notes beforehand in a separate flow.
+  Future<void> _uploadFile() async {
+    final category = await showDialog<NoteCategory>(
+      context: context,
+      builder: (context) => const CategoryDialog(),
+    );
+
+    if (!mounted || category == null) return;
+
+    final files = await openFiles(
+      acceptedTypeGroups: const [
+        XTypeGroup(
+          label: 'Study materials',
+          extensions: ['pdf', 'ppt', 'pptx'],
+        ),
+      ],
+    );
+
+    if (!mounted || files.isEmpty) return;
+
+    var uploaded = 0;
+
+    for (final file in files) {
+      final bytes = await file.readAsBytes();
+
+      if (bytes.length >= LibraryRepository.maxUploadBytes) {
+        _showMessage('${file.name} is larger than 10 MB.');
+        continue;
+      }
+
+      final extension =
+          file.name.contains('.') ? file.name.split('.').last : '';
+
+      final storagePath =
+          await ref.read(libraryActionControllerProvider.notifier).uploadNote(
+                folderId: _libraryFolderId,
+                fileName: file.name,
+                extension: extension,
+                bytes: bytes,
+                category: category,
+              );
+
+      if (!mounted) return;
+
+      if (storagePath == null) {
+        _showMessage('Failed to upload ${file.name}.');
+        continue;
+      }
+
+      uploaded++;
+
+      final noteId = _noteIdFromStoragePath(storagePath);
+
+      if (noteId != null) {
+        setState(() {
+          _browserMode = MaterialBrowserMode.library;
+          _selectedNoteIds.add(noteId);
+        });
+      }
+    }
+
+    if (uploaded > 0) {
+      _showMessage(
+        '$uploaded file${uploaded == 1 ? '' : 's'} uploaded and selected.',
+      );
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+      );
+  }
+
+  String? _noteIdFromStoragePath(String storagePath) {
+    final segments = storagePath.split('/');
+    final index = segments.indexOf('notes');
+
+    if (index == -1 || index + 1 >= segments.length) return null;
+
+    return segments[index + 1];
+  }
+
   @override
   Widget build(BuildContext context) {
     final folderStack =
@@ -114,6 +207,11 @@ class _StudyMaterialPickerScreenState
           },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file_outlined),
+            tooltip: 'Upload File',
+            onPressed: _uploadFile,
+          ),
           Builder(
             builder: (context) {
               final folderId =

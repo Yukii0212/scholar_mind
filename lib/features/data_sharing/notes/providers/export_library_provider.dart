@@ -31,8 +31,8 @@ Future<List<ExportModuleGroup>> exportLibrary(
     countdownsProvider.future,
   );
 
-  final flashcardDecks = await ref.watch(
-    flashcardDecksProvider.future,
+  final flashcardSets = await ref.watch(
+    flashcardSetsProvider.future,
   );
 
   final quizFolders = await ref.watch(
@@ -110,13 +110,14 @@ Future<List<ExportModuleGroup>> exportLibrary(
   )
       .toList();
 
-  final flashcardItems = flashcardDecks
+  final flashcardItems = flashcardSets
       .map(
-        (deck) => ExportItem(
-      id: deck.id,
-      name: deck.name,
-      subtitle: '${deck.cardCount} card${deck.cardCount == 1 ? '' : 's'}',
-      type: ShareResourceType.flashcardDeck,
+        (flashcardSet) => ExportItem(
+      id: flashcardSet.id,
+      name: flashcardSet.name,
+      subtitle:
+          '${flashcardSet.cardCount} card${flashcardSet.cardCount == 1 ? '' : 's'}',
+      type: ShareResourceType.flashcardSet,
       module: ExportModule.flashcards,
     ),
   )

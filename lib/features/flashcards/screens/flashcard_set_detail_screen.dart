@@ -7,21 +7,21 @@ import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/flashcard_models.dart';
 import '../providers/flashcard_provider.dart';
-import 'flashcard_card_editor_screen.dart';
-import 'flashcard_deck_editor_screen.dart';
+import 'flashcard_editor_screen.dart';
+import 'flashcard_set_editor_screen.dart';
 import 'flashcard_study_session_screen.dart';
 
-class FlashcardDeckDetailScreen extends ConsumerWidget {
-  const FlashcardDeckDetailScreen({
+class FlashcardSetDetailScreen extends ConsumerWidget {
+  const FlashcardSetDetailScreen({
     super.key,
-    required this.deck,
+    required this.flashcardSet,
   });
 
-  final FlashcardDeck deck;
+  final FlashcardSet flashcardSet;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cardsAsync = ref.watch(flashcardsProvider(deck.id));
+    final cardsAsync = ref.watch(flashcardsProvider(flashcardSet.id));
     final userId = ref.watch(authStateProvider).valueOrNull?.uid;
 
     return Scaffold(
@@ -33,13 +33,14 @@ class FlashcardDeckDetailScreen extends ConsumerWidget {
         children: [
           SpeedDialChild(
             child: const Icon(Icons.style_outlined),
-            label: 'Add Card',
+            label: 'Add Flashcard',
             onTap: userId == null
                 ? null
                 : () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => FlashcardCardEditorScreen(deck: deck),
+                  builder: (_) =>
+                      FlashcardEditorScreen(flashcardSet: flashcardSet),
                 ),
               );
             },
@@ -47,16 +48,17 @@ class FlashcardDeckDetailScreen extends ConsumerWidget {
         ],
       ),
       appBar: AppBar(
-        title: Text(deck.name),
+        title: Text(flashcardSet.name),
         actions: [
           IconButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => FlashcardDeckEditorScreen(deck: deck),
+                builder: (_) =>
+                    FlashcardSetEditorScreen(flashcardSet: flashcardSet),
               ),
             ),
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit deck',
+            tooltip: 'Edit set',
           ),
         ],
       ),
@@ -66,7 +68,7 @@ class FlashcardDeckDetailScreen extends ConsumerWidget {
           child: cardsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) =>
-                Center(child: Text('Unable to load cards: $error')),
+                Center(child: Text('Unable to load flashcards: $error')),
             data: (cards) => SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 112),
               child: Center(
@@ -75,28 +77,28 @@ class FlashcardDeckDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _DeckHero(deck: deck, cards: cards),
+                      _SetHero(flashcardSet: flashcardSet, cards: cards),
                       const Gap(16),
-                      _ActionPanel(deck: deck, cards: cards),
+                      _ActionPanel(flashcardSet: flashcardSet, cards: cards),
                       const Gap(16),
                       ScholarPanel(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ScholarSectionHeader(
-                              title: 'Cards (${cards.length})',
+                              title: 'Flashcards (${cards.length})',
                               subtitle:
                                   'Front and back content remains editable',
                             ),
                             const Gap(14),
                             if (cards.isEmpty)
-                              const Text('No cards yet.')
+                              const Text('No flashcards yet.')
                             else
                               Column(
                                 children: [
                                   for (var i = 0; i < cards.length; i++) ...[
                                     _CardRow(
-                                      deck: deck,
+                                      flashcardSet: flashcardSet,
                                       card: cards[i],
                                       index: i + 1,
                                     ),
@@ -119,13 +121,13 @@ class FlashcardDeckDetailScreen extends ConsumerWidget {
   }
 }
 
-class _DeckHero extends StatelessWidget {
-  const _DeckHero({
-    required this.deck,
+class _SetHero extends StatelessWidget {
+  const _SetHero({
+    required this.flashcardSet,
     required this.cards,
   });
 
-  final FlashcardDeck deck;
+  final FlashcardSet flashcardSet;
   final List<Flashcard> cards;
 
   @override
@@ -137,7 +139,8 @@ class _DeckHero extends StatelessWidget {
       child: Row(
         children: [
           ScholarIconBadge(
-            icon: deck.generationMethod == FlashcardGenerationMethod.aiGenerated
+            icon: flashcardSet.generationMethod ==
+                    FlashcardGenerationMethod.aiGenerated
                 ? Icons.auto_awesome_rounded
                 : Icons.style_outlined,
             size: 64,
@@ -148,7 +151,7 @@ class _DeckHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  deck.name,
+                  flashcardSet.name,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -158,17 +161,17 @@ class _DeckHero extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _Pill('${cards.length} cards'),
-                    _Pill(deck.generationMethod.label),
-                    if (deck.sourceReference != null)
-                      _Pill(deck.sourceReference!),
-                    for (final tag in deck.tags.take(3)) _Pill(tag),
+                    _Pill('${cards.length} flashcards'),
+                    _Pill(flashcardSet.generationMethod.label),
+                    if (flashcardSet.sourceReference != null)
+                      _Pill(flashcardSet.sourceReference!),
+                    for (final tag in flashcardSet.tags.take(3)) _Pill(tag),
                   ],
                 ),
-                if ((deck.description ?? '').trim().isNotEmpty) ...[
+                if ((flashcardSet.description ?? '').trim().isNotEmpty) ...[
                   const Gap(12),
                   Text(
-                    deck.description!.trim(),
+                    flashcardSet.description!.trim(),
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
@@ -186,11 +189,11 @@ class _DeckHero extends StatelessWidget {
 
 class _ActionPanel extends StatelessWidget {
   const _ActionPanel({
-    required this.deck,
+    required this.flashcardSet,
     required this.cards,
   });
 
-  final FlashcardDeck deck;
+  final FlashcardSet flashcardSet;
   final List<Flashcard> cards;
 
   @override
@@ -203,7 +206,7 @@ class _ActionPanel extends StatelessWidget {
             : () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => FlashcardStudySessionScreen(
-                      deck: deck,
+                      flashcardSet: flashcardSet,
                       cards: cards,
                     ),
                   ),
@@ -224,12 +227,12 @@ class _ActionPanel extends StatelessWidget {
 
 class _CardRow extends ConsumerWidget {
   const _CardRow({
-    required this.deck,
+    required this.flashcardSet,
     required this.card,
     required this.index,
   });
 
-  final FlashcardDeck deck;
+  final FlashcardSet flashcardSet;
   final Flashcard card;
   final int index;
 
@@ -291,25 +294,25 @@ class _CardRow extends ConsumerWidget {
           IconButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => FlashcardCardEditorScreen(
-                  deck: deck,
+                builder: (_) => FlashcardEditorScreen(
+                  flashcardSet: flashcardSet,
                   card: card,
                 ),
               ),
             ),
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit card',
+            tooltip: 'Edit flashcard',
           ),
           IconButton(
             onPressed: userId == null
                 ? null
                 : () => ref.read(flashcardRepositoryProvider).deleteCard(
                       userId: userId,
-                      deckId: deck.id,
+                      setId: flashcardSet.id,
                       cardId: card.id,
                     ),
             icon: const Icon(Icons.delete_outline_rounded),
-            tooltip: 'Delete card',
+            tooltip: 'Delete flashcard',
           ),
         ],
       ),

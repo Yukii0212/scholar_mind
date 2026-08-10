@@ -3,7 +3,7 @@ import '../../../data_sharing/domain/models/collection/collected_resource.dart';
 import '../../../data_sharing/domain/models/collection/collection_result.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
 import '../flashcard_repository.dart';
-import 'flashcard_with_deck.dart';
+import 'flashcard_with_set.dart';
 
 class FlashcardCollectionService implements DataShareCollector {
   FlashcardCollectionService({
@@ -13,7 +13,7 @@ class FlashcardCollectionService implements DataShareCollector {
   final FlashcardRepository repository;
 
   @override
-  ShareResourceType get resourceType => ShareResourceType.flashcardDeck;
+  ShareResourceType get resourceType => ShareResourceType.flashcardSet;
 
   @override
   Future<CollectionResult> collect({
@@ -21,33 +21,33 @@ class FlashcardCollectionService implements DataShareCollector {
     required List<String> resourceIds,
   }) async {
     final resources = <CollectedResource>[];
-    final visitedDecks = <String>{};
+    final visitedSets = <String>{};
 
-    for (final deckId in resourceIds) {
-      if (!visitedDecks.add(deckId)) {
+    for (final setId in resourceIds) {
+      if (!visitedSets.add(setId)) {
         continue;
       }
 
-      final deck = await repository.getDeck(
+      final flashcardSet = await repository.getSet(
         userId: userId,
-        deckId: deckId,
+        setId: setId,
       );
 
-      if (deck == null) {
+      if (flashcardSet == null) {
         continue;
       }
 
       resources.add(
         CollectedResource(
-          resourceType: ShareResourceType.flashcardDeck,
-          resourceId: deck.id,
-          data: deck,
+          resourceType: ShareResourceType.flashcardSet,
+          resourceId: flashcardSet.id,
+          data: flashcardSet,
         ),
       );
 
-      final cards = await repository.getCardsInDeck(
+      final cards = await repository.getCardsInSet(
         userId: userId,
-        deckId: deck.id,
+        setId: flashcardSet.id,
       );
 
       for (final card in cards) {
@@ -55,9 +55,9 @@ class FlashcardCollectionService implements DataShareCollector {
           CollectedResource(
             resourceType: ShareResourceType.flashcard,
             resourceId: card.id,
-            data: FlashcardWithDeck(
+            data: FlashcardWithSet(
               card: card,
-              deckId: deck.id,
+              setId: flashcardSet.id,
             ),
           ),
         );

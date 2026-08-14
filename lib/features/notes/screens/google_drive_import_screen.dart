@@ -6,7 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_tasks/domain/app_task_type.dart';
 import '../../../core/app_tasks/providers/app_task_provider.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 import '../domain/drive_item.dart';
+import '../help/google_drive_import_help_topics.dart';
 import '../providers/google_classroom_provider.dart';
 import '../providers/library_provider.dart';
 import '../domain/note_category.dart';
@@ -121,9 +124,16 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
                       'Import (${_selectedAttachments.length})',
                     ),
                   ),
+                HelpMenuButton(
+                  pageId: 'notes-drive-import',
+                  topics: googleDriveImportHelpTopics(),
+                ),
               ],
             ),
-      body: RefreshIndicator(
+      body: HelpAnchor(
+        pageId: 'notes-drive-import',
+        anchorId: 'drive-browser',
+        child: RefreshIndicator(
                 onRefresh: () async {
                   await _loadFolder(
                     _navigationStack.isEmpty
@@ -239,6 +249,7 @@ class _GoogleDriveImportScreenState extends ConsumerState<GoogleDriveImportScree
                   },
                 ),
               ),
+        ),
             );
     }
 

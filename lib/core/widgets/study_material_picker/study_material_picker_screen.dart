@@ -207,11 +207,6 @@ class _StudyMaterialPickerScreenState
           },
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.upload_file_outlined),
-            tooltip: 'Upload File',
-            onPressed: _uploadFile,
-          ),
           Builder(
             builder: (context) {
               final folderId =
@@ -311,6 +306,18 @@ class _StudyMaterialPickerScreenState
                   _browserMode = selection.first;
                 });
               },
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _uploadFile,
+                icon: const Icon(Icons.upload_file_outlined),
+                label: const Text('Upload New'),
+              ),
             ),
           ),
 

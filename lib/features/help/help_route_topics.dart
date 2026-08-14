@@ -1,5 +1,10 @@
+import '../countdown/help/countdown_help_topics.dart';
+import '../flashcards/help/flashcard_library_help_topics.dart';
 import '../home/help/home_dashboard_help_topics.dart';
 import '../home/help/standing_chip_preview_provider.dart';
+import '../notes/help/notes_library_help_topics.dart';
+import '../quiz/help/quiz_library_help_topics.dart';
+import '../study_streak/help/study_streak_help_topics.dart';
 import 'domain/help_topic.dart';
 
 /// Help topics for pages reachable through the shared shell AppBar
@@ -15,10 +20,21 @@ import 'domain/help_topic.dart';
 List<HelpTopic> helpTopicsForRoute(
   String location, {
   required void Function(StandingPreview?) setStandingPreview,
+  required void Function(bool) setNotesFabOpen,
 }) {
   switch (location) {
     case '/home':
       return homeDashboardHelpTopics(setStandingPreview: setStandingPreview);
+    case '/notes':
+      return notesLibraryHelpTopics(setFabOpen: setNotesFabOpen);
+    case '/flashcards':
+      return flashcardLibraryHelpTopics();
+    case '/quiz':
+      return quizLibraryHelpTopics();
+    case '/countdown':
+      return countdownHelpTopics();
+    case '/study-streak':
+      return studyStreakHelpTopics();
     default:
       return const [];
   }

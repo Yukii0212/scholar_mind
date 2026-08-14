@@ -10,6 +10,8 @@ import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 import '../../notes/domain/note_item.dart';
 import '../../notes/providers/library_provider.dart';
 import '../../../core/widgets/study_material_picker/study_material_picker_screen.dart';
@@ -23,6 +25,7 @@ import '../../quiz/screens/selection_manager_screen.dart';
 import '../../quiz/services/study_material_preprocessor.dart';
 import '../../quiz/widgets/study_materials_card.dart';
 import '../domain/flashcard_folder.dart';
+import '../help/generate_flashcards_help_topics.dart';
 import '../providers/flashcard_provider.dart';
 import '../services/openai_flashcard_service.dart';
 import '../widgets/flashcard_configuration_card.dart';
@@ -30,7 +33,12 @@ import '../widgets/flashcard_folder_picker_dialog.dart';
 import 'flashcard_set_detail_screen.dart';
 
 class GenerateFlashcardsScreen extends ConsumerStatefulWidget {
-  const GenerateFlashcardsScreen({super.key});
+  const GenerateFlashcardsScreen({super.key, this.quickMode = false});
+
+  /// When true, skips the difficulty/Bloom's config card and the
+  /// additional-instructions/tags panel -- just pick study materials and
+  /// go. Material selection and destination stay mandatory in both modes.
+  final bool quickMode;
 
   @override
   ConsumerState<GenerateFlashcardsScreen> createState() =>
@@ -80,7 +88,15 @@ class _GenerateFlashcardsScreenState
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('AI Flashcard Generation'),
+        title: Text(
+          widget.quickMode ? 'Quick Flashcards' : 'AI Flashcard Generation',
+        ),
+        actions: [
+          HelpMenuButton(
+            pageId: 'flashcard-generate',
+            topics: generateFlashcardsHelpTopics(),
+          ),
+        ],
       ),
       body: ScholarScaffoldBackground(
         child: SafeArea(
@@ -93,127 +109,133 @@ class _GenerateFlashcardsScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    StudyMaterialsCard(
-                      selectedLectureNotes: _selectedLectureNotes,
-                      selectedPastYearQuestions:
-                          _selectedPastYearQuestions,
-                      processedLectureNotes:
-                          _processedLectureNotes.values.toList(),
-                      processedPastYearQuestions:
-                          _processedPastYearQuestions.values.toList(),
-                      lectureNotesStatus: _lectureNotesStatus,
-                      pastYearQuestionsStatus: _pastYearQuestionsStatus,
-                      onLectureNotesTap: _selectLectureNotes,
-                      onPastYearQuestionsTap: _selectPastYearQuestions,
-                      onManageLectureNotesTap: _manageLectureNotes,
-                      onManagePastYearQuestionsTap:
-                          _managePastYearQuestions,
-                    ),
-
-                    const Gap(16),
-
-                    FlashcardConfigurationCard(
-                      cardCount: _cardCount,
-                      materialCharacterCount: _processedLectureNotes.values
-                              .fold(0, (sum, m) => sum + m.text.length) +
-                          _processedPastYearQuestions.values.fold(
-                            0,
-                            (sum, m) => sum + m.text.length,
-                          ),
-                      assessmentMode: _assessmentMode,
-                      difficulty: _difficulty,
-                      minimumBloomsLevel: _minimumBloomsLevel,
-                      maximumBloomsLevel: _maximumBloomsLevel,
-                      onCardCountChanged: (value) => setState(() {
-                        _cardCount = value;
-                      }),
-                      onAssessmentModeChanged: (value) => setState(() {
-                        _assessmentMode = value;
-                      }),
-                      onDifficultyChanged: (value) => setState(() {
-                        _difficulty = value;
-                      }),
-                      onMinimumBloomsLevelChanged: (value) => setState(() {
-                        _minimumBloomsLevel = value;
-                      }),
-                      onMaximumBloomsLevelChanged: (value) => setState(() {
-                        _maximumBloomsLevel = value;
-                      }),
-                    ),
-
-                    const Gap(16),
-
-                    ScholarPanel(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const ScholarSectionHeader(
-                            title: 'Additional Instructions',
-                            subtitle: 'Optional guidance for the AI',
-                          ),
-                          const Gap(14),
-                          TextField(
-                            controller: _instructionsController,
-                            maxLines: 5,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Focus on definitions, weak topics, examples...',
-                            ),
-                          ),
-                          const Gap(12),
-                          TextField(
-                            controller: _tagsController,
-                            decoration: const InputDecoration(
-                              labelText: 'Set tags',
-                              helperText: 'Separate tags with commas',
-                              prefixIcon: Icon(Icons.sell_outlined),
-                            ),
-                          ),
-                        ],
+                    HelpAnchor(
+                      pageId: 'flashcard-generate',
+                      anchorId: 'study-materials-card',
+                      child: StudyMaterialsCard(
+                        selectedLectureNotes: _selectedLectureNotes,
+                        selectedPastYearQuestions: _selectedPastYearQuestions,
+                        processedLectureNotes:
+                            _processedLectureNotes.values.toList(),
+                        processedPastYearQuestions:
+                            _processedPastYearQuestions.values.toList(),
+                        lectureNotesStatus: _lectureNotesStatus,
+                        pastYearQuestionsStatus: _pastYearQuestionsStatus,
+                        onLectureNotesTap: _selectLectureNotes,
+                        onPastYearQuestionsTap: _selectPastYearQuestions,
+                        onManageLectureNotesTap: _manageLectureNotes,
+                        onManagePastYearQuestionsTap: _managePastYearQuestions,
                       ),
                     ),
-                    const Gap(16),
-
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.folder),
-                        title: const Text('Destination'),
-                        subtitle: Text(_destinationFolderName),
-                        trailing: TextButton(
-                          onPressed: () async {
-                            final folders = await ref
-                                .read(flashcardAllFoldersProvider.future);
-
-                            if (!context.mounted) return;
-
-                            final folderId = await showDialog<String>(
-                              context: context,
-                              builder: (_) => FlashcardFolderPickerDialog(
-                                folders: folders,
+                    if (!widget.quickMode) ...[
+                      const Gap(16),
+                      HelpAnchor(
+                        pageId: 'flashcard-generate',
+                        anchorId: 'configuration-card',
+                        child: FlashcardConfigurationCard(
+                          cardCount: _cardCount,
+                          materialCharacterCount: _processedLectureNotes.values
+                                  .fold(0, (sum, m) => sum + m.text.length) +
+                              _processedPastYearQuestions.values.fold(
+                                0,
+                                (sum, m) => sum + m.text.length,
                               ),
-                            );
+                          assessmentMode: _assessmentMode,
+                          difficulty: _difficulty,
+                          minimumBloomsLevel: _minimumBloomsLevel,
+                          maximumBloomsLevel: _maximumBloomsLevel,
+                          onCardCountChanged: (value) => setState(() {
+                            _cardCount = value;
+                          }),
+                          onAssessmentModeChanged: (value) => setState(() {
+                            _assessmentMode = value;
+                          }),
+                          onDifficultyChanged: (value) => setState(() {
+                            _difficulty = value;
+                          }),
+                          onMinimumBloomsLevelChanged: (value) => setState(() {
+                            _minimumBloomsLevel = value;
+                          }),
+                          onMaximumBloomsLevelChanged: (value) => setState(() {
+                            _maximumBloomsLevel = value;
+                          }),
+                        ),
+                      ),
+                      const Gap(16),
+                      ScholarPanel(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const ScholarSectionHeader(
+                              title: 'Additional Instructions',
+                              subtitle: 'Optional guidance for the AI',
+                            ),
+                            const Gap(14),
+                            TextField(
+                              controller: _instructionsController,
+                              maxLines: 5,
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'Focus on definitions, weak topics, examples...',
+                              ),
+                            ),
+                            const Gap(12),
+                            TextField(
+                              controller: _tagsController,
+                              decoration: const InputDecoration(
+                                labelText: 'Set tags',
+                                helperText: 'Separate tags with commas',
+                                prefixIcon: Icon(Icons.sell_outlined),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const Gap(16),
+                    HelpAnchor(
+                      pageId: 'flashcard-generate',
+                      anchorId: 'destination-picker',
+                      child: Card(
+                        child: ListTile(
+                          leading: const Icon(Icons.folder),
+                          title: const Text('Destination'),
+                          subtitle: Text(_destinationFolderName),
+                          trailing: TextButton(
+                            onPressed: () async {
+                              final folders = await ref
+                                  .read(flashcardAllFoldersProvider.future);
 
-                            if (folderId == null) return;
+                              if (!context.mounted) return;
 
-                            final folderName =
-                                folderId == FlashcardFolder.rootId
-                                    ? 'My Flashcards'
-                                    : folders
-                                        .firstWhere(
-                                          (folder) => folder.id == folderId,
-                                        )
-                                        .name;
+                              final folderId = await showDialog<String>(
+                                context: context,
+                                builder: (_) => FlashcardFolderPickerDialog(
+                                  folders: folders,
+                                ),
+                              );
 
-                            setState(() {
-                              _destinationFolderId = folderId;
-                              _destinationFolderName = folderName;
-                            });
-                          },
-                          child: const Text('Change'),
+                              if (folderId == null) return;
+
+                              final folderName =
+                                  folderId == FlashcardFolder.rootId
+                                      ? 'My Flashcards'
+                                      : folders
+                                          .firstWhere(
+                                            (folder) => folder.id == folderId,
+                                          )
+                                          .name;
+
+                              setState(() {
+                                _destinationFolderId = folderId;
+                                _destinationFolderName = folderName;
+                              });
+                            },
+                            child: const Text('Change'),
+                          ),
                         ),
                       ),
                     ),
-
                     const Gap(18),
                     SizedBox(
                       width: double.infinity,
@@ -291,15 +313,13 @@ class _GenerateFlashcardsScreenState
     });
 
     try {
-      final removed =
-          previousSelection.difference(_selectedPastYearQuestions);
+      final removed = previousSelection.difference(_selectedPastYearQuestions);
 
       for (final id in removed) {
         _processedPastYearQuestions.remove(id);
       }
 
-      final addedIds =
-          _selectedPastYearQuestions.difference(previousSelection);
+      final addedIds = _selectedPastYearQuestions.difference(previousSelection);
 
       if (addedIds.isNotEmpty) {
         final notes = await _resolveNotes(addedIds);
@@ -414,9 +434,8 @@ class _GenerateFlashcardsScreenState
       MaterialPageRoute(
         builder: (_) => SelectionManagerScreen(
           title: 'Past Year Questions',
-          selectedNotes: _processedPastYearQuestions.values
-              .map((e) => e.note)
-              .toList(),
+          selectedNotes:
+              _processedPastYearQuestions.values.map((e) => e.note).toList(),
           onAddMore: (current) => Navigator.push<Set<String>>(
             context,
             MaterialPageRoute(
@@ -496,8 +515,7 @@ class _GenerateFlashcardsScreenState
             userId: userId,
             generated: generated,
             tags: tags,
-            sourceReference:
-                selectedNotes.map((e) => e.name).join(', '),
+            sourceReference: selectedNotes.map((e) => e.name).join(', '),
             description:
                 'Generated from ${selectedNotes.length} study material(s).',
             folderId: _destinationFolderId,

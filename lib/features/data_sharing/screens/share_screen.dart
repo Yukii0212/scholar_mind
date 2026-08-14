@@ -13,12 +13,15 @@ import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../domain/models/share/share_expiry.dart';
 import '../domain/models/share/share_result.dart';
+import '../help/share_help_topics.dart';
 import '../providers/export/export_controller.dart';
 import '../providers/export/export_statistics_provider.dart';
 import '../services/export_time_estimate.dart';
 import '../widgets/screen/share/share_contents_banner.dart';
 import '../widgets/screen/share/share_link_view.dart';
 import '../widgets/screen/share/share_qr_view.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 
 class ShareScreen extends ConsumerStatefulWidget {
   const ShareScreen({
@@ -132,12 +135,16 @@ class _ShareScreenState
       appBar: AppBar(
         title: const Text('Share'),
         actions: [
-          IconButton(
-            onPressed: () {
-              context.push('/share/links');
-            },
-            icon: const Icon(Icons.history_rounded),
-            tooltip: 'Shared links',
+          HelpAnchor(
+            pageId: shareScreenHelpPageId,
+            anchorId: 'shared-links-button',
+            child: IconButton(
+              onPressed: () {
+                context.push('/share/links');
+              },
+              icon: const Icon(Icons.history_rounded),
+              tooltip: 'Shared links',
+            ),
           ),
           if (hasShare)
             TextButton.icon(
@@ -145,6 +152,14 @@ class _ShareScreenState
               icon: const Icon(Icons.refresh),
               label: const Text('New Link'),
             ),
+          HelpMenuButton(
+            pageId: shareScreenHelpPageId,
+            topics: shareHelpTopics(
+              setSelectedTab: (value) => setState(() {
+                _selectedIndex = value;
+              }),
+            ),
+          ),
         ],
       ),
       body: SafeArea(
@@ -193,19 +208,23 @@ class _ShareScreenState
 
                 const SizedBox(height: 16),
 
-                FilledButton.icon(
-                  onPressed: generating ? null : _startGenerate,
-                  icon: generating
-                      ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                HelpAnchor(
+                  pageId: shareScreenHelpPageId,
+                  anchorId: 'generate-button',
+                  child: FilledButton.icon(
+                    onPressed: generating ? null : _startGenerate,
+                    icon: generating
+                        ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : const Icon(Icons.link),
+                    label: const Text(
+                      'Generate Link',
                     ),
-                  )
-                      : const Icon(Icons.link),
-                  label: const Text(
-                    'Generate Link',
                   ),
                 ),
 
@@ -260,27 +279,31 @@ class _ShareScreenState
 
               const SizedBox(height: 24),
 
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(
-                      value: 0,
-                      icon: Icon(Icons.qr_code),
-                      label: Text('QR Code'),
-                    ),
-                    ButtonSegment(
-                      value: 1,
-                      icon: Icon(Icons.link),
-                      label: Text('Link'),
-                    ),
-                  ],
-                  selected: {_selectedIndex},
-                  onSelectionChanged: (selection) {
-                    setState(() {
-                      _selectedIndex = selection.first;
-                    });
-                  },
+              HelpAnchor(
+                pageId: shareScreenHelpPageId,
+                anchorId: 'view-tabs',
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 0,
+                        icon: Icon(Icons.qr_code),
+                        label: Text('QR Code'),
+                      ),
+                      ButtonSegment(
+                        value: 1,
+                        icon: Icon(Icons.link),
+                        label: Text('Link'),
+                      ),
+                    ],
+                    selected: {_selectedIndex},
+                    onSelectionChanged: (selection) {
+                      setState(() {
+                        _selectedIndex = selection.first;
+                      });
+                    },
+                  ),
                 ),
               ),
 

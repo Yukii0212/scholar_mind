@@ -10,6 +10,9 @@ import '../../../core/app_tasks/domain/app_task_type.dart';
 import '../../../core/app_tasks/providers/app_task_provider.dart';
 import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
+import '../help/quiz_result_help_topics.dart';
 import '../providers/quiz_attempt_provider.dart';
 
 import '../domain/question_type.dart';
@@ -394,18 +397,26 @@ class _QuizResultScreenState
           'Quiz Results',
         ),
         actions: [
-          IconButton(
-            icon: _exporting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.ios_share_rounded),
-            tooltip: 'Export as PDF',
-            onPressed: _exporting
-                ? null
-                : () => _exportPdf(quiz, answers),
+          HelpAnchor(
+            pageId: 'quiz-result',
+            anchorId: 'export-pdf-button',
+            child: IconButton(
+              icon: _exporting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.ios_share_rounded),
+              tooltip: 'Export as PDF',
+              onPressed: _exporting
+                  ? null
+                  : () => _exportPdf(quiz, answers),
+            ),
+          ),
+          HelpMenuButton(
+            pageId: 'quiz-result',
+            topics: quizResultHelpTopics(),
           ),
         ],
       ),
@@ -415,28 +426,32 @@ class _QuizResultScreenState
         children: [
 
           if (objectiveTotal > 0)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
+            HelpAnchor(
+              pageId: 'quiz-result',
+              anchorId: 'score-summary',
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
 
-                    Text(
-                      '$percentage%',
-                      style: Theme.of(context)
-                          .textTheme
-                          .displayMedium,
-                    ),
+                      Text(
+                        '$percentage%',
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayMedium,
+                      ),
 
-                    const SizedBox(height: 8),
+                      const SizedBox(height: 8),
 
-                    Text(
-                      '$correct / $objectiveTotal Correct',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium,
-                    ),
-                  ],
+                      Text(
+                        '$correct / $objectiveTotal Correct',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -630,24 +645,51 @@ class _QuizResultScreenState
                       alignment: Alignment.centerRight,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 8, bottom: 4),
-                        child: TextButton.icon(
-                          onPressed: excluded
-                              ? () => _unflagNotImportant(index)
-                              : () => _flagNotImportant(
-                                    index,
-                                    question.question,
-                                    question.type,
+                        child: index == 0
+                            ? HelpAnchor(
+                                pageId: 'quiz-result',
+                                anchorId: 'not-important-toggle',
+                                child: TextButton.icon(
+                                  onPressed: excluded
+                                      ? () => _unflagNotImportant(index)
+                                      : () => _flagNotImportant(
+                                            index,
+                                            question.question,
+                                            question.type,
+                                          ),
+                                  icon: Icon(
+                                    excluded
+                                        ? Icons.undo_rounded
+                                        : Icons.flag_outlined,
+                                    size: 18,
                                   ),
-                          icon: Icon(
-                            excluded
-                                ? Icons.undo_rounded
-                                : Icons.flag_outlined,
-                            size: 18,
-                          ),
-                          label: Text(
-                            excluded ? 'Include in Grading' : 'Not Important',
-                          ),
-                        ),
+                                  label: Text(
+                                    excluded
+                                        ? 'Include in Grading'
+                                        : 'Not Important',
+                                  ),
+                                ),
+                              )
+                            : TextButton.icon(
+                                onPressed: excluded
+                                    ? () => _unflagNotImportant(index)
+                                    : () => _flagNotImportant(
+                                          index,
+                                          question.question,
+                                          question.type,
+                                        ),
+                                icon: Icon(
+                                  excluded
+                                      ? Icons.undo_rounded
+                                      : Icons.flag_outlined,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  excluded
+                                      ? 'Include in Grading'
+                                      : 'Not Important',
+                                ),
+                              ),
                       ),
                     ),
                   ],

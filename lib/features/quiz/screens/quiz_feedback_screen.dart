@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 import '../domain/quiz_feedback_entry.dart';
+import '../help/quiz_feedback_help_topics.dart';
 import '../providers/quiz_feedback_provider.dart';
 
 /// Lets the user review and manage every question they've marked "Not
@@ -52,12 +55,20 @@ class QuizFeedbackScreen extends ConsumerWidget {
           feedbackAsync.maybeWhen(
             data: (entries) => entries.isEmpty
                 ? const SizedBox.shrink()
-                : IconButton(
-                    icon: const Icon(Icons.delete_sweep_outlined),
-                    tooltip: 'Clear All',
-                    onPressed: () => _clearAll(context, ref),
+                : HelpAnchor(
+                    pageId: 'quiz-feedback',
+                    anchorId: 'clear-all-button',
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_sweep_outlined),
+                      tooltip: 'Clear All',
+                      onPressed: () => _clearAll(context, ref),
+                    ),
                   ),
             orElse: () => const SizedBox.shrink(),
+          ),
+          HelpMenuButton(
+            pageId: 'quiz-feedback',
+            topics: quizFeedbackHelpTopics(),
           ),
         ],
       ),

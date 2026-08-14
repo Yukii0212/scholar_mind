@@ -5,9 +5,12 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../help/widgets/help_anchor.dart';
 import '../../home/widgets/countdown/dashboard_calendar_grid.dart';
 import '../domain/study_streak_summary.dart';
 import '../providers/study_streak_provider.dart';
+
+const _studyStreakHelpPageId = '/study-streak';
 
 class StudyStreakScreen extends ConsumerWidget {
   const StudyStreakScreen({super.key});
@@ -123,11 +126,16 @@ class _StreakHero extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${summary.currentStreak} day streak',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                HelpAnchor(
+                  pageId: _studyStreakHelpPageId,
+                  anchorId: 'streak-hero-count',
+                  child: Text(
+                    '${summary.currentStreak} day streak',
+                    style:
+                        Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                  ),
                 ),
                 const Gap(6),
                 Text(
@@ -149,23 +157,27 @@ class _StreakHero extends StatelessWidget {
                   ),
                 ],
                 const Gap(16),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _StatTile(
-                      label: 'Longest',
-                      value: '${summary.longestStreak}',
-                    ),
-                    _StatTile(
-                      label: 'Total Days',
-                      value: '${summary.totalStudyDays}',
-                    ),
-                    _StatTile(
-                      label: 'Badges',
-                      value: '${summary.achievements.length}',
-                    ),
-                  ],
+                HelpAnchor(
+                  pageId: _studyStreakHelpPageId,
+                  anchorId: 'streak-hero-stats',
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _StatTile(
+                        label: 'Longest',
+                        value: '${summary.longestStreak}',
+                      ),
+                      _StatTile(
+                        label: 'Total Days',
+                        value: '${summary.totalStudyDays}',
+                      ),
+                      _StatTile(
+                        label: 'Badges',
+                        value: '${summary.achievements.length}',
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -235,9 +247,13 @@ class _ActivityCalendarState extends State<_ActivityCalendar> {
             Row(
               children: [
                 Expanded(
-                  child: ScholarSectionHeader(
-                    title: 'Activity Calendar',
-                    subtitle: _monthYear(_displayedMonth),
+                  child: HelpAnchor(
+                    pageId: _studyStreakHelpPageId,
+                    anchorId: 'activity-calendar-header',
+                    child: ScholarSectionHeader(
+                      title: 'Activity Calendar',
+                      subtitle: _monthYear(_displayedMonth),
+                    ),
                   ),
                 ),
                 IconButton(

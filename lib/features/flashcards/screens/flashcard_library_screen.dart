@@ -4,6 +4,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/collapsible_breadcrumb.dart';
+import '../../help/widgets/help_anchor.dart';
 import '../domain/flashcard_folder.dart';
 import '../domain/flashcard_library_section.dart';
 import '../providers/flashcard_provider.dart';
@@ -13,6 +14,13 @@ import '../widgets/flashcard_library_section_widget.dart';
 import '../widgets/flashcard_trash_section.dart';
 import 'flashcard_set_editor_screen.dart';
 import 'generate_flashcards_screen.dart';
+
+/// Page id under which this screen's [HelpAnchor]s are registered. This
+/// screen has no local AppBar (it's a shell bottom-nav tab), so its
+/// [HelpMenuButton] lives in the shared shell AppBar and is registered
+/// centrally in `lib/features/help/help_route_topics.dart` for route
+/// `/flashcards`, keyed to this same id.
+const _flashcardsHelpPageId = '/flashcards';
 
 class FlashcardLibraryScreen extends ConsumerStatefulWidget {
   const FlashcardLibraryScreen({super.key});
@@ -45,18 +53,24 @@ class _FlashcardLibraryScreenState
     setState(() {
       if (index < 0) {
         _folderStack.clear();
-        _section = FlashcardLibrarySection.continueSection;
       } else {
         _folderStack.removeRange(index + 1, _folderStack.length);
       }
     });
   }
 
-  String get _title => switch (_section) {
-        FlashcardLibrarySection.continueSection => 'Continue',
-        FlashcardLibrarySection.library => 'Flashcards',
-        FlashcardLibrarySection.trash => 'Trash',
-      };
+  String get _title {
+    if (_section == FlashcardLibrarySection.library &&
+        _folderStack.isNotEmpty) {
+      return _folderStack.last.name;
+    }
+
+    return switch (_section) {
+      FlashcardLibrarySection.continueSection => 'Continue',
+      FlashcardLibrarySection.library => 'Flashcards',
+      FlashcardLibrarySection.trash => 'Trash',
+    };
+  }
 
   String get _subtitle => switch (_section) {
         FlashcardLibrarySection.continueSection =>
@@ -68,55 +82,69 @@ class _FlashcardLibraryScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isRoot = _folderId == FlashcardFolder.rootId;
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: SpeedDial(
-        icon: Icons.add,
-        activeIcon: Icons.close,
-        spacing: 12,
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.auto_awesome_rounded),
-            label: 'Generate Flashcards',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const GenerateFlashcardsScreen(),
-                ),
-              );
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.style_outlined),
-            label: 'Create Set',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const FlashcardSetEditorScreen(),
-                ),
-              );
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.create_new_folder),
-            label: 'New Folder',
-            onTap: () async {
-              final folderName = await showDialog<String>(
-                context: context,
-                builder: (_) => const CreateFlashcardFolderDialog(),
-              );
+      floatingActionButton: HelpAnchor(
+        pageId: _flashcardsHelpPageId,
+        anchorId: 'fab-menu',
+        child: SpeedDial(
+          icon: Icons.add,
+          activeIcon: Icons.close,
+          spacing: 12,
+          children: [
+            SpeedDialChild(
+              child: const Icon(Icons.auto_awesome_rounded),
+              label: 'Generate Flashcards',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const GenerateFlashcardsScreen(),
+                  ),
+                );
+              },
+            ),
+            SpeedDialChild(
+              child: const Icon(Icons.bolt_rounded),
+              label: 'Quick Flashcard',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const GenerateFlashcardsScreen(quickMode: true),
+                  ),
+                );
+              },
+            ),
+            SpeedDialChild(
+              child: const Icon(Icons.style_outlined),
+              label: 'Create Set',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const FlashcardSetEditorScreen(),
+                  ),
+                );
+              },
+            ),
+            SpeedDialChild(
+              child: const Icon(Icons.create_new_folder),
+              label: 'New Folder',
+              onTap: () async {
+                final folderName = await showDialog<String>(
+                  context: context,
+                  builder: (_) => const CreateFlashcardFolderDialog(),
+                );
 
-              if (folderName == null) return;
-              if (!context.mounted) return;
+                if (folderName == null) return;
+                if (!context.mounted) return;
 
-              await ref
-                  .read(flashcardLibraryActionControllerProvider.notifier)
-                  .createFolder(parentId: _folderId, name: folderName);
-            },
-          ),
-        ],
+                await ref
+                    .read(flashcardLibraryActionControllerProvider.notifier)
+                    .createFolder(parentId: _folderId, name: folderName);
+              },
+            ),
+          ],
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -125,14 +153,10 @@ class _FlashcardLibraryScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ScholarSectionHeader(
-                title: isRoot ? _title : 'Flashcards',
-                subtitle: isRoot
-                    ? _subtitle
-                    : 'Create sets, revise quickly, and generate from notes',
+                title: _title,
+                subtitle: _subtitle,
               ),
-
               const SizedBox(height: 12),
-
               CollapsibleBreadcrumb(
                 homeLabel: 'My Flashcards',
                 homeIcon: Icons.home_outlined,
@@ -141,16 +165,15 @@ class _FlashcardLibraryScreenState
                 ],
                 onPressed: _openBreadcrumb,
               ),
-
               const SizedBox(height: 12),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          if (isRoot) ...[
-            SizedBox(
-              width: double.infinity,
+          SizedBox(
+            width: double.infinity,
+            child: HelpAnchor(
+              pageId: _flashcardsHelpPageId,
+              anchorId: 'section-tabs',
               child: SegmentedButton<FlashcardLibrarySection>(
                 showSelectedIcon: false,
                 segments: const [
@@ -176,10 +199,9 @@ class _FlashcardLibraryScreenState
                 },
               ),
             ),
-            const SizedBox(height: 20),
-          ],
-
-          switch (isRoot ? _section : FlashcardLibrarySection.library) {
+          ),
+          const SizedBox(height: 20),
+          switch (_section) {
             FlashcardLibrarySection.continueSection =>
               const FlashcardContinueSection(),
             FlashcardLibrarySection.library => FlashcardLibrarySectionWidget(
@@ -188,7 +210,6 @@ class _FlashcardLibraryScreenState
               ),
             FlashcardLibrarySection.trash => const FlashcardTrashSection(),
           },
-
           const SizedBox(height: 100),
         ],
       ),

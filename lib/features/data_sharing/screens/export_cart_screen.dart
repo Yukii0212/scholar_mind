@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scholar_mind/features/data_sharing/screens/share_screen.dart';
 
 import '../domain/models/export/export_module.dart';
+import '../help/export_cart_help_topics.dart';
 import '../notes/model/export_cart_item.dart';
 import '../notes/providers/export_cart_items_provider.dart';
 import '../providers/export/export_selection_provider.dart';
@@ -10,6 +11,8 @@ import '../widgets/screen/cart/export_cart_header.dart';
 import '../widgets/screen/cart/export_cart_swipe_hint.dart';
 import '../widgets/screen/cart/module/export_cart_module_card.dart';
 import '../widgets/screen/cart/notes/export_card_note_tile.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 
 class ExportCartScreen
     extends ConsumerWidget {
@@ -39,27 +42,31 @@ class ExportCartScreen
             16,
             16,
           ),
-          child: FilledButton(
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ShareScreen(),
-                ),
-              );
-            },
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Export',
-                ),
-                SizedBox(
-                  width: 8,
-                ),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                ),
-              ],
+          child: HelpAnchor(
+            pageId: 'export-cart',
+            anchorId: 'export-button',
+            child: FilledButton(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ShareScreen(),
+                  ),
+                );
+              },
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Export',
+                  ),
+                  SizedBox(
+                    width: 8,
+                  ),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -75,6 +82,12 @@ class ExportCartScreen
           ),
           tooltip: 'Back to Library',
         ),
+        actions: [
+          HelpMenuButton(
+            pageId: 'export-cart',
+            topics: exportCartHelpTopics(),
+          ),
+        ],
       ),
       body: cart.when(
         data: (items) {
@@ -133,8 +146,12 @@ class ExportCartScreen
               const SizedBox(
                 height: 20,
               ),
-              ExportCartHeader(
-                itemCount: selection.totalSelected,
+              HelpAnchor(
+                pageId: 'export-cart',
+                anchorId: 'cart-header',
+                child: ExportCartHeader(
+                  itemCount: selection.totalSelected,
+                ),
               ),
               const SizedBox(
                 height: 20,

@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_tasks/domain/app_task_type.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 import '../../../core/preferences/quiz_navigation_preferences.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
+import '../help/quiz_viewer_help_topics.dart';
 import '../providers/quiz_attempt_provider.dart';
 import '../providers/quiz_feedback_provider.dart';
 
@@ -342,26 +345,34 @@ class _QuizViewerScreenState
           // lose my progress?) to someone seeing it for the first time.
           // "Questions" with a list icon reads as "jump to a question"
           // on its own, no tooltip-hunting required.
-          TextButton.icon(
-            icon: const Icon(Icons.format_list_numbered_rounded),
-            label: const Text('Questions'),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => QuizQuestionOverviewScreen(
-                    quiz: quiz,
-                    answers: answers,
-                    onSelectQuestion: (index) {
-                      Navigator.of(context).pop();
+          HelpAnchor(
+            pageId: 'quiz-viewer',
+            anchorId: 'questions-overview-button',
+            child: TextButton.icon(
+              icon: const Icon(Icons.format_list_numbered_rounded),
+              label: const Text('Questions'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => QuizQuestionOverviewScreen(
+                      quiz: quiz,
+                      answers: answers,
+                      onSelectQuestion: (index) {
+                        Navigator.of(context).pop();
 
-                      if (!mounted) return;
+                        if (!mounted) return;
 
-                      _jumpToQuestion(index);
-                    },
+                        _jumpToQuestion(index);
+                      },
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
+          ),
+          HelpMenuButton(
+            pageId: 'quiz-viewer',
+            topics: quizViewerHelpTopics(),
           ),
           if (_saving)
             const Padding(
@@ -416,13 +427,17 @@ class _QuizViewerScreenState
         SafeArea(
           top: false,
           minimum: const EdgeInsets.all(16),
-          child: FilledButton.icon(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
+          child: HelpAnchor(
+            pageId: 'quiz-viewer',
+            anchorId: 'submit-quiz-button',
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              icon: const Icon(Icons.check_circle),
+              label: const Text('Submit Quiz'),
+              onPressed: _submitQuiz,
             ),
-            icon: const Icon(Icons.check_circle),
-            label: const Text('Submit Quiz'),
-            onPressed: _submitQuiz,
           ),
         ),
       ],
@@ -494,10 +509,14 @@ class _QuizViewerScreenState
               Expanded(
                 flex: 2,
                 child: _currentPage >= lastIndex
-                    ? FilledButton.icon(
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text('Submit Quiz'),
-                        onPressed: _submitQuiz,
+                    ? HelpAnchor(
+                        pageId: 'quiz-viewer',
+                        anchorId: 'submit-quiz-button',
+                        child: FilledButton.icon(
+                          icon: const Icon(Icons.check_circle),
+                          label: const Text('Submit Quiz'),
+                          onPressed: _submitQuiz,
+                        ),
                       )
                     : FilledButton.icon(
                         onPressed: () => _pageController.nextPage(
@@ -845,7 +864,31 @@ class _QuizViewerScreenState
                     ),
                   ),
 
-                  CheckboxListTile(
+                  index == 0
+                      ? HelpAnchor(
+                          pageId: 'quiz-viewer',
+                          anchorId: 'not-important-flag',
+                          child: CheckboxListTile(
+                            contentPadding:
+                            EdgeInsets.zero,
+                            value:
+                            answers[index]
+                                ?.notImportant ??
+                                false,
+                            onChanged: (value) {
+                              if (value == true) {
+                                _flagNotImportant(index, question);
+                              } else {
+                                _unflagNotImportant(index);
+                              }
+                            },
+                            title: const Text(
+                              'Not important (exclude from grading)',
+                            ),
+                            secondary: const Icon(Icons.flag_outlined),
+                          ),
+                        )
+                      : CheckboxListTile(
                     contentPadding:
                     EdgeInsets.zero,
                     value:

@@ -6,6 +6,7 @@ import '../../../../core/theme/app_design.dart';
 import '../../../countdown/domain/countdown_item.dart';
 import '../../../countdown/providers/countdown_provider.dart';
 import '../../../countdown/screens/countdown_crud_screen.dart';
+import 'calendar_share_dialog.dart';
 import 'dashboard_calendar_grid.dart';
 import 'dashboard_day_events_sheet.dart';
 
@@ -67,6 +68,11 @@ class _DashboardCalendarPageState
                   ),
                 ),
                 IconButton(
+                  onPressed: () => _shareMonth(days),
+                  icon: const Icon(Icons.ios_share_rounded),
+                  tooltip: 'Share this month',
+                ),
+                IconButton(
                   onPressed: () => _changeMonth(-1),
                   icon: const Icon(Icons.chevron_left_rounded),
                 ),
@@ -124,6 +130,26 @@ class _DashboardCalendarPageState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _shareMonth(List<DateTime?> days) {
+    final countdowns =
+        ref.read(countdownsProvider).valueOrNull ?? const <CountdownItem>[];
+
+    final monthCountdowns = countdowns.where((item) {
+      return !item.isCompleted &&
+          item.dueDate.year == _displayedMonth.year &&
+          item.dueDate.month == _displayedMonth.month;
+    }).toList();
+
+    showDialog(
+      context: context,
+      builder: (_) => CalendarShareDialog(
+        displayedMonth: _displayedMonth,
+        days: days,
+        countdowns: monthCountdowns,
       ),
     );
   }

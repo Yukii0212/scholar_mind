@@ -23,6 +23,7 @@ lib/debug/openai_stub.dart
 
 # Environment variables
 .env
+*.md
 
 #System Documentation
 FYP_System_Documentation.md

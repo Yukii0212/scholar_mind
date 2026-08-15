@@ -393,6 +393,45 @@ class FlashcardRepository {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
+  /// One-time (non-streamed) session history across ALL of the user's
+  /// sets, for the Analytics page's cross-set trend chart -- unlike
+  /// watchSessions (per-set, live, capped at 50) this fans out a single
+  /// `.get()` per set rather than holding N live listeners open just to
+  /// show a stats page. Each session map is enriched with 'setId'/
+  /// 'setName' since the raw session docs don't carry either. Sorted
+  /// newest-first and capped at 200 across all sets combined.
+  Future<List<Map<String, dynamic>>> getAllSessions({
+    required String userId,
+    required List<FlashcardSet> sets,
+  }) async {
+    final results = await Future.wait(
+      sets.map((set) async {
+        final snapshot = await _sessions(userId, set.id)
+            .orderBy('completedAt', descending: true)
+            .limit(200)
+            .get();
+
+        return snapshot.docs.map((doc) {
+          return {
+            ...doc.data(),
+            'setId': set.id,
+            'setName': set.name,
+          };
+        });
+      }),
+    );
+
+    final sessions = results.expand((sessions) => sessions).toList();
+
+    sessions.sort((a, b) {
+      final aTime = a['completedAt'] as Timestamp?;
+      final bTime = b['completedAt'] as Timestamp?;
+      return (bTime ?? Timestamp(0, 0)).compareTo(aTime ?? Timestamp(0, 0));
+    });
+
+    return sessions.take(200).toList();
+  }
+
   Future<void> _refreshSetMetadata(String userId, String setId) async {
     final cards = await _cards(userId, setId).get();
     await _sets(userId).doc(setId).update({

@@ -404,6 +404,11 @@ class _QuickAccessGrid extends StatelessWidget {
       const _QuickAction('Quiz', Icons.bolt_rounded, route: '/quiz'),
       const _QuickAction('Grades', Icons.bar_chart_rounded, route: '/grades'),
       const _QuickAction(
+        'Analytics',
+        Icons.insights_rounded,
+        route: '/analytics',
+      ),
+      const _QuickAction(
         'Flashcards',
         Icons.style_rounded,
         route: '/flashcards',

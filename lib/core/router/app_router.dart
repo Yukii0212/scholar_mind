@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../features/analytics/screens/analytics_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/countdown/screens/countdown_screen.dart';
@@ -100,6 +101,10 @@ GoRouter appRouter(AppRouterRef ref) {
           GoRoute(
             path: '/grades',
             builder: (context, state) => const GradeHomeScreen(),
+          ),
+          GoRoute(
+            path: '/analytics',
+            builder: (context, state) => const AnalyticsScreen(),
           ),
           GoRoute(
             path: '/study-streak',

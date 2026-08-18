@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../help/widgets/help_anchor.dart';
 import '../widgets/sections/hidden_section.dart';
 import '../domain/countdown_item.dart';
 import '../providers/countdown_provider.dart';
@@ -23,19 +24,23 @@ class CountdownScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: SpeedDial(
-        icon: Icons.add,
-        activeIcon: Icons.close,
-        spacing: 12,
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.event_note_outlined),
-            label: 'New Countdown',
-            onTap: userId == null
-                ? null
-                : () => _openCountdownCrud(context),
-          ),
-        ],
+      floatingActionButton: HelpAnchor(
+        pageId: '/countdown',
+        anchorId: 'new-countdown-fab',
+        child: SpeedDial(
+          icon: Icons.add,
+          activeIcon: Icons.close,
+          spacing: 12,
+          children: [
+            SpeedDialChild(
+              child: const Icon(Icons.event_note_outlined),
+              label: 'New Countdown',
+              onTap: userId == null
+                  ? null
+                  : () => _openCountdownCrud(context),
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
         top: false,
@@ -106,20 +111,32 @@ class _CountdownSummary extends StatelessWidget {
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < 620;
           final tiles = [
-            _SummaryTile(
-              icon: Icons.event_available_rounded,
-              label: 'Active',
-              value: '${active.length}',
+            HelpAnchor(
+              pageId: '/countdown',
+              anchorId: 'summary-active-tile',
+              child: _SummaryTile(
+                icon: Icons.event_available_rounded,
+                label: 'Active',
+                value: '${active.length}',
+              ),
             ),
-            _SummaryTile(
-              icon: Icons.priority_high_rounded,
-              label: 'Urgent',
-              value: '$urgent',
+            HelpAnchor(
+              pageId: '/countdown',
+              anchorId: 'summary-urgent-tile',
+              child: _SummaryTile(
+                icon: Icons.priority_high_rounded,
+                label: 'Urgent',
+                value: '$urgent',
+              ),
             ),
-            _SummaryTile(
-              icon: Icons.school_outlined,
-              label: 'Exams',
-              value: '$exams',
+            HelpAnchor(
+              pageId: '/countdown',
+              anchorId: 'summary-exams-tile',
+              child: _SummaryTile(
+                icon: Icons.school_outlined,
+                label: 'Exams',
+                value: '$exams',
+              ),
             ),
           ];
 

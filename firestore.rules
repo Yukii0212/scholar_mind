@@ -53,6 +53,12 @@ service cloud.firestore {
           && validCountdown(request.resource.data);
       }
 
+      match /flashcard_folders/{folderId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validFlashcardFolder(request.resource.data);
+      }
+
       match /flashcard_decks/{deckId} {
         allow read, delete: if isOwner(userId);
         allow create, update: if isOwner(userId)
@@ -368,6 +374,11 @@ service cloud.firestore {
           'cardsReviewed',
           'knownCards',
           'needsReviewCards',
+          'folderId',
+          'isArchived',
+          'isDeleted',
+          'deletedAt',
+          'deletedAsCascade',
           'createdAt',
           'updatedAt'
         ])
@@ -382,6 +393,11 @@ service cloud.firestore {
           'cardsReviewed',
           'knownCards',
           'needsReviewCards',
+          'folderId',
+          'isArchived',
+          'isDeleted',
+          'deletedAt',
+          'deletedAsCascade',
           'createdAt',
           'updatedAt'
         ])
@@ -397,6 +413,40 @@ service cloud.firestore {
         && data.cardsReviewed is int
         && data.knownCards is int
         && data.needsReviewCards is int
+        && data.folderId is string
+        && data.isArchived is bool
+        && data.isDeleted is bool
+        && (data.deletedAt == null || data.deletedAt is timestamp)
+        && data.deletedAsCascade is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function validFlashcardFolder(data) {
+      return data.keys().hasAll([
+          'name',
+          'parentId',
+          'isDeleted',
+          'deletedAt',
+          'deletedAsCascade',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'parentId',
+          'isDeleted',
+          'deletedAt',
+          'deletedAsCascade',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.parentId is string
+        && data.isDeleted is bool
+        && (data.deletedAt == null || data.deletedAt is timestamp)
+        && data.deletedAsCascade is bool
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }

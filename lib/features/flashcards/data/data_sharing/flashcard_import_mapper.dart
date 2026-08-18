@@ -3,7 +3,7 @@ import '../../../data_sharing/domain/models/share/share_resource.dart';
 class FlashcardImportMapper {
   const FlashcardImportMapper();
 
-  Map<String, dynamic> deckPayload(
+  Map<String, dynamic> setPayload(
       ShareResource resource,
       ) {
     return resource.payload;

@@ -7,23 +7,23 @@ import '../../auth/providers/auth_provider.dart';
 import '../domain/flashcard_models.dart';
 import '../providers/flashcard_provider.dart';
 
-class FlashcardCardEditorScreen extends ConsumerStatefulWidget {
-  const FlashcardCardEditorScreen({
+class FlashcardEditorScreen extends ConsumerStatefulWidget {
+  const FlashcardEditorScreen({
     super.key,
-    required this.deck,
+    required this.flashcardSet,
     this.card,
   });
 
-  final FlashcardDeck deck;
+  final FlashcardSet flashcardSet;
   final Flashcard? card;
 
   @override
-  ConsumerState<FlashcardCardEditorScreen> createState() =>
-      _FlashcardCardEditorScreenState();
+  ConsumerState<FlashcardEditorScreen> createState() =>
+      _FlashcardEditorScreenState();
 }
 
-class _FlashcardCardEditorScreenState
-    extends ConsumerState<FlashcardCardEditorScreen> {
+class _FlashcardEditorScreenState
+    extends ConsumerState<FlashcardEditorScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _frontController;
   late final TextEditingController _backController;
@@ -37,7 +37,7 @@ class _FlashcardCardEditorScreenState
     _frontController = TextEditingController(text: card?.front ?? '');
     _backController = TextEditingController(text: card?.back ?? '');
     _tagsController = TextEditingController(
-      text: card?.tags.join(', ') ?? widget.deck.tags.join(', '),
+      text: card?.tags.join(', ') ?? widget.flashcardSet.tags.join(', '),
     );
   }
 
@@ -56,7 +56,7 @@ class _FlashcardCardEditorScreenState
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Card' : 'Add Card'),
+        title: Text(isEditing ? 'Edit Flashcard' : 'Add Flashcard'),
         actions: [
           TextButton.icon(
             onPressed: _saving ? null : _save,
@@ -151,7 +151,7 @@ class _FlashcardCardEditorScreenState
     try {
       await ref.read(flashcardRepositoryProvider).saveCard(
             userId: userId,
-            deckId: widget.deck.id,
+            setId: widget.flashcardSet.id,
             cardId: widget.card?.id,
             front: _frontController.text.trim(),
             back: _backController.text.trim(),

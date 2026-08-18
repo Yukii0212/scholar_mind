@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controller/share_import_controller.dart';
+import '../help/import_library_help_topics.dart';
 import 'import_preview_screen.dart';
 import 'qr_scanner_screen.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 
 class ImportLibraryScreen extends ConsumerStatefulWidget {
   const ImportLibraryScreen({
@@ -161,10 +163,18 @@ class _ImportLibraryScreenState
           'Import Materials',
         ),
         actions: [
-          IconButton(
-            onPressed: _isImporting ? null : _scanQrCode,
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            tooltip: 'Scan QR code',
+          HelpAnchor(
+            pageId: 'import-library',
+            anchorId: 'scan-qr-button',
+            child: IconButton(
+              onPressed: _isImporting ? null : _scanQrCode,
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              tooltip: 'Scan QR code',
+            ),
+          ),
+          HelpMenuButton(
+            pageId: 'import-library',
+            topics: importLibraryHelpTopics(),
           ),
         ],
       ),
@@ -172,40 +182,48 @@ class _ImportLibraryScreenState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-              TextField(
-                controller: _controller,
-                enabled: !_isImporting,
-                minLines: 1,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Share Link or Share ID',
-                  hintText:
-                  'Paste a ScholarMind share link or share ID',
-                  border: OutlineInputBorder(),
+              HelpAnchor(
+                pageId: 'import-library',
+                anchorId: 'import-input-field',
+                child: TextField(
+                  controller: _controller,
+                  enabled: !_isImporting,
+                  minLines: 1,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Share Link or Share ID',
+                    hintText:
+                    'Paste a ScholarMind share link or share ID',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ),
               const SizedBox(
                 height: 16,
               ),
-              FilledButton.icon(
-                onPressed:
-                _isImporting ? null : _import,
-                icon: _isImporting
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child:
-                  CircularProgressIndicator(
-                    strokeWidth: 2,
+              HelpAnchor(
+                pageId: 'import-library',
+                anchorId: 'import-button',
+                child: FilledButton.icon(
+                  onPressed:
+                  _isImporting ? null : _import,
+                  icon: _isImporting
+                      ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child:
+                    CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Icon(
+                    Icons.download_rounded,
                   ),
-                )
-                    : const Icon(
-                  Icons.download_rounded,
-                ),
-                label: Text(
-                  _isImporting
-                      ? 'Importing...'
-                      : 'Import',
+                  label: Text(
+                    _isImporting
+                        ? 'Importing...'
+                        : 'Import',
+                  ),
                 ),
               ),
               const SizedBox(

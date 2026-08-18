@@ -7,21 +7,21 @@ import '../../auth/providers/auth_provider.dart';
 import '../domain/flashcard_models.dart';
 import '../providers/flashcard_provider.dart';
 
-class FlashcardDeckEditorScreen extends ConsumerStatefulWidget {
-  const FlashcardDeckEditorScreen({
+class FlashcardSetEditorScreen extends ConsumerStatefulWidget {
+  const FlashcardSetEditorScreen({
     super.key,
-    this.deck,
+    this.flashcardSet,
   });
 
-  final FlashcardDeck? deck;
+  final FlashcardSet? flashcardSet;
 
   @override
-  ConsumerState<FlashcardDeckEditorScreen> createState() =>
-      _FlashcardDeckEditorScreenState();
+  ConsumerState<FlashcardSetEditorScreen> createState() =>
+      _FlashcardSetEditorScreenState();
 }
 
-class _FlashcardDeckEditorScreenState
-    extends ConsumerState<FlashcardDeckEditorScreen> {
+class _FlashcardSetEditorScreenState
+    extends ConsumerState<FlashcardSetEditorScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _tagsController;
@@ -33,14 +33,15 @@ class _FlashcardDeckEditorScreenState
   @override
   void initState() {
     super.initState();
-    final deck = widget.deck;
-    _nameController = TextEditingController(text: deck?.name ?? '');
-    _tagsController = TextEditingController(text: deck?.tags.join(', ') ?? '');
+    final flashcardSet = widget.flashcardSet;
+    _nameController = TextEditingController(text: flashcardSet?.name ?? '');
+    _tagsController =
+        TextEditingController(text: flashcardSet?.tags.join(', ') ?? '');
     _sourceController =
-        TextEditingController(text: deck?.sourceReference ?? '');
+        TextEditingController(text: flashcardSet?.sourceReference ?? '');
     _descriptionController =
-        TextEditingController(text: deck?.description ?? '');
-    _method = deck?.generationMethod ?? FlashcardGenerationMethod.manual;
+        TextEditingController(text: flashcardSet?.description ?? '');
+    _method = flashcardSet?.generationMethod ?? FlashcardGenerationMethod.manual;
   }
 
   @override
@@ -54,12 +55,12 @@ class _FlashcardDeckEditorScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.deck != null;
+    final isEditing = widget.flashcardSet != null;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Deck' : 'Create Deck'),
+        title: Text(isEditing ? 'Edit Set' : 'Create Set'),
         actions: [
           TextButton.icon(
             onPressed: _saving ? null : _save,
@@ -85,19 +86,19 @@ class _FlashcardDeckEditorScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const ScholarSectionHeader(
-                          title: 'Deck Details',
-                          subtitle: 'Set how this flashcard deck is organized',
+                          title: 'Set Details',
+                          subtitle: 'Set how this flashcard set is organized',
                         ),
                         const Gap(16),
                         TextFormField(
                           controller: _nameController,
                           decoration: const InputDecoration(
-                            labelText: 'Deck name',
+                            labelText: 'Set name',
                             prefixIcon: Icon(Icons.style_outlined),
                           ),
                           validator: (value) {
                             if ((value ?? '').trim().isEmpty) {
-                              return 'Enter a deck name';
+                              return 'Enter a set name';
                             }
                             return null;
                           },
@@ -168,9 +169,9 @@ class _FlashcardDeckEditorScreenState
 
     setState(() => _saving = true);
     try {
-      await ref.read(flashcardRepositoryProvider).saveDeck(
+      await ref.read(flashcardRepositoryProvider).saveSet(
             userId: userId,
-            deckId: widget.deck?.id,
+            setId: widget.flashcardSet?.id,
             name: _nameController.text.trim(),
             tags: _tagsController.text.split(','),
             generationMethod: _method,

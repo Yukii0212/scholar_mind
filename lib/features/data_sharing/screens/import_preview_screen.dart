@@ -9,7 +9,10 @@ import '../controller/share_import_controller.dart';
 import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_archive.dart';
 import '../domain/models/share/share_resource.dart';
+import '../help/import_preview_help_topics.dart';
 import '../providers/share/share_link_service_provider.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 
 class ImportPreviewScreen extends ConsumerStatefulWidget {
   const ImportPreviewScreen({
@@ -136,6 +139,12 @@ class _ImportPreviewScreenState
         title: const Text(
           'Import Preview',
         ),
+        actions: [
+          HelpMenuButton(
+            pageId: 'import-preview',
+            topics: importPreviewHelpTopics(),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -152,18 +161,22 @@ class _ImportPreviewScreenState
                       '$selectedCount of ${widget.archive.resources.length} selected',
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        for (var i = 0;
-                        i < _selected.length;
-                        i++) {
-                          _selected[i] = true;
-                        }
-                      });
-                    },
-                    child: const Text(
-                      'Select All',
+                  HelpAnchor(
+                    pageId: 'import-preview',
+                    anchorId: 'select-all-button',
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          for (var i = 0;
+                          i < _selected.length;
+                          i++) {
+                            _selected[i] = true;
+                          }
+                        });
+                      },
+                      child: const Text(
+                        'Select All',
+                      ),
                     ),
                   ),
                 ],
@@ -207,10 +220,14 @@ class _ImportPreviewScreenState
             child: Padding(
               padding:
               const EdgeInsets.all(16),
-              child: FilledButton(
-                onPressed: _import,
-                child: const Text(
-                  'Import Selected',
+              child: HelpAnchor(
+                pageId: 'import-preview',
+                anchorId: 'import-selected-button',
+                child: FilledButton(
+                  onPressed: _import,
+                  child: const Text(
+                    'Import Selected',
+                  ),
                 ),
               ),
             ),

@@ -32,7 +32,7 @@ class FlashcardDataShareHandler
 
   @override
   List<ShareResourceType> get resourceTypes => const [
-    ShareResourceType.flashcardDeck,
+    ShareResourceType.flashcardSet,
     ShareResourceType.flashcard,
   ];
 
@@ -44,7 +44,7 @@ class FlashcardDataShareHandler
       return const ValidationResult(
         isValid: false,
         errors: [
-          'No flashcard decks selected.',
+          'No flashcard sets selected.',
         ],
       );
     }
@@ -89,13 +89,13 @@ class FlashcardDataShareHandler
       return;
     }
 
-    final deckIdMap = <String, String>{};
+    final setIdMap = <String, String>{};
 
-    final decks = resources
+    final sets = resources
         .where(
           (resource) =>
       resource.resourceType ==
-          ShareResourceType.flashcardDeck,
+          ShareResourceType.flashcardSet,
     )
         .toList();
 
@@ -107,10 +107,10 @@ class FlashcardDataShareHandler
     )
         .toList();
 
-    for (final resource in decks) {
-      final payload = _importMapper.deckPayload(resource);
+    for (final resource in sets) {
+      final payload = _importMapper.setPayload(resource);
 
-      final newDeckId = await _repository.saveDeck(
+      final newSetId = await _repository.saveSet(
         userId: userId,
         name: resource.metadata.displayName,
         tags: (payload['tags'] as List<dynamic>?)
@@ -123,21 +123,21 @@ class FlashcardDataShareHandler
         description: payload['description'] as String?,
       );
 
-      deckIdMap[resource.resourceId] = newDeckId;
+      setIdMap[resource.resourceId] = newSetId;
     }
 
     for (final resource in cards) {
       final payload = _importMapper.cardPayload(resource);
 
-      final newDeckId = deckIdMap[payload['deckId'] as String?];
+      final newSetId = setIdMap[payload['setId'] as String?];
 
-      if (newDeckId == null) {
+      if (newSetId == null) {
         continue;
       }
 
       await _repository.saveCard(
         userId: userId,
-        deckId: newDeckId,
+        setId: newSetId,
         front: payload['front'] as String? ?? '',
         back: payload['back'] as String? ?? '',
         tags: (payload['tags'] as List<dynamic>?)

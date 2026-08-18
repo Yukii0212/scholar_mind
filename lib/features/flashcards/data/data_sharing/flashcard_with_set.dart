@@ -1,12 +1,12 @@
 import '../../domain/flashcard_models.dart';
 
-class FlashcardWithDeck {
-  const FlashcardWithDeck({
+class FlashcardWithSet {
+  const FlashcardWithSet({
     required this.card,
-    required this.deckId,
+    required this.setId,
   });
 
   final Flashcard card;
 
-  final String deckId;
+  final String setId;
 }

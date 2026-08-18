@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/providers/auth_provider.dart';
 import '../domain/quiz_folder.dart';
+import '../providers/quiz_library_provider.dart' as quiz_library;
+import 'quiz_folder_dialogs.dart';
 
 /// Picks a destination folder by drilling down one level at a time,
 /// matching how the study material picker (`StudyMaterialPickerScreen`)
@@ -8,7 +12,7 @@ import '../domain/quiz_folder.dart';
 /// to squeeze folder names down to almost nothing (or an unreadable
 /// ellipsis) once a few levels deep. "Move Here" always targets whichever
 /// folder is currently being viewed.
-class QuizFolderPickerDialog extends StatefulWidget {
+class QuizFolderPickerDialog extends ConsumerStatefulWidget {
   const QuizFolderPickerDialog({
     super.key,
     required this.folders,
@@ -19,12 +23,21 @@ class QuizFolderPickerDialog extends StatefulWidget {
   final String? excludeFolderId;
 
   @override
-  State<QuizFolderPickerDialog> createState() =>
+  ConsumerState<QuizFolderPickerDialog> createState() =>
       _QuizFolderPickerDialogState();
 }
 
-class _QuizFolderPickerDialogState extends State<QuizFolderPickerDialog> {
+class _QuizFolderPickerDialogState
+    extends ConsumerState<QuizFolderPickerDialog> {
+  late List<QuizFolder> _folders;
   final List<QuizFolder> _stack = [];
+  bool _creating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _folders = widget.folders;
+  }
 
   String get _currentFolderId =>
       _stack.isEmpty ? QuizFolder.rootId : _stack.last.id;
@@ -33,7 +46,7 @@ class _QuizFolderPickerDialogState extends State<QuizFolderPickerDialog> {
       _stack.isEmpty ? 'My Quizzes' : _stack.last.name;
 
   List<QuizFolder> get _children {
-    final children = widget.folders
+    final children = _folders
         .where(
           (folder) =>
               folder.parentId == _currentFolderId &&
@@ -46,6 +59,53 @@ class _QuizFolderPickerDialogState extends State<QuizFolderPickerDialog> {
     );
 
     return children;
+  }
+
+  Future<void> _createFolder() async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => const CreateQuizFolderDialog(),
+    );
+
+    if (name == null) return;
+
+    final userId = ref.read(firebaseAuthProvider).currentUser?.uid;
+    if (userId == null) return;
+
+    setState(() => _creating = true);
+
+    try {
+      final newFolderId = await ref
+          .read(quiz_library.quizLibraryRepositoryProvider)
+          .createFolder(userId: userId, parentId: _currentFolderId, name: name);
+
+      final refreshed =
+          await ref.refresh(quiz_library.allFoldersProvider.future);
+
+      if (!mounted) return;
+
+      final newFolder = refreshed.firstWhere(
+        (folder) => folder.id == newFolderId,
+        orElse: () => QuizFolder(
+          id: newFolderId,
+          name: name,
+          parentId: _currentFolderId,
+          isFavorite: false,
+          isArchived: false,
+          isDeleted: false,
+          deletedAt: null,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      setState(() {
+        _folders = refreshed;
+        _stack.add(newFolder);
+      });
+    } finally {
+      if (mounted) setState(() => _creating = false);
+    }
   }
 
   @override
@@ -79,6 +139,17 @@ class _QuizFolderPickerDialogState extends State<QuizFolderPickerDialog> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                ),
+                IconButton(
+                  icon: _creating
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.create_new_folder_outlined),
+                  tooltip: 'New folder',
+                  onPressed: _creating ? null : _createFolder,
                 ),
               ],
             ),

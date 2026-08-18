@@ -11,7 +11,7 @@ import '../domain/flashcard_models.dart';
 class OpenAIFlashcardService {
   const OpenAIFlashcardService();
 
-  Future<GeneratedFlashcardDeck> generateFlashcards({
+  Future<GeneratedFlashcardSet> generateFlashcards({
     required String studyContext,
     required int cardCount,
     required AssessmentMode assessmentMode,
@@ -86,7 +86,7 @@ Rules:
 JSON format:
 
 {
-  "title": "Short Deck Title",
+  "title": "Short Set Title",
   "cards": [
     {
       "front": "Question or prompt",
@@ -105,7 +105,7 @@ JSON format:
       );
 
       final decoded = jsonDecode(response.outputText);
-      return GeneratedFlashcardDeck.fromJson(
+      return GeneratedFlashcardSet.fromJson(
         Map<String, dynamic>.from(decoded as Map),
       );
     } finally {

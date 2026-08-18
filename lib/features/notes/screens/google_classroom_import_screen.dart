@@ -10,6 +10,9 @@ import '../../../core/app_tasks/domain/app_task_type.dart';
 import '../../../core/app_tasks/screens/app_task_details_screen.dart';
 import '../../../core/app_tasks/services/app_task_controller.dart';
 
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
+import '../help/google_classroom_import_help_topics.dart';
 import '../providers/google_classroom_provider.dart';
 import '../providers/library_provider.dart';
 import '../domain/note_category.dart';
@@ -132,9 +135,16 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
                   : const Icon(Icons.download),
               label: Text(_isImporting ? 'Importing...' : 'Import (${_selectedAttachments.length})'),
             ),
+          HelpMenuButton(
+            pageId: 'notes-classroom-import',
+            topics: googleClassroomImportHelpTopics(),
+          ),
         ],
       ),
-        body: IgnorePointer(
+        body: HelpAnchor(
+          pageId: 'notes-classroom-import',
+          anchorId: 'classroom-browser',
+          child: IgnorePointer(
           ignoring: _isImporting,
           child: RefreshIndicator(
         onRefresh: () async {
@@ -202,7 +212,10 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
                 Padding(
                   padding:
                   const EdgeInsets.all(12),
-                  child: SegmentedButton<int>(
+                  child: HelpAnchor(
+                    pageId: 'notes-classroom-import',
+                    anchorId: 'classroom-tabs',
+                    child: SegmentedButton<int>(
                     segments: const [
                       ButtonSegment(
                         value: 0,
@@ -231,6 +244,7 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
                             selection.first;
                       });
                     },
+                    ),
                   ),
                 ),
 
@@ -351,6 +365,7 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
             );
           },
         ),
+    ),
     ),
     ),
     ),

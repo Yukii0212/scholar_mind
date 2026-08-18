@@ -38,11 +38,16 @@ class AppTaskController {
     );
 
     void progress(String message) {
-      final current =
-          notifier.currentTask;
+      // Looked up by this task's own id, not notifier.currentTask (the
+      // most-recently-touched task across the WHOLE app) -- with two
+      // background tasks running concurrently (e.g. flashcard + quiz
+      // generation together), currentTask would resolve to whichever one
+      // was touched more recently, silently dropping progress/completion
+      // updates for the other one, which would then be stuck showing as
+      // "running" forever even after its own work actually finished.
+      final current = notifier.taskById(id);
 
-      if (current == null ||
-          current.id != id) {
+      if (current == null) {
         return;
       }
 
@@ -57,11 +62,9 @@ class AppTaskController {
       final result =
       await task(progress);
 
-      final current =
-          notifier.currentTask;
+      final current = notifier.taskById(id);
 
-      if (current != null &&
-          current.id == id) {
+      if (current != null) {
         notifier.update(
           current.copyWith(
             status: AppTaskStatus.completed,
@@ -79,11 +82,9 @@ class AppTaskController {
 
       return result;
     } catch (error) {
-      final current =
-          notifier.currentTask;
+      final current = notifier.taskById(id);
 
-      if (current != null &&
-          current.id == id) {
+      if (current != null) {
         notifier.update(
           current.copyWith(
             status: AppTaskStatus.failed,

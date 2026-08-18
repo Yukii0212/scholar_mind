@@ -3,7 +3,7 @@ import '../../../data_sharing/domain/models/share/share_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource_metadata.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
 import '../../domain/flashcard_models.dart';
-import 'flashcard_with_deck.dart';
+import 'flashcard_with_set.dart';
 
 class FlashcardExportMapper {
   const FlashcardExportMapper();
@@ -12,14 +12,14 @@ class FlashcardExportMapper {
       CollectedResource resource,
       ) {
     switch (resource.resourceType) {
-      case ShareResourceType.flashcardDeck:
-        return _deck(
-          resource.asType<FlashcardDeck>(),
+      case ShareResourceType.flashcardSet:
+        return _set(
+          resource.asType<FlashcardSet>(),
         );
 
       case ShareResourceType.flashcard:
         return _card(
-          resource.asType<FlashcardWithDeck>(),
+          resource.asType<FlashcardWithSet>(),
         );
 
       default:
@@ -30,30 +30,30 @@ class FlashcardExportMapper {
     }
   }
 
-  ShareResource _deck(
-      FlashcardDeck deck,
+  ShareResource _set(
+      FlashcardSet flashcardSet,
       ) {
     return ShareResource(
-      resourceType: ShareResourceType.flashcardDeck,
+      resourceType: ShareResourceType.flashcardSet,
       resourceVersion: 1,
-      resourceId: deck.id,
+      resourceId: flashcardSet.id,
       metadata: ShareResourceMetadata(
-        displayName: deck.name,
-        createdAt: deck.createdAt,
-        updatedAt: deck.updatedAt,
-        tags: deck.tags,
+        displayName: flashcardSet.name,
+        createdAt: flashcardSet.createdAt,
+        updatedAt: flashcardSet.updatedAt,
+        tags: flashcardSet.tags,
       ),
       payload: {
-        'tags': deck.tags,
-        'generationMethod': deck.generationMethod.name,
-        'sourceReference': deck.sourceReference,
-        'description': deck.description,
+        'tags': flashcardSet.tags,
+        'generationMethod': flashcardSet.generationMethod.name,
+        'sourceReference': flashcardSet.sourceReference,
+        'description': flashcardSet.description,
       },
     );
   }
 
   ShareResource _card(
-      FlashcardWithDeck wrapper,
+      FlashcardWithSet wrapper,
       ) {
     final card = wrapper.card;
 
@@ -68,7 +68,7 @@ class FlashcardExportMapper {
         tags: card.tags,
       ),
       payload: {
-        'deckId': wrapper.deckId,
+        'setId': wrapper.setId,
         'front': card.front,
         'back': card.back,
         'tags': card.tags,

@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 
 import '../domain/models/share/share_link_record.dart';
 import '../domain/models/share/share_result.dart';
+import '../help/my_shared_links_help_topics.dart';
 import '../providers/share/my_share_links_provider.dart';
 import '../providers/share/share_link_service_provider.dart';
+import '../../help/widgets/help_menu_button.dart';
 import 'view_shared_link_screen.dart';
 
 class MySharedLinksScreen extends ConsumerWidget {
@@ -18,6 +20,12 @@ class MySharedLinksScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Shared Links'),
+        actions: [
+          HelpMenuButton(
+            pageId: 'my-shared-links',
+            topics: mySharedLinksHelpTopics(),
+          ),
+        ],
       ),
       body: linksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),

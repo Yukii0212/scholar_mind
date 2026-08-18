@@ -5,7 +5,10 @@ import 'dart:math';
 
 import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 import '../domain/flashcard_models.dart';
+import '../help/flashcard_study_help_topics.dart';
 import '../providers/flashcard_provider.dart';
 import '../widgets/study_swipe_card_item.dart';
 import '../widgets/study_swipe_cards.dart';
@@ -17,14 +20,25 @@ enum _SelfEvaluation {
   skipped,
 }
 
+// AI-generated answers sometimes pack a numbered list into one run-on
+// string ("1) First point. 2) Second point. 3) Third point."), which reads
+// as a wall of text with no structure. This breaks it into paragraphs at
+// each list marker so it's actually scannable, without touching the
+// underlying stored text.
+final _listMarkerPattern = RegExp(r'\s+(?=\d+[.)]\s)');
+
+String _formatCardText(String text) {
+  return text.trim().replaceAll(_listMarkerPattern, '\n\n');
+}
+
 class FlashcardStudySessionScreen extends ConsumerStatefulWidget {
   const FlashcardStudySessionScreen({
     super.key,
-    required this.deck,
+    required this.flashcardSet,
     required this.cards,
   });
 
-  final FlashcardDeck deck;
+  final FlashcardSet flashcardSet;
   final List<Flashcard> cards;
 
   @override
@@ -96,6 +110,10 @@ class _FlashcardStudySessionScreenState
       appBar: AppBar(
         title: const Text('Study Session'),
         actions: [
+          HelpMenuButton(
+            pageId: 'flashcard-study',
+            topics: flashcardStudyHelpTopics(),
+          ),
           TextButton.icon(
             onPressed: _finish,
             icon: const Icon(Icons.logout_rounded),
@@ -165,83 +183,111 @@ class _FlashcardStudySessionScreenState
                           const Gap(16),
                           if (current != null)
                             Expanded(
-                              child: StudySwipeCards(
-                                enabled: true,
-                                hintText: _showAnswer
-                                    ? 'Swipe right: I knew it  •  '
-                                        "Swipe left: Didn't know it"
-                                    : 'Swipe either way to skip',
-                                leftLabel: _showAnswer ? "DIDN'T KNOW" : null,
-                                leftColor: _showAnswer
-                                    ? Theme.of(context).colorScheme.error
-                                    : null,
-                                rightLabel: _showAnswer ? 'KNEW IT' : null,
-                                rightColor:
-                                    _showAnswer ? palette.success : null,
-                                item: StudySwipeCardItem(
-                                  title: 'Flashcard',
-                                  icon: Icons.style_rounded,
-                                  onSwipeLeft: () => _evaluate(
-                                    _showAnswer
-                                        ? _SelfEvaluation.didntKnow
-                                        : _SelfEvaluation.skipped,
-                                  ),
-                                  onSwipeRight: () => _evaluate(
-                                    _showAnswer
-                                        ? _SelfEvaluation.knewIt
-                                        : _SelfEvaluation.skipped,
-                                  ),
-                                  child: GestureDetector(
-                                    onTap: () => setState(
-                                          () => _showAnswer = !_showAnswer,
+                              child: HelpAnchor(
+                                pageId: 'flashcard-study',
+                                anchorId: 'study-swipe-card',
+                                child: StudySwipeCards(
+                                  enabled: true,
+                                  hintText: _showAnswer
+                                      ? "← Didn't know   •   Knew it →"
+                                      : 'Swipe either way to skip',
+                                  leftLabel: _showAnswer ? "DIDN'T KNOW" : null,
+                                  leftColor: _showAnswer
+                                      ? Theme.of(context).colorScheme.error
+                                      : null,
+                                  rightLabel: _showAnswer ? 'KNEW IT' : null,
+                                  rightColor:
+                                      _showAnswer ? palette.success : null,
+                                  item: StudySwipeCardItem(
+                                    title: 'Flashcard',
+                                    icon: Icons.style_rounded,
+                                    onSwipeLeft: () => _evaluate(
+                                      _showAnswer
+                                          ? _SelfEvaluation.didntKnow
+                                          : _SelfEvaluation.skipped,
                                     ),
-                                    child: ScholarPanel(
-                                      padding: const EdgeInsets.all(22),
-                                      child: Center(
-                                        child: SingleChildScrollView(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                            children: [
-                                              _Pill(
-                                                _showAnswer
-                                                    ? 'Answer'
-                                                    : 'Question',
-                                                _showAnswer
-                                                    ? palette.success
-                                                    : palette.brandEnd,
-                                              ),
-                                              const Gap(22),
-                                              Text(
-                                                _showAnswer
-                                                    ? current.back
-                                                    : current.front,
-                                                textAlign:
-                                                TextAlign.center,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headlineSmall
-                                                    ?.copyWith(
-                                                  fontWeight:
-                                                  FontWeight.w800,
+                                    onSwipeRight: () => _evaluate(
+                                      _showAnswer
+                                          ? _SelfEvaluation.knewIt
+                                          : _SelfEvaluation.skipped,
+                                    ),
+                                    child: GestureDetector(
+                                      onTap: () => setState(
+                                        () => _showAnswer = !_showAnswer,
+                                      ),
+                                      child: ScholarPanel(
+                                        padding: const EdgeInsets.all(22),
+                                        child: Scrollbar(
+                                          thumbVisibility: true,
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment: _showAnswer
+                                                  ? CrossAxisAlignment.stretch
+                                                  : CrossAxisAlignment.center,
+                                              children: [
+                                                Align(
+                                                  alignment: _showAnswer
+                                                      ? Alignment.centerLeft
+                                                      : Alignment.center,
+                                                  child: _Pill(
+                                                    _showAnswer
+                                                        ? 'Answer'
+                                                        : 'Question',
+                                                    _showAnswer
+                                                        ? palette.success
+                                                        : palette.brandEnd,
+                                                  ),
                                                 ),
-                                              ),
-                                              const Gap(22),
-                                              Text(
-                                                _showAnswer
-                                                    ? 'Choose how well you knew it, '
-                                                        'or swipe'
-                                                    : 'Tap to reveal • Swipe either '
-                                                        'way to skip',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall
-                                                    ?.copyWith(
-                                                  color:
-                                                  palette.textMuted,
+                                                const Gap(22),
+                                                Text(
+                                                  _showAnswer
+                                                      ? _formatCardText(
+                                                          current.back)
+                                                      : current.front,
+                                                  textAlign: _showAnswer
+                                                      ? TextAlign.left
+                                                      : TextAlign.center,
+                                                  style: _showAnswer
+                                                      ? Theme.of(context)
+                                                          .textTheme
+                                                          .titleMedium
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            height: 1.5,
+                                                          )
+                                                      : Theme.of(context)
+                                                          .textTheme
+                                                          .headlineSmall
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w800,
+                                                          ),
                                                 ),
-                                              ),
-                                            ],
+                                                const Gap(22),
+                                                Align(
+                                                  alignment: _showAnswer
+                                                      ? Alignment.centerLeft
+                                                      : Alignment.center,
+                                                  child: Text(
+                                                    _showAnswer
+                                                        ? 'Choose how well you knew it, '
+                                                            'or swipe'
+                                                        : 'Tap to reveal • Swipe either '
+                                                            'way to skip',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color:
+                                                              palette.textMuted,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -250,7 +296,7 @@ class _FlashcardStudySessionScreenState
                                 ),
                               ),
                             ),
-                          const Gap(16),
+                          const Gap(10),
                           if (_showAnswer)
                             _EvaluationPanel(onSelected: _evaluate),
                         ],
@@ -425,7 +471,7 @@ class _FlashcardStudySessionScreenState
 
     await ref.read(flashcardRepositoryProvider).recordSession(
           userId: userId,
-          deckId: widget.deck.id,
+          setId: widget.flashcardSet.id,
           reviewed: _reviewed,
           known: _known,
           needsReview: _needsReview,
@@ -441,17 +487,15 @@ class _EvaluationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // No "How well did you know this?" header -- the button labels already
+    // say what they mean, and this panel gets seen dozens of times in a
+    // single session, so every bit of chrome above the buttons themselves
+    // is repeated nagging rather than useful the second time around.
     return ScholarPanel(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'How well did you know this?',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-          const Gap(12),
           Row(
             children: [
               Expanded(
@@ -509,7 +553,7 @@ class _EvaluationButton extends StatelessWidget {
       label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 10),
       ),
     );
   }
@@ -535,15 +579,18 @@ class _CompletionPanel extends StatelessWidget {
     final percent = _masteryPercent;
 
     if (percent >= 100) {
-      return ('Deck mastered!', "Every card in this deck — you knew it all.");
+      return (
+        'Set mastered!',
+        "Every flashcard in this set — you knew it all."
+      );
     }
 
     if (percent >= 75) {
-      return ('Great work!', "You're close to mastering this deck.");
+      return ('Great work!', "You're close to mastering this set.");
     }
 
     if (percent >= 50) {
-      return ('Solid session!', 'Over half the deck is sticking.');
+      return ('Solid session!', 'Over half the set is sticking.');
     }
 
     return ('Nice start!', 'Keep at it — it gets easier each round.');

@@ -119,8 +119,8 @@ class _CourseRow extends StatelessWidget {
                       !summary.hasAnyScores
                           ? 'No scores recorded yet'
                           : summary.isFullyForecasted
-                              ? 'Projected ${summary.projectedPercentage.toStringAsFixed(0)}%'
-                              : 'Up to ${summary.maximumPossiblePercentage.toStringAsFixed(0)}% possible',
+                              ? 'Projected ${summary.projectedPercentage.toStringAsFixed(1)}%'
+                              : 'Up to ${summary.maximumPossiblePercentage.toStringAsFixed(1)}% possible',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: palette.textMuted,
                           ),

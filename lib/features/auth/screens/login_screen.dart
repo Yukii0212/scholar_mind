@@ -4,7 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
+import '../help/auth_help_topics.dart';
 import '../providers/auth_provider.dart';
+
+/// Page id used to scope this screen's [HelpAnchor]s and [HelpMenuButton].
+const _helpPageId = 'auth-login';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -15,6 +21,21 @@ class LoginScreen extends ConsumerWidget {
     final palette = context.scholarPalette;
 
     return Scaffold(
+      // No title/back button — this is the app's entry screen. The bar
+      // exists only to host the help icon without disturbing the screen's
+      // own centered layout below.
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 48,
+        automaticallyImplyLeading: false,
+        actions: [
+          HelpMenuButton(
+            pageId: _helpPageId,
+            topics: authHelpTopics(),
+          ),
+        ],
+      ),
       body: ScholarScaffoldBackground(
         child: SafeArea(
           child: LayoutBuilder(
@@ -100,22 +121,26 @@ class LoginScreen extends ConsumerWidget {
                             ),
                             const Gap(12),
                           ],
-                          FilledButton.icon(
-                            onPressed: authAction.isLoading
-                                ? null
-                                : () => ref
-                                    .read(authControllerProvider.notifier)
-                                    .signInWithGoogle(),
-                            icon: authAction.isLoading
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.login_rounded),
-                            label: const Text('Continue with Google'),
+                          HelpAnchor(
+                            pageId: _helpPageId,
+                            anchorId: 'google-signin-button',
+                            child: FilledButton.icon(
+                              onPressed: authAction.isLoading
+                                  ? null
+                                  : () => ref
+                                      .read(authControllerProvider.notifier)
+                                      .signInWithGoogle(),
+                              icon: authAction.isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.login_rounded),
+                              label: const Text('Continue with Google'),
+                            ),
                           ),
                         ],
                       ),

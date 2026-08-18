@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_design.dart';
 import 'study_swipe_card_item.dart';
 
 class StudySwipeCards extends StatefulWidget {
@@ -257,11 +258,16 @@ class _StudySwipeCardsState
           const Duration(milliseconds: 250),
           child: Padding(
             padding: const EdgeInsets.only(
-              bottom: 12,
+              bottom: 6,
             ),
             child: Text(
               widget.hintText,
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.scholarPalette.textMuted,
+                  ),
             ),
           ),
         ),
@@ -299,29 +305,34 @@ class _StudySwipeCardsState
             }
                 : null,
 
-            child: Center(
-              child: AnimatedOpacity(
-                duration:
-                const Duration(
-                  milliseconds: 150,
-                ),
-                opacity:
-                _animatingAway
-                    ? 0.7
-                    : 1,
-                child:
-                Transform.translate(
-                  offset: _offset,
-                  child: Transform.rotate(
-                    angle: _rotation,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        widget.item.child,
-                        _buildColorOverlay(),
-                        _buildStamp(),
-                      ],
-                    ),
+            child: AnimatedOpacity(
+              duration:
+              const Duration(
+                milliseconds: 150,
+              ),
+              opacity:
+              _animatingAway
+                  ? 0.7
+                  : 1,
+              child:
+              Transform.translate(
+                offset: _offset,
+                child: Transform.rotate(
+                  angle: _rotation,
+                  // fit: expand fills the whole area this widget is given
+                  // (all the height Expanded above hands it) instead of
+                  // shrink-wrapping to the card's content -- a short
+                  // question used to leave most of that space empty while
+                  // a long AI-generated answer had barely any room and had
+                  // to scroll almost immediately.
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    fit: StackFit.expand,
+                    children: [
+                      widget.item.child,
+                      _buildColorOverlay(),
+                      _buildStamp(),
+                    ],
                   ),
                 ),
               ),

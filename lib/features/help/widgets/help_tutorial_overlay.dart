@@ -102,7 +102,24 @@ class _HelpTutorialState extends State<_HelpTutorial> {
       final key = anchorId == null ? null : widget.resolveAnchor(anchorId);
       final box = key?.currentContext?.findRenderObject() as RenderBox?;
       final attached = box != null && box.attached;
-      return attached ? (box.localToGlobal(Offset.zero) & box.size).inflate(8) : null;
+
+      if (!attached) return null;
+
+      var rect = box.localToGlobal(Offset.zero) & box.size;
+
+      final secondaryId = step.secondaryAnchorId;
+      final secondaryKey =
+          secondaryId == null ? null : widget.resolveAnchor(secondaryId);
+      final secondaryBox =
+          secondaryKey?.currentContext?.findRenderObject() as RenderBox?;
+
+      if (secondaryBox != null && secondaryBox.attached) {
+        rect = rect.expandToInclude(
+          secondaryBox.localToGlobal(Offset.zero) & secondaryBox.size,
+        );
+      }
+
+      return rect.inflate(8);
     }
 
     Future<void> scrollIntoView() async {

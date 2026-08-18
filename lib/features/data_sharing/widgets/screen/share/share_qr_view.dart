@@ -10,6 +10,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart' hide ShareResult;
 
 import '../../../domain/models/share/share_result.dart';
+import '../../../help/share_help_topics.dart';
+import '../../../../help/widgets/help_anchor.dart';
 
 class ShareQrView extends StatefulWidget {
   const ShareQrView({
@@ -211,16 +213,24 @@ class _ShareQrViewState extends State<ShareQrView> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : _saveToGallery,
-                  icon: const Icon(Icons.download_rounded),
-                  label: const Text('Save'),
+                HelpAnchor(
+                  pageId: shareScreenHelpPageId,
+                  anchorId: 'qr-save-button',
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : _saveToGallery,
+                    icon: const Icon(Icons.download_rounded),
+                    label: const Text('Save'),
+                  ),
                 ),
                 const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : _shareImage,
-                  icon: const Icon(Icons.ios_share_rounded),
-                  label: const Text('Share'),
+                HelpAnchor(
+                  pageId: shareScreenHelpPageId,
+                  anchorId: 'qr-share-button',
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : _shareImage,
+                    icon: const Icon(Icons.ios_share_rounded),
+                    label: const Text('Share'),
+                  ),
                 ),
               ],
             ),

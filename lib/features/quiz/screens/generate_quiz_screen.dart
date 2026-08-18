@@ -5,6 +5,9 @@ import '../../auth/providers/auth_provider.dart';
 import '../../notes/domain/note_item.dart';
 import '../../notes/providers/library_provider.dart';
 
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
+import '../help/generate_quiz_help_topics.dart';
 import '../data/quiz_feedback_repository.dart';
 import '../providers/quiz_feedback_provider.dart';
 import '../domain/processing_status.dart';
@@ -31,7 +34,13 @@ import '../providers/quiz_library_provider.dart' as quiz_library;
 import '../widgets/quiz_folder_picker_dialog.dart';
 
 class GenerateQuizScreen extends ConsumerStatefulWidget {
-  const GenerateQuizScreen({super.key});
+  const GenerateQuizScreen({super.key, this.quickMode = false});
+
+  /// When true, skips the difficulty/Bloom's/question-type configuration
+  /// entirely and generates with the defaults below -- just pick study
+  /// materials and go. Material selection and destination stay mandatory
+  /// in both modes since generation always needs source material.
+  final bool quickMode;
 
   @override
   ConsumerState<GenerateQuizScreen> createState() =>
@@ -104,7 +113,13 @@ class _QuizScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Quiz'),
+        title: Text(widget.quickMode ? 'Quick Quiz' : 'AI Quiz'),
+        actions: [
+          HelpMenuButton(
+            pageId: 'quiz-generate',
+            topics: generateQuizHelpTopics(),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -112,7 +127,10 @@ class _QuizScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              StudyMaterialsCard(
+              HelpAnchor(
+                pageId: 'quiz-generate',
+                anchorId: 'study-materials-card',
+                child: StudyMaterialsCard(
                 selectedLectureNotes:
                 _selectedLectureNotes,
                 selectedPastYearQuestions:
@@ -133,11 +151,16 @@ class _QuizScreenState
                 _manageLectureNotes,
                 onManagePastYearQuestionsTap:
                 _managePastYearQuestions,
+                ),
               ),
 
-              SizedBox(height: 20),
+              if (!widget.quickMode) ...[
+                SizedBox(height: 20),
 
-              QuizConfigurationCard(
+                HelpAnchor(
+                  pageId: 'quiz-generate',
+                  anchorId: 'configuration-card',
+                  child: QuizConfigurationCard(
                 questionCount: _questionCount,
                 materialCharacterCount: _processedLectureNotes.values.fold(
                       0,
@@ -217,17 +240,22 @@ class _QuizScreenState
                   });
                 },
 
-                onExtraInstructionsChanged:
-                    (value) {
-                  setState(() {
-                    _extraInstructions = value;
-                  });
-                },
-              ),
+                  onExtraInstructionsChanged:
+                      (value) {
+                    setState(() {
+                      _extraInstructions = value;
+                    });
+                  },
+                ),
+                ),
+              ],
 
               SizedBox(height: 32),
 
-              Card(
+              HelpAnchor(
+                pageId: 'quiz-generate',
+                anchorId: 'destination-folder-card',
+                child: Card(
                 child: ListTile(
 
                   leading: const Icon(
@@ -298,6 +326,7 @@ class _QuizScreenState
                   ),
 
                 ),
+              ),
               ),
 
               const SizedBox(height: 20),

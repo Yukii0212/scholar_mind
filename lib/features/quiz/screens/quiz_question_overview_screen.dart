@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_design.dart';
+import '../../help/widgets/help_anchor.dart';
+import '../../help/widgets/help_menu_button.dart';
 import '../domain/question_type.dart';
 import '../domain/quiz_answer.dart';
 import '../domain/quiz_response.dart';
+import '../help/quiz_question_overview_help_topics.dart';
 
 /// Lists every question with its current in-progress status (answered,
 /// unanswered, marked as a guess, or flagged for review) and lets the
@@ -41,7 +44,15 @@ class QuizQuestionOverviewScreen extends StatelessWidget {
     final palette = context.scholarPalette;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Question Overview')),
+      appBar: AppBar(
+        title: const Text('Question Overview'),
+        actions: [
+          HelpMenuButton(
+            pageId: 'quiz-question-overview',
+            topics: quizQuestionOverviewHelpTopics(),
+          ),
+        ],
+      ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: quiz.questions.length,
@@ -57,7 +68,7 @@ class QuizQuestionOverviewScreen extends StatelessWidget {
                   ? (Icons.check_circle_outline, palette.success)
                   : (Icons.radio_button_unchecked, palette.textMuted);
 
-          return Material(
+          final row = Material(
             color: palette.panelStrong.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
@@ -120,6 +131,20 @@ class QuizQuestionOverviewScreen extends StatelessWidget {
               ),
             ),
           );
+
+          // Anchored only on the first row -- ListView.separated lazily
+          // builds items near the viewport, but the first is always among
+          // them, so it's a reliable, always-mounted anchor without
+          // registering the same anchor id against more than one widget.
+          if (index == 0) {
+            return HelpAnchor(
+              pageId: 'quiz-question-overview',
+              anchorId: 'question-row-first',
+              child: row,
+            );
+          }
+
+          return row;
         },
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/collapsible_breadcrumb.dart';
+import '../../help/widgets/help_anchor.dart';
 import '../domain/quiz_folder.dart';
 import '../providers/quiz_library_provider.dart'
 as quiz_library;
@@ -55,7 +56,6 @@ class _QuizLibraryScreenState
     setState(() {
       if (index < 0) {
         _folderStack.clear();
-        _section = QuizLibrarySection.continueSection;
       } else {
         _folderStack.removeRange(
           index + 1,
@@ -65,11 +65,17 @@ class _QuizLibraryScreenState
     });
   }
 
-  String get _title => switch (_section) {
-        QuizLibrarySection.continueSection => 'Resume',
-        QuizLibrarySection.library => 'Quiz Library',
-        QuizLibrarySection.trash => 'Trash',
-      };
+  String get _title {
+    if (_section == QuizLibrarySection.library && _folderStack.isNotEmpty) {
+      return _folderStack.last.name;
+    }
+
+    return switch (_section) {
+      QuizLibrarySection.continueSection => 'Resume',
+      QuizLibrarySection.library => 'Quiz Library',
+      QuizLibrarySection.trash => 'Trash',
+    };
+  }
 
   String get _subtitle => switch (_section) {
         QuizLibrarySection.continueSection =>
@@ -86,7 +92,10 @@ class _QuizLibraryScreenState
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: SpeedDial(
+      floatingActionButton: HelpAnchor(
+        pageId: '/quiz',
+        anchorId: 'quiz-fab',
+        child: SpeedDial(
 
         icon: Icons.add,
         activeIcon: Icons.close,
@@ -112,6 +121,31 @@ class _QuizLibraryScreenState
                 MaterialPageRoute(
                   builder: (_) =>
                   const GenerateQuizScreen(),
+                ),
+
+              );
+
+            },
+
+          ),
+
+          SpeedDialChild(
+
+            child: const Icon(
+              Icons.bolt_rounded,
+            ),
+
+            label: 'Quick Quiz',
+
+            onTap: () {
+
+              Navigator.push(
+
+                context,
+
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const GenerateQuizScreen(quickMode: true),
                 ),
 
               );
@@ -165,6 +199,7 @@ class _QuizLibraryScreenState
 
         ],
 
+        ),
       ),
       body: ListView(
         padding:
@@ -176,10 +211,8 @@ class _QuizLibraryScreenState
             children: [
 
               ScholarSectionHeader(
-                title: isRoot ? _title : 'Quiz Library',
-                subtitle: isRoot
-                    ? _subtitle
-                    : 'Organize and access all your quizzes',
+                title: _title,
+                subtitle: _subtitle,
               ),
 
               const SizedBox(height: 12),
@@ -200,10 +233,12 @@ class _QuizLibraryScreenState
 
           const SizedBox(height: 24),
 
-        if (isRoot) ...[
           SizedBox(
             width: double.infinity,
-            child: SegmentedButton<QuizLibrarySection>(
+            child: HelpAnchor(
+              pageId: '/quiz',
+              anchorId: 'section-tabs',
+              child: SegmentedButton<QuizLibrarySection>(
 
             showSelectedIcon: false,
 
@@ -266,18 +301,11 @@ class _QuizLibraryScreenState
 
           ),
           ),
+          ),
 
           const SizedBox(height: 20),
 
-          ],
-
-          switch (
-
-          isRoot
-              ? _section
-              : QuizLibrarySection.library
-
-          ) {
+          switch (_section) {
 
             QuizLibrarySection.continueSection =>
 
@@ -299,25 +327,29 @@ class _QuizLibraryScreenState
           if (isRoot) ...[
             const SizedBox(height: 24),
             Center(
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.outline,
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.outline.withValues(
-                          alpha: 0.4,
-                        ),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const QuizFeedbackScreen(),
+              child: HelpAnchor(
+                pageId: '/quiz',
+                anchorId: 'flagged-questions-button',
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.outline,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.outline.withValues(
+                            alpha: 0.4,
+                          ),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.flag_outlined, size: 16),
-                label: const Text('Flagged Questions'),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const QuizFeedbackScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.flag_outlined, size: 16),
+                  label: const Text('Flagged Questions'),
+                ),
               ),
             ),
           ],

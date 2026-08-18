@@ -72,7 +72,7 @@ class ExportItemTile extends ConsumerWidget {
       case ShareResourceType.countdown:
         return const Icon(Icons.timer_outlined);
 
-      case ShareResourceType.flashcardDeck:
+      case ShareResourceType.flashcardSet:
         return const Icon(Icons.style_outlined);
 
       case ShareResourceType.quizFolder:

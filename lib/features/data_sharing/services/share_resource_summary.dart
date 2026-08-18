@@ -3,13 +3,13 @@ import '../domain/models/share/share_resource_type.dart';
 
 // Resources a user would actually recognize as "things I selected" —
 // child records that ride along with a container (individual flashcards
-// under a deck, grading components/assessment entries under a course) are
-// deliberately excluded so a summary reads as "1 flashcard deck" rather
-// than the noisier and less meaningful "1 flashcard deck, 38 flashcards".
+// under a set, grading components/assessment entries under a course) are
+// deliberately excluded so a summary reads as "1 flashcard set" rather
+// than the noisier and less meaningful "1 flashcard set, 38 flashcards".
 const _headlineTypes = {
   ShareResourceType.note,
   ShareResourceType.noteFolder,
-  ShareResourceType.flashcardDeck,
+  ShareResourceType.flashcardSet,
   ShareResourceType.quiz,
   ShareResourceType.quizFolder,
   ShareResourceType.countdown,

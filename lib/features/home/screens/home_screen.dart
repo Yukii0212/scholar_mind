@@ -15,6 +15,8 @@ import '../../data_sharing/screens/import_library_screen.dart';
 import '../../data_sharing/screens/qr_scanner_screen.dart';
 import '../../help/help_route_topics.dart';
 import '../../help/widgets/help_menu_button.dart';
+import '../../notes/help/notes_fab_open_provider.dart';
+import '../../notes/help/notes_section_override_provider.dart';
 import '../help/standing_chip_preview_provider.dart';
 import '../../countdown/domain/countdown_item.dart';
 import '../../countdown/providers/countdown_provider.dart';
@@ -124,6 +126,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               setStandingPreview: (preview) => ref
                   .read(standingChipPreviewProvider.notifier)
                   .state = preview,
+              setNotesFabOpen: (value) =>
+                  ref.read(notesFabOpenProvider.notifier).state = value,
+              setNotesSection: (section) =>
+                  ref.read(notesSectionOverrideProvider.notifier).state =
+                      section,
             ),
           ),
           _UserAvatar(
@@ -400,6 +407,11 @@ class _QuickAccessGrid extends StatelessWidget {
       ),
       const _QuickAction('Quiz', Icons.bolt_rounded, route: '/quiz'),
       const _QuickAction('Grades', Icons.bar_chart_rounded, route: '/grades'),
+      const _QuickAction(
+        'Analytics',
+        Icons.insights_rounded,
+        route: '/analytics',
+      ),
       const _QuickAction(
         'Flashcards',
         Icons.style_rounded,

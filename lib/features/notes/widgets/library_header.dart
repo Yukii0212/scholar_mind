@@ -3,6 +3,7 @@ import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/collapsible_breadcrumb.dart';
+import '../../help/widgets/help_anchor.dart';
 import '../domain/library_enums.dart';
 import '../domain/library_folder.dart';
 
@@ -41,10 +42,14 @@ class LibraryHeader extends StatelessWidget {
 
         const Gap(12),
 
-        if (section == LibrarySection.browse)
+        if (folderStack.isNotEmpty)
           CollapsibleBreadcrumb(
-            homeLabel: 'Library',
-            homeIcon: Icons.home_outlined,
+            homeLabel: section == LibrarySection.favorites
+                ? 'Favorites'
+                : 'Library',
+            homeIcon: section == LibrarySection.favorites
+                ? Icons.star_outline
+                : Icons.home_outlined,
             segments: [
               for (final folder in folderStack) folder.name,
             ],
@@ -57,47 +62,54 @@ class LibraryHeader extends StatelessWidget {
 
         SizedBox(
           width: double.infinity,
-          child: SegmentedButton<LibrarySection>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(
-                value: LibrarySection.browse,
-                icon: Icon(Icons.folder_outlined),
-                tooltip: 'Library',
-              ),
-              ButtonSegment(
-                value: LibrarySection.favorites,
-                icon: Icon(Icons.star_outline),
-                tooltip: 'Favorites',
-              ),
-              ButtonSegment(
-                value: LibrarySection.archived,
-                icon: Icon(Icons.archive_outlined),
-                tooltip: 'Archived',
-              ),
-              ButtonSegment(
-                value: LibrarySection.trash,
-                icon: Icon(Icons.delete_outline),
-                tooltip: 'Trash',
-              ),
-            ],
-            selected: {section},
-            onSelectionChanged: isBusy
-                ? null
-                : (selection) => onSectionChanged(selection.first),
+          child: HelpAnchor(
+            pageId: '/notes',
+            anchorId: 'library-section-tabs',
+            child: SegmentedButton<LibrarySection>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(
+                  value: LibrarySection.browse,
+                  icon: Icon(Icons.folder_outlined),
+                  tooltip: 'Library',
+                ),
+                ButtonSegment(
+                  value: LibrarySection.favorites,
+                  icon: Icon(Icons.star_outline),
+                  tooltip: 'Favorites',
+                ),
+                ButtonSegment(
+                  value: LibrarySection.archived,
+                  icon: Icon(Icons.archive_outlined),
+                  tooltip: 'Archived',
+                ),
+                ButtonSegment(
+                  value: LibrarySection.trash,
+                  icon: Icon(Icons.delete_outline),
+                  tooltip: 'Trash',
+                ),
+              ],
+              selected: {section},
+              onSelectionChanged: isBusy
+                  ? null
+                  : (selection) => onSectionChanged(selection.first),
+            ),
           ),
         ),
       ],
     );
   }
 
-  String get _title => switch (section) {
-        LibrarySection.browse =>
-          folderStack.isEmpty ? 'Notes' : folderStack.last.name,
-        LibrarySection.favorites => 'Favorites',
-        LibrarySection.archived => 'Archived',
-        LibrarySection.trash => 'Deleted',
-      };
+  String get _title {
+    if (folderStack.isNotEmpty) return folderStack.last.name;
+
+    return switch (section) {
+      LibrarySection.browse => 'Notes',
+      LibrarySection.favorites => 'Favorites',
+      LibrarySection.archived => 'Archived',
+      LibrarySection.trash => 'Deleted',
+    };
+  }
 
   String get _subtitle => switch (section) {
         LibrarySection.browse => 'Organize and access your study materials',

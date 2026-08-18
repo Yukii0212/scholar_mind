@@ -4,6 +4,7 @@ class HelpStep {
   const HelpStep({
     required this.description,
     this.anchorId,
+    this.secondaryAnchorId,
     this.beforeShow,
     this.colorLegend,
     this.scrimOpacity = heavyScrim,
@@ -28,6 +29,14 @@ class HelpStep {
   /// currently mounted, e.g. a different page of a swipe carousel) falls
   /// back to a centered, non-spotlit bubble for this step.
   final String? anchorId;
+
+  /// A second anchor to include in the spotlight cutout, unioned with
+  /// [anchorId]'s rect -- for a step whose subject is split across two
+  /// separately-positioned widgets that can't share a single [HelpAnchor]
+  /// (e.g. a speed-dial option's icon and its label, which
+  /// `flutter_speed_dial` renders as two independent widgets). Ignored if
+  /// [anchorId] itself doesn't resolve to a mounted anchor.
+  final String? secondaryAnchorId;
 
   /// Black-scrim opacity (0–1) painted over everything except the cutout
   /// around [anchorId] (or the whole screen, if there's no anchor). Use

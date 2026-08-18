@@ -1,5 +1,6 @@
 import '../../help/domain/help_step.dart';
 import '../../help/domain/help_topic.dart';
+import '../domain/library_enums.dart';
 
 /// Help topics for the Notes library
 /// (`lib/features/notes/screens/notes_screen.dart`), reached through the
@@ -11,16 +12,23 @@ import '../../help/domain/help_topic.dart';
 ///   control, in `lib/features/notes/widgets/library_header.dart`.
 /// - `notes-fab` — the add (+) speed-dial button itself, always present
 ///   whenever adding is allowed, in `notes_screen.dart`.
-/// - `fab-import-file` / `fab-new-note` / `fab-new-folder` — the three
-///   speed-dial options, only mounted while the dial is open. [setFabOpen]
-///   forces it open (a real, functional open — not a mocked preview) so
-///   each option can be spotlighted in turn.
+/// - `fab-import-file` / `fab-new-note` / `fab-new-folder` (+ their
+///   `-label` counterparts) — the three speed-dial options' icons and
+///   labels, only mounted while the dial is open. [setFabOpen] forces it
+///   open (a real, functional open — not a mocked preview) so each option
+///   can be spotlighted in turn; each step's `secondaryAnchorId` extends
+///   the spotlight to cover the label too, not just the icon.
+/// - `library-section-tabs` steps use [setSection] to actually switch the
+///   Notes screen to whichever section they're describing, so the view
+///   underneath matches the narration instead of staying on Library.
 ///
-/// Opening a folder isn't anchored: a brand-new user has no folders yet, and
-/// the folder list is exactly the kind of data-dependent content the help
-/// system's anchor fallback (a centered, non-spotlit bubble) exists for.
+/// - `first-folder-card` — the first folder card in the current list, in
+///   `notes_screen.dart`. A brand-new user has no folders yet, so this
+///   anchor isn't always mounted -- the help system's own fallback (a
+///   centered, non-spotlit bubble) covers that case automatically.
 List<HelpTopic> notesLibraryHelpTopics({
   required void Function(bool) setFabOpen,
+  required void Function(LibrarySection) setSection,
 }) {
   Future<void> openFab() async {
     setFabOpen(true);
@@ -31,15 +39,20 @@ List<HelpTopic> notesLibraryHelpTopics({
   }
 
   return [
-    const HelpTopic(
+    HelpTopic(
       id: 'library-sections',
       title: 'Library, Favorites, Archived & Trash',
+      // Leaves the view on whichever section the last step showed --
+      // reset back to the default so closing the tutorial mid-way (e.g.
+      // on the Trash step) doesn't strand the user there.
+      onDismiss: () => setSection(LibrarySection.browse),
       steps: [
         HelpStep(
           description:
               'Library is where all your active notes and folders live — '
               'this is the default view when you open Notes.',
           anchorId: 'library-section-tabs',
+          beforeShow: () async => setSection(LibrarySection.browse),
         ),
         HelpStep(
           description:
@@ -47,6 +60,7 @@ List<HelpTopic> notesLibraryHelpTopics({
               'can jump to what you use most without digging through '
               'folders.',
           anchorId: 'library-section-tabs',
+          beforeShow: () async => setSection(LibrarySection.favorites),
         ),
         HelpStep(
           description:
@@ -54,6 +68,7 @@ List<HelpTopic> notesLibraryHelpTopics({
               'them — they stay out of your main Library view until you '
               'need them again.',
           anchorId: 'library-section-tabs',
+          beforeShow: () async => setSection(LibrarySection.archived),
         ),
         HelpStep(
           description:
@@ -62,6 +77,7 @@ List<HelpTopic> notesLibraryHelpTopics({
               'or use Restore All / Delete All to handle everything at '
               'once.',
           anchorId: 'library-section-tabs',
+          beforeShow: () async => setSection(LibrarySection.trash),
         ),
       ],
     ),
@@ -78,11 +94,13 @@ List<HelpTopic> notesLibraryHelpTopics({
           anchorId: 'notes-fab',
           beforeShow: () async => setFabOpen(false),
         ),
-        const HelpStep(
+        HelpStep(
           description:
               'Tap any folder to open it. A breadcrumb trail appears at '
               'the top so you can navigate back to where you started.',
+          anchorId: 'first-folder-card',
           scrimOpacity: HelpStep.lightScrim,
+          beforeShow: () async => setSection(LibrarySection.browse),
         ),
       ],
     ),
@@ -103,6 +121,7 @@ List<HelpTopic> notesLibraryHelpTopics({
               '"Import File" brings in a file from your device, Google '
               'Drive, or Google Classroom.',
           anchorId: 'fab-import-file',
+          secondaryAnchorId: 'fab-import-file-label',
           beforeShow: openFab,
         ),
         HelpStep(
@@ -110,6 +129,7 @@ List<HelpTopic> notesLibraryHelpTopics({
               '"New Note" creates a blank note you can write directly '
               'inside ScholarMind.',
           anchorId: 'fab-new-note',
+          secondaryAnchorId: 'fab-new-note-label',
           beforeShow: openFab,
         ),
         HelpStep(
@@ -117,6 +137,7 @@ List<HelpTopic> notesLibraryHelpTopics({
               '"New Folder" creates a new folder here to help keep things '
               'organized.',
           anchorId: 'fab-new-folder',
+          secondaryAnchorId: 'fab-new-folder-label',
           beforeShow: openFab,
         ),
       ],

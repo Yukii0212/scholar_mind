@@ -18,6 +18,7 @@ import '../domain/note_item.dart';
 import '../domain/library_enums.dart';
 
 import '../help/notes_fab_open_provider.dart';
+import '../help/notes_section_override_provider.dart';
 import '../providers/library_provider.dart';
 import '../services/file_cache_service.dart';
 
@@ -41,6 +42,48 @@ enum _ImportSource {
   device,
   classroom,
   drive,
+}
+
+/// Reproduces flutter_speed_dial's default label-bubble look (see
+/// `SpeedDialChild`'s built-in `label` rendering) but wraps the text in a
+/// [HelpAnchor] so the "Adding notes and folders" tutorial can spotlight
+/// the label alongside its icon -- the package renders `label` as a
+/// separate widget from `child` (the icon), so a plain `label: '...'`
+/// string can never be wrapped directly.
+class _SpeedDialLabel extends StatelessWidget {
+  const _SpeedDialLabel({required this.anchorId, required this.text});
+
+  final String anchorId;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: dark ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: const BorderRadius.all(Radius.circular(6.0)),
+        boxShadow: [
+          BoxShadow(
+            color: dark
+                ? Colors.grey[900]!.withValues(alpha: 0.7)
+                : Colors.grey.withValues(alpha: 0.7),
+            offset: const Offset(0.8, 0.8),
+            blurRadius: 2.4,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
+        child: HelpAnchor(
+          pageId: '/notes',
+          anchorId: anchorId,
+          child: Text(text),
+        ),
+      ),
+    );
+  }
 }
 
 class NotesScreen extends ConsumerStatefulWidget {
@@ -74,6 +117,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Widget build(BuildContext context) {
     ref.listen<bool>(notesFabOpenProvider, (previous, next) {
       _fabOpenNotifier.value = next;
+    });
+
+    ref.listen<LibrarySection?>(notesSectionOverrideProvider, (previous, next) {
+      if (next != null) _changeSection(next);
     });
 
     final actionState = ref.watch(
@@ -118,7 +165,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         Icons.file_upload_outlined,
                       ),
                     ),
-                    label: 'Import File',
+                    labelWidget: const _SpeedDialLabel(
+                      anchorId: 'fab-import-file-label',
+                      text: 'Import File',
+                    ),
                     onTap: _uploadNotes,
                   ),
                   SpeedDialChild(
@@ -129,7 +179,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         Icons.note_add_outlined,
                       ),
                     ),
-                    label: 'New Note',
+                    labelWidget: const _SpeedDialLabel(
+                      anchorId: 'fab-new-note-label',
+                      text: 'New Note',
+                    ),
                     onTap: _createNote,
                   ),
                   SpeedDialChild(
@@ -140,7 +193,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         Icons.create_new_folder,
                       ),
                     ),
-                    label: 'New Folder',
+                    labelWidget: const _SpeedDialLabel(
+                      anchorId: 'fab-new-folder-label',
+                      text: 'New Folder',
+                    ),
                     onTap: _createFolder,
                   ),
                 ],
@@ -374,7 +430,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               itemBuilder: (context, index) {
                 final folder = items[index];
 
-                return FolderCard(
+                final card = FolderCard(
                   folder: folder,
                   isArchivedSection: _section == LibrarySection.archived,
                   isTrashSection: _section == LibrarySection.trash,
@@ -387,6 +443,22 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   onToggleFavorite: () => _toggleFavorite(folder),
                   onToggleArchived: () => _toggleArchived(folder),
                 );
+
+                // Gives the "Working with folders" tutorial's "tap any
+                // folder to open it" step a real folder to spotlight
+                // instead of a floating, disconnected bubble -- falls
+                // back to that bubble automatically (via the help
+                // system's own unmounted-anchor handling) for a
+                // brand-new account with no folders yet.
+                if (index == 0) {
+                  return HelpAnchor(
+                    pageId: '/notes',
+                    anchorId: 'first-folder-card',
+                    child: card,
+                  );
+                }
+
+                return card;
               },
             ),
           ),

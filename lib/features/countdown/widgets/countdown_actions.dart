@@ -7,7 +7,11 @@ import '../providers/countdown_provider.dart';
 class CountdownActions {
   const CountdownActions._();
 
-  static Future<void> delete(
+  /// Returns whether the countdown was actually deleted (`false` if the
+  /// user cancelled the confirmation), so callers that need to react --
+  /// e.g. popping an edit screen for the item just deleted -- can do so
+  /// without guessing.
+  static Future<bool> delete(
       BuildContext context,
       WidgetRef ref,
       String userId,
@@ -34,12 +38,14 @@ class CountdownActions {
     );
 
     if (confirmed != true) {
-      return;
+      return false;
     }
 
     await ref.read(countdownRepositoryProvider).deleteCountdown(
       userId: userId,
       countdownId: item.id,
     );
+
+    return true;
   }
 }

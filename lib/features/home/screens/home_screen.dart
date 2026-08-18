@@ -16,6 +16,7 @@ import '../../data_sharing/screens/qr_scanner_screen.dart';
 import '../../help/help_route_topics.dart';
 import '../../help/widgets/help_menu_button.dart';
 import '../../notes/help/notes_fab_open_provider.dart';
+import '../../notes/help/notes_section_override_provider.dart';
 import '../help/standing_chip_preview_provider.dart';
 import '../../countdown/domain/countdown_item.dart';
 import '../../countdown/providers/countdown_provider.dart';
@@ -127,6 +128,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   .state = preview,
               setNotesFabOpen: (value) =>
                   ref.read(notesFabOpenProvider.notifier).state = value,
+              setNotesSection: (section) =>
+                  ref.read(notesSectionOverrideProvider.notifier).state =
+                      section,
             ),
           ),
           _UserAvatar(

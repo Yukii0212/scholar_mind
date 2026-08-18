@@ -6,6 +6,7 @@ import '../../../core/theme/app_design.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/countdown_item.dart';
 import '../providers/countdown_provider.dart';
+import '../widgets/countdown_actions.dart';
 
 class CountdownCrudScreen extends ConsumerStatefulWidget {
   const CountdownCrudScreen({
@@ -53,6 +54,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
 
   var _saving = false;
   var _togglingCompletion = false;
+  var _deleting = false;
 
   @override
   void initState() {
@@ -233,6 +235,34 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                           ),
                         ),
                       ),
+                      if (isEditing) ...[
+                        const Gap(12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _deleting ? null : _delete,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              side: BorderSide(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                            icon: _deleting
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color:
+                                          Theme.of(context).colorScheme.error,
+                                    ),
+                                  )
+                                : const Icon(Icons.delete_outline_rounded),
+                            label: const Text('Delete Countdown'),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -302,6 +332,28 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
       }
     } finally {
       if (mounted) setState(() => _togglingCompletion = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final item = widget.initial;
+
+    if (userId == null || item == null) return;
+
+    setState(() => _deleting = true);
+    try {
+      final deleted = await CountdownActions.delete(context, ref, userId, item);
+
+      if (!mounted) return;
+
+      if (deleted) {
+        Navigator.of(context).pop();
+      } else {
+        setState(() => _deleting = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _deleting = false);
     }
   }
 }

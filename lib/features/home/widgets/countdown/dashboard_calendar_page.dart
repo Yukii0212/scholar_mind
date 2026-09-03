@@ -250,6 +250,10 @@ class _DashboardCalendarPageState
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
+      // Without this, the sheet is capped at a fixed fraction of the
+      // screen height regardless of content -- DashboardDayEventsSheet
+      // sets its own (more generous, and scrollable) height cap instead.
+      isScrollControlled: true,
       builder: (_) {
         return DashboardDayEventsSheet(
           date: date,

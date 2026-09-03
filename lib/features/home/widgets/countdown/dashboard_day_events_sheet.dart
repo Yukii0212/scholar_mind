@@ -21,61 +21,69 @@ class DashboardDayEventsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${date.day} ${_month(date.month)} ${date.year}',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                fontWeight: FontWeight.w800,
+      child: ConstrainedBox(
+        // Caps the sheet instead of letting it grow past the screen with
+        // a long list of countdowns -- the item list below is what
+        // scrolls once it can't all fit in what's left of this budget,
+        // rather than overflowing past the bottom of the sheet.
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${date.day} ${_month(date.month)} ${date.year}',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-            const Gap(20),
+              const Gap(20),
 
-            if (countdowns.isEmpty)
-              const Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'No countdowns scheduled.',
-                  ),
-                  Gap(6),
-                  Text(
-                    'Tap "Add Countdown" to create one with this date pre-selected.',
-                  ),
-                ],
-              )
-            else
-              Column(
-                children: [
-                  for (var i = 0; i < countdowns.length; i++) ...[
-                    _CountdownTile(
+              if (countdowns.isEmpty)
+                const Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'No countdowns scheduled.',
+                    ),
+                    Gap(6),
+                    Text(
+                      'Tap "Add Countdown" to create one with this date pre-selected.',
+                    ),
+                  ],
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: countdowns.length,
+                    separatorBuilder: (_, __) => const Gap(10),
+                    itemBuilder: (context, i) => _CountdownTile(
                       item: countdowns[i],
                       onTap: () => onCountdownSelected(countdowns[i]),
                     ),
-                    if (i != countdowns.length - 1)
-                      const Gap(10),
-                  ],
-                ],
-              ),
+                  ),
+                ),
 
-            const Gap(20),
-            FilledButton.icon(
-              onPressed: onAddCountdown,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                'Add Countdown',
+              const Gap(20),
+              FilledButton.icon(
+                onPressed: onAddCountdown,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text(
+                  'Add Countdown',
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

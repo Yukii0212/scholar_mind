@@ -33,6 +33,11 @@ design_document.md
 FYP_System_Documentation.md
 design_document.md
 
+#System Documentation
+FYP_System_Documentation.md
+design_document.md
+*.docx
+
 # Flutter/Dart
 .dart_tool/
 .flutter-plugins

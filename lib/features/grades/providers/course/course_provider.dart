@@ -20,10 +20,10 @@ Provider<CourseRepository>(
 final courseStreamProvider =
 StreamProvider<List<CourseModel>>(
       (ref) {
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     if (userId == null) {
-      return const Stream.empty();
+      return Stream.value(const []);
     }
 
     return ref
@@ -33,10 +33,16 @@ StreamProvider<List<CourseModel>>(
 );
 
 final courseProvider =
-StreamProvider.family<
+StreamProvider.autoDispose.family<
     CourseModel,
     String>(
       (ref, courseId) {
+    final userId = ref.watch(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      return const Stream.empty();
+    }
+
     return ref
         .watch(
       courseRepositoryProvider,

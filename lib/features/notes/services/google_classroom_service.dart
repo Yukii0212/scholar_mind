@@ -95,6 +95,10 @@ class GoogleClassroomService {
         file['id'] as String,
       );
 
+      onProgress(
+        'Saving ${i + 1} of ${files.length}: $fileName',
+      );
+
       final extension =
       fileName.contains('.')
           ? fileName

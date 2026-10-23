@@ -109,7 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final selectedIndex = _locationToIndex(location);
     final isWide = MediaQuery.sizeOf(context).width >= 860;
     final palette = context.scholarPalette;
-    final user = ref.watch(firebaseAuthProvider).currentUser;
+    final user = ref.watch(activeUserProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -220,7 +220,7 @@ class DashboardView extends ConsumerWidget {
     final statistics = semester == null
         ? null
         : ref.watch(semesterStatisticsProvider(semester.id)).valueOrNull;
-    final user = ref.watch(firebaseAuthProvider).currentUser;
+    final user = ref.watch(activeUserProvider);
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 900;
     final hasTodayContent = urgentCountdown != null || quizToResume != null;

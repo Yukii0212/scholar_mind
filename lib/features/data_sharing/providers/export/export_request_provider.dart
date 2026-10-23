@@ -19,9 +19,7 @@ ExportRequest? exportRequest(
     return null;
   }
 
-  final user = ref.watch(
-    authStateProvider,
-  ).value;
+  final user = ref.watch(activeUserProvider);
 
   if (user == null) {
     return null;

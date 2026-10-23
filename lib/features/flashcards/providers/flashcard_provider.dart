@@ -11,24 +11,24 @@ final flashcardRepositoryProvider = Provider<FlashcardRepository>(
 );
 
 final flashcardSetsProvider = StreamProvider<List<FlashcardSet>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   return ref.watch(flashcardRepositoryProvider).watchSets(userId);
 });
 
 final flashcardsProvider =
-    StreamProvider.family<List<Flashcard>, String>((ref, setId) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    StreamProvider.autoDispose.family<List<Flashcard>, String>((ref, setId) {
+  final userId = ref.watch(activeUserProvider)?.uid;
   return ref.watch(flashcardRepositoryProvider).watchCards(userId, setId);
 });
 
 final flashcardActiveSetsProvider = StreamProvider<List<FlashcardSet>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   return ref.watch(flashcardRepositoryProvider).watchActiveSets(userId);
 });
 
 final flashcardSetsInFolderProvider =
-    StreamProvider.family<List<FlashcardSet>, String>((ref, folderId) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    StreamProvider.autoDispose.family<List<FlashcardSet>, String>((ref, folderId) {
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) return Stream.value(const []);
 
@@ -38,8 +38,8 @@ final flashcardSetsInFolderProvider =
 });
 
 final flashcardChildFoldersProvider =
-    StreamProvider.family<List<FlashcardFolder>, String>((ref, parentId) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    StreamProvider.autoDispose.family<List<FlashcardFolder>, String>((ref, parentId) {
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) return Stream.value(const []);
 
@@ -50,7 +50,7 @@ final flashcardChildFoldersProvider =
 
 final flashcardAllFoldersProvider =
     StreamProvider<List<FlashcardFolder>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) return Stream.value(const []);
 
@@ -59,7 +59,7 @@ final flashcardAllFoldersProvider =
 
 final flashcardDeletedFoldersProvider =
     StreamProvider<List<FlashcardFolder>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) return Stream.value(const []);
 
@@ -67,7 +67,7 @@ final flashcardDeletedFoldersProvider =
 });
 
 final flashcardDeletedSetsProvider = StreamProvider<List<FlashcardSet>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) return Stream.value(const []);
 
@@ -75,8 +75,8 @@ final flashcardDeletedSetsProvider = StreamProvider<List<FlashcardSet>>((ref) {
 });
 
 final flashcardFolderPathProvider =
-    FutureProvider.family<List<FlashcardFolder>, String>((ref, folderId) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    FutureProvider.autoDispose.family<List<FlashcardFolder>, String>((ref, folderId) {
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) return Future.value(const []);
 
@@ -193,7 +193,7 @@ class FlashcardLibraryActionController extends StateNotifier<AsyncValue<void>> {
   Future<bool> _run(
     Future<void> Function(String userId, FlashcardRepository repository) action,
   ) async {
-    final userId = _ref.read(firebaseAuthProvider).currentUser?.uid;
+    final userId = _ref.read(activeUserProvider)?.uid;
     if (userId == null) {
       state = AsyncValue.error(
         StateError('You must be signed in.'),

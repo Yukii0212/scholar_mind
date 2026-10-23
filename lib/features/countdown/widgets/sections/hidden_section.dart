@@ -14,7 +14,7 @@ class HiddenSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countdowns = ref.watch(countdownsProvider);
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     return countdowns.when(
       loading: () => const SizedBox.shrink(),

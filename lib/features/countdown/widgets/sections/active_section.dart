@@ -17,7 +17,7 @@ class ActiveSection extends ConsumerWidget {
         .watch(upcomingCountdownsProvider)
         .where((item) => !item.isHidden)
         .toList();
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     if (upcoming.isEmpty) {
       return const SizedBox.shrink();

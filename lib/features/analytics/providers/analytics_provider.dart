@@ -40,7 +40,7 @@ final quizAnalyticsProvider = Provider<QuizAnalyticsSummary>((ref) {
 
 final flashcardAnalyticsProvider =
     FutureProvider<FlashcardAnalyticsSummary>((ref) async {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) return FlashcardAnalyticsSummary.empty;
 

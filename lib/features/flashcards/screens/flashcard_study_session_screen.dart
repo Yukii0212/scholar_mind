@@ -458,7 +458,7 @@ class _FlashcardStudySessionScreenState
   }
 
   Future<void> _recordSession() async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     if (userId == null) return;
 
     // Cards never marked "Knew It" across any round -- the ones worth

@@ -239,7 +239,7 @@ class _SetTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.scholarPalette;
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     return ScholarPanel(
       padding: const EdgeInsets.all(14),

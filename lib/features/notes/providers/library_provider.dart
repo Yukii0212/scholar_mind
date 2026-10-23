@@ -25,7 +25,7 @@ Stream<List<LibraryFolder>> childFolders(
   ChildFoldersRef ref,
   String parentId,
 ) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref
@@ -38,7 +38,7 @@ Stream<List<LibraryFolder>> allFolders(
     AllFoldersRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -51,7 +51,7 @@ Stream<List<LibraryFolder>> allFolders(
 
 @riverpod
 Stream<List<LibraryFolder>> favoriteFolders(FavoriteFoldersRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref.watch(libraryRepositoryProvider).watchFavoriteFolders(userId);
@@ -62,7 +62,7 @@ Stream<List<NoteItem>> favoriteNotes(
     FavoriteNotesRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -75,7 +75,7 @@ Stream<List<NoteItem>> favoriteNotes(
 
 @riverpod
 Stream<List<LibraryFolder>> archivedFolders(ArchivedFoldersRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref.watch(libraryRepositoryProvider).watchArchivedFolders(userId);
@@ -83,7 +83,7 @@ Stream<List<LibraryFolder>> archivedFolders(ArchivedFoldersRef ref) {
 
 @riverpod
 Stream<List<LibraryFolder>> deletedFolders(DeletedFoldersRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref
@@ -108,7 +108,7 @@ Stream<List<LibraryFolder>> deletedFolders(DeletedFoldersRef ref) {
 
 @riverpod
 Stream<List<NoteItem>> deletedNotes(DeletedNotesRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref.watch(libraryRepositoryProvider).watchDeletedNotes(userId);
@@ -119,7 +119,7 @@ Stream<List<NoteItem>> notesInFolder(
   NotesInFolderRef ref,
   String folderId,
 ) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref.watch(libraryRepositoryProvider).watchNotes(userId, folderId);
@@ -131,7 +131,7 @@ Stream<NoteItem> note(
     String noteId,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -150,7 +150,7 @@ Stream<List<NoteItem>> allUploadedNotes(
     AllUploadedNotesRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -319,7 +319,7 @@ class LibraryActionController extends _$LibraryActionController {
   }) async {
 
     final userId =
-        ref.read(firebaseAuthProvider).currentUser?.uid;
+        ref.read(activeUserProvider)?.uid;
 
     if (userId == null) {
       state = AsyncValue.error(
@@ -404,7 +404,7 @@ class LibraryActionController extends _$LibraryActionController {
     required String noteId,
   }) async {
     final userId =
-        ref.read(firebaseAuthProvider).currentUser?.uid;
+        ref.read(activeUserProvider)?.uid;
 
     if (userId == null) {
       state = AsyncValue.error(
@@ -515,7 +515,7 @@ class LibraryActionController extends _$LibraryActionController {
   Future<bool> _run(
     Future<void> Function(String userId, LibraryRepository repository) action,
   ) async {
-    final userId = ref.read(firebaseAuthProvider).currentUser?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     if (userId == null) {
       state = AsyncValue.error(
         StateError('You must be signed in.'),
@@ -541,7 +541,7 @@ Stream<List<NoteItem>> allExportableNotes(
     AllExportableNotesRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();

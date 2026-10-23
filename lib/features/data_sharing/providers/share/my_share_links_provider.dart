@@ -5,7 +5,7 @@ import '../../domain/models/share/share_link_record.dart';
 import 'share_link_service_provider.dart';
 
 final myShareLinksProvider = StreamProvider<List<ShareLinkRecord>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return Stream.value(const []);

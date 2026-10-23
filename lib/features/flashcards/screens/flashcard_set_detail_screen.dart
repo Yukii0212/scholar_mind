@@ -22,7 +22,7 @@ class FlashcardSetDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cardsAsync = ref.watch(flashcardsProvider(flashcardSet.id));
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -239,7 +239,7 @@ class _CardRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.scholarPalette;
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     return Container(
       padding: const EdgeInsets.all(12),

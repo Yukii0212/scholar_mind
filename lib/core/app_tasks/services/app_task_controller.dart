@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../features/auth/providers/auth_provider.dart';
 import '../domain/app_task.dart';
 import '../domain/app_task_status.dart';
 import '../domain/app_task_type.dart';
@@ -24,6 +25,15 @@ class AppTaskController {
   }) async {
     final notifier =
     _ref.read(appTaskProvider.notifier);
+    final sessionUserId = _ref.read(activeUserProvider)?.uid;
+
+    void ensureSameSession() {
+      if (_ref.read(activeUserProvider)?.uid != sessionUserId) {
+        throw StateError(
+          'The signed-in account changed while the task was running.',
+        );
+      }
+    }
 
     notifier.update(
       AppTask(
@@ -38,6 +48,8 @@ class AppTaskController {
     );
 
     void progress(String message) {
+      ensureSameSession();
+
       // Looked up by this task's own id, not notifier.currentTask (the
       // most-recently-touched task across the WHOLE app) -- with two
       // background tasks running concurrently (e.g. flashcard + quiz
@@ -59,8 +71,12 @@ class AppTaskController {
     }
 
     try {
+      ensureSameSession();
+
       final result =
       await task(progress);
+
+      ensureSameSession();
 
       final current = notifier.taskById(id);
 

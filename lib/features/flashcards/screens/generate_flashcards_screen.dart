@@ -463,7 +463,7 @@ class _GenerateFlashcardsScreenState
   }
 
   Future<void> _generate() async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     if (userId == null) {
       return;
@@ -549,7 +549,7 @@ class _GenerateFlashcardsScreenState
   }
 
   Future<void> _openGeneratedSet(BuildContext context, String setId) async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     if (userId == null) return;
 

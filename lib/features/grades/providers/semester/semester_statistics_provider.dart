@@ -18,7 +18,7 @@ class SemesterCoursePriority {
 }
 
 final semesterStatisticsProvider =
-FutureProvider.family<List<SemesterCoursePriority>, String>(
+FutureProvider.autoDispose.family<List<SemesterCoursePriority>, String>(
       (ref, semesterId) async {
     final repository = ref.read(
       gradingComponentRepositoryProvider,

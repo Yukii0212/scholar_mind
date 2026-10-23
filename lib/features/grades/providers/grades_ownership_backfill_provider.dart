@@ -21,7 +21,7 @@ const _prefsKeyPrefix = 'grades_ownership_backfilled_';
 class GradesOwnershipBackfill extends _$GradesOwnershipBackfill {
   @override
   void build() {
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     if (userId == null) {
       return;

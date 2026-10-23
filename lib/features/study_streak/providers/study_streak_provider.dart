@@ -10,11 +10,11 @@ final studyStreakRepositoryProvider = Provider<StudyStreakRepository>(
 );
 
 final studyStreakSummaryProvider = StreamProvider<StudyStreakSummary>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   return ref.watch(studyStreakRepositoryProvider).watchSummary(userId);
 });
 
 final studyStreakRecorderProvider = FutureProvider<void>((ref) async {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   await ref.watch(studyStreakRepositoryProvider).recordToday(userId);
 });

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/providers/auth_provider.dart';
 import '../../data/datasources/grading_component_firestore_datasource.dart';
 import '../../data/repositories/grading_component_repository.dart';
 
@@ -18,11 +19,17 @@ Provider<GradingComponentRepository>(
 );
 
 final hasGradingStructureProvider =
-StreamProvider.family<bool, String>(
+StreamProvider.autoDispose.family<bool, String>(
       (
       ref,
       courseId,
       ) {
+    final userId = ref.watch(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      return Stream.value(false);
+    }
+
     return ref
         .watch(
       gradingComponentRepositoryProvider,

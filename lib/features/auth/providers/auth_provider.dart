@@ -4,7 +4,6 @@ import '../../notes/providers/google_classroom_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter/foundation.dart';
 
 part 'auth_provider.g.dart';
 
@@ -47,6 +46,20 @@ Stream<User?> authState(AuthStateRef ref) {
   return ref.watch(firebaseAuthProvider).authStateChanges();
 }
 
+/// The user whose backend resources may currently be accessed.
+///
+/// Firebase can still report the previous user while a sign-out is in
+/// progress, and it reports a newly signed-in user before the surrounding UI
+/// has finished the sign-in operation. Gating user-scoped providers on the
+/// controller prevents old listeners from crossing account boundaries.
+final activeUserProvider = Provider<User?>((ref) {
+  if (ref.watch(authControllerProvider).isLoading) {
+    return null;
+  }
+
+  return ref.watch(authStateProvider).valueOrNull;
+});
+
 @Riverpod(keepAlive: true)
 class AuthController extends _$AuthController {
   @override
@@ -69,7 +82,10 @@ class AuthController extends _$AuthController {
         idToken: googleAuth.idToken,
       );
 
-      await ref.read(firebaseAuthProvider).signInWithCredential(credential);
+      final userCredential =
+          await ref.read(firebaseAuthProvider).signInWithCredential(credential);
+
+      await userCredential.user?.getIdToken();
       state = const AsyncValue.data(null);
     }
     catch (e, st) {
@@ -82,6 +98,9 @@ class AuthController extends _$AuthController {
   Future<void> signOut() async {
     state = const AsyncValue.loading();
 
+    ref.invalidate(classroomCoursesProvider);
+    ref.invalidate(googleClassroomServiceProvider);
+
     try {
       await ref.read(firebaseAuthProvider).signOut();
 
@@ -92,10 +111,8 @@ class AuthController extends _$AuthController {
 
       await ref.read(googleSignInProvider).signOut();
 
-      ref.invalidate(classroomCoursesProvider);
-      ref.invalidate(googleClassroomServiceProvider);
       state = const AsyncValue.data(null);
-    } catch (e, st) {
+    } catch (_) {
       state = const AsyncValue.data(null);
     }
   }

@@ -277,7 +277,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     if (userId == null) return;
 
     setState(() => _saving = true);
@@ -302,7 +302,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
   }
 
   Future<void> _toggleCompleted() async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     final countdownId = widget.initial?.id;
 
     if (userId == null || countdownId == null) return;
@@ -336,7 +336,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
   }
 
   Future<void> _delete() async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     final item = widget.initial;
 
     if (userId == null || item == null) return;

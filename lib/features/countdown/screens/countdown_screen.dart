@@ -20,7 +20,7 @@ class CountdownScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final countdownsAsync = ref.watch(countdownsProvider);
     final upcoming = ref.watch(upcomingCountdownsProvider);
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     return Scaffold(
       backgroundColor: Colors.transparent,

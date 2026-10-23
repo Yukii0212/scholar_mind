@@ -361,7 +361,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     if (confirmed != true) return;
 
-    final userId = ref.read(firebaseAuthProvider).currentUser?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     if (userId == null) return;
 
     final repository = ref.read(libraryRepositoryProvider);

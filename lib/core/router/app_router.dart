@@ -43,11 +43,12 @@ GoRouter appRouter(AppRouterRef ref) {
 
       final authState = ref.read(authStateProvider);
 
-      if (authState.isLoading) {
+      if (authState.isLoading ||
+          ref.read(authControllerProvider).isLoading) {
         return null;
       }
 
-      final isLoggedIn = authState.valueOrNull != null;
+      final isLoggedIn = ref.read(activeUserProvider) != null;
       final location = state.matchedLocation;
 
       final isOnSplash = location == '/splash';
@@ -156,6 +157,7 @@ GoRouter appRouter(AppRouterRef ref) {
   );
 
   ref.listen(authStateProvider, (_, __) => router.refresh());
+  ref.listen(authControllerProvider, (_, __) => router.refresh());
   ref.onDispose(router.dispose);
 
   return router;

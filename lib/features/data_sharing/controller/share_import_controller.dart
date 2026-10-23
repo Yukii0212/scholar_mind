@@ -95,7 +95,7 @@ class ShareImportController extends _$ShareImportController {
   Future<ImportResult> importArchive(
       ShareArchive archive,
       ) {
-    final user = ref.read(firebaseAuthProvider).currentUser;
+    final user = ref.read(activeUserProvider);
 
     if (user == null) {
       throw Exception(
@@ -115,4 +115,3 @@ class ShareImportController extends _$ShareImportController {
     );
   }
 }
-

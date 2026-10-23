@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
@@ -14,7 +13,7 @@ final quizFeedbackRepositoryProvider = Provider<QuizFeedbackRepository>((ref) {
 
 final quizFeedbackProvider =
     StreamProvider.autoDispose<List<QuizFeedbackEntry>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -40,7 +39,7 @@ class QuizFeedbackActionController extends AsyncNotifier<void> {
     required String questionType,
     String? reason,
   }) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     if (userId == null) return null;
 
@@ -53,7 +52,7 @@ class QuizFeedbackActionController extends AsyncNotifier<void> {
   }
 
   Future<void> deleteFeedback(String feedbackId) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     if (userId == null) return;
 
@@ -64,7 +63,7 @@ class QuizFeedbackActionController extends AsyncNotifier<void> {
   }
 
   Future<void> clearAll() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     if (userId == null) return;
 

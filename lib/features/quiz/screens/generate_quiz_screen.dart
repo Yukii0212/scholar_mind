@@ -726,7 +726,7 @@ class _QuizScreenState
 
     if (!mounted) return;
 
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     var avoidedQuestionsText = '';
 

@@ -104,7 +104,6 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.scholarPalette;
     final isEditing = widget.initial != null;
 
     return Scaffold(
@@ -137,22 +136,21 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: _togglingCompletion
-                                ? null
-                                : _toggleCompleted,
+                            onPressed:
+                                _togglingCompletion ? null : _toggleCompleted,
                             icon: _togglingCompletion
                                 ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
                                 : Icon(
-                              _isCompleted
-                                  ? Icons.undo
-                                  : Icons.check_circle_outline,
-                            ),
+                                    _isCompleted
+                                        ? Icons.undo
+                                        : Icons.check_circle_outline,
+                                  ),
                             label: Text(
                               _isCompleted
                                   ? 'Mark as Active'
@@ -176,7 +174,7 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
 
                                 if (preset != CountdownPriorityPreset.custom) {
                                   _priorityController.text =
-                                  '${_presetValues[preset]!}';
+                                      '${_presetValues[preset]!}';
                                 }
                               });
                             },
@@ -214,24 +212,21 @@ class _CountdownCrudScreenState extends ConsumerState<CountdownCrudScreen> {
                           );
                         },
                       ),
-
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
                           onPressed: _saving ? null : _save,
                           icon: _saving
                               ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Icon(Icons.check_rounded),
                           label: Text(
-                            isEditing
-                                ? 'Save Changes'
-                                : 'Create Countdown',
+                            isEditing ? 'Save Changes' : 'Create Countdown',
                           ),
                         ),
                       ),
@@ -502,12 +497,9 @@ class _DetailsPanel extends StatelessWidget {
               }
             },
           ),
-
           const Gap(12),
-
           if (priorityPreset == CountdownPriorityPreset.custom) ...[
             const Gap(12),
-
             TextFormField(
               controller: priorityController,
               keyboardType: TextInputType.number,
@@ -528,19 +520,15 @@ class _DetailsPanel extends StatelessWidget {
               },
             ),
           ],
-
           if (priorityPreset == CountdownPriorityPreset.custom) ...[
             const Gap(16),
-
             Text(
               'Priority Presets',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+                    fontWeight: FontWeight.w800,
+                  ),
             ),
-
             const Gap(8),
-
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -551,9 +539,7 @@ class _DetailsPanel extends StatelessWidget {
                     .withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outlineVariant,
+                  color: Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
               child: Column(
@@ -566,9 +552,7 @@ class _DetailsPanel extends StatelessWidget {
                       Expanded(child: Text('• High = 150')),
                     ],
                   ),
-
                   const Gap(6),
-
                   const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -576,20 +560,17 @@ class _DetailsPanel extends StatelessWidget {
                       Expanded(child: Text('• Critical = 200')),
                     ],
                   ),
-
                   const Gap(14),
-
                   Text(
                     'Custom lets you enter any priority value.\n\n'
-                        'Use a higher value to make this countdown appear higher in your countdown list.\n\n'
-                        'Example:\n'
-                        '• A countdown with priority 200 appears above one with priority 100.',
+                    'Use a higher value to make this countdown appear higher in your countdown list.\n\n'
+                    'Example:\n'
+                    '• A countdown with priority 200 appears above one with priority 100.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
             ),
-
             const Gap(12),
           ],
           TextFormField(
@@ -684,20 +665,19 @@ class _OptionsPanel extends StatelessWidget {
               value: deadlineExtendable,
               onChanged: onExtendableChanged,
               title: const Text('Allow deadline extensions'),
-          ),
+            ),
           ),
           const Gap(8),
-
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: Text(
-                deadlineExtendable
-                    ? 'The countdown stays active after the due date.'
-                    : 'The countdown is completed after the due date.',
+              deadlineExtendable
+                  ? 'The countdown stays active after the due date.'
+                  : 'The countdown is completed after the due date.',
               key: ValueKey(deadlineExtendable),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: palette.textMuted,
-              ),
+                    color: palette.textMuted,
+                  ),
             ),
           ),
         ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -43,37 +45,27 @@ class GenerateQuizScreen extends ConsumerStatefulWidget {
   final bool quickMode;
 
   @override
-  ConsumerState<GenerateQuizScreen> createState() =>
-      _QuizScreenState();
+  ConsumerState<GenerateQuizScreen> createState() => _QuizScreenState();
 }
 
-class _QuizScreenState
-    extends ConsumerState<GenerateQuizScreen> {
-
+class _QuizScreenState extends ConsumerState<GenerateQuizScreen> {
   Set<String> _selectedLectureNotes = {};
 
   Set<String> _selectedPastYearQuestions = {};
 
-  ProcessingStatus _lectureNotesStatus =
-      ProcessingStatus.idle;
+  ProcessingStatus _lectureNotesStatus = ProcessingStatus.idle;
 
-  ProcessingStatus _pastYearQuestionsStatus =
-      ProcessingStatus.idle;
+  ProcessingStatus _pastYearQuestionsStatus = ProcessingStatus.idle;
 
-  final Map<String, ProcessedStudyMaterial>
-  _processedLectureNotes = {};
+  final Map<String, ProcessedStudyMaterial> _processedLectureNotes = {};
 
-  final Map<String, ProcessedStudyMaterial>
-  _processedPastYearQuestions = {};
+  final Map<String, ProcessedStudyMaterial> _processedPastYearQuestions = {};
 
-  final _preprocessor =
-  const StudyMaterialPreprocessor();
+  final _preprocessor = const StudyMaterialPreprocessor();
 
-  final _quizRepository =
-  QuizRepository();
+  final _quizRepository = QuizRepository();
 
-  final _generationService =
-  const QuizGenerationService();
+  final _generationService = const QuizGenerationService();
 
   String _destinationFolderId = QuizFolder.rootId;
 
@@ -83,17 +75,13 @@ class _QuizScreenState
 
   int _questionCount = 10;
 
-  AssessmentMode _assessmentMode =
-      AssessmentMode.informal;
+  AssessmentMode _assessmentMode = AssessmentMode.informal;
 
-  QuizDifficulty _difficulty =
-      QuizDifficulty.medium;
+  QuizDifficulty _difficulty = QuizDifficulty.medium;
 
-  BloomsLevel _minimumBloomsLevel =
-      BloomsLevel.c1;
+  BloomsLevel _minimumBloomsLevel = BloomsLevel.c1;
 
-  BloomsLevel _maximumBloomsLevel =
-      BloomsLevel.c3;
+  BloomsLevel _maximumBloomsLevel = BloomsLevel.c3;
 
   List<QuestionType> _questionTypes = [
     QuestionType.multipleChoice,
@@ -101,9 +89,7 @@ class _QuizScreenState
 
   String _extraInstructions = '';
 
-  QuestionTypeWeight
-  _questionTypeWeight =
-  const QuestionTypeWeight(
+  QuestionTypeWeight _questionTypeWeight = const QuestionTypeWeight(
     multipleChoice: 100,
     trueFalse: 0,
     openEnded: 0,
@@ -131,204 +117,158 @@ class _QuizScreenState
                 pageId: 'quiz-generate',
                 anchorId: 'study-materials-card',
                 child: StudyMaterialsCard(
-                selectedLectureNotes:
-                _selectedLectureNotes,
-                selectedPastYearQuestions:
-                _selectedPastYearQuestions,
-                processedLectureNotes:
-                _processedLectureNotes.values.toList(),
-                processedPastYearQuestions:
-                _processedPastYearQuestions.values.toList(),
-                lectureNotesStatus:
-                _lectureNotesStatus,
-                pastYearQuestionsStatus:
-                _pastYearQuestionsStatus,
-                onLectureNotesTap:
-                _selectLectureNotes,
-                onPastYearQuestionsTap:
-                _selectPastYearQuestions,
-                onManageLectureNotesTap:
-                _manageLectureNotes,
-                onManagePastYearQuestionsTap:
-                _managePastYearQuestions,
+                  selectedLectureNotes: _selectedLectureNotes,
+                  selectedPastYearQuestions: _selectedPastYearQuestions,
+                  processedLectureNotes: _processedLectureNotes.values.toList(),
+                  processedPastYearQuestions:
+                      _processedPastYearQuestions.values.toList(),
+                  lectureNotesStatus: _lectureNotesStatus,
+                  pastYearQuestionsStatus: _pastYearQuestionsStatus,
+                  onLectureNotesTap: _selectLectureNotes,
+                  onPastYearQuestionsTap: _selectPastYearQuestions,
+                  onManageLectureNotesTap: _manageLectureNotes,
+                  onManagePastYearQuestionsTap: _managePastYearQuestions,
                 ),
               ),
-
               if (!widget.quickMode) ...[
                 SizedBox(height: 20),
-
                 HelpAnchor(
                   pageId: 'quiz-generate',
                   anchorId: 'configuration-card',
                   child: QuizConfigurationCard(
-                questionCount: _questionCount,
-                materialCharacterCount: _processedLectureNotes.values.fold(
-                      0,
-                      (sum, m) => sum + m.text.length,
-                    ) +
-                    _processedPastYearQuestions.values.fold(
-                      0,
-                      (sum, m) => sum + m.text.length,
-                    ),
-                assessmentMode: _assessmentMode,
-                difficulty: _difficulty,
-                minimumBloomsLevel: _minimumBloomsLevel,
-                maximumBloomsLevel: _maximumBloomsLevel,
-                questionTypes: _questionTypes,
-                questionTypeWeight:
-                _questionTypeWeight,
-                extraInstructions:
-                _extraInstructions,
+                    questionCount: _questionCount,
+                    materialCharacterCount: _processedLectureNotes.values.fold(
+                          0,
+                          (sum, m) => sum + m.text.length,
+                        ) +
+                        _processedPastYearQuestions.values.fold(
+                          0,
+                          (sum, m) => sum + m.text.length,
+                        ),
+                    assessmentMode: _assessmentMode,
+                    difficulty: _difficulty,
+                    minimumBloomsLevel: _minimumBloomsLevel,
+                    maximumBloomsLevel: _maximumBloomsLevel,
+                    questionTypes: _questionTypes,
+                    questionTypeWeight: _questionTypeWeight,
+                    extraInstructions: _extraInstructions,
+                    onQuestionCountChanged: (value) {
+                      setState(() {
+                        _questionCount = value;
+                      });
+                    },
+                    onAssessmentModeChanged: (value) {
+                      setState(() {
+                        _assessmentMode = value;
+                      });
+                    },
+                    onDifficultyChanged: (value) {
+                      setState(() {
+                        _difficulty = value;
+                      });
+                    },
+                    onMinimumBloomsLevelChanged: (value) {
+                      setState(() {
+                        _minimumBloomsLevel = value;
 
-                onQuestionCountChanged: (value) {
-                  setState(() {
-                    _questionCount = value;
-                  });
-                },
+                        if (_minimumBloomsLevel.level >
+                            _maximumBloomsLevel.level) {
+                          _maximumBloomsLevel = value;
+                        }
+                      });
+                    },
+                    onMaximumBloomsLevelChanged: (value) {
+                      setState(() {
+                        _maximumBloomsLevel = value;
 
-                onAssessmentModeChanged: (value) {
-                  setState(() {
-                    _assessmentMode = value;
-                  });
-                },
+                        if (_maximumBloomsLevel.level <
+                            _minimumBloomsLevel.level) {
+                          _minimumBloomsLevel = value;
+                        }
+                      });
+                    },
+                    onQuestionTypesChanged: (value) {
+                      setState(() {
+                        _questionTypes = value;
 
-                onDifficultyChanged: (value) {
-                  setState(() {
-                    _difficulty = value;
-                  });
-                },
-
-                onMinimumBloomsLevelChanged: (value) {
-                  setState(() {
-                    _minimumBloomsLevel = value;
-
-                    if (_minimumBloomsLevel.level >
-                        _maximumBloomsLevel.level) {
-                      _maximumBloomsLevel = value;
-                    }
-                  });
-                },
-
-                onMaximumBloomsLevelChanged: (value) {
-                  setState(() {
-                    _maximumBloomsLevel = value;
-
-                    if (_maximumBloomsLevel.level <
-                        _minimumBloomsLevel.level) {
-                      _minimumBloomsLevel = value;
-                    }
-                  });
-                },
-
-                onQuestionTypesChanged: (value) {
-                  setState(() {
-                    _questionTypes = value;
-
-                    _questionTypeWeight =
-                        _rebalanceQuestionTypes(
+                        _questionTypeWeight = _rebalanceQuestionTypes(
                           value,
                           _questionTypeWeight,
                         );
-                  });
-                },
-
-                onQuestionTypeWeightChanged:
-                    (value) {
-                  setState(() {
-                    _questionTypeWeight =
-                        value;
-                  });
-                },
-
-                  onExtraInstructionsChanged:
-                      (value) {
-                    setState(() {
-                      _extraInstructions = value;
-                    });
-                  },
-                ),
+                      });
+                    },
+                    onQuestionTypeWeightChanged: (value) {
+                      setState(() {
+                        _questionTypeWeight = value;
+                      });
+                    },
+                    onExtraInstructionsChanged: (value) {
+                      setState(() {
+                        _extraInstructions = value;
+                      });
+                    },
+                  ),
                 ),
               ],
-
               SizedBox(height: 32),
-
               HelpAnchor(
                 pageId: 'quiz-generate',
                 anchorId: 'destination-folder-card',
                 child: Card(
-                child: ListTile(
-
-                  leading: const Icon(
-                    Icons.folder,
-                  ),
-
-                  title: const Text(
-                    'Destination',
-                  ),
-
-                  subtitle: Text(
-                    _destinationFolderName,
-                  ),
-
-                  trailing: TextButton(
-
-                    onPressed: () async {
-
-                      final folders = await ref.read(
-                        quiz_library.allFoldersProvider.future,
-                      );
-
-                      if (!mounted) {
-                        return;
-                      }
-
-                      final folderId =
-                      await showDialog<String>(
-                        context: context,
-                        builder: (_) {
-                          return QuizFolderPickerDialog(
-                            folders: folders,
-                          );
-                        },
-                      );
-
-                      if (folderId == null) {
-                        return;
-                      }
-
-                      final folderName =
-                      folderId == QuizFolder.rootId
-                          ? 'My Quizzes'
-                          : folders
-                          .firstWhere(
-                            (folder) =>
-                        folder.id ==
-                            folderId,
-                      )
-                          .name;
-
-                      setState(() {
-
-                        _destinationFolderId =
-                            folderId;
-
-                        _destinationFolderName =
-                            folderName;
-
-                      });
-
-                    },
-
-                    child: const Text(
-                      'Change',
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.folder,
                     ),
+                    title: const Text(
+                      'Destination',
+                    ),
+                    subtitle: Text(
+                      _destinationFolderName,
+                    ),
+                    trailing: TextButton(
+                      onPressed: () async {
+                        final folders = await ref.read(
+                          quiz_library.allFoldersProvider.future,
+                        );
 
+                        if (!mounted) {
+                          return;
+                        }
+
+                        final folderId = await showDialog<String>(
+                          context: context,
+                          builder: (_) {
+                            return QuizFolderPickerDialog(
+                              folders: folders,
+                            );
+                          },
+                        );
+
+                        if (folderId == null) {
+                          return;
+                        }
+
+                        final folderName = folderId == QuizFolder.rootId
+                            ? 'My Quizzes'
+                            : folders
+                                .firstWhere(
+                                  (folder) => folder.id == folderId,
+                                )
+                                .name;
+
+                        setState(() {
+                          _destinationFolderId = folderId;
+
+                          _destinationFolderName = folderName;
+                        });
+                      },
+                      child: const Text(
+                        'Change',
+                      ),
+                    ),
                   ),
-
                 ),
               ),
-              ),
-
               const SizedBox(height: 20),
               GenerateQuizButton(
                 onPressed: _generateQuiz,
@@ -341,17 +281,13 @@ class _QuizScreenState
   }
 
   Future<void> _selectLectureNotes() async {
-    final selected =
-    await Navigator.push<Set<String>>(
+    final selected = await Navigator.push<Set<String>>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            StudyMaterialPickerScreen(
-              type:
-              StudyMaterialType.lectureNotes,
-              initialSelection:
-              _selectedLectureNotes,
-            ),
+        builder: (_) => StudyMaterialPickerScreen(
+          type: StudyMaterialType.lectureNotes,
+          initialSelection: _selectedLectureNotes,
+        ),
       ),
     );
 
@@ -359,8 +295,7 @@ class _QuizScreenState
       return;
     }
 
-    final previousSelection =
-        _selectedLectureNotes;
+    final previousSelection = _selectedLectureNotes;
 
     setState(() {
       _selectedLectureNotes = selected;
@@ -371,16 +306,16 @@ class _QuizScreenState
     );
   }
 
-  QuestionTypeWeight
-  _rebalanceQuestionTypes(
-      List<QuestionType> types,
-      QuestionTypeWeight current,
-      ) {
+  QuestionTypeWeight _rebalanceQuestionTypes(
+    List<QuestionType> types,
+    QuestionTypeWeight current,
+  ) {
     if (!current.isCustom) {
       switch (types.length) {
         case 1:
           return QuestionTypeWeight(
-            multipleChoice: types.contains(QuestionType.multipleChoice) ? 100 : 0,
+            multipleChoice:
+                types.contains(QuestionType.multipleChoice) ? 100 : 0,
             trueFalse: types.contains(QuestionType.trueFalse) ? 100 : 0,
             openEnded: types.contains(QuestionType.openEnded) ? 100 : 0,
           );
@@ -425,18 +360,15 @@ class _QuizScreenState
     var tf = 0;
     var oe = 0;
 
-    if (types.contains(
-        QuestionType.multipleChoice)) {
+    if (types.contains(QuestionType.multipleChoice)) {
       mcq = base + (remainder-- > 0 ? 1 : 0);
     }
 
-    if (types.contains(
-        QuestionType.trueFalse)) {
+    if (types.contains(QuestionType.trueFalse)) {
       tf = base + (remainder-- > 0 ? 1 : 0);
     }
 
-    if (types.contains(
-        QuestionType.openEnded)) {
+    if (types.contains(QuestionType.openEnded)) {
       oe = base + (remainder-- > 0 ? 1 : 0);
     }
 
@@ -449,16 +381,12 @@ class _QuizScreenState
   }
 
   Future<void> _selectPastYearQuestions() async {
-    final selected =
-    await Navigator.push<Set<String>>(
+    final selected = await Navigator.push<Set<String>>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-        StudyMaterialPickerScreen(
-          type: StudyMaterialType
-              .pastYearQuestions,
-          initialSelection:
-          _selectedPastYearQuestions,
+        builder: (_) => StudyMaterialPickerScreen(
+          type: StudyMaterialType.pastYearQuestions,
+          initialSelection: _selectedPastYearQuestions,
         ),
       ),
     );
@@ -467,12 +395,10 @@ class _QuizScreenState
       return;
     }
 
-    final previousSelection =
-        _selectedPastYearQuestions;
+    final previousSelection = _selectedPastYearQuestions;
 
     setState(() {
-      _selectedPastYearQuestions =
-          selected;
+      _selectedPastYearQuestions = selected;
     });
 
     await _processPastYearQuestions(
@@ -481,27 +407,23 @@ class _QuizScreenState
   }
 
   Future<void> _manageLectureNotes() async {
-    final selected =
-    await Navigator.push<Set<String>>(
+    final selected = await Navigator.push<Set<String>>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            SelectionManagerScreen(
-              title: 'Lecture Notes',
-              selectedNotes:
-              _processedLectureNotes.values
-                  .map((e) => e.note)
-                  .toList(),
-              onAddMore: (current) => Navigator.push<Set<String>>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => StudyMaterialPickerScreen(
-                    type: StudyMaterialType.lectureNotes,
-                    initialSelection: current,
-                  ),
-                ),
+        builder: (_) => SelectionManagerScreen(
+          title: 'Lecture Notes',
+          selectedNotes:
+              _processedLectureNotes.values.map((e) => e.note).toList(),
+          onAddMore: (current) => Navigator.push<Set<String>>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StudyMaterialPickerScreen(
+                type: StudyMaterialType.lectureNotes,
+                initialSelection: current,
               ),
             ),
+          ),
+        ),
       ),
     );
 
@@ -509,8 +431,7 @@ class _QuizScreenState
       return;
     }
 
-    final previousSelection =
-        _selectedLectureNotes;
+    final previousSelection = _selectedLectureNotes;
 
     setState(() {
       _selectedLectureNotes = selected;
@@ -522,28 +443,23 @@ class _QuizScreenState
   }
 
   Future<void> _managePastYearQuestions() async {
-    final selected =
-    await Navigator.push<Set<String>>(
+    final selected = await Navigator.push<Set<String>>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            SelectionManagerScreen(
-              title: 'Past Year Questions',
-              selectedNotes:
-              _processedPastYearQuestions
-                  .values
-                  .map((e) => e.note)
-                  .toList(),
-              onAddMore: (current) => Navigator.push<Set<String>>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => StudyMaterialPickerScreen(
-                    type: StudyMaterialType.pastYearQuestions,
-                    initialSelection: current,
-                  ),
-                ),
+        builder: (_) => SelectionManagerScreen(
+          title: 'Past Year Questions',
+          selectedNotes:
+              _processedPastYearQuestions.values.map((e) => e.note).toList(),
+          onAddMore: (current) => Navigator.push<Set<String>>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StudyMaterialPickerScreen(
+                type: StudyMaterialType.pastYearQuestions,
+                initialSelection: current,
               ),
             ),
+          ),
+        ),
       ),
     );
 
@@ -551,12 +467,10 @@ class _QuizScreenState
       return;
     }
 
-    final previousSelection =
-        _selectedPastYearQuestions;
+    final previousSelection = _selectedPastYearQuestions;
 
     setState(() {
-      _selectedPastYearQuestions =
-          selected;
+      _selectedPastYearQuestions = selected;
     });
 
     await _processPastYearQuestions(
@@ -565,26 +479,24 @@ class _QuizScreenState
   }
 
   Future<List<NoteItem>> _resolveNotes(
-      Set<String> ids,
-      ) async {
-    final notes =
-    await ref.read(
+    Set<String> ids,
+  ) async {
+    final notes = await ref.read(
       allUploadedNotesProvider.future,
     );
 
     return notes
         .where(
           (note) => ids.contains(note.id),
-    )
+        )
         .toList();
   }
 
   Future<void> _processLectureNotes(
-      Set<String> previousSelection,
-      ) async {
+    Set<String> previousSelection,
+  ) async {
     setState(() {
-      _lectureNotesStatus =
-          ProcessingStatus.processing;
+      _lectureNotesStatus = ProcessingStatus.processing;
     });
 
     try {
@@ -596,51 +508,42 @@ class _QuizScreenState
         _processedLectureNotes.remove(id);
       }
 
-      final addedIds =
-      _selectedLectureNotes.difference(
+      final addedIds = _selectedLectureNotes.difference(
         previousSelection,
       );
 
       if (addedIds.isNotEmpty) {
-        final notes =
-        await _resolveNotes(addedIds);
+        final notes = await _resolveNotes(addedIds);
 
-        final processed =
-        await _preprocessor.process(notes);
+        final processed = await _preprocessor.process(notes);
 
         _processedLectureNotes.addAll(processed);
       }
 
-      _studyContext =
-      await _quizRepository.buildStudyContext(
-        lectureNotes:
-        _processedLectureNotes.values.toList(),
-        pastYearQuestions:
-        _processedPastYearQuestions.values.toList(),
+      _studyContext = await _quizRepository.buildStudyContext(
+        lectureNotes: _processedLectureNotes.values.toList(),
+        pastYearQuestions: _processedPastYearQuestions.values.toList(),
       );
 
       if (!mounted) return;
 
       setState(() {
-        _lectureNotesStatus =
-            ProcessingStatus.completed;
+        _lectureNotesStatus = ProcessingStatus.completed;
       });
     } catch (_) {
       if (!mounted) return;
 
       setState(() {
-        _lectureNotesStatus =
-            ProcessingStatus.failed;
+        _lectureNotesStatus = ProcessingStatus.failed;
       });
     }
   }
 
   Future<void> _processPastYearQuestions(
-      Set<String> previousSelection,
-      ) async {
+    Set<String> previousSelection,
+  ) async {
     setState(() {
-      _pastYearQuestionsStatus =
-          ProcessingStatus.processing;
+      _pastYearQuestionsStatus = ProcessingStatus.processing;
     });
 
     try {
@@ -652,52 +555,42 @@ class _QuizScreenState
         _processedPastYearQuestions.remove(id);
       }
 
-      final addedIds =
-      _selectedPastYearQuestions.difference(
+      final addedIds = _selectedPastYearQuestions.difference(
         previousSelection,
       );
 
       if (addedIds.isNotEmpty) {
-        final notes =
-        await _resolveNotes(addedIds);
+        final notes = await _resolveNotes(addedIds);
 
-        final processed =
-        await _preprocessor.process(notes);
+        final processed = await _preprocessor.process(notes);
 
         _processedPastYearQuestions.addAll(processed);
       }
 
-      _studyContext =
-      await _quizRepository.buildStudyContext(
-        lectureNotes:
-        _processedLectureNotes.values.toList(),
-        pastYearQuestions:
-        _processedPastYearQuestions.values.toList(),
+      _studyContext = await _quizRepository.buildStudyContext(
+        lectureNotes: _processedLectureNotes.values.toList(),
+        pastYearQuestions: _processedPastYearQuestions.values.toList(),
       );
 
       if (!mounted) return;
 
       setState(() {
-        _pastYearQuestionsStatus =
-            ProcessingStatus.completed;
+        _pastYearQuestionsStatus = ProcessingStatus.completed;
       });
     } catch (_) {
       if (!mounted) return;
 
       setState(() {
-        _pastYearQuestionsStatus =
-            ProcessingStatus.failed;
+        _pastYearQuestionsStatus = ProcessingStatus.failed;
       });
     }
   }
 
   Future<void> _generateQuiz() async {
-    if (_selectedLectureNotes.isEmpty &&
-        _selectedPastYearQuestions.isEmpty) {
+    if (_selectedLectureNotes.isEmpty && _selectedPastYearQuestions.isEmpty) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Please select at least one Lecture Note or Past Year Question before generating a quiz.',
@@ -708,12 +601,10 @@ class _QuizScreenState
       return;
     }
 
-    if (_studyContext == null ||
-        _studyContext!.isEmpty) {
+    if (_studyContext == null || _studyContext!.isEmpty) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Your study materials are still being processed. Please wait a moment and try again.',
@@ -728,27 +619,43 @@ class _QuizScreenState
 
     final userId = ref.read(activeUserProvider)?.uid;
 
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in again before generating a quiz.'),
+        ),
+      );
+      return;
+    }
+
     var avoidedQuestionsText = '';
 
-    if (userId != null) {
-      try {
-        final feedback = await ref
-            .read(quizFeedbackRepositoryProvider)
-            .recentFeedbackForPrompt(userId);
+    try {
+      final feedback = await ref
+          .read(quizFeedbackRepositoryProvider)
+          .recentFeedbackForPrompt(userId);
 
-        avoidedQuestionsText =
-            QuizFeedbackRepository.formatForPrompt(feedback);
-      } catch (_) {
-        // Feedback is a nice-to-have for generation quality, not a
-        // requirement -- if it can't be fetched, generate without it
-        // rather than blocking the user.
-      }
+      avoidedQuestionsText = QuizFeedbackRepository.formatForPrompt(feedback);
+    } catch (_) {
+      // Feedback is a nice-to-have for generation quality, not a
+      // requirement -- if it can't be fetched, generate without it
+      // rather than blocking the user.
     }
 
     if (!mounted) return;
 
-    final request =
-    QuizGenerationRequest(
+    if (ref.read(activeUserProvider)?.uid != userId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Your account changed. Please start quiz generation again.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final request = QuizGenerationRequest(
       studyContext: _studyContext!,
       questionCount: _questionCount,
       assessmentMode: _assessmentMode,
@@ -756,33 +663,39 @@ class _QuizScreenState
       minimumBloomsLevel: _minimumBloomsLevel,
       maximumBloomsLevel: _maximumBloomsLevel,
       questionTypes: _questionTypes,
-      questionTypeWeight:
-      _questionTypeWeight,
-      extraInstructions:
-      _extraInstructions,
+      questionTypeWeight: _questionTypeWeight,
+      extraInstructions: _extraInstructions,
       avoidedQuestionsText: avoidedQuestionsText,
     );
 
-    final taskController =
-    ref.read(appTaskControllerProvider);
+    final taskController = ref.read(appTaskControllerProvider);
 
-    final quizAttemptNotifier =
-    ref.read(
+    final quizAttemptNotifier = ref.read(
       quizAttemptProvider.notifier,
     );
 
-    taskController.run(
+    final destinationFolderId = _destinationFolderId;
+
+    final generation = taskController.runSession(
       id: 'quiz_generation',
       type: AppTaskType.quizGeneration,
       title: 'Generating Quiz',
-      task: (progress) async {
-        final attempt =
-        await _generationService.generate(
+      task: (session, progress) async {
+        if (session.userId != userId) {
+          throw const AppTaskSessionChangedException();
+        }
+
+        session.throwIfChanged();
+
+        final attempt = await _generationService.generate(
+          userId: userId,
           request: request,
-          destinationFolderId:
-          _destinationFolderId,
+          destinationFolderId: destinationFolderId,
           onProgress: progress,
+          ensureSessionCurrent: session.throwIfChanged,
         );
+
+        session.throwIfChanged();
 
         await quizAttemptNotifier.startAttempt(
           attempt,
@@ -790,6 +703,13 @@ class _QuizScreenState
 
         return attempt;
       },
+    );
+
+    unawaited(
+      generation.then<void>(
+        (_) {},
+        onError: (_, __) {},
+      ),
     );
 
     if (!mounted) return;

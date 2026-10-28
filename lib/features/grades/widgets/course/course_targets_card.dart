@@ -24,7 +24,7 @@ class CourseTargetsCard extends ConsumerWidget {
     final assessmentAsync = ref.watch(assessmentEntriesProvider(course.id));
 
     return StreamBuilder(
-      stream: repository.watchCourseComponents(course.id),
+      stream: repository.watchCourseComponents(course.ownerId, course.id),
       builder: (context, gradingSnapshot) {
         if (!gradingSnapshot.hasData) {
           return _loading();
@@ -50,83 +50,84 @@ class CourseTargetsCard extends ConsumerWidget {
                 pageId: 'course-analytics',
                 anchorId: 'required-score-calculator',
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const ScholarSectionHeader(
-                    title: 'Required Score Calculator',
-                    subtitle: 'One remaining assessment prediction',
-                  ),
-                  const Gap(18),
-                  if (!summary.canCalculateRequiredScore)
-                    if (showRequiredScorePreview)
-                      // No real calculation available for this course yet,
-                      // but the help tutorial still needs something to
-                      // point at — show one illustrative, non-interactive
-                      // example instead of silently having nothing here.
-                      // See `course_analytics_preview_provider.dart`.
-                      const _ScoreRequirementCard(
-                        title: 'Target Score',
-                        icon: Icons.flag_outlined,
-                        target: 80,
-                        requiredScore: 92.3,
-                        component: 'Finals',
-                        achievable: true,
-                        maximumPossible: 100,
-                        isExample: true,
-                      )
-                    else
-                      _InformationCard(
-                        icon: Icons.auto_awesome_outlined,
-                        title: summary.remainingTargets.isEmpty
-                            ? 'No open assessment to calculate'
-                            : 'More information required',
-                        message: summary.remainingTargets.isEmpty
-                            ? 'Leave one assessment without an Actual or Expected score to calculate what you need there.'
-                            : 'Add Expected scores for all but one remaining assessment to unlock personalized predictions.',
-                      )
-                  else ...[
-                    if (course.targetScore != null)
-                      _ScoreRequirementCard(
-                        title: 'Target Score',
-                        icon: Icons.flag_outlined,
-                        target: course.targetScore!,
-                        requiredScore: summary.requiredPercentageFor(
-                          course.targetScore!,
-                        )!,
-                        component:
-                            summary.remainingTarget?.component.name ?? '',
-                        achievable: summary.isAchievable(course.targetScore!),
-                        maximumPossible: summary.maximumPossiblePercentage,
-                      ),
-                    if (course.targetScore != null) const Gap(12),
-                    if (course.minimumAcceptableScore != null)
-                      _ScoreRequirementCard(
-                        title: 'Minimum Acceptable',
-                        icon: Icons.thumb_up_outlined,
-                        target: course.minimumAcceptableScore!,
-                        requiredScore: summary.requiredPercentageFor(
-                          course.minimumAcceptableScore!,
-                        )!,
-                        component:
-                            summary.remainingTarget?.component.name ?? '',
-                        achievable: summary.isAchievable(
-                          course.minimumAcceptableScore!,
-                        ),
-                        maximumPossible: summary.maximumPossiblePercentage,
-                      ),
-                    if (course.minimumAcceptableScore != null) const Gap(12),
-                    _ScoreRequirementCard(
-                      title: 'Passing Score',
-                      icon: Icons.school_outlined,
-                      target: course.passingScore,
-                      requiredScore:
-                          summary.requiredPercentageFor(course.passingScore)!,
-                      component: summary.remainingTarget?.component.name ?? '',
-                      achievable: summary.isAchievable(course.passingScore),
-                      maximumPossible: summary.maximumPossiblePercentage,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const ScholarSectionHeader(
+                      title: 'Required Score Calculator',
+                      subtitle: 'One remaining assessment prediction',
                     ),
+                    const Gap(18),
+                    if (!summary.canCalculateRequiredScore)
+                      if (showRequiredScorePreview)
+                        // No real calculation available for this course yet,
+                        // but the help tutorial still needs something to
+                        // point at — show one illustrative, non-interactive
+                        // example instead of silently having nothing here.
+                        // See `course_analytics_preview_provider.dart`.
+                        const _ScoreRequirementCard(
+                          title: 'Target Score',
+                          icon: Icons.flag_outlined,
+                          target: 80,
+                          requiredScore: 92.3,
+                          component: 'Finals',
+                          achievable: true,
+                          maximumPossible: 100,
+                          isExample: true,
+                        )
+                      else
+                        _InformationCard(
+                          icon: Icons.auto_awesome_outlined,
+                          title: summary.remainingTargets.isEmpty
+                              ? 'No open assessment to calculate'
+                              : 'More information required',
+                          message: summary.remainingTargets.isEmpty
+                              ? 'Leave one assessment without an Actual or Expected score to calculate what you need there.'
+                              : 'Add Expected scores for all but one remaining assessment to unlock personalized predictions.',
+                        )
+                    else ...[
+                      if (course.targetScore != null)
+                        _ScoreRequirementCard(
+                          title: 'Target Score',
+                          icon: Icons.flag_outlined,
+                          target: course.targetScore!,
+                          requiredScore: summary.requiredPercentageFor(
+                            course.targetScore!,
+                          )!,
+                          component:
+                              summary.remainingTarget?.component.name ?? '',
+                          achievable: summary.isAchievable(course.targetScore!),
+                          maximumPossible: summary.maximumPossiblePercentage,
+                        ),
+                      if (course.targetScore != null) const Gap(12),
+                      if (course.minimumAcceptableScore != null)
+                        _ScoreRequirementCard(
+                          title: 'Minimum Acceptable',
+                          icon: Icons.thumb_up_outlined,
+                          target: course.minimumAcceptableScore!,
+                          requiredScore: summary.requiredPercentageFor(
+                            course.minimumAcceptableScore!,
+                          )!,
+                          component:
+                              summary.remainingTarget?.component.name ?? '',
+                          achievable: summary.isAchievable(
+                            course.minimumAcceptableScore!,
+                          ),
+                          maximumPossible: summary.maximumPossiblePercentage,
+                        ),
+                      if (course.minimumAcceptableScore != null) const Gap(12),
+                      _ScoreRequirementCard(
+                        title: 'Passing Score',
+                        icon: Icons.school_outlined,
+                        target: course.passingScore,
+                        requiredScore:
+                            summary.requiredPercentageFor(course.passingScore)!,
+                        component:
+                            summary.remainingTarget?.component.name ?? '',
+                        achievable: summary.isAchievable(course.passingScore),
+                        maximumPossible: summary.maximumPossiblePercentage,
+                      ),
+                    ],
                   ],
-                ],
                 ),
               ),
             );

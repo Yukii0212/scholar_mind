@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/providers/auth_provider.dart';
 import '../../data/models/semester_model.dart';
 import '../../providers/semester/semester_provider.dart';
 import '../../screens/semester/semester_detail_screen.dart';
@@ -11,9 +12,9 @@ class SemesterActions {
   const SemesterActions._();
 
   static void open(
-      BuildContext context,
-      SemesterModel semester,
-      ) {
+    BuildContext context,
+    SemesterModel semester,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => SemesterDetailScreen(
@@ -24,9 +25,9 @@ class SemesterActions {
   }
 
   static void edit(
-      BuildContext context,
-      SemesterModel semester,
-      ) {
+    BuildContext context,
+    SemesterModel semester,
+  ) {
     showDialog(
       context: context,
       builder: (_) => EditSemesterDialog(
@@ -36,27 +37,33 @@ class SemesterActions {
   }
 
   static Future<void> toggleHidden(
-      BuildContext context,
-      SemesterModel semester,
-      ) async {
-    await ProviderScope.containerOf(context)
-        .read(semesterRepositoryProvider)
-        .toggleHidden(
-      semesterId: semester.id,
-      isHidden: !semester.isHidden,
-    );
+    BuildContext context,
+    SemesterModel semester,
+  ) async {
+    final container = ProviderScope.containerOf(context);
+    final userId = container.read(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      return;
+    }
+
+    await container.read(semesterRepositoryProvider).toggleHidden(
+          userId: userId,
+          semesterId: semester.id,
+          isHidden: !semester.isHidden,
+        );
   }
 
   static Future<void> delete(
-      BuildContext context,
-      SemesterModel semester,
-      ) async {
+    BuildContext context,
+    SemesterModel semester,
+  ) async {
     final deleted = await showDialog<bool>(
-      context: context,
-      builder: (_) => DeleteSemesterDialog(
-        semester: semester,
-      ),
-    ) ??
+          context: context,
+          builder: (_) => DeleteSemesterDialog(
+            semester: semester,
+          ),
+        ) ??
         false;
 
     if (!deleted || !context.mounted) {

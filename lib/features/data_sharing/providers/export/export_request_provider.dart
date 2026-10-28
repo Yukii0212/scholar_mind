@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:scholar_mind/features/auth/providers/auth_provider.dart';
 
@@ -9,8 +8,8 @@ part 'export_request_provider.g.dart';
 
 @riverpod
 ExportRequest? exportRequest(
-    ExportRequestRef ref,
-    ) {
+  ExportRequestRef ref,
+) {
   final selection = ref.watch(
     exportSelectionNotifierProvider,
   );
@@ -28,9 +27,7 @@ ExportRequest? exportRequest(
   ('=== Export Request ===');
 
   for (final entry in selection.selectedIds.entries) {
-    (
-      '${entry.key.name}: ${entry.value.toList()}',
-    );
+    ('${entry.key.name}: ${entry.value.toList()}',);
   }
 
   return ExportRequest(

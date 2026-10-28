@@ -1,9 +1,11 @@
 import 'dart:async';
 
-import '../../notes/providers/google_classroom_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../notes/providers/google_classroom_provider.dart';
+import '../../notes/services/file_cache_service.dart';
 
 part 'auth_provider.g.dart';
 
@@ -17,10 +19,7 @@ class AuthWarmup extends _$AuthWarmup {
   @override
   void build() {
     unawaited(
-      ref
-          .read(googleSignInProvider)
-          .signInSilently()
-          .catchError((_) => null),
+      ref.read(googleSignInProvider).signInSilently().catchError((_) => null),
     );
   }
 }
@@ -30,8 +29,8 @@ FirebaseAuth firebaseAuth(FirebaseAuthRef ref) => FirebaseAuth.instance;
 
 @Riverpod(keepAlive: true)
 GoogleSignIn googleSignIn(
-    GoogleSignInRef ref,
-    ) {
+  GoogleSignInRef ref,
+) {
   return GoogleSignIn(
     scopes: const [
       'https://www.googleapis.com/auth/classroom.courses.readonly',
@@ -87,8 +86,7 @@ class AuthController extends _$AuthController {
 
       await userCredential.user?.getIdToken();
       state = const AsyncValue.data(null);
-    }
-    catch (e, st) {
+    } catch (e, st) {
       ("GOOGLE SIGN IN ERROR: $e");
 
       state = AsyncValue.error(e, st);
@@ -102,18 +100,42 @@ class AuthController extends _$AuthController {
     ref.invalidate(googleClassroomServiceProvider);
 
     try {
-      await ref.read(firebaseAuthProvider).signOut();
+      final firebaseAuth = ref.read(firebaseAuthProvider);
+      final googleSignIn = ref.read(googleSignInProvider);
+      final userId = firebaseAuth.currentUser?.uid;
 
-      try {
-        await ref.read(googleSignInProvider).disconnect();
-      } catch (_) {
+      await firebaseAuth.signOut();
+
+      Object? cleanupError;
+      StackTrace? cleanupStackTrace;
+
+      if (userId != null) {
+        try {
+          await FileCacheService.clearUserCache(userId);
+        } catch (error, stackTrace) {
+          cleanupError = error;
+          cleanupStackTrace = stackTrace;
+        }
       }
 
-      await ref.read(googleSignInProvider).signOut();
+      try {
+        await googleSignIn.disconnect();
+      } catch (_) {
+        try {
+          await googleSignIn.signOut();
+        } catch (error, stackTrace) {
+          cleanupError ??= error;
+          cleanupStackTrace ??= stackTrace;
+        }
+      }
+
+      if (cleanupError != null) {
+        Error.throwWithStackTrace(cleanupError, cleanupStackTrace!);
+      }
 
       state = const AsyncValue.data(null);
-    } catch (_) {
-      state = const AsyncValue.data(null);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
     }
   }
 }

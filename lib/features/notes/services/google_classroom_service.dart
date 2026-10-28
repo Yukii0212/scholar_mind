@@ -7,23 +7,16 @@ import '../domain/drive_item.dart';
 
 class GoogleClassroomService {
   GoogleClassroomService(
-      this._googleSignIn,
-      );
+    this._googleSignIn,
+  );
 
   final GoogleSignIn _googleSignIn;
 
-  static const _scopes = [
-    'https://www.googleapis.com/auth/classroom.courses.readonly',
-    'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
-    'https://www.googleapis.com/auth/drive.readonly',
-  ];
-
   Future<Uint8List> downloadDriveFile(
-      String fileId,
-      ) async {
+    String fileId,
+  ) async {
     final user =
-        await _googleSignIn.signInSilently() ??
-            await _googleSignIn.signIn();
+        await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
 
     if (user == null) {
       throw Exception(
@@ -31,17 +24,14 @@ class GoogleClassroomService {
       );
     }
 
-    final auth =
-    await user.authentication;
+    final auth = await user.authentication;
 
-    final response =
-    await http.get(
+    final response = await http.get(
       Uri.parse(
         'https://www.googleapis.com/drive/v3/files/$fileId?alt=media',
       ),
       headers: {
-        'Authorization':
-        'Bearer ${auth.accessToken}',
+        'Authorization': 'Bearer ${auth.accessToken}',
       },
     );
 
@@ -58,62 +48,56 @@ class GoogleClassroomService {
     required Iterable<Map<String, dynamic>> attachments,
     required String destinationFolderId,
     required Future<String?> Function({
-    required String folderId,
-    required String fileName,
-    required String extension,
-    required Uint8List bytes,
+      required String folderId,
+      required String fileName,
+      required String extension,
+      required Uint8List bytes,
     }) uploadNote,
     required Future<void> Function(
-        String storagePath,
-        String fileName,
-        Uint8List bytes,
-        ) cacheFile,
+      String storagePath,
+      String fileName,
+      Uint8List bytes,
+    ) cacheFile,
     required void Function(String message) onProgress,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
     var importedCount = 0;
 
-    final files =
-    attachments.toList(
+    final files = attachments.toList(
       growable: false,
     );
 
-    for (var i = 0;
-    i < files.length;
-    i++) {
+    for (var i = 0; i < files.length; i++) {
+      ensureSessionCurrent?.call();
 
       final file = files[i];
 
-      final fileName =
-      file['title'] as String;
+      final fileName = file['title'] as String;
 
       onProgress(
         'Importing ${i + 1} of ${files.length}: $fileName',
       );
 
-      final bytes =
-      await downloadDriveFile(
+      final bytes = await downloadDriveFile(
         file['id'] as String,
       );
+      ensureSessionCurrent?.call();
 
       onProgress(
         'Saving ${i + 1} of ${files.length}: $fileName',
       );
 
       final extension =
-      fileName.contains('.')
-          ? fileName
-          .split('.')
-          .last
-          : 'txt';
+          fileName.contains('.') ? fileName.split('.').last : 'txt';
 
-      final storagePath =
-      await uploadNote(
-        folderId:
-        destinationFolderId,
+      final storagePath = await uploadNote(
+        folderId: destinationFolderId,
         fileName: fileName,
         extension: extension,
         bytes: bytes,
       );
+      ensureSessionCurrent?.call();
 
       if (storagePath == null) {
         continue;
@@ -126,42 +110,40 @@ class GoogleClassroomService {
         fileName,
         bytes,
       );
+      ensureSessionCurrent?.call();
     }
 
     return importedCount;
   }
 
   Future<List<DriveItem>> fetchDriveItems(
-      String folderId,
-      ) async {
+    String folderId,
+  ) async {
     final user =
-        await _googleSignIn.signInSilently() ??
-            await _googleSignIn.signIn();
+        await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
 
     if (user == null) {
       return [];
     }
 
-    final auth =
-    await user.authentication;
+    final auth = await user.authentication;
 
     final response = await http.get(
       Uri.parse(
         'https://www.googleapis.com/drive/v3/files'
-            '?q='
-            '\'${folderId == 'root' ? 'root' : folderId}\' in parents '
-            'and trashed=false'
-            '&fields=files('
-            'id,'
-            'name,'
-            'mimeType,'
-            'shortcutDetails(targetId,targetMimeType)'
-            ')'
-            '&orderBy=folder,name',
+        '?q='
+        '\'${folderId == 'root' ? 'root' : folderId}\' in parents '
+        'and trashed=false'
+        '&fields=files('
+        'id,'
+        'name,'
+        'mimeType,'
+        'shortcutDetails(targetId,targetMimeType)'
+        ')'
+        '&orderBy=folder,name',
       ),
       headers: {
-        'Authorization':
-        'Bearer ${auth.accessToken}',
+        'Authorization': 'Bearer ${auth.accessToken}',
       },
     );
 
@@ -171,40 +153,29 @@ class GoogleClassroomService {
       );
     }
 
-    final data =
-    jsonDecode(response.body);
+    final data = jsonDecode(response.body);
 
-    final files =
-        (data['files'] as List?)
-            ?.cast<Map<String, dynamic>>() ??
-            [];
+    final files = (data['files'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
-    return files
-        .map(DriveItem.fromJson)
-        .toList();
+    return files.map(DriveItem.fromJson).toList();
   }
 
-  Future<List<ClassroomCourse>>
-  fetchCourses() async {
+  Future<List<ClassroomCourse>> fetchCourses() async {
     final user =
-        await _googleSignIn.signInSilently() ??
-            await _googleSignIn.signIn();
+        await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
 
     if (user == null) {
       return [];
     }
 
-    final auth =
-    await user.authentication;
+    final auth = await user.authentication;
 
-    final response =
-    await http.get(
+    final response = await http.get(
       Uri.parse(
         'https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&courseStates=ARCHIVED',
       ),
       headers: {
-        'Authorization':
-        'Bearer ${auth.accessToken}',
+        'Authorization': 'Bearer ${auth.accessToken}',
       },
     );
 
@@ -217,44 +188,35 @@ class GoogleClassroomService {
       );
     }
 
-    final data =
-    jsonDecode(response.body);
+    final data = jsonDecode(response.body);
 
     final courses =
-        (data['courses'] as List?)
-            ?.cast<Map<String, dynamic>>() ??
-            [];
+        (data['courses'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     return courses
         .map(
-      ClassroomCourse.fromJson,
-    )
+          ClassroomCourse.fromJson,
+        )
         .toList();
   }
 
-  Future<List<ClassroomMaterial>>
-  fetchCourseFiles(
-      String courseId,
-      ) async {
+  Future<List<ClassroomMaterial>> fetchCourseFiles(
+    String courseId,
+  ) async {
     final user =
-        await _googleSignIn
-            .signInSilently() ??
-            await _googleSignIn.signIn();
+        await _googleSignIn.signInSilently() ?? await _googleSignIn.signIn();
 
     if (user == null) {
       return [];
     }
 
-    final auth =
-    await user.authentication;
+    final auth = await user.authentication;
 
-    final response =
-    await http.get(
+    final response = await http.get(
       Uri.parse(
         'https://classroom.googleapis.com/v1/courses/$courseId/courseWorkMaterials',
       ),
       headers: {
-        'Authorization':
-        'Bearer ${auth.accessToken}',
+        'Authorization': 'Bearer ${auth.accessToken}',
       },
     );
 
@@ -264,48 +226,33 @@ class GoogleClassroomService {
       );
     }
 
-    final data =
-    jsonDecode(response.body);
+    final data = jsonDecode(response.body);
 
     final materials =
-        (data['courseWorkMaterial']
-        as List?)
-            ?.cast<Map<String, dynamic>>() ??
+        (data['courseWorkMaterial'] as List?)?.cast<Map<String, dynamic>>() ??
             [];
 
-    final result =
-    <ClassroomMaterial>[];
+    final result = <ClassroomMaterial>[];
 
     for (final material in materials) {
-      final files =
-      <ClassroomDriveFile>[];
+      final files = <ClassroomDriveFile>[];
 
-      final attachments =
-          material['materials']
-          as List? ??
-              [];
+      final attachments = material['materials'] as List? ?? [];
 
-      for (final attachment
-      in attachments) {
-        final driveFile =
-        attachment['driveFile'];
+      for (final attachment in attachments) {
+        final driveFile = attachment['driveFile'];
 
         if (driveFile == null) {
           continue;
         }
 
-        final driveFileData =
-        driveFile['driveFile'];
+        final driveFileData = driveFile['driveFile'];
 
         files.add(
           ClassroomDriveFile(
             id: driveFileData['id'],
-            title:
-            driveFileData['title'] ??
-                'Untitled',
-            alternateLink:
-            driveFileData['alternateLink'] ??
-                '',
+            title: driveFileData['title'] ?? 'Untitled',
+            alternateLink: driveFileData['alternateLink'] ?? '',
           ),
         );
       }
@@ -316,11 +263,8 @@ class GoogleClassroomService {
 
       result.add(
         ClassroomMaterial(
-          id:
-          material['id'],
-          title:
-          material['title'] ??
-              'Untitled',
+          id: material['id'],
+          title: material['title'] ?? 'Untitled',
           files: files,
         ),
       );
@@ -342,13 +286,12 @@ class ClassroomCourse {
   final String courseState;
 
   factory ClassroomCourse.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return ClassroomCourse(
       id: json['id'],
       name: json['name'] ?? 'Untitled',
-      courseState:
-      json['courseState'] ?? 'ACTIVE',
+      courseState: json['courseState'] ?? 'ACTIVE',
     );
   }
 }

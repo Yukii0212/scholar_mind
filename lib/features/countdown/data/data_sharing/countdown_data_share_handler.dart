@@ -2,14 +2,14 @@ import '../../../data_sharing/domain/models/share/share_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
 import '../../../data_sharing/domain/models/validation/validation_result.dart';
 import '../../../data_sharing/registry/data_share_handler.dart';
+import '../../../data_sharing/services/share_resource_validator.dart';
 import '../../domain/countdown_item.dart';
 import '../countdown_repository.dart';
 import 'countdown_collection_service.dart';
 import 'countdown_export_mapper.dart';
 import 'countdown_import_mapper.dart';
 
-class CountdownDataShareHandler
-    implements DataShareHandler {
+class CountdownDataShareHandler implements DataShareHandler {
   CountdownDataShareHandler({
     required CountdownCollectionService collector,
     required CountdownRepository repository,
@@ -17,10 +17,8 @@ class CountdownDataShareHandler
     CountdownImportMapper? importMapper,
   })  : _collector = collector,
         _repository = repository,
-        _exportMapper =
-            exportMapper ?? const CountdownExportMapper(),
-        _importMapper =
-            importMapper ?? const CountdownImportMapper();
+        _exportMapper = exportMapper ?? const CountdownExportMapper(),
+        _importMapper = importMapper ?? const CountdownImportMapper();
 
   final CountdownCollectionService _collector;
 
@@ -32,13 +30,13 @@ class CountdownDataShareHandler
 
   @override
   List<ShareResourceType> get resourceTypes => const [
-    ShareResourceType.countdown,
-  ];
+        ShareResourceType.countdown,
+      ];
 
   @override
   ValidationResult validateExport(
-      List<String> resourceIds,
-      ) {
+    List<String> resourceIds,
+  ) {
     if (resourceIds.isEmpty) {
       return const ValidationResult(
         isValid: false,
@@ -55,11 +53,30 @@ class CountdownDataShareHandler
 
   @override
   ValidationResult validateImport(
-      ShareResource resource,
-      ) {
-    return const ValidationResult(
-      isValid: true,
+    ShareResource resource,
+  ) {
+    final validator = ShareResourceValidator(
+      resource,
+      supportedTypes: resourceTypes.toSet(),
     );
+
+    validator.requireAllowedValue(
+      'type',
+      CountdownType.values.map((value) => value.id),
+    );
+    validator.requireInt('priority');
+    validator.requireDate('dueDate');
+    validator.optionalString('description');
+    validator.optionalBool('deadlineExtendable');
+
+    return validator.result();
+  }
+
+  @override
+  ValidationResult validateImportBatch(
+    List<ShareResource> resources,
+  ) {
+    return const ValidationResult(isValid: true);
   }
 
   @override
@@ -68,23 +85,26 @@ class CountdownDataShareHandler
     required List<String> resourceIds,
     required String shareId,
     void Function(String message)? onProgress,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
     final collected = await _collector.collect(
       userId: userId,
       resourceIds: resourceIds,
     );
+    ensureSessionCurrent?.call();
 
-    return collected.resources
-        .map(_exportMapper.toResource)
-        .toList();
+    return collected.resources.map(_exportMapper.toResource).toList();
   }
 
   @override
   Future<void> import({
     required String userId,
     required List<ShareResource> resources,
+    void Function()? ensureSessionCurrent,
   }) async {
     for (final resource in resources) {
+      ensureSessionCurrent?.call();
       final payload = _importMapper.payloadOf(resource);
 
       await _repository.importCountdown(
@@ -98,9 +118,9 @@ class CountdownDataShareHandler
           payload['dueDate'] as String,
         ),
         description: payload['description'] as String?,
-        deadlineExtendable:
-        payload['deadlineExtendable'] as bool? ?? false,
+        deadlineExtendable: payload['deadlineExtendable'] as bool? ?? false,
       );
+      ensureSessionCurrent?.call();
     }
   }
 }

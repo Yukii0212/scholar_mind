@@ -19,7 +19,6 @@ class CountdownScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countdownsAsync = ref.watch(countdownsProvider);
-    final upcoming = ref.watch(upcomingCountdownsProvider);
     final userId = ref.watch(activeUserProvider)?.uid;
 
     return Scaffold(
@@ -35,9 +34,7 @@ class CountdownScreen extends ConsumerWidget {
             SpeedDialChild(
               child: const Icon(Icons.event_note_outlined),
               label: 'New Countdown',
-              onTap: userId == null
-                  ? null
-                  : () => _openCountdownCrud(context),
+              onTap: userId == null ? null : () => _openCountdownCrud(context),
             ),
           ],
         ),
@@ -45,45 +42,44 @@ class CountdownScreen extends ConsumerWidget {
       body: SafeArea(
         top: false,
         child: countdownsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(
-            child: Text('Unable to load countdowns: $error'),
-          ),
-          data: (items) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 112),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 980),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const ScholarSectionHeader(
-                        title: 'Countdown',
-                        subtitle:
-                        'Track exams, assessments, and important deadlines',
-                      ),
-                      const Gap(16),
-                      _CountdownSummary(items: items),
-                      const Gap(16),
-                      if (items.isEmpty)
-                        const _EmptyCountdowns()
-                      else
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ActiveSection(),
-                            CompletedSection(),
-                            HiddenSection(),
-                          ],
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(
+                  child: Text('Unable to load countdowns: $error'),
+                ),
+            data: (items) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 112),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 980),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ScholarSectionHeader(
+                          title: 'Countdown',
+                          subtitle:
+                              'Track exams, assessments, and important deadlines',
                         ),
-                    ],
+                        const Gap(16),
+                        _CountdownSummary(items: items),
+                        const Gap(16),
+                        if (items.isEmpty)
+                          const _EmptyCountdowns()
+                        else
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ActiveSection(),
+                              CompletedSection(),
+                              HiddenSection(),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          }
-        ),
+              );
+            }),
       ),
     );
   }

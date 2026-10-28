@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../auth/providers/auth_provider.dart';
 import '../../../data/models/semester_model.dart';
 import '../../../providers/semester/semester_provider.dart';
 import '../../common/month_year_picker.dart';
@@ -13,8 +14,7 @@ class CreateSemesterDialog extends ConsumerStatefulWidget {
       _CreateSemesterDialogState();
 }
 
-class _CreateSemesterDialogState
-    extends ConsumerState<CreateSemesterDialog> {
+class _CreateSemesterDialogState extends ConsumerState<CreateSemesterDialog> {
   final _nameController = TextEditingController();
 
   final now = DateTime.now();
@@ -62,20 +62,19 @@ class _CreateSemesterDialogState
 
     final endDate = _useExactDates
         ? DateTime(
-      _endYear,
-      _endMonth,
-      _endDay,
-    )
+            _endYear,
+            _endMonth,
+            _endDay,
+          )
         : DateTime(
-      _endYear,
-      _endMonth + 1,
-      0,
-    );
+            _endYear,
+            _endMonth + 1,
+            0,
+          );
 
     if (endDate.isBefore(startDate)) {
       setState(() {
-        _dateError =
-        'End date cannot be earlier than the start date.';
+        _dateError = 'End date cannot be earlier than the start date.';
       });
 
       return;
@@ -93,18 +92,21 @@ class _CreateSemesterDialogState
       updatedAt: DateTime.now(),
     );
 
-    final repository =
-    ref.read(semesterRepositoryProvider);
+    final repository = ref.read(semesterRepositoryProvider);
+    final userId = ref.read(activeUserProvider)?.uid;
 
-    final hasOverlap =
-    await repository.hasOverlappingSemester(
+    if (userId == null) {
+      return;
+    }
+
+    final hasOverlap = await repository.hasOverlappingSemester(
+      userId: userId,
       startDate: startDate,
       endDate: endDate,
     );
 
     if (hasOverlap) {
-      final shouldContinue =
-          await showDialog<bool>(
+      final shouldContinue = await showDialog<bool>(
             context: context,
             builder: (dialogContext) {
               return AlertDialog(
@@ -113,7 +115,7 @@ class _CreateSemesterDialogState
                 ),
                 content: const Text(
                   'This semester overlaps an existing semester.\n\n'
-                      'Do you want to create it anyway?',
+                  'Do you want to create it anyway?',
                 ),
                 actions: [
                   TextButton(
@@ -138,14 +140,18 @@ class _CreateSemesterDialogState
               );
             },
           ) ??
-              false;
+          false;
 
       if (!shouldContinue) {
         return;
       }
     }
 
-    await repository.createSemester(semester);
+    if (ref.read(activeUserProvider)?.uid != userId) {
+      return;
+    }
+
+    await repository.createSemester(userId, semester);
     if (!mounted) {
       return;
     }
@@ -182,9 +188,7 @@ class _CreateSemesterDialogState
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
                 TextField(
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
@@ -203,9 +207,7 @@ class _CreateSemesterDialogState
                     errorText: _nameError,
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 MonthYearPicker(
                   label: 'Start',
                   showDay: _useExactDates,
@@ -222,9 +224,7 @@ class _CreateSemesterDialogState
                     setState(() => _startYear = value);
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 MonthYearPicker(
                   label: 'End',
                   errorText: _dateError,
@@ -251,9 +251,7 @@ class _CreateSemesterDialogState
                     });
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Specify exact dates'),
@@ -264,7 +262,6 @@ class _CreateSemesterDialogState
                     });
                   },
                 ),
-
                 if (_dateError != null) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -274,9 +271,7 @@ class _CreateSemesterDialogState
                     ),
                   ),
                 ],
-
                 const SizedBox(height: 24),
-
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
@@ -284,9 +279,7 @@ class _CreateSemesterDialogState
                     child: const Text('Create'),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(

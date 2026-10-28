@@ -1,45 +1,56 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/providers/auth_provider.dart';
 import '../../services/grading/grading_structure_persistence_service.dart';
 import 'grading_provider.dart';
 import 'grading_structure_draft_provider.dart';
 
-final gradingStructureControllerProvider =
-Provider<GradingStructureController>(
-      (ref) => GradingStructureController(ref),
+final gradingStructureControllerProvider = Provider<GradingStructureController>(
+  (ref) => GradingStructureController(ref),
 );
 
 class GradingStructureController {
   const GradingStructureController(
-      this._ref,
-      );
+    this._ref,
+  );
 
   final Ref _ref;
 
   Future<void> loadCourse(
-      String courseId,
-      ) async {
+    String courseId,
+  ) async {
+    final userId = _ref.read(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      return;
+    }
+
     final repository = _ref.read(
       gradingComponentRepositoryProvider,
     );
 
-    final draft =
-    await GradingStructurePersistenceService
-        .loadCourseOrEmpty(
+    final draft = await GradingStructurePersistenceService.loadCourseOrEmpty(
+      userId: userId,
       courseId: courseId,
       repository: repository,
     );
 
     _ref
         .read(
-      gradingStructureDraftProvider.notifier,
-    )
+          gradingStructureDraftProvider.notifier,
+        )
         .load(draft);
   }
 
   Future<void> saveCourse(
-      String courseId,
-      ) async {
+    String courseId,
+  ) async {
+    final userId = _ref.read(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      return;
+    }
+
     final repository = _ref.read(
       gradingComponentRepositoryProvider,
     );
@@ -48,8 +59,8 @@ class GradingStructureController {
       gradingStructureDraftProvider,
     );
 
-    await GradingStructurePersistenceService
-        .saveCourse(
+    await GradingStructurePersistenceService.saveCourse(
+      userId: userId,
       courseId: courseId,
       draft: draft,
       repository: repository,
@@ -59,8 +70,8 @@ class GradingStructureController {
   void discard() {
     _ref
         .read(
-      gradingStructureDraftProvider.notifier,
-    )
+          gradingStructureDraftProvider.notifier,
+        )
         .reset();
   }
 }

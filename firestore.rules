@@ -10,6 +10,26 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function ownsSemester(semesterId, courseCreatedAt) {
+      return isSignedIn()
+        && semesterId is string
+        && courseCreatedAt is timestamp
+        && exists(
+          /databases/$(database)/documents/users/$(request.auth.uid)/semesters/$(semesterId)
+        )
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)/semesters/$(semesterId)
+        ).data.createdAt <= courseCreatedAt;
+    }
+
+    function ownsCourse(courseId) {
+      return isSignedIn()
+        && courseId is string
+        && get(
+          /databases/$(database)/documents/courses/$(courseId)
+        ).data.ownerId == request.auth.uid;
+    }
+
     match /users/{userId} {
       allow read, delete: if isOwner(userId);
       allow create, update: if isOwner(userId)
@@ -105,32 +125,52 @@ service cloud.firestore {
 
       match /semesters/{semesterId} {
         allow read, delete: if isOwner(userId);
-        allow create, update: if isOwner(userId)
-          && validSemester(request.resource.data);
+        allow create: if isOwner(userId)
+          && validSemester(request.resource.data)
+          && request.resource.data.id == semesterId
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && validSemester(request.resource.data)
+          && request.resource.data.id == semesterId
+          && request.resource.data.createdAt == resource.data.createdAt;
       }
     }
 
-    // Grades: `courses` and `grading_components` are top-level collections
-    // with no owning-user path segment or field anywhere in the current
-    // data model (CourseModel/GradingComponentModel have no ownerId).
-    // They cannot be scoped to a specific owner via security rules alone
-    // without a data-model change, so they're left open to any signed-in
-    // user here -- this matches current (deployed) behavior, it is not a
-    // regression, but it is a known gap. A real fix needs an ownerId field
-    // added to both models plus a migration of existing documents.
-    // NOTE (pending -- do not deploy until confirmed): tightened from
-    // isSignedIn() to real per-owner checks now that Course/GradingComponent
-    // carry an ownerId field. Existing documents need
-    // GradesOwnershipBackfill (lib/features/grades/providers/
-    // grades_ownership_backfill_provider.dart) to have run at least once
-    // against the rebuilt app before this is deployed, or it will 403
-    // not-yet-migrated courses for their own owner.
+    // Courses are top-level for historical reasons. A course's semesterId
+    // points to a semester under its owner's /users/{uid} tree, which is the
+    // ownership signal used only while legacy documents are being backfilled.
     match /courses/{courseId} {
-      allow read, delete: if isSignedIn()
+      allow read: if isSignedIn()
+        && ((('ownerId' in resource.data)
+            && resource.data.ownerId == request.auth.uid)
+          || ownsSemester(
+            resource.data.semesterId,
+            resource.data.createdAt
+          ));
+      allow delete: if isSignedIn()
         && resource.data.ownerId == request.auth.uid;
-      allow create, update: if isSignedIn()
+      allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
+        && ownsSemester(
+          request.resource.data.semesterId,
+          request.resource.data.createdAt
+        )
         && validCourse(request.resource.data);
+      allow update: if isSignedIn()
+        && validCourse(request.resource.data)
+        && (
+          (
+            ('ownerId' in resource.data)
+            && resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId
+            && ownsSemester(
+              request.resource.data.semesterId,
+              request.resource.data.createdAt
+            )
+          )
+          || isLegacyCourseOwnerBackfill()
+        );
 
       match /assessmentEntries/{entryId} {
         allow read, delete: if isSignedIn()
@@ -144,11 +184,27 @@ service cloud.firestore {
     }
 
     match /grading_components/{componentId} {
-      allow read, delete: if isSignedIn()
+      allow read: if isSignedIn()
+        && ((('ownerId' in resource.data)
+            && resource.data.ownerId == request.auth.uid)
+          || ownsCourse(resource.data.courseId));
+      allow delete: if isSignedIn()
         && resource.data.ownerId == request.auth.uid;
-      allow create, update: if isSignedIn()
+      allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
+        && ownsCourse(request.resource.data.courseId)
         && validGradingComponent(request.resource.data);
+      allow update: if isSignedIn()
+        && validGradingComponent(request.resource.data)
+        && (
+          (
+            ('ownerId' in resource.data)
+            && resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId
+            && ownsCourse(request.resource.data.courseId)
+          )
+          || isLegacyComponentOwnerBackfill()
+        );
     }
 
     // Share links: readable by any signed-in user (the whole point is that
@@ -167,15 +223,30 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
         && validExportLink(request.resource.data);
-      // Owners can update/revoke their own link freely. Importers aren't
-      // owners, but still need to be able to record that they imported one
-      // -- scoped narrowly so that write can only ever bump downloadCount
-      // by exactly one and can't touch anything else on the doc.
-      allow update: if (isSignedIn()
-          && resource.data.ownerId == request.auth.uid)
+      // Owners can only revoke; immutable owner/path/expiry fields keep the
+      // Storage authorization record trustworthy. Importers may only bump
+      // downloadCount on a still-active link.
+      allow update: if isOwnerRevocation()
         || isDownloadCountIncrement();
       allow delete: if isSignedIn()
         && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Immutable mapping from a shared_exports Storage directory to the
+    // public export_links document that authorizes it. Keeping this separate
+    // preserves existing public share ids whose Storage folder id differs.
+    match /export_storage_access/{storageShareId} {
+      allow get: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
+      allow list: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && validExportStorageAccess(
+          request.resource.data,
+          storageShareId
+        );
+      allow update, delete: if false;
     }
 
     function validFolder(data) {
@@ -633,14 +704,32 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
-    // ownerId is optional here (rather than required) so the backfill
-    // migration's merge write -- which only sets ownerId on an existing,
-    // otherwise-already-valid document -- still validates during the
-    // transition window before every course has one. Actual write access
-    // is still gated by the ownerId match in the `courses` match block
-    // above, not by this function.
+    function isLegacyCourseOwnerBackfill() {
+      return (!('ownerId' in resource.data)
+          || (('ownerId' in resource.data)
+            && resource.data.ownerId == ''))
+        && ownsSemester(
+          resource.data.semesterId,
+          resource.data.createdAt
+        )
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly(['ownerId']);
+    }
+
+    function isLegacyComponentOwnerBackfill() {
+      return (!('ownerId' in resource.data)
+          || (('ownerId' in resource.data)
+            && resource.data.ownerId == ''))
+        && ownsCourse(resource.data.courseId)
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly(['ownerId']);
+    }
+
     function validCourse(data) {
       return data.keys().hasAll([
+          'ownerId',
           'semesterId',
           'name',
           'targetScore',
@@ -659,7 +748,8 @@ service cloud.firestore {
           'createdAt',
           'updatedAt'
         ])
-        && (!('ownerId' in data) || data.ownerId is string)
+        && data.ownerId is string
+        && data.ownerId.size() > 0
         && data.semesterId is string
         && data.name is string
         && data.name.size() > 0
@@ -673,6 +763,7 @@ service cloud.firestore {
 
     function validGradingComponent(data) {
       return data.keys().hasAll([
+          'ownerId',
           'courseId',
           'parentId',
           'name',
@@ -691,7 +782,8 @@ service cloud.firestore {
           'createdAt',
           'updatedAt'
         ])
-        && (!('ownerId' in data) || data.ownerId is string)
+        && data.ownerId is string
+        && data.ownerId.size() > 0
         && data.courseId is string
         && (data.parentId == null || data.parentId is string)
         && data.name is string
@@ -744,8 +836,20 @@ service cloud.firestore {
 
     function isDownloadCountIncrement() {
       return isSignedIn()
+        && resource.data.isRevoked == false
+        && (resource.data.expiresAt == null
+          || request.time < resource.data.expiresAt)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloadCount'])
         && request.resource.data.downloadCount == resource.data.downloadCount + 1;
+    }
+
+    function isOwnerRevocation() {
+      return isSignedIn()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.isRevoked == true
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly(['isRevoked']);
     }
 
     function validExportLink(data) {
@@ -774,6 +878,29 @@ service cloud.firestore {
         && (data.expiresAt == null || data.expiresAt is timestamp)
         && data.downloadCount is int
         && data.isRevoked is bool;
+    }
+
+    function validExportStorageAccess(data, storageShareId) {
+      return data.keys().hasAll([
+          'ownerId',
+          'shareLinkId',
+          'storagePath'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'shareLinkId',
+          'storagePath'
+        ])
+        && data.ownerId is string
+        && data.shareLinkId is string
+        && data.storagePath == 'users/' + data.ownerId
+          + '/shared_exports/' + storageShareId + '/archive.json'
+        && getAfter(
+          /databases/$(database)/documents/export_links/$(data.shareLinkId)
+        ).data.ownerId == request.auth.uid
+        && getAfter(
+          /databases/$(database)/documents/export_links/$(data.shareLinkId)
+        ).data.storagePath == data.storagePath;
     }
   }
 }

@@ -2,14 +2,14 @@ import '../../../data_sharing/domain/models/share/share_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
 import '../../../data_sharing/domain/models/validation/validation_result.dart';
 import '../../../data_sharing/registry/data_share_handler.dart';
+import '../../../data_sharing/services/share_resource_validator.dart';
 import '../../domain/flashcard_models.dart';
 import '../flashcard_repository.dart';
 import 'flashcard_collection_service.dart';
 import 'flashcard_export_mapper.dart';
 import 'flashcard_import_mapper.dart';
 
-class FlashcardDataShareHandler
-    implements DataShareHandler {
+class FlashcardDataShareHandler implements DataShareHandler {
   FlashcardDataShareHandler({
     required FlashcardCollectionService collector,
     required FlashcardRepository repository,
@@ -17,10 +17,8 @@ class FlashcardDataShareHandler
     FlashcardImportMapper? importMapper,
   })  : _collector = collector,
         _repository = repository,
-        _exportMapper =
-            exportMapper ?? const FlashcardExportMapper(),
-        _importMapper =
-            importMapper ?? const FlashcardImportMapper();
+        _exportMapper = exportMapper ?? const FlashcardExportMapper(),
+        _importMapper = importMapper ?? const FlashcardImportMapper();
 
   final FlashcardCollectionService _collector;
 
@@ -32,14 +30,14 @@ class FlashcardDataShareHandler
 
   @override
   List<ShareResourceType> get resourceTypes => const [
-    ShareResourceType.flashcardSet,
-    ShareResourceType.flashcard,
-  ];
+        ShareResourceType.flashcardSet,
+        ShareResourceType.flashcard,
+      ];
 
   @override
   ValidationResult validateExport(
-      List<String> resourceIds,
-      ) {
+    List<String> resourceIds,
+  ) {
     if (resourceIds.isEmpty) {
       return const ValidationResult(
         isValid: false,
@@ -56,11 +54,65 @@ class FlashcardDataShareHandler
 
   @override
   ValidationResult validateImport(
-      ShareResource resource,
-      ) {
-    return const ValidationResult(
-      isValid: true,
+    ShareResource resource,
+  ) {
+    final validator = ShareResourceValidator(
+      resource,
+      supportedTypes: resourceTypes.toSet(),
     );
+
+    switch (resource.resourceType) {
+      case ShareResourceType.flashcardSet:
+        validator.optionalStringList('tags');
+        validator.requireAllowedValue(
+          'generationMethod',
+          FlashcardGenerationMethod.values.map((value) => value.name),
+        );
+        validator.optionalString('sourceReference');
+        validator.optionalString('description');
+        break;
+      case ShareResourceType.flashcard:
+        validator.requireString('setId');
+        validator.requireString('front');
+        validator.requireString('back');
+        validator.optionalStringList('tags');
+        validator.optionalString('frontImageUrl');
+        validator.optionalString('backImageUrl');
+        break;
+      default:
+        break;
+    }
+
+    return validator.result();
+  }
+
+  @override
+  ValidationResult validateImportBatch(List<ShareResource> resources) {
+    final setIds = resources
+        .where(
+          (resource) => resource.resourceType == ShareResourceType.flashcardSet,
+        )
+        .map((resource) => resource.resourceId)
+        .toSet();
+    final orphanCards = resources.where((resource) {
+      if (resource.resourceType != ShareResourceType.flashcard) {
+        return false;
+      }
+
+      return !setIds.contains(resource.payload['setId']);
+    }).toList();
+
+    if (orphanCards.isNotEmpty) {
+      return ValidationResult(
+        isValid: false,
+        errors: [
+          '${orphanCards.length} flashcard(s) reference a set that is not '
+              'included in the import.',
+        ],
+      );
+    }
+
+    return const ValidationResult(isValid: true);
   }
 
   @override
@@ -69,22 +121,25 @@ class FlashcardDataShareHandler
     required List<String> resourceIds,
     required String shareId,
     void Function(String message)? onProgress,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
     final collected = await _collector.collect(
       userId: userId,
       resourceIds: resourceIds,
     );
+    ensureSessionCurrent?.call();
 
-    return collected.resources
-        .map(_exportMapper.toResource)
-        .toList();
+    return collected.resources.map(_exportMapper.toResource).toList();
   }
 
   @override
   Future<void> import({
     required String userId,
     required List<ShareResource> resources,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
     if (resources.isEmpty) {
       return;
     }
@@ -93,40 +148,37 @@ class FlashcardDataShareHandler
 
     final sets = resources
         .where(
-          (resource) =>
-      resource.resourceType ==
-          ShareResourceType.flashcardSet,
-    )
+          (resource) => resource.resourceType == ShareResourceType.flashcardSet,
+        )
         .toList();
 
     final cards = resources
         .where(
-          (resource) =>
-      resource.resourceType ==
-          ShareResourceType.flashcard,
-    )
+          (resource) => resource.resourceType == ShareResourceType.flashcard,
+        )
         .toList();
 
     for (final resource in sets) {
+      ensureSessionCurrent?.call();
       final payload = _importMapper.setPayload(resource);
 
       final newSetId = await _repository.saveSet(
         userId: userId,
         name: resource.metadata.displayName,
-        tags: (payload['tags'] as List<dynamic>?)
-            ?.cast<String>() ??
-            const [],
+        tags: (payload['tags'] as List<dynamic>?)?.cast<String>() ?? const [],
         generationMethod: FlashcardGenerationMethod.fromJson(
           payload['generationMethod'] as String?,
         ),
         sourceReference: payload['sourceReference'] as String?,
         description: payload['description'] as String?,
       );
+      ensureSessionCurrent?.call();
 
       setIdMap[resource.resourceId] = newSetId;
     }
 
     for (final resource in cards) {
+      ensureSessionCurrent?.call();
       final payload = _importMapper.cardPayload(resource);
 
       final newSetId = setIdMap[payload['setId'] as String?];
@@ -140,12 +192,11 @@ class FlashcardDataShareHandler
         setId: newSetId,
         front: payload['front'] as String? ?? '',
         back: payload['back'] as String? ?? '',
-        tags: (payload['tags'] as List<dynamic>?)
-            ?.cast<String>() ??
-            const [],
+        tags: (payload['tags'] as List<dynamic>?)?.cast<String>() ?? const [],
         frontImageUrl: payload['frontImageUrl'] as String?,
         backImageUrl: payload['backImageUrl'] as String?,
       );
+      ensureSessionCurrent?.call();
     }
   }
 }

@@ -368,13 +368,20 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     final taskController = ref.read(appTaskControllerProvider);
 
     unawaited(
-      taskController.run<void>(
+      taskController.runSession<void>(
         id: 'notes_bulk_delete',
         type: AppTaskType.bulkDelete,
         title: 'Emptying Notes trash',
-        task: (progress) => repository.permanentlyDeleteAll(
-          userId: userId,
-        ),
+        task: (session, progress) {
+          if (session.userId != userId) {
+            throw const AppTaskSessionChangedException();
+          }
+
+          return repository.permanentlyDeleteAll(
+            userId: userId,
+            ensureSessionCurrent: session.throwIfChanged,
+          );
+        },
       ),
     );
 
@@ -803,8 +810,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     // Uploaded files keep a locked extension so renaming can't produce a
     // file the OS/other apps no longer recognise — only the base name is
     // editable. Internal notes have no extension and are unaffected.
-    final hasLockedExtension =
-        !note.isInternal && note.extension.isNotEmpty;
+    final hasLockedExtension = !note.isInternal && note.extension.isNotEmpty;
 
     final extensionSuffix = '.${note.extension}';
 
@@ -832,8 +838,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             autofocus: true,
             decoration: InputDecoration(
               labelText: 'Note name',
-              suffixText:
-                  hasLockedExtension ? extensionSuffix : null,
+              suffixText: hasLockedExtension ? extensionSuffix : null,
             ),
           ),
           actions: [
@@ -848,9 +853,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 if (value.isNotEmpty) {
                   Navigator.pop(
                     dialogContext,
-                    hasLockedExtension
-                        ? '$value$extensionSuffix'
-                        : value,
+                    hasLockedExtension ? '$value$extensionSuffix' : value,
                   );
                 }
               },

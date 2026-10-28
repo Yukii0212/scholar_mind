@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +23,6 @@ import '../help/standing_chip_preview_provider.dart';
 import '../../countdown/domain/countdown_item.dart';
 import '../../countdown/providers/countdown_provider.dart';
 import '../../countdown/screens/countdown_crud_screen.dart';
-import '../../countdown/widgets/countdown_dashboard_card.dart';
 import '../../quiz/domain/quiz_attempt.dart';
 import '../../quiz/screens/quiz_viewer_screen.dart';
 import '../providers/dashboard_scroll_provider.dart';
@@ -63,6 +64,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late final BackgroundSyncService _backgroundSync;
+  late final ProviderSubscription<User?> _activeUserSubscription;
+
+  Future<void> _syncTransition = Future.value();
+  bool _isDisposed = false;
 
   int _locationToIndex(String location) {
     for (var i = 0; i < _navRoutes.length; i++) {
@@ -76,13 +81,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
 
     _backgroundSync = BackgroundSyncService();
-    _backgroundSync.start(ref.read(allUploadedNotesProvider.stream));
+    _activeUserSubscription = ref.listenManual<User?>(
+      activeUserProvider,
+      (_, user) => _scheduleBackgroundSync(user?.uid),
+      fireImmediately: true,
+    );
   }
 
   @override
   void dispose() {
-    _backgroundSync.stop();
+    _isDisposed = true;
+    _activeUserSubscription.close();
+    unawaited(_backgroundSync.stop());
     super.dispose();
+  }
+
+  void _scheduleBackgroundSync(String? userId) {
+    _syncTransition = _syncTransition
+        .then<void>(
+      (_) {},
+      onError: (_, __) {},
+    )
+        .then((_) async {
+      try {
+        await _backgroundSync.stop();
+      } catch (_) {
+        return;
+      }
+
+      if (_isDisposed ||
+          userId == null ||
+          ref.read(activeUserProvider)?.uid != userId) {
+        return;
+      }
+
+      _backgroundSync.start(
+        userId: userId,
+        notesStream:
+            ref.read(libraryRepositoryProvider).watchDeletedNotes(userId),
+      );
+    });
   }
 
   void _onNavTap(int index, int selectedIndex) {
@@ -128,9 +166,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   .state = preview,
               setNotesFabOpen: (value) =>
                   ref.read(notesFabOpenProvider.notifier).state = value,
-              setNotesSection: (section) =>
-                  ref.read(notesSectionOverrideProvider.notifier).state =
-                      section,
+              setNotesSection: (section) => ref
+                  .read(notesSectionOverrideProvider.notifier)
+                  .state = section,
             ),
           ),
           _UserAvatar(
@@ -623,8 +661,6 @@ class _TaskRow extends StatelessWidget {
     );
   }
 }
-
-
 
 class _GenerateQuizBanner extends StatelessWidget {
   const _GenerateQuizBanner();

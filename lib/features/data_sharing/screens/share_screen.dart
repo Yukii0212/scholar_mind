@@ -29,12 +29,10 @@ class ShareScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ShareScreen> createState() =>
-      _ShareScreenState();
+  ConsumerState<ShareScreen> createState() => _ShareScreenState();
 }
 
-class _ShareScreenState
-    extends ConsumerState<ShareScreen> {
+class _ShareScreenState extends ConsumerState<ShareScreen> {
   var _selectedIndex = 1;
 
   ShareResult? _share;
@@ -52,30 +50,38 @@ class _ShareScreenState
     });
 
     unawaited(
-      ref.read(appTaskControllerProvider).run<ShareResult?>(
-        id: taskId,
-        type: AppTaskType.export,
-        title: 'Generating share link',
-        task: (progress) => ref
-            .read(exportControllerProvider.notifier)
-            .generateShare(
-          expiry: _expiry,
-          shareId: shareId,
-          onProgress: progress,
-        ),
-        onOpen: (context, task) {
-          if (task.status == AppTaskStatus.completed) {
-            context.push('/share/links');
-            return;
-          }
+      ref.read(appTaskControllerProvider).runSession<ShareResult?>(
+            id: taskId,
+            type: AppTaskType.export,
+            title: 'Generating share link',
+            task: (session, progress) {
+              final userId = session.userId;
 
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const AppTaskDetailsScreen(),
-            ),
-          );
-        },
-      ),
+              if (userId == null) {
+                throw const AppTaskSessionChangedException();
+              }
+
+              return ref.read(exportControllerProvider.notifier).generateShare(
+                    expiry: _expiry,
+                    userId: userId,
+                    ensureSessionCurrent: session.throwIfChanged,
+                    shareId: shareId,
+                    onProgress: progress,
+                  );
+            },
+            onOpen: (context, task) {
+              if (task.status == AppTaskStatus.completed) {
+                context.push('/share/links');
+                return;
+              }
+
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AppTaskDetailsScreen(),
+                ),
+              );
+            },
+          ),
     );
   }
 
@@ -177,10 +183,8 @@ class _ShareScreenState
                 'Anyone with ScholarMind can import these materials.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-
               if (!hasShare) ...[
                 const SizedBox(height: 24),
-
                 DropdownButtonFormField<ShareExpiry>(
                   value: _expiry,
                   decoration: const InputDecoration(
@@ -190,10 +194,10 @@ class _ShareScreenState
                   items: ShareExpiry.values
                       .map(
                         (expiry) => DropdownMenuItem(
-                      value: expiry,
-                      child: Text(expiry.label),
-                    ),
-                  )
+                          value: expiry,
+                          child: Text(expiry.label),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {
                     if (value == null) {
@@ -205,9 +209,7 @@ class _ShareScreenState
                     });
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 HelpAnchor(
                   pageId: shareScreenHelpPageId,
                   anchorId: 'generate-button',
@@ -215,21 +217,19 @@ class _ShareScreenState
                     onPressed: generating ? null : _startGenerate,
                     icon: generating
                         ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Icon(Icons.link),
                     label: const Text(
                       'Generate Link',
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 if (generating)
                   Text(
                     activeTask.message.isNotEmpty
@@ -245,18 +245,16 @@ class _ShareScreenState
                       return stats.when(
                         data: (value) => value.hasSelection
                             ? Text(
-                          'Estimated time: '
-                              '${estimateExportDuration(value)}',
-                          style:
-                          Theme.of(context).textTheme.bodySmall,
-                        )
+                                'Estimated time: '
+                                '${estimateExportDuration(value)}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              )
                             : const SizedBox.shrink(),
                         loading: () => const SizedBox.shrink(),
                         error: (_, __) => const SizedBox.shrink(),
                       );
                     },
                   ),
-
                 Text(
                   'You can leave this screen while your link '
                   'is generating — it keeps working in the '
@@ -271,14 +269,11 @@ class _ShareScreenState
                       ),
                 ),
               ],
-
               if (hasShare) ...[
                 const SizedBox(height: 24),
                 ShareContentsBanner(share: _share!),
               ],
-
               const SizedBox(height: 24),
-
               HelpAnchor(
                 pageId: shareScreenHelpPageId,
                 anchorId: 'view-tabs',
@@ -306,20 +301,18 @@ class _ShareScreenState
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
               SizedBox(
                 height: MediaQuery.sizeOf(context).height * 0.55,
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: _selectedIndex == 0
                       ? ShareQrView(
-                    share: _share,
-                  )
+                          share: _share,
+                        )
                       : ShareLinkView(
-                    share: _share,
-                  ),
+                          share: _share,
+                        ),
                 ),
               ),
             ],

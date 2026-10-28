@@ -4,140 +4,128 @@ import '../datasources/grading_component_firestore_datasource.dart';
 import '../models/grading_component_model.dart';
 
 class GradingComponentRepository {
+  static const _batchWriteLimit = 450;
+
   GradingComponentRepository(
-      this._dataSource,
-      );
+    this._dataSource,
+  );
 
-  final GradingComponentFirestoreDataSource
-  _dataSource;
+  final GradingComponentFirestoreDataSource _dataSource;
 
-  Stream<List<GradingComponentModel>>
-  watchCourseComponents(
-      String courseId,
-      ) {
+  Stream<List<GradingComponentModel>> watchCourseComponents(
+    String userId,
+    String courseId,
+  ) {
     return _dataSource.collection
         .where(
-      'ownerId',
-      isEqualTo: _dataSource.currentUserId,
-    )
+          'ownerId',
+          isEqualTo: userId,
+        )
         .where(
-      'courseId',
-      isEqualTo: courseId,
-    )
+          'courseId',
+          isEqualTo: courseId,
+        )
         .orderBy('order')
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
-          .map(
-        GradingComponentModel
-            .fromFirestore,
-      )
-          .toList(),
-    );
+              .map(
+                GradingComponentModel.fromFirestore,
+              )
+              .toList(),
+        );
   }
 
-  Future<void> createComponent(
-      GradingComponentModel component,
-      ) async {
+  Future<void> createComponent({
+    required String userId,
+    required GradingComponentModel component,
+  }) async {
     final owned = component.copyWith(
-      ownerId: _dataSource.currentUserId,
+      ownerId: userId,
     );
 
-    await _dataSource.collection
-        .doc(owned.id)
-        .set(
-      owned.toFirestore(),
-    );
+    await _dataSource.collection.doc(owned.id).set(
+          owned.toFirestore(),
+        );
   }
 
   Future<void> updateComponent(
-      GradingComponentModel component,
-      ) async {
-    await _dataSource.collection
-        .doc(component.id)
-        .update(
-      component
-          .copyWith(
-        updatedAt:
-        DateTime.now(),
-      )
-          .toFirestore(),
-    );
+    GradingComponentModel component,
+  ) async {
+    await _dataSource.collection.doc(component.id).update(
+          component
+              .copyWith(
+                updatedAt: DateTime.now(),
+              )
+              .toFirestore(),
+        );
   }
 
   Future<void> deleteComponent(
-      String componentId,
-      ) async {
-    await _dataSource.collection
-        .doc(componentId)
-        .delete();
+    String componentId,
+  ) async {
+    await _dataSource.collection.doc(componentId).delete();
   }
 
   Future<void> replaceCourseComponents({
+    required String userId,
     required String courseId,
-    required List<GradingComponentModel>
-    components,
+    required List<GradingComponentModel> components,
   }) async {
-    final ownerId = _dataSource.currentUserId;
-
-    final batch =
-    _dataSource.collection.firestore
-        .batch();
-
-    final existing =
-    await _dataSource.collection
+    final existing = await _dataSource.collection
         .where(
-      'ownerId',
-      isEqualTo: ownerId,
-    )
+          'ownerId',
+          isEqualTo: userId,
+        )
         .where(
-      'courseId',
-      isEqualTo: courseId,
-    )
+          'courseId',
+          isEqualTo: courseId,
+        )
         .get();
 
-    for (final doc
-    in existing.docs) {
-      batch.delete(doc.reference);
-    }
+    final writes = <void Function(WriteBatch)>[
+      for (final doc in existing.docs) (batch) => batch.delete(doc.reference),
+      for (final component in components)
+        (batch) => batch.set(
+              _dataSource.collection.doc(component.id),
+              component.copyWith(ownerId: userId).toFirestore(),
+            ),
+    ];
 
-    for (final component
-    in components) {
-      batch.set(
-        _dataSource.collection.doc(
-          component.id,
-        ),
-        component
-            .copyWith(ownerId: ownerId)
-            .toFirestore(),
-      );
-    }
+    for (var start = 0; start < writes.length; start += _batchWriteLimit) {
+      final end = start + _batchWriteLimit < writes.length
+          ? start + _batchWriteLimit
+          : writes.length;
+      final batch = _dataSource.collection.firestore.batch();
 
-    await batch.commit();
+      for (final write in writes.sublist(start, end)) {
+        write(batch);
+      }
+
+      await batch.commit();
+    }
   }
 
-  Future<List<GradingComponentModel>>
-  getCourseComponents(
-      String courseId,
-      ) async {
-    final snapshot =
-    await _dataSource.collection
+  Future<List<GradingComponentModel>> getCourseComponents(
+    String userId,
+    String courseId,
+  ) async {
+    final snapshot = await _dataSource.collection
         .where(
-      'ownerId',
-      isEqualTo: _dataSource.currentUserId,
-    )
+          'ownerId',
+          isEqualTo: userId,
+        )
         .where(
-      'courseId',
-      isEqualTo: courseId,
-    )
+          'courseId',
+          isEqualTo: courseId,
+        )
         .orderBy('order')
         .get();
 
     return snapshot.docs
         .map(
-      GradingComponentModel
-          .fromFirestore,
-    )
+          GradingComponentModel.fromFirestore,
+        )
         .toList();
   }
 
@@ -176,12 +164,16 @@ class GradingComponentRepository {
   Future<void> backfillOwnership({
     required String userId,
     required String courseId,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
     final snapshot = await _dataSource.collection
         .where('courseId', isEqualTo: courseId)
         .get();
+    ensureSessionCurrent?.call();
 
     for (final doc in snapshot.docs) {
+      ensureSessionCurrent?.call();
       final data = doc.data();
 
       if ((data['ownerId'] as String?)?.isNotEmpty ?? false) {
@@ -192,6 +184,7 @@ class GradingComponentRepository {
         {'ownerId': userId},
         SetOptions(merge: true),
       );
+      ensureSessionCurrent?.call();
     }
   }
 }

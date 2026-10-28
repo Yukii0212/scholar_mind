@@ -18,8 +18,8 @@ class SemesterCoursePriority {
 }
 
 final semesterStatisticsProvider =
-FutureProvider.autoDispose.family<List<SemesterCoursePriority>, String>(
-      (ref, semesterId) async {
+    FutureProvider.autoDispose.family<List<SemesterCoursePriority>, String>(
+  (ref, semesterId) async {
     final repository = ref.read(
       gradingComponentRepositoryProvider,
     );
@@ -30,30 +30,23 @@ FutureProvider.autoDispose.family<List<SemesterCoursePriority>, String>(
       ).future,
     );
 
-    final priorities =
-    <SemesterCoursePriority>[];
+    final priorities = <SemesterCoursePriority>[];
 
     for (final course in courses) {
-      final gradingComponents =
-      await repository
-          .getCourseComponents(
+      final gradingComponents = await repository.getCourseComponents(
+        course.ownerId,
         course.id,
       );
 
-      final assessments =
-      await ref.watch(
+      final assessments = await ref.watch(
         assessmentEntriesProvider(
           course.id,
         ).future,
       );
 
-      final summary =
-      CourseCalculationService
-          .calculate(
-        components:
-        gradingComponents,
-        assessments:
-        assessments,
+      final summary = CourseCalculationService.calculate(
+        components: gradingComponents,
+        assessments: assessments,
       );
 
       priorities.add(
@@ -65,17 +58,13 @@ FutureProvider.autoDispose.family<List<SemesterCoursePriority>, String>(
     }
 
     priorities.sort(
-          (a, b) {
-        final aTarget =
-            a.course.targetScore;
-        final bTarget =
-            b.course.targetScore;
+      (a, b) {
+        final aTarget = a.course.targetScore;
+        final bTarget = b.course.targetScore;
 
         // No targets -> alphabetical.
-        if (aTarget == null &&
-            bTarget == null) {
-          return a.course.name
-              .compareTo(
+        if (aTarget == null && bTarget == null) {
+          return a.course.name.compareTo(
             b.course.name,
           );
         }
@@ -89,37 +78,28 @@ FutureProvider.autoDispose.family<List<SemesterCoursePriority>, String>(
           return -1;
         }
 
-        final aAchievable =
-        a.summary.isAchievable(
+        final aAchievable = a.summary.isAchievable(
           aTarget,
         );
 
-        final bAchievable =
-        b.summary.isAchievable(
+        final bAchievable = b.summary.isAchievable(
           bTarget,
         );
 
         // Impossible targets first.
-        if (aAchievable !=
-            bAchievable) {
-          return aAchievable
-              ? 1
-              : -1;
+        if (aAchievable != bAchievable) {
+          return aAchievable ? 1 : -1;
         }
 
-        final aRequired =
-            a.summary
-                .requiredPercentageFor(
+        final aRequired = a.summary.requiredPercentageFor(
               aTarget,
             ) ??
-                0.0;
+            0.0;
 
-        final bRequired =
-            b.summary
-                .requiredPercentageFor(
+        final bRequired = b.summary.requiredPercentageFor(
               bTarget,
             ) ??
-                0.0;
+            0.0;
 
         // Higher required percentage first.
         return bRequired.compareTo(

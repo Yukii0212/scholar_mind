@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../data/quiz_library_repository.dart';
 import '../data/quiz_repository.dart';
@@ -13,24 +12,26 @@ class QuizGenerationService {
   const QuizGenerationService();
 
   Future<QuizAttempt> generate({
+    required String userId,
     required QuizGenerationRequest request,
     required String destinationFolderId,
     void Function(String message)? onProgress,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
 
     onProgress?.call(
       'Generating quiz...',
     );
 
-    final prompt =
-    const QuizPromptBuilder().build(request);
+    final prompt = const QuizPromptBuilder().build(request);
 
-    final QuizResponse quiz =
-    await const OpenAIQuizService()
-        .generateQuiz(
+    final QuizResponse quiz = await const OpenAIQuizService().generateQuiz(
       studyContext: request.studyContext,
       instructions: prompt,
     );
+
+    ensureSessionCurrent?.call();
 
     onProgress?.call(
       'Saving quiz...',
@@ -53,18 +54,21 @@ class QuizGenerationService {
     final repository = QuizRepository();
 
     await repository.saveCurrentAttempt(
-      attempt.toJson(),
+      userId: userId,
+      json: attempt.toJson(),
     );
+
+    ensureSessionCurrent?.call();
 
     await QuizLibraryRepository(
       FirebaseFirestore.instance,
     ).createQuiz(
-      userId:
-      FirebaseAuth.instance.currentUser!.uid,
+      userId: userId,
       quiz: attempt,
     );
+
+    ensureSessionCurrent?.call();
 
     return attempt;
   }
 }
-

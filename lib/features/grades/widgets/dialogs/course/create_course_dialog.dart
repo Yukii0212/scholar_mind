@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../auth/providers/auth_provider.dart';
 import '../../../data/models/course_model.dart';
 import '../../../providers/course/course_provider.dart';
 
@@ -14,17 +15,13 @@ class CreateCourseDialog extends ConsumerStatefulWidget {
   final String semesterId;
 
   @override
-  ConsumerState<CreateCourseDialog> createState() =>
-      _CreateCourseDialogState();
+  ConsumerState<CreateCourseDialog> createState() => _CreateCourseDialogState();
 }
 
-class _CreateCourseDialogState
-    extends ConsumerState<CreateCourseDialog> {
+class _CreateCourseDialogState extends ConsumerState<CreateCourseDialog> {
   final _nameController = TextEditingController();
-  final _targetScoreController =
-  TextEditingController();
-  final _passingScoreController =
-  TextEditingController(text: '50');
+  final _targetScoreController = TextEditingController();
+  final _passingScoreController = TextEditingController(text: '50');
 
   final _formKey = GlobalKey<FormState>();
 
@@ -47,28 +44,30 @@ class _CreateCourseDialogState
       _isLoading = true;
     });
 
+    final userId = ref.read(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+
     final now = DateTime.now();
 
     final course = CourseModel(
       id: const Uuid().v4(),
-      // Overwritten by CourseRepository.createCourse before it's persisted.
-      ownerId: '',
+      ownerId: userId,
       semesterId: widget.semesterId,
       name: _nameController.text.trim(),
-      targetScore:
-      _targetScoreController
-          .text
-          .trim()
-          .isEmpty
+      targetScore: _targetScoreController.text.trim().isEmpty
           ? null
           : double.tryParse(
-        _targetScoreController.text
-            .trim(),
-      ),
-      passingScore:
-      double.tryParse(
-        _passingScoreController.text.trim(),
-      ) ??
+              _targetScoreController.text.trim(),
+            ),
+      passingScore: double.tryParse(
+            _passingScoreController.text.trim(),
+          ) ??
           50,
       createdAt: now,
       updatedAt: now,
@@ -76,7 +75,7 @@ class _CreateCourseDialogState
 
     await ref
         .read(courseRepositoryProvider)
-        .createCourse(course);
+        .createCourse(userId: userId, course: course);
 
     if (!mounted) {
       return;
@@ -101,49 +100,39 @@ class _CreateCourseDialogState
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Expanded(
                       child: Text(
                         'Create Course',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall,
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ),
                     IconButton(
-                      onPressed: () =>
-                          Navigator.pop(context),
+                      onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Course Name',
                     border: OutlineInputBorder(),
                   ),
-                  textCapitalization:
-                  TextCapitalization.words,
+                  textCapitalization: TextCapitalization.words,
                   validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter a course name.';
                     }
 
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: _targetScoreController,
                   decoration: const InputDecoration(
@@ -174,9 +163,7 @@ class _CreateCourseDialogState
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: _passingScoreController,
                   decoration: const InputDecoration(
@@ -207,39 +194,29 @@ class _CreateCourseDialogState
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _isLoading
-                        ? null
-                        : _createCourse,
+                    onPressed: _isLoading ? null : _createCourse,
                     child: _isLoading
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child:
-                      CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Text(
-                      'Create',
-                    ),
+                            'Create',
+                          ),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () =>
-                        Navigator.pop(context),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
                     child: const Text('Cancel'),
                   ),
                 ),

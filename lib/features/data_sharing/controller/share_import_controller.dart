@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../auth/providers/auth_provider.dart';
 import '../domain/models/import/import_request.dart';
 import '../domain/models/import/import_result.dart';
 import '../domain/models/share/share_archive.dart';
@@ -18,12 +17,12 @@ class ShareImportController extends _$ShareImportController {
   FutureOr<void> build() {}
 
   Future<ShareArchive> importFromShareId(
-      String shareId,
-      ) async {
+    String shareId,
+  ) async {
     final snapshot = await ref
         .read(
-      shareLookupServiceProvider,
-    )
+          shareLookupServiceProvider,
+        )
         .lookup(shareId);
 
     if (!snapshot.exists) {
@@ -49,9 +48,7 @@ class ShareImportController extends _$ShareImportController {
     final expiresAt = data['expiresAt'];
 
     if (expiresAt != null) {
-      final expiry =
-      (expiresAt as dynamic).toDate()
-      as DateTime;
+      final expiry = (expiresAt as dynamic).toDate() as DateTime;
 
       if (DateTime.now().isAfter(expiry)) {
         throw Exception(
@@ -60,28 +57,27 @@ class ShareImportController extends _$ShareImportController {
       }
     }
 
-    final storagePath =
-    data['storagePath'] as String;
+    final storagePath = data['storagePath'] as String;
 
     final archiveJson = await ref
         .read(
-      shareDownloadServiceProvider,
-    )
+          shareDownloadServiceProvider,
+        )
         .downloadArchive(storagePath);
 
     final archive = ref
         .read(
-      shareArchiveDeserializerProvider,
-    )
+          shareArchiveDeserializerProvider,
+        )
         .deserialize(archiveJson);
 
     final validation = ref
         .read(
-      validationServiceProvider,
-    )
+          validationServiceProvider,
+        )
         .validateArchive(
-      archive,
-    );
+          archive,
+        );
 
     if (!validation.isValid) {
       throw Exception(
@@ -93,25 +89,21 @@ class ShareImportController extends _$ShareImportController {
   }
 
   Future<ImportResult> importArchive(
-      ShareArchive archive,
-      ) {
-    final user = ref.read(activeUserProvider);
-
-    if (user == null) {
-      throw Exception(
-        'You must be signed in to import shared data.',
-      );
-    }
-
+    ShareArchive archive, {
+    required String userId,
+    required void Function() ensureSessionCurrent,
+  }) {
+    ensureSessionCurrent();
     return ref
         .read(
-      importServiceProvider,
-    )
+          importServiceProvider,
+        )
         .import(
-      ImportRequest(
-        userId: user.uid,
-        archive: archive,
-      ),
-    );
+          ImportRequest(
+            userId: userId,
+            archive: archive,
+          ),
+          ensureSessionCurrent: ensureSessionCurrent,
+        );
   }
 }

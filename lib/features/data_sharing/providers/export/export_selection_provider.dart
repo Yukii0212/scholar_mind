@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/models/export/export_module.dart';
@@ -18,10 +17,10 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
   }
 
   void toggle(
-      ShareResourceType type,
-      String id,
-      ExportModule module,
-      ) {
+    ShareResourceType type,
+    String id,
+    ExportModule module,
+  ) {
     final updated = <ShareResourceType, Set<String>>{
       ...state.selectedIds,
     };
@@ -52,9 +51,7 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
     ('=== Selection Updated ===');
 
     for (final entry in state.selectedIds.entries) {
-      (
-        '${entry.key.name}: ${entry.value.toList()}',
-      );
+      ('${entry.key.name}: ${entry.value.toList()}',);
     }
   }
 
@@ -66,9 +63,9 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
   }
 
   void selectAll(
-      Map<ShareResourceType, Set<String>> selections,
-      ExportModule module,
-      ) {
+    Map<ShareResourceType, Set<String>> selections,
+    ExportModule module,
+  ) {
     final updated = <ShareResourceType, Set<String>>{
       ...state.selectedIds,
     };
@@ -98,8 +95,8 @@ class ExportSelectionNotifier extends _$ExportSelectionNotifier {
   }
 
   void unselectAll(
-      Map<ShareResourceType, Set<String>> selections,
-      ) {
+    Map<ShareResourceType, Set<String>> selections,
+  ) {
     final updated = <ShareResourceType, Set<String>>{
       ...state.selectedIds,
     };

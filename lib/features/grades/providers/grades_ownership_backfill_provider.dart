@@ -31,6 +31,12 @@ class GradesOwnershipBackfill extends _$GradesOwnershipBackfill {
   }
 
   Future<void> _run(String userId) async {
+    void ensureSessionCurrent() {
+      if (ref.read(activeUserProvider)?.uid != userId) {
+        throw StateError('The signed-in account changed during migration.');
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final key = '$_prefsKeyPrefix$userId';
 
@@ -39,20 +45,26 @@ class GradesOwnershipBackfill extends _$GradesOwnershipBackfill {
     }
 
     try {
+      ensureSessionCurrent();
       final semesters = await ref
           .read(semesterRepositoryProvider)
-          .watchSemesters()
+          .watchSemesters(userId)
           .first;
 
+      ensureSessionCurrent();
+
       await ref.read(courseRepositoryProvider).backfillOwnership(
-        userId: userId,
-        semesterIds: [
-          for (final semester in semesters) semester.id,
-        ],
-        componentRepository: ref.read(
-          gradingComponentRepositoryProvider,
-        ),
-      );
+            userId: userId,
+            semesterCreatedAt: {
+              for (final semester in semesters) semester.id: semester.createdAt,
+            },
+            componentRepository: ref.read(
+              gradingComponentRepositoryProvider,
+            ),
+            ensureSessionCurrent: ensureSessionCurrent,
+          );
+
+      ensureSessionCurrent();
 
       await prefs.setBool(key, true);
     } catch (_) {

@@ -7,8 +7,7 @@ import '../repositories/course_repository.dart';
 import '../repositories/grading_component_repository.dart';
 import '../repositories/semester_repository.dart';
 
-class GradesCollectionService
-    implements DataShareCollector {
+class GradesCollectionService implements DataShareCollector {
   GradesCollectionService({
     required this.semesterRepository,
     required this.courseRepository,
@@ -36,6 +35,7 @@ class GradesCollectionService
 
     for (final semesterId in resourceIds) {
       final semester = await semesterRepository.getSemester(
+        userId,
         semesterId,
       );
 
@@ -65,16 +65,15 @@ class GradesCollectionService
           ),
         );
 
-        final components =
-        await componentRepository.getCourseComponents(
+        final components = await componentRepository.getCourseComponents(
+          userId,
           course.id,
         );
 
         for (final component in components) {
           resources.add(
             CollectedResource(
-              resourceType:
-              ShareResourceType.gradingComponent,
+              resourceType: ShareResourceType.gradingComponent,
               resourceId: component.id,
               data: component,
             ),
@@ -88,8 +87,7 @@ class GradesCollectionService
         for (final entry in entries) {
           resources.add(
             CollectedResource(
-              resourceType:
-              ShareResourceType.assessmentEntry,
+              resourceType: ShareResourceType.assessmentEntry,
               resourceId: entry.id,
               data: entry,
             ),

@@ -6,26 +6,24 @@ import 'grading_component_repository.dart';
 
 class CourseRepository {
   CourseRepository(
-      this._dataSource,
-      );
+    this._dataSource,
+  );
 
   final CourseFirestoreDataSource _dataSource;
 
   Stream<List<CourseModel>> watchCourses(
-      String userId,
-      ) {
+    String userId,
+  ) {
     return _dataSource.collection
         .where(
-      'ownerId',
-      isEqualTo: userId,
-    )
+          'ownerId',
+          isEqualTo: userId,
+        )
         .orderBy('createdAt')
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-          .map(CourseModel.fromFirestore)
-          .toList(),
-    );
+          (snapshot) => snapshot.docs.map(CourseModel.fromFirestore).toList(),
+        );
   }
 
   Stream<List<CourseModel>> watchSemesterCourses({
@@ -34,55 +32,47 @@ class CourseRepository {
   }) {
     return _dataSource.collection
         .where(
-      'ownerId',
-      isEqualTo: userId,
-    )
+          'ownerId',
+          isEqualTo: userId,
+        )
         .where(
-      'semesterId',
-      isEqualTo: semesterId,
-    )
+          'semesterId',
+          isEqualTo: semesterId,
+        )
         .orderBy('createdAt')
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-          .map(CourseModel.fromFirestore)
-          .toList(),
-    );
+          (snapshot) => snapshot.docs.map(CourseModel.fromFirestore).toList(),
+        );
   }
 
   Stream<CourseModel> watchCourse(
-      String courseId,
-      ) {
-    return _dataSource.collection
-        .doc(courseId)
-        .snapshots()
-        .map(
-          (snapshot) =>
-          CourseModel.fromFirestore(
+    String courseId,
+  ) {
+    return _dataSource.collection.doc(courseId).snapshots().map(
+          (snapshot) => CourseModel.fromFirestore(
             snapshot,
           ),
-    );
+        );
   }
 
-  Future<void> createCourse(
-      CourseModel course,
-      ) async {
+  Future<void> createCourse({
+    required String userId,
+    required CourseModel course,
+  }) async {
     final owned = course.copyWith(
-      ownerId: _dataSource.currentUserId,
+      ownerId: userId,
     );
 
-    await _dataSource.collection
-        .doc(owned.id)
-        .set(
-      owned.toFirestore(),
-    );
+    await _dataSource.collection.doc(owned.id).set(
+          owned.toFirestore(),
+        );
   }
 
   Future<CourseModel?> getCourse(
-      String courseId,
-      ) async {
-    final snapshot =
-    await _dataSource.collection.doc(courseId).get();
+    String courseId,
+  ) async {
+    final snapshot = await _dataSource.collection.doc(courseId).get();
 
     if (!snapshot.exists) return null;
 
@@ -95,18 +85,16 @@ class CourseRepository {
   }) async {
     final snapshot = await _dataSource.collection
         .where(
-      'ownerId',
-      isEqualTo: userId,
-    )
+          'ownerId',
+          isEqualTo: userId,
+        )
         .where(
-      'semesterId',
-      isEqualTo: semesterId,
-    )
+          'semesterId',
+          isEqualTo: semesterId,
+        )
         .get();
 
-    return snapshot.docs
-        .map(CourseModel.fromFirestore)
-        .toList();
+    return snapshot.docs.map(CourseModel.fromFirestore).toList();
   }
 
   Future<String> importCourse({
@@ -137,26 +125,25 @@ class CourseRepository {
   }
 
   Future<void> updateCourse(
-      CourseModel course,
-      ) async {
-    await _dataSource.collection
-        .doc(course.id)
-        .update(
-      course.copyWith(
-        updatedAt: DateTime.now(),
-      ).toFirestore(),
-    );
+    CourseModel course,
+  ) async {
+    await _dataSource.collection.doc(course.id).update(
+          course
+              .copyWith(
+                updatedAt: DateTime.now(),
+              )
+              .toFirestore(),
+        );
   }
 
   Future<void> deleteCourse(
-      String courseId,
-      ) async {
-    await _dataSource.collection
-        .doc(courseId)
-        .delete();
+    String courseId,
+  ) async {
+    await _dataSource.collection.doc(courseId).delete();
   }
 
   Future<CourseModel> copyCourse({
+    required String userId,
     required CourseModel source,
     required String semesterId,
   }) async {
@@ -164,26 +151,19 @@ class CourseRepository {
 
     final copiedCourse = CourseModel(
       id: _dataSource.collection.doc().id,
-      ownerId: _dataSource.currentUserId,
+      ownerId: userId,
       semesterId: semesterId,
-
       name: source.name,
-
-      targetScore:
-      source.targetScore,
-
-      minimumAcceptableScore:
-      source.minimumAcceptableScore,
-
-      passingScore:
-      source.passingScore,
-
+      targetScore: source.targetScore,
+      minimumAcceptableScore: source.minimumAcceptableScore,
+      passingScore: source.passingScore,
       createdAt: now,
       updatedAt: now,
     );
 
     await createCourse(
-      copiedCourse,
+      userId: userId,
+      course: copiedCourse,
     );
 
     return copiedCourse;
@@ -196,17 +176,26 @@ class CourseRepository {
   /// Safe to call repeatedly; only touches documents missing ownerId.
   Future<void> backfillOwnership({
     required String userId,
-    required List<String> semesterIds,
+    required Map<String, DateTime> semesterCreatedAt,
     required GradingComponentRepository componentRepository,
+    void Function()? ensureSessionCurrent,
   }) async {
-    if (semesterIds.isEmpty) return;
+    ensureSessionCurrent?.call();
+    if (semesterCreatedAt.isEmpty) return;
 
-    for (final batch in _chunks(semesterIds, 30)) {
+    for (final entry in semesterCreatedAt.entries) {
+      ensureSessionCurrent?.call();
       final snapshot = await _dataSource.collection
-          .where('semesterId', whereIn: batch)
+          .where('semesterId', isEqualTo: entry.key)
+          .where(
+            'createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(entry.value),
+          )
           .get();
+      ensureSessionCurrent?.call();
 
       for (final doc in snapshot.docs) {
+        ensureSessionCurrent?.call();
         final data = doc.data();
 
         if ((data['ownerId'] as String?)?.isNotEmpty ?? false) {
@@ -217,21 +206,15 @@ class CourseRepository {
           {'ownerId': userId},
           SetOptions(merge: true),
         );
+        ensureSessionCurrent?.call();
 
         await componentRepository.backfillOwnership(
           userId: userId,
           courseId: doc.id,
+          ensureSessionCurrent: ensureSessionCurrent,
         );
+        ensureSessionCurrent?.call();
       }
-    }
-  }
-
-  static Iterable<List<T>> _chunks<T>(List<T> items, int size) sync* {
-    for (var i = 0; i < items.length; i += size) {
-      yield items.sublist(
-        i,
-        i + size > items.length ? items.length : i + size,
-      );
     }
   }
 }

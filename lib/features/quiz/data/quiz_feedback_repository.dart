@@ -5,6 +5,8 @@ import '../domain/quiz_feedback_entry.dart';
 class QuizFeedbackRepository {
   QuizFeedbackRepository(this._firestore);
 
+  static const _batchWriteLimit = 450;
+
   final FirebaseFirestore _firestore;
 
   CollectionReference<Map<String, dynamic>> _feedback(String userId) =>
@@ -18,9 +20,8 @@ class QuizFeedbackRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map(QuizFeedbackEntry.fromDocument)
-              .toList(),
+          (snapshot) =>
+              snapshot.docs.map(QuizFeedbackEntry.fromDocument).toList(),
         );
   }
 
@@ -37,9 +38,8 @@ class QuizFeedbackRepository {
     final doc = await _feedback(userId).add({
       'questionText': questionText,
       'questionType': questionType,
-      'reason': (reason == null || reason.trim().isEmpty)
-          ? null
-          : reason.trim(),
+      'reason':
+          (reason == null || reason.trim().isEmpty) ? null : reason.trim(),
       'createdAt': FieldValue.serverTimestamp(),
     });
 
@@ -56,13 +56,20 @@ class QuizFeedbackRepository {
   Future<void> clearAllFeedback(String userId) async {
     final snapshot = await _feedback(userId).get();
 
-    final batch = _firestore.batch();
+    for (var start = 0;
+        start < snapshot.docs.length;
+        start += _batchWriteLimit) {
+      final end = start + _batchWriteLimit < snapshot.docs.length
+          ? start + _batchWriteLimit
+          : snapshot.docs.length;
+      final batch = _firestore.batch();
 
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
+      for (final doc in snapshot.docs.sublist(start, end)) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
     }
-
-    await batch.commit();
   }
 
   /// Recent flagged questions, most-relevant-first, bounded for prompt use

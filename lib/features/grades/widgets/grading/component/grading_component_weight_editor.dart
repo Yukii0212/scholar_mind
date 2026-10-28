@@ -3,11 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/grading/grading_component_draft.dart';
 import '../../../providers/grading/grading_structure_draft_provider.dart';
-import 'grading_component_weight_editor.dart';
 
-class GradingComponentWeightEditor
-    extends ConsumerStatefulWidget {
-
+class GradingComponentWeightEditor extends ConsumerStatefulWidget {
   const GradingComponentWeightEditor({
     super.key,
     required this.component,
@@ -16,17 +13,13 @@ class GradingComponentWeightEditor
   final GradingComponentDraft component;
 
   @override
-  ConsumerState<GradingComponentWeightEditor>
-  createState() =>
+  ConsumerState<GradingComponentWeightEditor> createState() =>
       _GradingComponentWeightEditorState();
 }
 
 class _GradingComponentWeightEditorState
-    extends ConsumerState<
-        GradingComponentWeightEditor> {
-
-  late final TextEditingController
-  _controller;
+    extends ConsumerState<GradingComponentWeightEditor> {
+  late final TextEditingController _controller;
   late final FocusNode _focusNode;
 
   @override
@@ -34,8 +27,7 @@ class _GradingComponentWeightEditorState
     super.initState();
 
     _controller = TextEditingController(
-      text:
-      widget.component.weight.toStringAsFixed(0),
+      text: widget.component.weight.toStringAsFixed(0),
     );
 
     _focusNode = FocusNode();
@@ -50,13 +42,10 @@ class _GradingComponentWeightEditorState
   }
 
   @override
-  void didUpdateWidget(
-      covariant GradingComponentWeightEditor
-      oldWidget) {
+  void didUpdateWidget(covariant GradingComponentWeightEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final value =
-    widget.component.weight.toStringAsFixed(0);
+    final value = widget.component.weight.toStringAsFixed(0);
 
     if (_controller.text != value) {
       _controller.text = value;
@@ -79,9 +68,7 @@ class _GradingComponentWeightEditorState
           'Weight',
           style: Theme.of(context).textTheme.labelLarge,
         ),
-
         const SizedBox(height: 8),
-
         Row(
           children: [
             SizedBox(
@@ -100,43 +87,39 @@ class _GradingComponentWeightEditorState
                 ),
                 onFieldSubmitted: (value) {
                   final weight =
-                      double.tryParse(value) ??
-                          widget.component.weight;
+                      double.tryParse(value) ?? widget.component.weight;
 
                   ref
                       .read(
-                    gradingStructureDraftProvider.notifier,
-                  )
+                        gradingStructureDraftProvider.notifier,
+                      )
                       .updateWeight(
-                    componentId: widget.component.id,
-                    weight: weight.clamp(
-                      0,
-                      100,
-                    ),
-                  );
+                        componentId: widget.component.id,
+                        weight: weight.clamp(
+                          0,
+                          100,
+                        ),
+                      );
                 },
               ),
             ),
-
             const SizedBox(width: 16),
-
             Expanded(
               child: Slider(
                 value: widget.component.weight,
                 min: 0,
                 max: 100,
                 divisions: 100,
-                label:
-                '${widget.component.weight.toStringAsFixed(0)}%',
+                label: '${widget.component.weight.toStringAsFixed(0)}%',
                 onChanged: (value) {
                   ref
                       .read(
-                    gradingStructureDraftProvider.notifier,
-                  )
+                        gradingStructureDraftProvider.notifier,
+                      )
                       .updateWeight(
-                    componentId: widget.component.id,
-                    weight: value,
-                  );
+                        componentId: widget.component.id,
+                        weight: value,
+                      );
                 },
               ),
             ),

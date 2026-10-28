@@ -1,4 +1,3 @@
-import '../domain/question_type.dart';
 import '../domain/quiz_generation_request.dart';
 import '../domain/assessment_mode.dart';
 
@@ -6,23 +5,20 @@ class QuizPromptBuilder {
   const QuizPromptBuilder();
 
   String build(
-      QuizGenerationRequest request,
-      ) {
-    final extraInstructions =
-    request.extraInstructions.trim();
+    QuizGenerationRequest request,
+  ) {
+    final extraInstructions = request.extraInstructions.trim();
 
     return '''
 Generate UP TO ${request.questionCount} questions.
 
-${request.assessmentMode == AssessmentMode.informal
-        ? '''
+${request.assessmentMode == AssessmentMode.informal ? '''
 Assessment Style
 
 Informal Practice
 
 Difficulty: ${request.difficulty.toPrompt()}.
-'''
-        : '''
+''' : '''
 Assessment Style
 
 Formal Assessment

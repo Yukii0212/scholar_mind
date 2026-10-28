@@ -11,30 +11,29 @@ class ExportService {
   ExportService({
     ValidationService? validationService,
     ArchiveBuilderService? archiveBuilderService,
-  })  : _validationService =
-      validationService ?? const ValidationService(),
+  })  : _validationService = validationService ?? const ValidationService(),
         _archiveBuilderService =
-            archiveBuilderService ??
-                const ArchiveBuilderService();
+            archiveBuilderService ?? const ArchiveBuilderService();
 
   final ValidationService _validationService;
 
   final ArchiveBuilderService _archiveBuilderService;
 
   Future<ShareArchive> export(
-      ExportRequest request, {
-        required String shareId,
-        void Function(String message)? onProgress,
-      }) async {
+    ExportRequest request, {
+    required String shareId,
+    void Function(String message)? onProgress,
+    void Function()? ensureSessionCurrent,
+  }) async {
+    ensureSessionCurrent?.call();
     final List<ShareResource> resources = [];
 
-    final Map<DataShareHandler, Set<String>>
-    resourceIdsByHandler = {};
+    final Map<DataShareHandler, Set<String>> resourceIdsByHandler = {};
 
     for (final MapEntry<ShareResourceType, List<String>> entry
-    in request.resourceIds.entries) {
-      final validation =
-      _validationService.validateExport(
+        in request.resourceIds.entries) {
+      ensureSessionCurrent?.call();
+      final validation = _validationService.validateExport(
         resourceType: entry.key,
         resourceIds: entry.value,
       );
@@ -43,8 +42,7 @@ class ExportService {
         continue;
       }
 
-      final handler =
-      DataShareRegistry.instance.handlerFor(
+      final handler = DataShareRegistry.instance.handlerFor(
         entry.key,
       );
 
@@ -54,24 +52,28 @@ class ExportService {
 
       resourceIdsByHandler
           .putIfAbsent(
-        handler,
+            handler,
             () => <String>{},
-      )
+          )
           .addAll(entry.value);
     }
 
     for (final entry in resourceIdsByHandler.entries) {
-      final exported =
-      await entry.key.export(
+      ensureSessionCurrent?.call();
+      final exported = await entry.key.export(
         userId: request.userId,
         resourceIds: entry.value.toList(),
         shareId: shareId,
         onProgress: onProgress,
+        ensureSessionCurrent: ensureSessionCurrent,
       );
+
+      ensureSessionCurrent?.call();
 
       resources.addAll(exported);
     }
 
+    ensureSessionCurrent?.call();
     onProgress?.call('Preparing archive...');
 
     return _archiveBuilderService.build(

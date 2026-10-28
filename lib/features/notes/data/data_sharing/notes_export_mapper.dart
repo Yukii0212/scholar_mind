@@ -4,6 +4,7 @@ import '../../../data_sharing/domain/models/collection/collected_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource.dart';
 import '../../../data_sharing/domain/models/share/share_resource_metadata.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
+import '../../../data_sharing/services/share_download_limits.dart';
 import '../../domain/library_folder.dart';
 import '../../domain/note_item.dart';
 
@@ -14,14 +15,13 @@ class NotesExportMapper {
 
   final FirebaseStorage? _storage;
 
-  FirebaseStorage get _storageInstance =>
-      _storage ?? FirebaseStorage.instance;
+  FirebaseStorage get _storageInstance => _storage ?? FirebaseStorage.instance;
 
   Future<ShareResource> toResource(
-      CollectedResource resource, {
-      required String userId,
-      required String shareId,
-      }) {
+    CollectedResource resource, {
+    required String userId,
+    required String shareId,
+  }) {
     switch (resource.resourceType) {
       case ShareResourceType.note:
         return _note(
@@ -38,14 +38,14 @@ class NotesExportMapper {
       default:
         throw UnsupportedError(
           'Unsupported Notes resource: '
-              '${resource.resourceType}',
+          '${resource.resourceType}',
         );
     }
   }
 
   Future<ShareResource> _folder(
-      LibraryFolder folder,
-      ) async {
+    LibraryFolder folder,
+  ) async {
     return ShareResource(
       resourceType: ShareResourceType.noteFolder,
       resourceVersion: 1,
@@ -63,10 +63,10 @@ class NotesExportMapper {
   }
 
   Future<ShareResource> _note(
-      NoteItem note, {
-      required String userId,
-      required String shareId,
-      }) async {
+    NoteItem note, {
+    required String userId,
+    required String shareId,
+  }) async {
     // A file's bytes are copied to their own object under this share and
     // only its storage path goes in the payload below — not the bytes
     // themselves. Every note in a recursively-expanded folder used to
@@ -78,36 +78,40 @@ class NotesExportMapper {
     // of how many files a folder pulls in.
     String? sharedFileStoragePath;
 
-    if (!note.isInternal && note.storagePath.isNotEmpty) {
-      try {
-        final bytes = await _storageInstance
-            .ref(note.storagePath)
-            .getData();
+    if (!note.isInternal) {
+      if (note.storagePath.isEmpty) {
+        throw StateError(
+          'Cannot export "${note.name}" because its source file is missing.',
+        );
+      }
 
-        if (bytes != null) {
-          final safeName = note.displayFileName.replaceAll(
-            RegExp(r'[^a-zA-Z0-9._-]'),
-            '_',
+      final bytes = await _storageInstance
+          .ref(note.storagePath)
+          .getData(maxShareObjectDownloadBytes);
+
+      if (bytes == null) {
+        throw StateError(
+          'Cannot export "${note.name}" because its source file could not '
+          'be downloaded.',
+        );
+      }
+
+      final safeName = note.displayFileName.replaceAll(
+        RegExp(r'[^a-zA-Z0-9._-]'),
+        '_',
+      );
+
+      final targetPath = 'users/$userId/shared_exports/$shareId/files/'
+          '${note.id}_$safeName';
+
+      await _storageInstance.ref(targetPath).putData(
+            bytes,
+            SettableMetadata(
+              contentType: _contentTypeFor(note.extension),
+            ),
           );
 
-          final targetPath =
-              'users/$userId/shared_exports/$shareId/files/'
-              '${note.id}_$safeName';
-
-          await _storageInstance.ref(targetPath).putData(
-                bytes,
-                SettableMetadata(
-                  contentType: _contentTypeFor(note.extension),
-                ),
-              );
-
-          sharedFileStoragePath = targetPath;
-        }
-      } catch (_) {
-        // File too large, network failure, etc. — export the note's
-        // metadata without its file rather than failing the whole export.
-        sharedFileStoragePath = null;
-      }
+      sharedFileStoragePath = targetPath;
     }
 
     return ShareResource(

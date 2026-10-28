@@ -5,13 +5,12 @@ import '../../data/datasources/grading_component_firestore_datasource.dart';
 import '../../data/repositories/grading_component_repository.dart';
 
 final gradingComponentFirestoreDataSourceProvider =
-Provider<GradingComponentFirestoreDataSource>(
-      (ref) => GradingComponentFirestoreDataSource(),
+    Provider<GradingComponentFirestoreDataSource>(
+  (ref) => GradingComponentFirestoreDataSource(),
 );
 
-final gradingComponentRepositoryProvider =
-Provider<GradingComponentRepository>(
-      (ref) => GradingComponentRepository(
+final gradingComponentRepositoryProvider = Provider<GradingComponentRepository>(
+  (ref) => GradingComponentRepository(
     ref.watch(
       gradingComponentFirestoreDataSourceProvider,
     ),
@@ -19,11 +18,11 @@ Provider<GradingComponentRepository>(
 );
 
 final hasGradingStructureProvider =
-StreamProvider.autoDispose.family<bool, String>(
-      (
-      ref,
-      courseId,
-      ) {
+    StreamProvider.autoDispose.family<bool, String>(
+  (
+    ref,
+    courseId,
+  ) {
     final userId = ref.watch(activeUserProvider)?.uid;
 
     if (userId == null) {
@@ -32,12 +31,11 @@ StreamProvider.autoDispose.family<bool, String>(
 
     return ref
         .watch(
-      gradingComponentRepositoryProvider,
-    )
-        .watchCourseComponents(courseId)
+          gradingComponentRepositoryProvider,
+        )
+        .watchCourseComponents(userId, courseId)
         .map(
-          (components) =>
-      components.isNotEmpty,
-    );
+          (components) => components.isNotEmpty,
+        );
   },
 );

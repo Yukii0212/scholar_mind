@@ -33,8 +33,7 @@ class ImportPreviewScreen extends ConsumerStatefulWidget {
       _ImportPreviewScreenState();
 }
 
-class _ImportPreviewScreenState
-    extends ConsumerState<ImportPreviewScreen> {
+class _ImportPreviewScreenState extends ConsumerState<ImportPreviewScreen> {
   late final List<bool> _selected;
 
   @override
@@ -69,10 +68,7 @@ class _ImportPreviewScreenState
       return;
     }
 
-    final archive = ShareArchive(
-      manifest: widget.archive.manifest,
-      resources: resources,
-    );
+    final archive = widget.archive.withResources(resources);
 
     final taskController = ref.read(
       appTaskControllerProvider,
@@ -83,13 +79,21 @@ class _ImportPreviewScreenState
     );
 
     unawaited(
-      taskController.run<ImportResult>(
+      taskController.runSession<ImportResult>(
         id: 'share_import',
         type: AppTaskType.shareImport,
         title: 'Importing shared materials',
-        task: (progress) async {
+        task: (session, progress) async {
+          final userId = session.userId;
+
+          if (userId == null) {
+            throw const AppTaskSessionChangedException();
+          }
+
           final result = await importController.importArchive(
             archive,
+            userId: userId,
+            ensureSessionCurrent: session.throwIfChanged,
           );
 
           if (!result.success) {
@@ -98,17 +102,19 @@ class _ImportPreviewScreenState
             );
           }
 
-          unawaited(
-            ref
+          session.throwIfChanged();
+
+          try {
+            await ref
                 .read(shareLinkServiceProvider)
-                .incrementDownloadCount(widget.shareId)
-                .catchError((Object error) {
-              debugPrint(
-                'Could not record import for '
-                '${widget.shareId}: $error',
-              );
-            }),
-          );
+                .incrementDownloadCount(widget.shareId);
+          } catch (error) {
+            debugPrint(
+              'Could not record import for ${widget.shareId}: $error',
+            );
+          }
+
+          session.throwIfChanged();
 
           return result;
         },
@@ -131,7 +137,7 @@ class _ImportPreviewScreenState
     final selectedCount = _selected
         .where(
           (selected) => selected,
-    )
+        )
         .length;
 
     return Scaffold(
@@ -149,9 +155,7 @@ class _ImportPreviewScreenState
       body: Column(
         children: [
           Material(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -167,9 +171,7 @@ class _ImportPreviewScreenState
                     child: TextButton(
                       onPressed: () {
                         setState(() {
-                          for (var i = 0;
-                          i < _selected.length;
-                          i++) {
+                          for (var i = 0; i < _selected.length; i++) {
                             _selected[i] = true;
                           }
                         });
@@ -185,24 +187,20 @@ class _ImportPreviewScreenState
           ),
           Expanded(
             child: ListView.builder(
-              itemCount:
-              widget.archive.resources.length,
+              itemCount: widget.archive.resources.length,
               itemBuilder: (
-                  context,
-                  index,
-                  ) {
-                final resource =
-                widget.archive.resources[index];
+                context,
+                index,
+              ) {
+                final resource = widget.archive.resources[index];
 
-                final displayName =
-                    resource.metadata.displayName;
+                final displayName = resource.metadata.displayName;
 
                 return CheckboxListTile(
                   value: _selected[index],
                   onChanged: (value) {
                     setState(() {
-                      _selected[index] =
-                          value ?? false;
+                      _selected[index] = value ?? false;
                     });
                   },
                   title: Text(
@@ -218,8 +216,7 @@ class _ImportPreviewScreenState
           SafeArea(
             top: false,
             child: Padding(
-              padding:
-              const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: HelpAnchor(
                 pageId: 'import-preview',
                 anchorId: 'import-selected-button',

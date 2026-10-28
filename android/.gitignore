@@ -33,7 +33,9 @@ build/
 **/android/app/debug/
 **/android/app/profile/
 **/android/app/release/
-**/android/key.properties
+/key.properties
+*.jks
+*.keystore
 android/app/google-services.json
 
 # iOS/macOS

@@ -7,32 +7,50 @@ import '../domain/quiz_answer.dart';
 import '../domain/quiz_attempt.dart';
 import '../domain/question_type.dart';
 import '../services/openai_quiz_service.dart';
-import 'quiz_provider.dart';
 
-class QuizAttemptController
-    extends StateNotifier<QuizAttempt?> {
-
+class QuizAttemptController extends StateNotifier<QuizAttempt?> {
   QuizAttemptController(
-      this._repository,
-      this._openAI,
-      this._ref,
-      ) : super(null);
+    this._repository,
+    this._openAI, {
+    required String? userId,
+    required bool Function() isSessionCurrent,
+  })  : _userId = userId,
+        _isSessionCurrent = isSessionCurrent,
+        super(null);
 
   final QuizRepository _repository;
 
   final OpenAIQuizService _openAI;
-  final Ref _ref;
+  final String? _userId;
+  final bool Function() _isSessionCurrent;
 
   Timer? _idleTimer;
 
   Timer? _dirtyTimer;
 
   bool _dirty = false;
+  bool _isDisposed = false;
+
+  QuizAttempt? get currentAttempt => state;
+
+  String get _activeUserId {
+    final userId = _userId;
+
+    if (_isDisposed || userId == null || !_isSessionCurrent()) {
+      throw StateError(
+        'The signed-in account changed while the quiz was active.',
+      );
+    }
+
+    return userId;
+  }
 
   Future<void> startAttempt(
-      QuizAttempt attempt,
-      ) async {
+    QuizAttempt attempt,
+  ) async {
+    _activeUserId;
     state = attempt;
+    _dirty = true;
 
     await saveNow();
   }
@@ -40,6 +58,7 @@ class QuizAttemptController
   Future<void> restoreAttempt({
     required QuizAttempt attempt,
   }) async {
+    _activeUserId;
     state = attempt;
   }
 
@@ -47,17 +66,18 @@ class QuizAttemptController
     required int questionIndex,
     required QuizAnswer answer,
   }) {
-    if (state == null) {
+    if (state == null ||
+        _isDisposed ||
+        _userId == null ||
+        !_isSessionCurrent()) {
       return;
     }
 
-    final updatedAnswers =
-    Map<int, QuizAnswer>.from(
+    final updatedAnswers = Map<int, QuizAnswer>.from(
       state!.answers,
     );
 
-    updatedAnswers[questionIndex] =
-        answer;
+    updatedAnswers[questionIndex] = answer;
 
     state = state!.copyWith(
       answers: updatedAnswers,
@@ -78,6 +98,8 @@ class QuizAttemptController
     if (state == null) {
       return;
     }
+
+    _activeUserId;
 
     // Marked pending BEFORE saving so that if grading is interrupted
     // (app closed mid-review), the persisted attempt correctly shows
@@ -114,37 +136,24 @@ class QuizAttemptController
       return;
     }
 
-    final payload =
-    <Map<String, String>>[];
+    final payload = <Map<String, String>>[];
 
-    state!.quiz.questions
-        .asMap()
-        .forEach(
-          (index, question) {
-        if (question.type !=
-            QuestionType.openEnded) {
+    state!.quiz.questions.asMap().forEach(
+      (index, question) {
+        if (question.type != QuestionType.openEnded) {
           return;
         }
 
         payload.add({
-          'questionIndex':
-          '$index',
-          'question':
-          question.question,
-          'sampleAnswer':
-          question.sampleAnswer ??
-              '',
-          'studentAnswer':
-          state!
-              .answers[index]
-              ?.openEndedAnswer ??
-              '',
+          'questionIndex': '$index',
+          'question': question.question,
+          'sampleAnswer': question.sampleAnswer ?? '',
+          'studentAnswer': state!.answers[index]?.openEndedAnswer ?? '',
         });
       },
     );
 
     if (payload.isEmpty) {
-
       state = state!.copyWith(
         status: QuizAttemptStatus.completed,
         completedAt: DateTime.now(),
@@ -157,44 +166,31 @@ class QuizAttemptController
       return;
     }
 
-    final result =
-    await _openAI
-        .evaluateOpenEndedAnswers(
+    final result = await _openAI.evaluateOpenEndedAnswers(
       answers: payload,
     );
+
+    _activeUserId;
 
     if (state == null) {
       return;
     }
 
-    final updated =
-    Map<int, QuizAnswer>.from(
+    final updated = Map<int, QuizAnswer>.from(
       state!.answers,
     );
 
-    for (final evaluation
-    in result) {
+    for (final evaluation in result) {
       final index = int.parse(
-        evaluation[
-        'questionIndex']
-            .toString(),
+        evaluation['questionIndex'].toString(),
       );
 
-      updated[index] =
-          (updated[index] ??
-              const QuizAnswer())
-              .copyWith(
-            aiReviewPending: false,
-            aiScore:
-            evaluation['score']
-            as int?,
-            aiMaxScore:
-            evaluation[
-            'maxScore'] as int?,
-            aiFeedback:
-            evaluation[
-            'feedback'] as String?,
-          );
+      updated[index] = (updated[index] ?? const QuizAnswer()).copyWith(
+        aiReviewPending: false,
+        aiScore: evaluation['score'] as int?,
+        aiMaxScore: evaluation['maxScore'] as int?,
+        aiFeedback: evaluation['feedback'] as String?,
+      );
     }
 
     state = state!.copyWith(
@@ -229,11 +225,11 @@ class QuizAttemptController
   }
 
   Future<void> saveNow() async {
-    if (!_dirty ||
-        state == null) {
+    if (!_dirty || state == null) {
       return;
     }
 
+    final userId = _activeUserId;
     final attempt = state!;
 
     _dirty = false;
@@ -244,33 +240,48 @@ class QuizAttemptController
     _dirtyTimer?.cancel();
     _dirtyTimer = null;
 
-    await _repository.saveCurrentAttempt(
-      attempt.toJson(),
-    );
+    try {
+      await _repository.saveCurrentAttempt(
+        userId: userId,
+        json: attempt.toJson(),
+      );
 
-    await _repository.saveAttemptToCloud(
-      attempt,
-    );
+      _activeUserId;
+
+      await _repository.saveAttemptToCloud(
+        userId: userId,
+        attempt: attempt,
+      );
+
+      _activeUserId;
+    } catch (_) {
+      if (!_isDisposed && _userId != null && _isSessionCurrent()) {
+        _dirty = true;
+      }
+
+      rethrow;
+    }
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
     _idleTimer?.cancel();
     _dirtyTimer?.cancel();
     super.dispose();
   }
 
   Future<void> retryAttempt() async {
-
     if (state == null) {
       return;
     }
+
+    _activeUserId;
 
     state = state!.reset();
 
     _dirty = true;
 
     await saveNow();
-
   }
 }

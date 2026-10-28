@@ -7,6 +7,7 @@ import '../domain/models/share/share_result.dart';
 import '../help/my_shared_links_help_topics.dart';
 import '../providers/share/my_share_links_provider.dart';
 import '../providers/share/share_link_service_provider.dart';
+import '../services/share_link_service.dart';
 import '../../help/widgets/help_menu_button.dart';
 import 'view_shared_link_screen.dart';
 
@@ -36,8 +37,7 @@ class MySharedLinksScreen extends ConsumerWidget {
           // Expired links have nothing left to do — they can't be
           // imported from anymore, so surfacing them just adds noise
           // to a list meant for finding and reusing an active link.
-          final links =
-              allLinks.where((link) => !link.isExpired).toList();
+          final links = allLinks.where((link) => !link.isExpired).toList();
 
           if (links.isEmpty) {
             return Center(
@@ -172,6 +172,12 @@ class _ShareLinkTile extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Link revoked.')),
+        );
+      }
+    } on ShareRevocationCleanupException catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
         );
       }
     } catch (e) {

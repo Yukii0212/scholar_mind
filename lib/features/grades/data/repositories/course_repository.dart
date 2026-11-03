@@ -20,9 +20,12 @@ class CourseRepository {
           isEqualTo: userId,
         )
         .orderBy('createdAt')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map(
-          (snapshot) => snapshot.docs.map(CourseModel.fromFirestore).toList(),
+          (snapshot) => snapshot.docs
+              .where((document) => !document.metadata.hasPendingWrites)
+              .map(CourseModel.fromFirestore)
+              .toList(),
         );
   }
 
@@ -40,20 +43,23 @@ class CourseRepository {
           isEqualTo: semesterId,
         )
         .orderBy('createdAt')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map(
-          (snapshot) => snapshot.docs.map(CourseModel.fromFirestore).toList(),
+          (snapshot) => snapshot.docs
+              .where((document) => !document.metadata.hasPendingWrites)
+              .map(CourseModel.fromFirestore)
+              .toList(),
         );
   }
 
   Stream<CourseModel> watchCourse(
     String courseId,
   ) {
-    return _dataSource.collection.doc(courseId).snapshots().map(
-          (snapshot) => CourseModel.fromFirestore(
-            snapshot,
-          ),
-        );
+    return _dataSource.collection
+        .doc(courseId)
+        .snapshots(includeMetadataChanges: true)
+        .where((snapshot) => !snapshot.metadata.hasPendingWrites)
+        .map(CourseModel.fromFirestore);
   }
 
   Future<void> createCourse({

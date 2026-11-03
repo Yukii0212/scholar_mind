@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/providers/auth_provider.dart';
 import '../../data/datasources/grading_component_firestore_datasource.dart';
+import '../../data/models/grading_component_model.dart';
 import '../../data/repositories/grading_component_repository.dart';
 
 final gradingComponentFirestoreDataSourceProvider =
@@ -17,8 +18,8 @@ final gradingComponentRepositoryProvider = Provider<GradingComponentRepository>(
   ),
 );
 
-final hasGradingStructureProvider =
-    StreamProvider.autoDispose.family<bool, String>(
+final gradingComponentsProvider = StreamProvider.autoDispose
+    .family<List<GradingComponentModel>, String>(
   (
     ref,
     courseId,
@@ -26,16 +27,20 @@ final hasGradingStructureProvider =
     final userId = ref.watch(activeUserProvider)?.uid;
 
     if (userId == null) {
-      return Stream.value(false);
+      return Stream.value(const <GradingComponentModel>[]);
     }
 
     return ref
         .watch(
           gradingComponentRepositoryProvider,
         )
-        .watchCourseComponents(userId, courseId)
-        .map(
-          (components) => components.isNotEmpty,
-        );
+        .watchCourseComponents(userId, courseId);
   },
+);
+
+final hasGradingStructureProvider =
+    Provider.autoDispose.family<AsyncValue<bool>, String>(
+  (ref, courseId) => ref
+      .watch(gradingComponentsProvider(courseId))
+      .whenData((components) => components.isNotEmpty),
 );

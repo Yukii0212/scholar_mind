@@ -11,6 +11,7 @@ import 'semester/semester_provider.dart';
 part 'grades_ownership_backfill_provider.g.dart';
 
 const _prefsKeyPrefix = 'grades_ownership_backfilled_';
+final _attemptedUserIds = <String>{};
 
 /// One-time, per-user backfill of the `ownerId` field on Course/
 /// GradingComponent documents written before ownership tracking existed.
@@ -24,6 +25,13 @@ class GradesOwnershipBackfill extends _$GradesOwnershipBackfill {
     final userId = ref.watch(activeUserProvider)?.uid;
 
     if (userId == null) {
+      return;
+    }
+
+    // A denied legacy migration must not be relaunched by provider rebuilds
+    // and keep reopening Firestore's write stream. A failed user is retried
+    // after the next app restart; successful users remain covered by prefs.
+    if (!_attemptedUserIds.add(userId)) {
       return;
     }
 

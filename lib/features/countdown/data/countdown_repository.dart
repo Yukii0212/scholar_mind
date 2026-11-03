@@ -17,6 +17,7 @@ class CountdownRepository {
   // and completed sections on every one of those cycles, and if a write
   // ever fails to stick, the cycle never converges.
   final Set<String> _autoCompleting = {};
+  final Map<String, DateTime> _autoCompleteFailures = {};
 
   CollectionReference<Map<String, dynamic>> _collection(String userId) {
     return _firestore.collection('users').doc(userId).collection('countdowns');
@@ -29,7 +30,10 @@ class CountdownRepository {
       final items = snapshot.docs.map(CountdownItem.fromFirestore).toList();
 
       for (final item in items.where(_shouldAutoComplete)) {
-        if (!_autoCompleting.add(item.id)) {
+        final operationId = '$userId/${item.id}';
+        final failedAt = _autoCompleteFailures[operationId];
+
+        if (failedAt == item.updatedAt || !_autoCompleting.add(operationId)) {
           continue;
         }
 
@@ -38,11 +42,12 @@ class CountdownRepository {
           countdownId: item.id,
           completed: true,
         ).catchError((Object error) {
+          _autoCompleteFailures[operationId] = item.updatedAt;
           debugPrint(
             'Auto-complete failed for countdown ${item.id}: $error',
           );
         }).whenComplete(() {
-          _autoCompleting.remove(item.id);
+          _autoCompleting.remove(operationId);
         });
       }
 

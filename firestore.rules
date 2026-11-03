@@ -10,16 +10,31 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function ownsSemester(semesterId, courseCreatedAt) {
+    function ownsSemester(semesterId) {
       return isSignedIn()
         && semesterId is string
-        && courseCreatedAt is timestamp
         && exists(
           /databases/$(database)/documents/users/$(request.auth.uid)/semesters/$(semesterId)
-        )
+        );
+    }
+
+    // Legacy courses do not carry ownerId, so their ownership has to be
+    // inferred from a semester that already belonged to the current user.
+    // Keep the chronology check isolated to that migration-only proof. New
+    // course writes use client timestamps, which must never be ordered against
+    // the semester's server timestamp because device clock skew can reject a
+    // legitimate write.
+    function ownsLegacySemester(semesterId, courseCreatedAt) {
+      return ownsSemester(semesterId)
+        && courseCreatedAt is timestamp
         && get(
           /databases/$(database)/documents/users/$(request.auth.uid)/semesters/$(semesterId)
         ).data.createdAt <= courseCreatedAt;
+    }
+
+    function isLegacyCourse(data) {
+      return !('ownerId' in data)
+        || data.ownerId == '';
     }
 
     function ownsCourse(courseId) {
@@ -69,8 +84,11 @@ service cloud.firestore {
 
       match /countdowns/{countdownId} {
         allow read, delete: if isOwner(userId);
-        allow create, update: if isOwner(userId)
+        allow create: if isOwner(userId)
           && validCountdown(request.resource.data);
+        allow update: if isOwner(userId)
+          && (validCountdown(request.resource.data)
+            || isCountdownStatusUpdate());
       }
 
       match /flashcard_folders/{folderId} {
@@ -144,30 +162,26 @@ service cloud.firestore {
       allow read: if isSignedIn()
         && ((('ownerId' in resource.data)
             && resource.data.ownerId == request.auth.uid)
-          || ownsSemester(
-            resource.data.semesterId,
-            resource.data.createdAt
-          ));
+          || (isLegacyCourse(resource.data)
+            && ownsLegacySemester(
+              resource.data.semesterId,
+              resource.data.createdAt
+            )));
       allow delete: if isSignedIn()
         && resource.data.ownerId == request.auth.uid;
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && ownsSemester(
-          request.resource.data.semesterId,
-          request.resource.data.createdAt
-        )
+        && ownsSemester(request.resource.data.semesterId)
         && validCourse(request.resource.data);
       allow update: if isSignedIn()
-        && validCourse(request.resource.data)
         && (
           (
-            ('ownerId' in resource.data)
+            validCourse(request.resource.data)
+            && ('ownerId' in resource.data)
             && resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId
-            && ownsSemester(
-              request.resource.data.semesterId,
-              request.resource.data.createdAt
-            )
+            && request.resource.data.createdAt == resource.data.createdAt
+            && ownsSemester(request.resource.data.semesterId)
           )
           || isLegacyCourseOwnerBackfill()
         );
@@ -195,10 +209,10 @@ service cloud.firestore {
         && ownsCourse(request.resource.data.courseId)
         && validGradingComponent(request.resource.data);
       allow update: if isSignedIn()
-        && validGradingComponent(request.resource.data)
         && (
           (
-            ('ownerId' in resource.data)
+            validGradingComponent(request.resource.data)
+            && ('ownerId' in resource.data)
             && resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId
             && ownsCourse(request.resource.data.courseId)
@@ -431,6 +445,18 @@ service cloud.firestore {
         && data.isHidden is bool
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
+    }
+
+    // Older countdown documents can predate fields that are now required by
+    // validCountdown. Permit only the automatic/manual status fields to move
+    // on those documents so the client can converge instead of retrying a
+    // permanently denied auto-complete write on every snapshot.
+    function isCountdownStatusUpdate() {
+      return request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly(['isCompleted', 'isHidden', 'updatedAt'])
+        && request.resource.data.isCompleted is bool
+        && request.resource.data.isHidden is bool
+        && request.resource.data.updatedAt is timestamp;
     }
 
     function validFlashcardDeck(data) {
@@ -708,7 +734,7 @@ service cloud.firestore {
       return (!('ownerId' in resource.data)
           || (('ownerId' in resource.data)
             && resource.data.ownerId == ''))
-        && ownsSemester(
+        && ownsLegacySemester(
           resource.data.semesterId,
           resource.data.createdAt
         )

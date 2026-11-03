@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -103,6 +104,12 @@ class AuthController extends _$AuthController {
       final firebaseAuth = ref.read(firebaseAuthProvider);
       final googleSignIn = ref.read(googleSignInProvider);
       final userId = firebaseAuth.currentUser?.uid;
+
+      try {
+        await FirebaseFirestore.instance
+            .waitForPendingWrites()
+            .timeout(const Duration(seconds: 5));
+      } catch (_) {}
 
       await firebaseAuth.signOut();
 

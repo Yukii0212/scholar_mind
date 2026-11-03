@@ -71,15 +71,27 @@ class CourseActions {
       return;
     }
 
-    final copiedCourse = await ref
-        .read(
-          courseRepositoryProvider,
-        )
-        .copyCourse(
-          userId: userId,
-          source: selected,
+    final now = DateTime.now();
+    final reviewedCourse = await showDialog<CourseModel>(
+      context: context,
+      builder: (_) => EditCourseDialog(
+        course: selected.copyWith(
+          id: '',
+          ownerId: userId,
           semesterId: semesterId,
-        );
+          createdAt: now,
+          updatedAt: now,
+        ),
+        isImport: true,
+        title: 'Review Copied Course',
+      ),
+    );
+
+    if (reviewedCourse == null ||
+        !context.mounted ||
+        ref.read(activeUserProvider)?.uid != userId) {
+      return;
+    }
 
     final components = await ref
         .read(
@@ -88,6 +100,20 @@ class CourseActions {
         .getCourseComponents(
           userId,
           selected.id,
+        );
+
+    if (ref.read(activeUserProvider)?.uid != userId) {
+      return;
+    }
+
+    final copiedCourse = await ref
+        .read(
+          courseRepositoryProvider,
+        )
+        .copyCourse(
+          userId: userId,
+          source: reviewedCourse,
+          semesterId: semesterId,
         );
 
     final idMap = <String, String>{};
@@ -123,21 +149,8 @@ class CourseActions {
           components: copiedComponents,
         );
 
-    if (!context.mounted) {
-      return;
-    }
-
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (_) => EditCourseDialog(
-        course: copiedCourse,
-        isImport: true,
-        deleteOnCancel: true,
-        title: 'Review Copied Course',
-      ),
-    );
-
-    if (saved != true || !context.mounted) {
+    if (!context.mounted ||
+        ref.read(activeUserProvider)?.uid != userId) {
       return;
     }
 

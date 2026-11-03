@@ -44,7 +44,14 @@ class StudyStreakRepository {
           ? null
           : DateTime.tryParse(current.lastStudyDate!);
       final isConsecutive = previousDate != null &&
-          _dateId(previousDate.add(const Duration(days: 1))) == today;
+          _dateId(
+                DateTime(
+                  previousDate.year,
+                  previousDate.month,
+                  previousDate.day + 1,
+                ),
+              ) ==
+              today;
       final currentStreak = isConsecutive ? current.currentStreak + 1 : 1;
       final longestStreak = currentStreak > current.longestStreak
           ? currentStreak

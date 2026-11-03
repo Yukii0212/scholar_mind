@@ -8,13 +8,11 @@ class EditCourseDialog extends ConsumerStatefulWidget {
   const EditCourseDialog({
     super.key,
     required this.course,
-    this.deleteOnCancel = false,
     this.title = 'Edit Course',
     this.isImport = false,
   });
 
   final CourseModel course;
-  final bool deleteOnCancel;
   final String title;
   final bool isImport;
 
@@ -69,18 +67,12 @@ class _EditCourseDialogState
       _isSaving = true;
     });
 
+    final targetScoreText = _targetScoreController.text.trim();
     final updated = widget.course.copyWith(
       name: _nameController.text.trim(),
       targetScore:
-      _targetScoreController
-          .text
-          .trim()
-          .isEmpty
-          ? null
-          : double.tryParse(
-        _targetScoreController.text
-            .trim(),
-      ),
+          targetScoreText.isEmpty ? null : double.tryParse(targetScoreText),
+      clearTargetScore: targetScoreText.isEmpty,
       passingScore:
       double.tryParse(
         _passingScoreController.text.trim(),
@@ -88,13 +80,15 @@ class _EditCourseDialogState
           widget.course.passingScore,
     );
 
-    await ref
-        .read(courseRepositoryProvider)
-        .updateCourse(updated);
+    if (!widget.isImport) {
+      await ref
+          .read(courseRepositoryProvider)
+          .updateCourse(updated);
+    }
 
     if (!mounted) return;
 
-    Navigator.pop(context, true);
+    Navigator.pop(context, updated);
   }
 
   @override
@@ -201,21 +195,7 @@ class _EditCourseDialogState
                 TextButton(
                   onPressed: _isSaving
                       ? null
-                      : () async {
-                    if (widget.deleteOnCancel) {
-                      await ref
-                          .read(courseRepositoryProvider)
-                          .deleteCourse(
-                        widget.course.id,
-                      );
-                    }
-
-                    if (!mounted) {
-                      return;
-                    }
-
-                    Navigator.pop(context, false);
-                  },
+                      : () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
               ],

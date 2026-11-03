@@ -10,7 +10,7 @@ final countdownRepositoryProvider = Provider<CountdownRepository>(
 );
 
 final countdownsProvider = StreamProvider<List<CountdownItem>>((ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   return ref.watch(countdownRepositoryProvider).watchCountdowns(userId);
 });
 

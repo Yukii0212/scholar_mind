@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/providers/auth_provider.dart';
 import '../../data/datasources/assessment_firestore_datasource.dart';
 import '../../data/repositories/assessment_repository.dart';
 
@@ -22,11 +23,17 @@ Provider(
 );
 
 final assessmentEntriesProvider =
-StreamProvider.family(
+StreamProvider.autoDispose.family(
       (
       ref,
       String courseId,
       ) {
+    final userId = ref.watch(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      return const Stream.empty();
+    }
+
     return ref
         .watch(
       assessmentRepositoryProvider,

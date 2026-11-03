@@ -4,24 +4,21 @@ import '../domain/quiz_response.dart';
 import '../services/openai_quiz_service.dart';
 import '../services/quiz_local_cache_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class QuizRepository {
-
   QuizRepository({
-    this.openAI =
-    const OpenAIQuizService(),
-    this.localCache =
-    const QuizLocalCacheService(),
-  });
+    this.openAI = const OpenAIQuizService(),
+    this.localCache = const QuizLocalCacheService(),
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore;
 
   final OpenAIQuizService openAI;
 
-  final QuizLocalCacheService
-  localCache;
+  final QuizLocalCacheService localCache;
 
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  final FirebaseFirestore? _firestore;
+
+  FirebaseFirestore get _database => _firestore ?? FirebaseFirestore.instance;
 
   Future<String> buildStudyContext({
     required List<ProcessedStudyMaterial> lectureNotes,
@@ -74,26 +71,39 @@ class QuizRepository {
     return buffer.toString().trim();
   }
 
-  Future<void> saveCurrentAttempt(
-      Map<String, dynamic> json,
-      ) {
-    return localCache.saveAttempt(json);
+  Future<void> saveCurrentAttempt({
+    required String userId,
+    required Map<String, dynamic> json,
+  }) {
+    return localCache.saveAttempt(
+      userId: userId,
+      json: json,
+    );
   }
 
-  Future<Map<String, dynamic>?>
-  restoreCurrentAttempt() async {
-    return await localCache.loadCurrentAttempt();
+  Future<Map<String, dynamic>?> restoreCurrentAttempt({
+    required String userId,
+  }) async {
+    return await localCache.loadCurrentAttempt(
+      userId: userId,
+    );
   }
 
-  Future<void> clearCurrentAttempt() {
-    return localCache.clearCurrentAttempt();
+  Future<void> clearCurrentAttempt({
+    required String userId,
+  }) {
+    return localCache.clearCurrentAttempt(
+      userId: userId,
+    );
   }
 
   Future<QuizAttempt?> restoreQuizAttempt({
+    required String userId,
     required QuizResponse quiz,
   }) async {
-    final json =
-    await restoreCurrentAttempt();
+    final json = await restoreCurrentAttempt(
+      userId: userId,
+    );
 
     if (json == null) {
       return null;
@@ -110,31 +120,24 @@ class QuizRepository {
   }
 
   Future<void> saveCompletedAttempt(
-      QuizAttempt attempt,
-      ) async {}
+    QuizAttempt attempt,
+  ) async {}
 
   Future<void> deleteAttempt(
-      String attemptId,
-      ) async {}
+    String attemptId,
+  ) async {}
 
-  Future<void> saveAttemptToCloud(
-      QuizAttempt attempt,
-      ) async {
-
-    final user =
-        FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      return;
-    }
-
-    await _firestore
+  Future<void> saveAttemptToCloud({
+    required String userId,
+    required QuizAttempt attempt,
+  }) async {
+    await _database
         .collection('users')
-        .doc(user.uid)
+        .doc(userId)
         .collection('quizzes')
         .doc(attempt.id)
         .set(
-      attempt.toJson(),
-    );
+          attempt.toJson(),
+        );
   }
 }

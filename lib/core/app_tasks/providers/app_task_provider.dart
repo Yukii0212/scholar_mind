@@ -1,11 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../features/auth/providers/auth_provider.dart';
 import '../domain/app_task.dart';
 import '../domain/app_task_status.dart';
 
 final appTaskProvider =
 StateNotifierProvider<AppTaskController, List<AppTask>>(
-      (_) => AppTaskController(),
+      (ref) {
+    final controller = AppTaskController();
+
+    ref.listen(activeUserProvider, (previous, next) {
+      if (previous?.uid != next?.uid) {
+        controller.clear();
+      }
+    });
+
+    return controller;
+  },
 );
 
 class AppTaskController extends StateNotifier<List<AppTask>> {

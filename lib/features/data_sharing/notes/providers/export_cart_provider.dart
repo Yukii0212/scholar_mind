@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../domain/models/share/share_resource_type.dart';
 import '../model/export_item.dart';
 import 'export_library_provider.dart';
 import '../../providers/export/export_selection_provider.dart';
@@ -9,8 +8,8 @@ part 'export_cart_provider.g.dart';
 
 @riverpod
 Future<List<ExportItem>> exportCart(
-    ExportCartRef ref,
-    ) async {
+  ExportCartRef ref,
+) async {
   final modules = await ref.watch(
     exportLibraryProvider.future,
   );
@@ -22,15 +21,13 @@ Future<List<ExportItem>> exportCart(
   final results = <ExportItem>[];
 
   for (final module in modules) {
-
     final itemsById = {
-      for (final item in module.items)
-        item.id: item,
+      for (final item in module.items) item.id: item,
     };
 
     bool hasSelectedAncestor(
-        ExportItem item,
-        ) {
+      ExportItem item,
+    ) {
       var parentId = item.parentId;
 
       while (parentId != null) {
@@ -41,9 +38,7 @@ Future<List<ExportItem>> exportCart(
         }
 
         final selected =
-            selection.selectedIds[parent.type]
-                ?.contains(parent.id) ??
-                false;
+            selection.selectedIds[parent.type]?.contains(parent.id) ?? false;
 
         if (selected) {
           return true;
@@ -56,11 +51,9 @@ Future<List<ExportItem>> exportCart(
     }
 
     for (final item in module.items) {
-      final ids =
-      selection.selectedIds[item.type];
+      final ids = selection.selectedIds[item.type];
 
-      final selected =
-          ids?.contains(item.id) ?? false;
+      final selected = ids?.contains(item.id) ?? false;
 
       if (!selected) {
         continue;
@@ -71,13 +64,13 @@ Future<List<ExportItem>> exportCart(
       }
 
       int subfolderCount(
-          ExportItem root,
-          ) {
+        ExportItem root,
+      ) {
         var count = 0;
 
         void visit(String parentId) {
           for (final child in module.items.where(
-                (e) => e.parentId == parentId,
+            (e) => e.parentId == parentId,
           )) {
             if (child.type.name == 'noteFolder') {
               count++;
@@ -93,13 +86,13 @@ Future<List<ExportItem>> exportCart(
       }
 
       int noteCount(
-          ExportItem root,
-          ) {
+        ExportItem root,
+      ) {
         var count = 0;
 
         void visit(String parentId) {
           for (final child in module.items.where(
-                (e) => e.parentId == parentId,
+            (e) => e.parentId == parentId,
           )) {
             if (child.type.name == 'note') {
               count++;
@@ -112,32 +105,6 @@ Future<List<ExportItem>> exportCart(
         visit(root.id);
 
         return count;
-      }
-
-      Map<ShareResourceType, Set<String>> collectSelections(
-          ExportItem root,
-          ) {
-        final selections =
-        <ShareResourceType, Set<String>>{};
-
-        void collect(ExportItem current) {
-          selections
-              .putIfAbsent(
-            current.type,
-                () => <String>{},
-          )
-              .add(current.id);
-
-          for (final child in module.items.where(
-                (e) => e.parentId == current.id,
-          )) {
-            collect(child);
-          }
-        }
-
-        collect(root);
-
-        return selections;
       }
 
       results.add(

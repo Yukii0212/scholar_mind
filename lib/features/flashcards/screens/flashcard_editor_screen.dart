@@ -144,7 +144,7 @@ class _FlashcardEditorScreenState
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     if (userId == null) return;
 
     setState(() => _saving = true);

@@ -463,7 +463,7 @@ class _GenerateFlashcardsScreenState
   }
 
   Future<void> _generate() async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     if (userId == null) {
       return;
@@ -494,11 +494,16 @@ class _GenerateFlashcardsScreenState
     final studyContext = _studyContext!;
 
     unawaited(
-      taskController.run<String>(
+      taskController.runSession<String>(
         id: 'flashcard_generation',
         type: AppTaskType.flashcardGeneration,
         title: 'Generating Flashcards',
-        task: (progress) async {
+        task: (session, progress) async {
+          if (session.userId != userId) {
+            throw const AppTaskSessionChangedException();
+          }
+
+          session.throwIfChanged();
           progress('Generating flashcards...');
 
           final generated = await _aiService.generateFlashcards(
@@ -511,7 +516,9 @@ class _GenerateFlashcardsScreenState
             extraInstructions: extraInstructions,
           );
 
-          return repository.saveGeneratedSet(
+          session.throwIfChanged();
+
+          final setId = await repository.saveGeneratedSet(
             userId: userId,
             generated: generated,
             tags: tags,
@@ -521,6 +528,9 @@ class _GenerateFlashcardsScreenState
             folderId: _destinationFolderId,
             onProgress: progress,
           );
+
+          session.throwIfChanged();
+          return setId;
         },
         onOpen: (context, task) {
           if (task.status != AppTaskStatus.completed) {
@@ -549,7 +559,7 @@ class _GenerateFlashcardsScreenState
   }
 
   Future<void> _openGeneratedSet(BuildContext context, String setId) async {
-    final userId = ref.read(authStateProvider).valueOrNull?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
 
     if (userId == null) return;
 

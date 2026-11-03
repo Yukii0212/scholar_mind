@@ -29,27 +29,24 @@ class CoursePredictionCard extends ConsumerWidget {
 
     return StreamBuilder(
       stream: repository.watchCourseComponents(
+        course.ownerId,
         course.id,
       ),
       builder: (
-          context,
-          gradingSnapshot,
-          ) {
+        context,
+        gradingSnapshot,
+      ) {
         if (!gradingSnapshot.hasData) {
           return _loading();
         }
 
-        final components =
-        gradingSnapshot.data!;
+        final components = gradingSnapshot.data!;
 
         return assessmentAsync.when(
           loading: _loading,
-
           error: (_, __) => _error(),
-
           data: (assessments) {
-            final summary =
-            CourseCalculationService.calculate(
+            final summary = CourseCalculationService.calculate(
               components: components,
               assessments: assessments,
             );
@@ -66,38 +63,27 @@ class CoursePredictionCard extends ConsumerWidget {
               );
             }
 
-            final predictions =
-            summary.predictionTableFor(
+            final predictions = summary.predictionTableFor(
               course.targetScore!,
             );
 
             return Card(
               child: Padding(
-                padding:
-                const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Text(
                       'Overall Mark Predictions',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-
                     const SizedBox(height: 8),
-
                     Text(
                       'See how different scores in ${summary.remainingTarget!.component.name} affect your overall course mark.',
                     ),
-
                     const SizedBox(height: 24),
-
                     Row(
                       children: [
-
                         Expanded(
                           child: Text(
                             summary.remainingTarget!.component.name,
@@ -106,29 +92,22 @@ class CoursePredictionCard extends ConsumerWidget {
                             ),
                           ),
                         ),
-
                         Expanded(
                           child: const Text(
                             'Overall Mark',
-                            textAlign:
-                            TextAlign.end,
+                            textAlign: TextAlign.end,
                             style: TextStyle(
-                              fontWeight:
-                              FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
-
                     const Divider(),
-
                     ...predictions.map(
-                          (prediction) =>
-                          _PredictionRow(
-                            prediction:
-                            prediction,
-                          ),
+                      (prediction) => _PredictionRow(
+                        prediction: prediction,
+                      ),
                     ),
                   ],
                 ),
@@ -140,23 +119,18 @@ class CoursePredictionCard extends ConsumerWidget {
     );
   }
 
-  static Widget _loading() =>
-      const Card(
+  static Widget _loading() => const Card(
         child: Padding(
-          padding:
-          EdgeInsets.all(32),
+          padding: EdgeInsets.all(32),
           child: Center(
-            child:
-            CircularProgressIndicator(),
+            child: CircularProgressIndicator(),
           ),
         ),
       );
 
-  static Widget _error() =>
-      const Card(
+  static Widget _error() => const Card(
         child: Padding(
-          padding:
-          EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Text(
             'Unable to load predictions.',
           ),
@@ -164,63 +138,46 @@ class CoursePredictionCard extends ConsumerWidget {
       );
 }
 
-class _PredictionRow
-    extends StatelessWidget {
-
+class _PredictionRow extends StatelessWidget {
   const _PredictionRow({
     required this.prediction,
   });
 
-  final CourseCalculationPrediction
-  prediction;
+  final CourseCalculationPrediction prediction;
 
   @override
   Widget build(BuildContext context) {
-
-    final highlight =
-        prediction.isHighlighted;
+    final highlight = prediction.isHighlighted;
 
     return Container(
-      margin:
-      const EdgeInsets.symmetric(
+      margin: const EdgeInsets.symmetric(
         vertical: 3,
       ),
-      padding:
-      const EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: highlight
-            ? Theme.of(context)
-            .colorScheme
-            .primaryContainer
-            : null,
-        borderRadius:
-        BorderRadius.circular(12),
+        color:
+            highlight ? Theme.of(context).colorScheme.primaryContainer : null,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-
           Expanded(
             child: Text(
               '${prediction.assessmentPercentage.toStringAsFixed(0)}%',
               style: TextStyle(
-                fontWeight: highlight
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
-
           Expanded(
             child: Text(
               '${prediction.finalPercentage.toStringAsFixed(1)}%',
               textAlign: TextAlign.end,
               style: TextStyle(
-                fontWeight: highlight
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),

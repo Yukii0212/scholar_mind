@@ -1,13 +1,10 @@
-import 'package:flutter/cupertino.dart';
-
 import '../../../data_sharing/collection/data_share_collector.dart';
 import '../../../data_sharing/domain/models/collection/collected_resource.dart';
 import '../../../data_sharing/domain/models/collection/collection_result.dart';
 import '../../../data_sharing/domain/models/share/share_resource_type.dart';
 import '../repository/library_repository.dart';
 
-class NotesCollectionService
-    implements DataShareCollector {
+class NotesCollectionService implements DataShareCollector {
   NotesCollectionService({
     required LibraryRepository repository,
   }) : repository = repository;
@@ -15,8 +12,7 @@ class NotesCollectionService
   final LibraryRepository repository;
 
   @override
-  ShareResourceType get resourceType =>
-      ShareResourceType.note;
+  ShareResourceType get resourceType => ShareResourceType.note;
 
   @override
   Future<CollectionResult> collect({
@@ -116,15 +112,10 @@ class NotesCollectionService
       folderId: folder.id,
     );
 
-    (
-      'Folder "${folder.name}" contains ${notes.length} notes',
-    );
+    ('Folder "${folder.name}" contains ${notes.length} notes',);
 
     for (final note in notes) {
-
-      (
-        '  ${note.name} folderId=${note.folderId}',
-      );
+      ('  ${note.name} folderId=${note.folderId}',);
 
       if (!visitedNotes.add(note.id)) {
         continue;

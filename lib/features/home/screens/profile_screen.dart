@@ -29,7 +29,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final user = ref.read(firebaseAuthProvider).currentUser;
+    final user = ref.read(activeUserProvider);
     _nameController = TextEditingController(text: user?.displayName ?? '');
   }
 
@@ -41,7 +41,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(firebaseAuthProvider).currentUser;
+    final user = ref.watch(activeUserProvider);
     final palette = context.scholarPalette;
 
     return SafeArea(
@@ -244,7 +244,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _saveName() async {
-    final user = ref.read(firebaseAuthProvider).currentUser;
+    final user = ref.read(activeUserProvider);
     final name = _nameController.text.trim();
     if (user == null || name.isEmpty) return;
 
@@ -269,7 +269,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _changePhoto() async {
-    final user = ref.read(firebaseAuthProvider).currentUser;
+    final user = ref.read(activeUserProvider);
     if (user == null) return;
 
     final file = await openFile(

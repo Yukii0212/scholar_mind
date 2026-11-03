@@ -10,15 +10,31 @@ service firebase.storage {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Shared export archives: readable by any signed-in user (that's how
-    // another user's import flow fetches the archive.json for a share
-    // link, plus each note's own file underneath .../files/), but only
-    // the owner can upload/overwrite/delete their own. archive.json
-    // itself stays small (references, not file bytes); this cap is really
-    // about the individual file objects under .../files/, so it's set
-    // above the per-note upload cap below rather than at it.
+    function hasActiveShareAccess(userId, storageShareId) {
+      let access = firestore.get(
+        /databases/(default)/documents/export_storage_access/$(storageShareId)
+      );
+      let link = firestore.get(
+        /databases/(default)/documents/export_links/$(access.data.shareLinkId)
+      );
+
+      return isSignedIn()
+        && access.data.ownerId == userId
+        && access.data.storagePath == 'users/' + userId
+          + '/shared_exports/' + storageShareId + '/archive.json'
+        && link.data.ownerId == userId
+        && link.data.storagePath == access.data.storagePath
+        && link.data.isRevoked == false
+        && (link.data.expiresAt == null
+          || request.time < link.data.expiresAt);
+    }
+
+    // Importers may read only while the mapped Firestore share link remains
+    // active. Owners retain access so uploads and cleanup are not blocked by
+    // the link lifecycle.
     match /users/{userId}/shared_exports/{shareId}/{allPaths=**} {
-      allow read: if isSignedIn();
+      allow read: if isOwner(userId)
+        || hasActiveShareAccess(userId, shareId);
       allow delete: if isOwner(userId);
       allow create, update: if isOwner(userId)
         && request.resource.size > 0

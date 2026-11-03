@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -14,9 +15,24 @@ class FileCacheService {
 
   FileCacheService._();
 
+  static Directory? _cacheDirectoryOverride;
+
+  static void setCacheDirectoryForTesting(Directory? directory) {
+    _cacheDirectoryOverride = directory;
+  }
+
   static Future<Directory> _cacheDirectory() async {
-    final supportDir =
-    await getApplicationSupportDirectory();
+    final override = _cacheDirectoryOverride;
+
+    if (override != null) {
+      if (!await override.exists()) {
+        await override.create(recursive: true);
+      }
+
+      return override;
+    }
+
+    final supportDir = await getApplicationSupportDirectory();
 
     final directory = Directory(
       path.join(
@@ -26,10 +42,8 @@ class FileCacheService {
       ),
     );
 
-    if (!directory.existsSync()) {
-      directory.createSync(
-        recursive: true,
-      );
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
     }
 
     return directory;
@@ -41,43 +55,98 @@ class FileCacheService {
   // opening it, and it must stay in sync with the note's current display
   // name rather than leaking internal storage-path plumbing into it.
   static Future<Directory> _noteCacheDirectory(
-      String storagePath,
-      ) async {
-    final directory =
-    await _cacheDirectory();
+    String storagePath,
+  ) async {
+    if (storagePath.isEmpty) {
+      throw ArgumentError.value(
+        storagePath,
+        'storagePath',
+        'Storage path cannot be empty.',
+      );
+    }
 
-    final safeStorage =
-    storagePath.replaceAll('/', '_');
-
-    final noteDirectory = Directory(
-      path.join(
-        directory.path,
-        safeStorage,
-      ),
+    final directory = await _cacheDirectory();
+    final ownerId = _ownerId(storagePath);
+    var directoryPath = path.join(
+      directory.path,
+      'v2',
+      _encodePathComponent(ownerId),
     );
 
-    if (!noteDirectory.existsSync()) {
-      noteDirectory.createSync(
-        recursive: true,
-      );
+    for (final component in _encodedPathComponents(storagePath)) {
+      directoryPath = path.join(directoryPath, component);
+    }
+
+    final noteDirectory = Directory(directoryPath);
+
+    if (!await noteDirectory.exists()) {
+      await noteDirectory.create(recursive: true);
     }
 
     return noteDirectory;
   }
 
   static Future<File> _cacheFile(
-      String storagePath,
-      String fileName,
-      ) async {
-    final noteDirectory =
-    await _noteCacheDirectory(storagePath);
-
-    return File(
-      path.join(
-        noteDirectory.path,
-        fileName,
+    String storagePath,
+    String fileName,
+  ) async {
+    final noteDirectory = await _noteCacheDirectory(storagePath);
+    final safeFileName = _safeFileName(fileName);
+    final candidatePath = path.normalize(
+      path.absolute(
+        path.join(noteDirectory.path, safeFileName),
       ),
     );
+    final noteDirectoryPath = path.normalize(
+      path.absolute(noteDirectory.path),
+    );
+
+    if (!path.isWithin(noteDirectoryPath, candidatePath)) {
+      throw ArgumentError.value(
+        fileName,
+        'fileName',
+        'Cache filename must stay within its note directory.',
+      );
+    }
+
+    return File(candidatePath);
+  }
+
+  static String _ownerId(String storagePath) {
+    final segments = storagePath
+        .replaceAll('\\', '/')
+        .split('/')
+        .where((segment) => segment.isNotEmpty)
+        .toList(growable: false);
+
+    if (segments.length >= 2 && segments.first == 'users') {
+      return segments[1];
+    }
+
+    return '_unscoped';
+  }
+
+  static String _encodePathComponent(String value) {
+    return base64Url.encode(utf8.encode(value));
+  }
+
+  static Iterable<String> _encodedPathComponents(String storagePath) sync* {
+    final encoded = _encodePathComponent(storagePath);
+
+    for (var offset = 0; offset < encoded.length; offset += 120) {
+      final end = offset + 120 < encoded.length ? offset + 120 : encoded.length;
+      yield encoded.substring(offset, end);
+    }
+  }
+
+  static String _safeFileName(String fileName) {
+    var safeName = fileName.replaceAll(RegExp(r'[/\\\x00-\x1F]'), '_');
+
+    if (safeName.isEmpty || safeName == '.' || safeName == '..') {
+      safeName = 'note';
+    }
+
+    return safeName;
   }
 
   /// Renames a note's cached file in place (no re-download) so a rename
@@ -105,9 +174,9 @@ class FileCacheService {
   }
 
   static Future<bool> exists(
-      String storagePath,
-      String fileName,
-      ) async {
+    String storagePath,
+    String fileName,
+  ) async {
     final file = await _cacheFile(
       storagePath,
       fileName,
@@ -148,18 +217,32 @@ class FileCacheService {
     required String storagePath,
     required String fileName,
   }) async {
-    final ref =
-    FirebaseStorage.instance.ref(
+    final ref = FirebaseStorage.instance.ref(
       storagePath,
     );
 
-    final url =
-    await ref.getDownloadURL();
+    final url = await ref.getDownloadURL();
 
-    final response =
-    await http.get(
-      Uri.parse(url),
+    return downloadFromUrl(
+      storagePath: storagePath,
+      fileName: fileName,
+      url: Uri.parse(url),
     );
+  }
+
+  static Future<File> downloadFromUrl({
+    required String storagePath,
+    required String fileName,
+    required Uri url,
+  }) async {
+    final response = await http.get(url);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException(
+        'Note download failed with HTTP ${response.statusCode}.',
+        uri: url,
+      );
+    }
 
     return saveBytes(
       storagePath: storagePath,
@@ -169,8 +252,8 @@ class FileCacheService {
   }
 
   static Future<void> syncMissingCaches(
-      Iterable<NoteItem> notes,
-      ) async {
+    Iterable<NoteItem> notes,
+  ) async {
     for (final note in notes) {
       if (note.isInternal) {
         continue;
@@ -194,8 +277,7 @@ class FileCacheService {
           storagePath: note.storagePath,
           fileName: note.displayFileName,
         );
-      } catch (_) {
-      }
+      } catch (_) {}
     }
   }
 
@@ -214,8 +296,8 @@ class FileCacheService {
   }
 
   static Future<void> ensureCacheExists(
-      NoteItem note,
-      ) async {
+    NoteItem note,
+  ) async {
     final cached = await exists(
       note.storagePath,
       note.displayFileName,
@@ -232,11 +314,39 @@ class FileCacheService {
   }
 
   static Future<void> deleteCache(
-      NoteItem note,
-      ) async {
+    NoteItem note,
+  ) async {
     await delete(
       storagePath: note.storagePath,
       fileName: note.displayFileName,
     );
+  }
+
+  static Future<void> clearUserCache(String userId) async {
+    if (userId.isEmpty) return;
+
+    final cacheDirectory = await _cacheDirectory();
+    final accountDirectory = Directory(
+      path.join(
+        cacheDirectory.path,
+        'v2',
+        _encodePathComponent(userId),
+      ),
+    );
+
+    if (await accountDirectory.exists()) {
+      await accountDirectory.delete(recursive: true);
+    }
+
+    final legacyPrefix = 'users_${userId}_notes_';
+
+    await for (final entity in cacheDirectory.list()) {
+      if (entity is! Directory) continue;
+
+      final entityName = path.basename(entity.path);
+      if (entityName.startsWith(legacyPrefix)) {
+        await entity.delete(recursive: true);
+      }
+    }
   }
 }

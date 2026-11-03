@@ -12,16 +12,18 @@ import 'export_service_provider.dart';
 part 'export_controller.g.dart';
 
 @riverpod
-class ExportController
-    extends _$ExportController {
+class ExportController extends _$ExportController {
   @override
   FutureOr<void> build() {}
 
   Future<ShareResult?> generateShare({
     required ShareExpiry expiry,
+    required String userId,
+    required void Function() ensureSessionCurrent,
     String? shareId,
     void Function(String message)? onProgress,
   }) async {
+    ensureSessionCurrent();
     final request = ref.read(
       exportRequestProvider,
     );
@@ -30,39 +32,48 @@ class ExportController
       return null;
     }
 
+    if (request.userId != userId) {
+      throw StateError('The export belongs to a different signed-in user.');
+    }
+
     final resolvedShareId = shareId ?? const Uuid().v4();
 
-    final archive = await ref
-        .read(exportServiceProvider)
-        .export(
-      request,
-      shareId: resolvedShareId,
-      onProgress: onProgress,
-    );
+    ensureSessionCurrent();
+    final archive = await ref.read(exportServiceProvider).export(
+          request,
+          shareId: resolvedShareId,
+          onProgress: onProgress,
+          ensureSessionCurrent: ensureSessionCurrent,
+        );
 
+    ensureSessionCurrent();
     onProgress?.call('Uploading share archive...');
 
     final storagePath = await ref
         .read(
-      shareUploadServiceProvider,
-    )
+          shareUploadServiceProvider,
+        )
         .uploadArchive(
-      userId: request.userId,
-      shareId: resolvedShareId,
-      archive: archive,
-    );
+          userId: request.userId,
+          shareId: resolvedShareId,
+          archive: archive,
+        );
 
+    ensureSessionCurrent();
     onProgress?.call('Finalizing share link...');
 
-    return ref
+    final result = await ref
         .read(
-      shareLinkServiceProvider,
-    )
+          shareLinkServiceProvider,
+        )
         .createLink(
-      ownerId: request.userId,
-      storagePath: storagePath,
-      expiry: expiry,
-      resourceCounts: summarizeResources(archive.resources),
-    );
+          ownerId: request.userId,
+          storagePath: storagePath,
+          expiry: expiry,
+          resourceCounts: summarizeResources(archive.resources),
+        );
+
+    ensureSessionCurrent();
+    return result;
   }
 }

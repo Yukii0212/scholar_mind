@@ -47,17 +47,14 @@ StateNotifierProvider<
     );
 
     notifier.loadForUser(
-      ref
-          .read(authStateProvider)
-          .valueOrNull
-          ?.uid,
+      ref.read(activeUserProvider)?.uid,
     );
 
     ref.listen(
-      authStateProvider,
+      activeUserProvider,
           (_, next) {
         notifier.loadForUser(
-          next.valueOrNull?.uid,
+          next?.uid,
         );
       },
     );

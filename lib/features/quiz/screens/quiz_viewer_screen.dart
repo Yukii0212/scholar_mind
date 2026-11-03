@@ -21,8 +21,7 @@ import 'quiz_question_overview_screen.dart';
 import 'quiz_result_screen.dart';
 import '../domain/quiz_attempt.dart';
 
-class QuizViewerScreen
-    extends ConsumerStatefulWidget {
+class QuizViewerScreen extends ConsumerStatefulWidget {
   const QuizViewerScreen({
     super.key,
     required this.attempt,
@@ -31,23 +30,16 @@ class QuizViewerScreen
   final QuizAttempt attempt;
 
   @override
-  ConsumerState<QuizViewerScreen>
-  createState() =>
-      _QuizViewerScreenState();
+  ConsumerState<QuizViewerScreen> createState() => _QuizViewerScreenState();
 }
 
-class _QuizViewerScreenState
-    extends ConsumerState<QuizViewerScreen>
+class _QuizViewerScreenState extends ConsumerState<QuizViewerScreen>
     with WidgetsBindingObserver {
+  QuizAttempt get attempt => widget.attempt;
 
-  QuizAttempt get attempt =>
-      widget.attempt;
+  QuizResponse get quiz => attempt.quiz;
 
-  QuizResponse get quiz =>
-      attempt.quiz;
-
-  final Map<int, TextEditingController>
-  _openEndedControllers = {};
+  final Map<int, TextEditingController> _openEndedControllers = {};
 
   final Map<int, FocusNode> _openEndedFocusNodes = {};
 
@@ -74,11 +66,11 @@ class _QuizViewerScreenState
 
       await ref
           .read(
-        quizAttemptProvider.notifier,
-      )
+            quizAttemptProvider.notifier,
+          )
           .restoreAttempt(
-        attempt: widget.attempt,
-      );
+            attempt: widget.attempt,
+          );
 
       await _resolveNavigationStyle();
     });
@@ -294,105 +286,100 @@ class _QuizViewerScreenState
 
   @override
   Widget build(BuildContext context) {
-    final currentAttempt =
-    ref.watch(
+    final currentAttempt = ref.watch(
       quizAttemptProvider,
     );
 
     if (currentAttempt == null || _navigationStyle == null) {
-
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
       );
-
     }
 
-    final answers =
-        currentAttempt.answers;
+    final answers = currentAttempt.answers;
 
     return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) return;
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
 
-          setState(() => _saving = true);
+        setState(() => _saving = true);
 
-          // Block the pop until the save actually lands, rather than
-          // firing it off unawaited alongside a pop that's already
-          // underway -- otherwise the widget (and the ref it needs) can be
-          // torn down before the save finishes.
-          await ref
-              .read(
-            quizAttemptProvider.notifier,
-          )
-              .saveNow();
+        // Block the pop until the save actually lands, rather than
+        // firing it off unawaited alongside a pop that's already
+        // underway -- otherwise the widget (and the ref it needs) can be
+        // torn down before the save finishes.
+        await ref
+            .read(
+              quizAttemptProvider.notifier,
+            )
+            .saveNow();
 
-          if (!mounted) return;
+        if (!mounted) return;
 
-          setState(() => _saving = false);
+        setState(() => _saving = false);
 
-          Navigator.of(context).pop(result);
-        },
-        child: Scaffold(
-      appBar: AppBar(
-        title:
-        const Text('Generated Quiz'),
-        actions: [
-          // Labeled rather than a bare icon -- an unlabeled grid glyph in
-          // a quiz's AppBar reads ambiguously (does this leave the quiz?
-          // lose my progress?) to someone seeing it for the first time.
-          // "Questions" with a list icon reads as "jump to a question"
-          // on its own, no tooltip-hunting required.
-          HelpAnchor(
-            pageId: 'quiz-viewer',
-            anchorId: 'questions-overview-button',
-            child: TextButton.icon(
-              icon: const Icon(Icons.format_list_numbered_rounded),
-              label: const Text('Questions'),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => QuizQuestionOverviewScreen(
-                      quiz: quiz,
-                      answers: answers,
-                      onSelectQuestion: (index) {
-                        Navigator.of(context).pop();
+        Navigator.of(context).pop(result);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Generated Quiz'),
+          actions: [
+            // Labeled rather than a bare icon -- an unlabeled grid glyph in
+            // a quiz's AppBar reads ambiguously (does this leave the quiz?
+            // lose my progress?) to someone seeing it for the first time.
+            // "Questions" with a list icon reads as "jump to a question"
+            // on its own, no tooltip-hunting required.
+            HelpAnchor(
+              pageId: 'quiz-viewer',
+              anchorId: 'questions-overview-button',
+              child: TextButton.icon(
+                icon: const Icon(Icons.format_list_numbered_rounded),
+                label: const Text('Questions'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => QuizQuestionOverviewScreen(
+                        quiz: quiz,
+                        answers: answers,
+                        onSelectQuestion: (index) {
+                          Navigator.of(context).pop();
 
-                        if (!mounted) return;
+                          if (!mounted) return;
 
-                        _jumpToQuestion(index);
-                      },
+                          _jumpToQuestion(index);
+                        },
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-          HelpMenuButton(
-            pageId: 'quiz-viewer',
-            topics: quizViewerHelpTopics(),
-          ),
-          if (_saving)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+                  );
+                },
               ),
             ),
-        ],
-      ),
-      body: SafeArea(
-        child: _navigationStyle == QuizNavigationStyle.swipe
-            ? _buildSwipeBody(answers)
-            : _buildScrollBody(answers),
-      ),
+            HelpMenuButton(
+              pageId: 'quiz-viewer',
+              topics: quizViewerHelpTopics(),
+            ),
+            if (_saving)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+          ],
         ),
+        body: SafeArea(
+          child: _navigationStyle == QuizNavigationStyle.swipe
+              ? _buildSwipeBody(answers)
+              : _buildScrollBody(answers),
+        ),
+      ),
     );
   }
 
@@ -561,48 +548,42 @@ class _QuizViewerScreenState
     int index,
     Map<int, QuizAnswer> answers,
   ) {
-          final question =
-          quiz.questions[index];
+    final question = quiz.questions[index];
 
-          final questionKey =
-          _questionKeys.putIfAbsent(index, () => GlobalKey());
+    final questionKey = _questionKeys.putIfAbsent(index, () => GlobalKey());
 
-          return Card(
-            key: questionKey,
-            margin:
-            const EdgeInsets.only(
-              bottom: 20,
+    return Card(
+      key: questionKey,
+      margin: const EdgeInsets.only(
+        bottom: 20,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildQuestionHeader(context, index, question),
+
+            const SizedBox(
+              height: 20,
             ),
-            child: Padding(
-              padding:
-              const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
-                children: [
-                  _buildQuestionHeader(context, index, question),
 
-                  const SizedBox(
-                    height: 20,
-                  ),
-
-                  // No inner ConstrainedBox/SingleChildScrollView here even
-                  // for open-ended -- that was a second vertical scrollable
-                  // nested inside the outer one wrapping this whole card
-                  // (see _buildScrollBody/_buildSwipeBody), and touches
-                  // anywhere over it got claimed by the inner (usually
-                  // non-scrolling, since the field is only 3 lines) one
-                  // instead of bubbling up, which is what made the page
-                  // feel unscrollable near the answer area. The outer
-                  // scrollable already covers this; the TextField itself
-                  // is already height-capped (minLines/maxLines: 3) so it
-                  // can't grow unbounded either way.
-                  _buildAnswerControls(context, index, question, answers),
-                ],
-              ),
-            ),
-          );
+            // No inner ConstrainedBox/SingleChildScrollView here even
+            // for open-ended -- that was a second vertical scrollable
+            // nested inside the outer one wrapping this whole card
+            // (see _buildScrollBody/_buildSwipeBody), and touches
+            // anywhere over it got claimed by the inner (usually
+            // non-scrolling, since the field is only 3 lines) one
+            // instead of bubbling up, which is what made the page
+            // feel unscrollable near the answer area. The outer
+            // scrollable already covers this; the TextField itself
+            // is already height-capped (minLines/maxLines: 3) so it
+            // can't grow unbounded either way.
+            _buildAnswerControls(context, index, question, answers),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildAnswerControls(
@@ -615,309 +596,242 @@ class _QuizViewerScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-                  if (question.type ==
-                      QuestionType
-                          .multipleChoice)
-                    ...List.generate(
-                      question.options
-                          .length,
-                          (optionIndex) =>
-                          RadioListTile<
-                              int>(
-                            value:
-                            optionIndex,
-                            groupValue:
-                            answers[index]
-                                ?.selectedOptionIndex,
-                            title: Text(
-                              question.options[
-                              optionIndex],
-                            ),
-                            onChanged: (value) {
-                              final updated =
-                              (answers[index] ??
-                                  const QuizAnswer())
-                                  .copyWith(
-                                selectedOptionIndex: value!,
-                              );
+        if (question.type == QuestionType.multipleChoice)
+          ...List.generate(
+            question.options.length,
+            (optionIndex) => RadioListTile<int>(
+              value: optionIndex,
+              groupValue: answers[index]?.selectedOptionIndex,
+              title: Text(
+                question.options[optionIndex],
+              ),
+              onChanged: (value) {
+                final updated = (answers[index] ?? const QuizAnswer()).copyWith(
+                  selectedOptionIndex: value!,
+                );
 
-                              
+                ref
+                    .read(
+                      quizAttemptProvider.notifier,
+                    )
+                    .updateAnswer(
+                      questionIndex: index,
+                      answer: updated,
+                    );
 
-                              ref
-                                  .read(
-                                quizAttemptProvider.notifier,
-                              )
-                                  .updateAnswer(
-                                questionIndex: index,
-                                answer: updated,
-                              );
+                setState(() {});
+              },
+            ),
+          ),
+        if (question.type == QuestionType.trueFalse) ...[
+          RadioListTile<int>(
+            value: 0,
+            groupValue: answers[index]?.selectedOptionIndex,
+            title: const Text(
+              'True',
+            ),
+            onChanged: (value) {
+              final updated = (answers[index] ?? const QuizAnswer()).copyWith(
+                selectedOptionIndex: value!,
+              );
 
-                              setState(() {});
-                            },
-                          ),
-                    ),
+              ref
+                  .read(
+                    quizAttemptProvider.notifier,
+                  )
+                  .updateAnswer(
+                    questionIndex: index,
+                    answer: updated,
+                  );
 
-                  if (question.type ==
-                      QuestionType
-                          .trueFalse)
-                    ...[
-                      RadioListTile<int>(
-                        value: 0,
-                        groupValue:
-                        answers[index]
-                            ?.selectedOptionIndex,
-                        title: const Text(
-                          'True',
-                        ),
-                        onChanged: (value) {
-                          final updated =
-                          (answers[index] ??
-                              const QuizAnswer())
-                              .copyWith(
-                            selectedOptionIndex: value!,
-                          );
+              setState(() {});
+            },
+          ),
+          RadioListTile<int>(
+            value: 1,
+            groupValue: answers[index]?.selectedOptionIndex,
+            title: const Text(
+              'False',
+            ),
+            onChanged: (value) {
+              final updated = (answers[index] ?? const QuizAnswer()).copyWith(
+                selectedOptionIndex: value!,
+              );
 
-                          ref
-                              .read(
-                            quizAttemptProvider.notifier,
-                          )
-                              .updateAnswer(
-                            questionIndex: index,
-                            answer: updated,
-                          );
+              ref
+                  .read(
+                    quizAttemptProvider.notifier,
+                  )
+                  .updateAnswer(
+                    questionIndex: index,
+                    answer: updated,
+                  );
 
-                          setState(() {});
-                        },
-                      ),
-                      RadioListTile<int>(
-                        value: 1,
-                        groupValue:
-                        answers[index]
-                            ?.selectedOptionIndex,
-                        title: const Text(
-                          'False',
-                        ),
-                        onChanged: (value) {
-                          final updated =
-                          (answers[index] ??
-                              const QuizAnswer())
-                              .copyWith(
-                            selectedOptionIndex: value!,
-                          );
+              setState(() {});
+            },
+          ),
+        ],
+        if (question.type == QuestionType.openEnded) ...[
+          Builder(
+            builder: (context) {
+              final controller = _openEndedControllers.putIfAbsent(
+                index,
+                () => TextEditingController(
+                  text: answers[index]?.openEndedAnswer ?? '',
+                ),
+              );
 
-                          
+              final expectedText = answers[index]?.openEndedAnswer ?? '';
 
-                          ref
-                              .read(
-                            quizAttemptProvider.notifier,
-                          )
-                              .updateAnswer(
-                            questionIndex: index,
-                            answer: updated,
-                          );
-
-                          setState(() {});
-                        },
-                      ),
-                    ],
-
-                  if (question.type == QuestionType.openEnded) ...[
-                    Builder(
-                      builder: (context) {
-                        final controller =
-                        _openEndedControllers.putIfAbsent(
-                          index,
-                              () => TextEditingController(
-                            text: answers[index]?.openEndedAnswer ?? '',
-                          ),
-                        );
-
-                        final expectedText =
-                            answers[index]?.openEndedAnswer ?? '';
-
-                        if (controller.text != expectedText) {
-                          controller.value = TextEditingValue(
-                            text: expectedText,
-                            selection: TextSelection.collapsed(
-                              offset: expectedText.length,
-                            ),
-                          );
-                        }
-
-                        final focusNode = _openEndedFocusNodes.putIfAbsent(
-                          index,
-                          () => FocusNode()
-                            ..addListener(() {
-                              if (_openEndedFocusNodes[index]?.hasFocus ==
-                                  true) {
-                                _scrollQuestionIntoView(index);
-                              }
-                            }),
-                        );
-
-                        return TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          // Bounded rather than unbounded (was
-                          // minLines: 4, maxLines: null) — an ever-growing
-                          // field is what pushes the question off-screen
-                          // as the user types; capped, it scrolls
-                          // internally instead, so the question above it
-                          // stays put.
-                          minLines: 3,
-                          maxLines: 3,
-                          keyboardType: TextInputType.multiline,
-                          textInputAction: TextInputAction.newline,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            hintText: 'Enter your answer...',
-                          ),
-                          onChanged: (value) {
-                            final updated =
-                            (answers[index] ?? const QuizAnswer())
-                                .copyWith(
-                              openEndedAnswer: value,
-                            );
-
-                            ref
-                                .read(
-                              quizAttemptProvider.notifier,
-                            )
-                                .updateAnswer(
-                              questionIndex: index,
-                              answer: updated,
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(
-                    height: 12,
+              if (controller.text != expectedText) {
+                controller.value = TextEditingValue(
+                  text: expectedText,
+                  selection: TextSelection.collapsed(
+                    offset: expectedText.length,
                   ),
+                );
+              }
 
-                  CheckboxListTile(
-                    contentPadding:
-                    EdgeInsets.zero,
-                    value:
-                    answers[index]
-                        ?.markedForReview ??
-                        false,
-                    onChanged: (value) {
-                      final updated =
-                      (answers[index] ??
-                          const QuizAnswer())
-                          .copyWith(
-                        markedForReview: value!,
-                      );
+              final focusNode = _openEndedFocusNodes.putIfAbsent(
+                index,
+                () => FocusNode()
+                  ..addListener(() {
+                    if (_openEndedFocusNodes[index]?.hasFocus == true) {
+                      _scrollQuestionIntoView(index);
+                    }
+                  }),
+              );
 
-                      
+              return TextField(
+                controller: controller,
+                focusNode: focusNode,
+                // Bounded rather than unbounded (was
+                // minLines: 4, maxLines: null) — an ever-growing
+                // field is what pushes the question off-screen
+                // as the user types; capped, it scrolls
+                // internally instead, so the question above it
+                // stays put.
+                minLines: 3,
+                maxLines: 3,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Enter your answer...',
+                ),
+                onChanged: (value) {
+                  final updated =
+                      (answers[index] ?? const QuizAnswer()).copyWith(
+                    openEndedAnswer: value,
+                  );
 
-                      ref
-                          .read(
+                  ref
+                      .read(
                         quizAttemptProvider.notifier,
                       )
-                          .updateAnswer(
+                      .updateAnswer(
                         questionIndex: index,
                         answer: updated,
                       );
+                },
+              );
+            },
+          ),
+        ],
+        const SizedBox(
+          height: 12,
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: answers[index]?.markedForReview ?? false,
+          onChanged: (value) {
+            final updated = (answers[index] ?? const QuizAnswer()).copyWith(
+              markedForReview: value!,
+            );
 
-                      setState(() {});
-                    },
-                    title: const Text(
-                      'Review this question later',
-                    ),
+            ref
+                .read(
+                  quizAttemptProvider.notifier,
+                )
+                .updateAnswer(
+                  questionIndex: index,
+                  answer: updated,
+                );
+
+            setState(() {});
+          },
+          title: const Text(
+            'Review this question later',
+          ),
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: answers[index]?.guessed ?? false,
+          onChanged: (value) {
+            final updated = (answers[index] ?? const QuizAnswer()).copyWith(
+              guessed: value!,
+            );
+
+            ref
+                .read(
+                  quizAttemptProvider.notifier,
+                )
+                .updateAnswer(
+                  questionIndex: index,
+                  answer: updated,
+                );
+
+            setState(() {});
+          },
+          title: const Text(
+            'I was not confident in this answer',
+          ),
+        ),
+        index == 0
+            ? HelpAnchor(
+                pageId: 'quiz-viewer',
+                anchorId: 'not-important-flag',
+                child: CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: answers[index]?.notImportant ?? false,
+                  onChanged: (value) {
+                    if (value == true) {
+                      _flagNotImportant(index, question);
+                    } else {
+                      _unflagNotImportant(index);
+                    }
+                  },
+                  title: const Text(
+                    'Not important (exclude from grading)',
                   ),
-
-                  CheckboxListTile(
-                    contentPadding:
-                    EdgeInsets.zero,
-                    value:
-                    answers[index]
-                        ?.guessed ??
-                        false,
-                    onChanged: (value) {
-                      final updated =
-                      (answers[index] ??
-                          const QuizAnswer())
-                          .copyWith(
-                        guessed: value!,
-                      );
-
-                      
-
-                      ref
-                          .read(
-                        quizAttemptProvider.notifier,
-                      )
-                          .updateAnswer(
-                        questionIndex: index,
-                        answer: updated,
-                      );
-
-                      setState(() {});
-                    },
-                    title: const Text(
-                      'I was not confident in this answer',
-                    ),
-                  ),
-
-                  index == 0
-                      ? HelpAnchor(
-                          pageId: 'quiz-viewer',
-                          anchorId: 'not-important-flag',
-                          child: CheckboxListTile(
-                            contentPadding:
-                            EdgeInsets.zero,
-                            value:
-                            answers[index]
-                                ?.notImportant ??
-                                false,
-                            onChanged: (value) {
-                              if (value == true) {
-                                _flagNotImportant(index, question);
-                              } else {
-                                _unflagNotImportant(index);
-                              }
-                            },
-                            title: const Text(
-                              'Not important (exclude from grading)',
-                            ),
-                            secondary: const Icon(Icons.flag_outlined),
-                          ),
-                        )
-                      : CheckboxListTile(
-                    contentPadding:
-                    EdgeInsets.zero,
-                    value:
-                    answers[index]
-                        ?.notImportant ??
-                        false,
-                    onChanged: (value) {
-                      if (value == true) {
-                        _flagNotImportant(index, question);
-                      } else {
-                        _unflagNotImportant(index);
-                      }
-                    },
-                    title: const Text(
-                      'Not important (exclude from grading)',
-                    ),
-                    secondary: const Icon(Icons.flag_outlined),
-                  ),
+                  secondary: const Icon(Icons.flag_outlined),
+                ),
+              )
+            : CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: answers[index]?.notImportant ?? false,
+                onChanged: (value) {
+                  if (value == true) {
+                    _flagNotImportant(index, question);
+                  } else {
+                    _unflagNotImportant(index);
+                  }
+                },
+                title: const Text(
+                  'Not important (exclude from grading)',
+                ),
+                secondary: const Icon(Icons.flag_outlined),
+              ),
       ],
     );
   }
-
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
 
-    for (final controller
-    in _openEndedControllers.values) {
+    for (final controller in _openEndedControllers.values) {
       controller.dispose();
     }
 
@@ -931,8 +845,7 @@ class _QuizViewerScreenState
   }
 
   Future<void> _submitQuiz() async {
-    final submit =
-    await showDialog<bool>(
+    final submit = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -941,9 +854,9 @@ class _QuizViewerScreenState
           ),
           content: Text(
             'You have answered '
-                '$_answeredQuestions of '
-                '${quiz.questions.length} questions.\n\n'
-                'You can still review your answers after submitting.',
+            '$_answeredQuestions of '
+            '${quiz.questions.length} questions.\n\n'
+            'You can still review your answers after submitting.',
           ),
           actions: [
             TextButton(
@@ -1018,15 +931,17 @@ class _QuizViewerScreenState
     final quizTitle = quiz.title;
 
     unawaited(
-      ref.read(appTaskControllerProvider).run<void>(
-        id: 'quiz_grading_$attemptId',
-        type: AppTaskType.quizGrading,
-        title: 'Grading "$quizTitle"',
-        task: (progress) async {
-          progress('Grading your open-ended answers...');
-          await notifier.startGrading();
-        },
-      ),
+      ref.read(appTaskControllerProvider).runSession<void>(
+            id: 'quiz_grading_$attemptId',
+            type: AppTaskType.quizGrading,
+            title: 'Grading "$quizTitle"',
+            task: (session, progress) async {
+              session.throwIfChanged();
+              progress('Grading your open-ended answers...');
+              await notifier.startGrading();
+              session.throwIfChanged();
+            },
+          ),
     );
 
     if (!mounted) return;

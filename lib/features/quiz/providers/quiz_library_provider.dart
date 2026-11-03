@@ -27,7 +27,7 @@ Stream<List<QuizFolder>> childFolders(
     ChildFoldersRef ref,
     String parentId,
     ) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref
@@ -40,7 +40,7 @@ Stream<List<QuizFolder>> allFolders(
     AllFoldersRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -53,7 +53,7 @@ Stream<List<QuizFolder>> allFolders(
 
 @riverpod
 Stream<List<QuizFolder>> favoriteFolders(FavoriteFoldersRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref.watch(quizLibraryRepositoryProvider).watchFavoriteFolders(userId);
@@ -64,7 +64,7 @@ Stream<List<QuizAttempt>> favoriteQuizzes(
     FavoriteQuizzesRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -80,7 +80,7 @@ Stream<List<QuizAttempt>> allQuizzes(
     AllQuizzesRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -93,7 +93,7 @@ Stream<List<QuizAttempt>> allQuizzes(
 
 @riverpod
 Stream<List<QuizFolder>> archivedFolders(ArchivedFoldersRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref.watch(quizLibraryRepositoryProvider).watchArchivedFolders(userId);
@@ -101,7 +101,7 @@ Stream<List<QuizFolder>> archivedFolders(ArchivedFoldersRef ref) {
 
 @riverpod
 Stream<List<QuizFolder>> deletedFolders(DeletedFoldersRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref
@@ -126,7 +126,7 @@ Stream<List<QuizFolder>> deletedFolders(DeletedFoldersRef ref) {
 
 @riverpod
 Stream<List<QuizAttempt>> deletedQuizzes(DeletedQuizzesRef ref) {
-  final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+  final userId = ref.watch(activeUserProvider)?.uid;
   if (userId == null) return const Stream.empty();
 
   return ref
@@ -165,7 +165,7 @@ Stream<List<QuizAttempt>> quizzesInFolder(
     String folderId,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -241,9 +241,7 @@ Stream<List<QuizAttempt>> activeQuizzes(
     ActiveQuizzesRef ref,
     ) {
   final userId =
-      ref.watch(authStateProvider)
-          .valueOrNull
-          ?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -264,7 +262,7 @@ Stream<QuizAttempt> quiz(
     String quizId,
     ) {
   final userId =
-      ref.watch(authStateProvider).valueOrNull?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return const Stream.empty();
@@ -285,9 +283,7 @@ Future<List<QuizFolder>> folderPath(
     ) async {
 
   final userId =
-      ref.watch(authStateProvider)
-          .valueOrNull
-          ?.uid;
+      ref.watch(activeUserProvider)?.uid;
 
   if (userId == null) {
     return [];
@@ -515,7 +511,7 @@ class QuizLibraryActionController extends _$QuizLibraryActionController {
           QuizLibraryRepository repository,
           ) action,
       ) async {
-    final userId = ref.read(firebaseAuthProvider).currentUser?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     if (userId == null) {
       state = AsyncValue.error(
         StateError('You must be signed in.'),

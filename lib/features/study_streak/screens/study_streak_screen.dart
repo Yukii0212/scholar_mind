@@ -19,7 +19,7 @@ class StudyStreakScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(studyStreakSummaryProvider);
     final accountCreated =
-        ref.watch(authStateProvider).valueOrNull?.metadata.creationTime;
+        ref.watch(activeUserProvider)?.metadata.creationTime;
 
     return SafeArea(
       top: false,

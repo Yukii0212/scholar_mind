@@ -11,6 +11,7 @@ import 'semester/semester_provider.dart';
 part 'grades_ownership_backfill_provider.g.dart';
 
 const _prefsKeyPrefix = 'grades_ownership_backfilled_';
+final _attemptedUserIds = <String>{};
 
 /// One-time, per-user backfill of the `ownerId` field on Course/
 /// GradingComponent documents written before ownership tracking existed.
@@ -21,9 +22,16 @@ const _prefsKeyPrefix = 'grades_ownership_backfilled_';
 class GradesOwnershipBackfill extends _$GradesOwnershipBackfill {
   @override
   void build() {
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     if (userId == null) {
+      return;
+    }
+
+    // A denied legacy migration must not be relaunched by provider rebuilds
+    // and keep reopening Firestore's write stream. A failed user is retried
+    // after the next app restart; successful users remain covered by prefs.
+    if (!_attemptedUserIds.add(userId)) {
       return;
     }
 
@@ -31,6 +39,12 @@ class GradesOwnershipBackfill extends _$GradesOwnershipBackfill {
   }
 
   Future<void> _run(String userId) async {
+    void ensureSessionCurrent() {
+      if (ref.read(activeUserProvider)?.uid != userId) {
+        throw StateError('The signed-in account changed during migration.');
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final key = '$_prefsKeyPrefix$userId';
 
@@ -39,20 +53,26 @@ class GradesOwnershipBackfill extends _$GradesOwnershipBackfill {
     }
 
     try {
+      ensureSessionCurrent();
       final semesters = await ref
           .read(semesterRepositoryProvider)
-          .watchSemesters()
+          .watchSemesters(userId)
           .first;
 
+      ensureSessionCurrent();
+
       await ref.read(courseRepositoryProvider).backfillOwnership(
-        userId: userId,
-        semesterIds: [
-          for (final semester in semesters) semester.id,
-        ],
-        componentRepository: ref.read(
-          gradingComponentRepositoryProvider,
-        ),
-      );
+            userId: userId,
+            semesterCreatedAt: {
+              for (final semester in semesters) semester.id: semester.createdAt,
+            },
+            componentRepository: ref.read(
+              gradingComponentRepositoryProvider,
+            ),
+            ensureSessionCurrent: ensureSessionCurrent,
+          );
+
+      ensureSessionCurrent();
 
       await prefs.setBool(key, true);
     } catch (_) {

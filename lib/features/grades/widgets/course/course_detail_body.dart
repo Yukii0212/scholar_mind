@@ -51,7 +51,10 @@ class CourseDetailBodyState extends ConsumerState<CourseDetailBody> {
           final repository = ref.watch(gradingComponentRepositoryProvider);
 
           return StreamBuilder(
-            stream: repository.watchCourseComponents(widget.course.id),
+            stream: repository.watchCourseComponents(
+              widget.course.ownerId,
+              widget.course.id,
+            ),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());

@@ -10,4 +10,17 @@ class ShareArchive {
   final ShareManifest manifest;
 
   final List<ShareResource> resources;
+
+  ShareArchive withResources(
+    List<ShareResource> resources,
+  ) {
+    return ShareArchive(
+      manifest: ShareManifest(
+        archiveVersion: manifest.archiveVersion,
+        createdAt: manifest.createdAt,
+        resourceCount: resources.length,
+      ),
+      resources: List<ShareResource>.unmodifiable(resources),
+    );
+  }
 }

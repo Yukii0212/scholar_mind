@@ -6,12 +6,16 @@ abstract class DataShareHandler {
   List<ShareResourceType> get resourceTypes;
 
   ValidationResult validateExport(
-      List<String> resourceIds,
-      );
+    List<String> resourceIds,
+  );
 
   ValidationResult validateImport(
-      ShareResource resource,
-      );
+    ShareResource resource,
+  );
+
+  ValidationResult validateImportBatch(
+    List<ShareResource> resources,
+  );
 
   Future<List<ShareResource>> export({
     required String userId,
@@ -27,10 +31,12 @@ abstract class DataShareHandler {
     // need it, but ones that do per-item network work (e.g. notes copying
     // files) can report incremental progress through it.
     void Function(String message)? onProgress,
+    void Function()? ensureSessionCurrent,
   });
 
   Future<void> import({
     required String userId,
     required List<ShareResource> resources,
+    void Function()? ensureSessionCurrent,
   });
 }

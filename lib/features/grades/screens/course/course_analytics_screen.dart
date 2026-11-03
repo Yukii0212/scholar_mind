@@ -73,7 +73,10 @@ class CourseAnalyticsScreenState extends ConsumerState<CourseAnalyticsScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: StreamBuilder(
-          stream: repository.watchCourseComponents(widget.course.id),
+          stream: repository.watchCourseComponents(
+            widget.course.ownerId,
+            widget.course.id,
+          ),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());

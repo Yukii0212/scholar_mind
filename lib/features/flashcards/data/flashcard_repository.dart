@@ -6,6 +6,10 @@ import '../domain/flashcard_models.dart';
 class FlashcardRepository {
   const FlashcardRepository(this._firestore);
 
+  static const analyticsSessionLimit = 200;
+  static const _batchWriteLimit = 450;
+  static const _analyticsReadConcurrency = 4;
+
   final FirebaseFirestore _firestore;
 
   // Collection path stays 'flashcard_decks'/'cards' -- renaming the
@@ -182,8 +186,7 @@ class FlashcardRepository {
         'isArchived': existingData?['isArchived'] as bool? ?? false,
         'isDeleted': existingData?['isDeleted'] as bool? ?? false,
         'deletedAt': existingData?['deletedAt'],
-        'deletedAsCascade':
-            existingData?['deletedAsCascade'] as bool? ?? false,
+        'deletedAsCascade': existingData?['deletedAsCascade'] as bool? ?? false,
         'createdAt': existingData?['createdAt'] as Timestamp? ?? now,
         'updatedAt': now,
       },
@@ -200,12 +203,21 @@ class FlashcardRepository {
     required String setId,
   }) async {
     final cards = await _cards(userId, setId).get();
-    final batch = _firestore.batch();
-    for (final card in cards.docs) {
-      batch.delete(card.reference);
+
+    for (var start = 0; start < cards.docs.length; start += _batchWriteLimit) {
+      final end = start + _batchWriteLimit < cards.docs.length
+          ? start + _batchWriteLimit
+          : cards.docs.length;
+      final batch = _firestore.batch();
+
+      for (final card in cards.docs.sublist(start, end)) {
+        batch.delete(card.reference);
+      }
+
+      await batch.commit();
     }
-    batch.delete(_sets(userId).doc(setId));
-    await batch.commit();
+
+    await _sets(userId).doc(setId).delete();
   }
 
   Future<void> softDeleteSet({
@@ -303,41 +315,46 @@ class FlashcardRepository {
       folderId: folderId,
     );
 
-    final batch = _firestore.batch();
     final now = Timestamp.fromDate(DateTime.now());
 
-    for (var i = 0; i < generated.cards.length; i++) {
-      final card = generated.cards[i];
+    for (var start = 0;
+        start < generated.cards.length;
+        start += _batchWriteLimit) {
+      final end = start + _batchWriteLimit < generated.cards.length
+          ? start + _batchWriteLimit
+          : generated.cards.length;
+      final batch = _firestore.batch();
 
-      onProgress?.call(
-        'Saving ${i + 1} of ${generated.cards.length}',
-      );
+      for (var i = start; i < end; i++) {
+        final card = generated.cards[i];
 
-      final reference = _cards(userId, setId).doc();
+        onProgress?.call(
+          'Saving ${i + 1} of ${generated.cards.length}',
+        );
 
-      batch.set(reference, {
-        'front': card.front,
-        'back': card.back,
-        'tags': _cleanTags([
-          ...tags,
-          ...card.tags,
-        ]),
-        'frontImageUrl': null,
-        'backImageUrl': null,
-        'createdAt': now,
-        'updatedAt': now,
-      });
+        final reference = _cards(userId, setId).doc();
+
+        batch.set(reference, {
+          'front': card.front,
+          'back': card.back,
+          'tags': _cleanTags([
+            ...tags,
+            ...card.tags,
+          ]),
+          'frontImageUrl': null,
+          'backImageUrl': null,
+          'createdAt': now,
+          'updatedAt': now,
+        });
+      }
+
+      await batch.commit();
     }
 
-    batch.update(
-      _sets(userId).doc(setId),
-      {
-        'cardCount': generated.cards.length,
-        'updatedAt': now,
-      },
-    );
-
-    await batch.commit();
+    await _sets(userId).doc(setId).update({
+      'cardCount': generated.cards.length,
+      'updatedAt': now,
+    });
 
     return setId;
   }
@@ -393,35 +410,52 @@ class FlashcardRepository {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
-  /// One-time (non-streamed) session history across ALL of the user's
-  /// sets, for the Analytics page's cross-set trend chart -- unlike
-  /// watchSessions (per-set, live, capped at 50) this fans out a single
-  /// `.get()` per set rather than holding N live listeners open just to
-  /// show a stats page. Each session map is enriched with 'setId'/
-  /// 'setName' since the raw session docs don't carry either. Sorted
-  /// newest-first and capped at 200 across all sets combined.
+  /// One-time session history across all of the user's sets. Reads are
+  /// limited to four concurrent queries and [limit] results per set, then
+  /// merged newest-first and capped to [limit] across all sets. Applying
+  /// [startDate] in Firestore keeps the cap correct for the selected range.
   Future<List<Map<String, dynamic>>> getAllSessions({
     required String userId,
     required List<FlashcardSet> sets,
+    DateTime? startDate,
+    int limit = analyticsSessionLimit,
   }) async {
-    final results = await Future.wait(
-      sets.map((set) async {
-        final snapshot = await _sessions(userId, set.id)
-            .orderBy('completedAt', descending: true)
-            .limit(200)
-            .get();
+    if (sets.isEmpty || limit <= 0) return const [];
 
-        return snapshot.docs.map((doc) {
+    final sessions = <Map<String, dynamic>>[];
+    var nextSetIndex = 0;
+
+    Future<void> readSessions() async {
+      while (nextSetIndex < sets.length) {
+        final set = sets[nextSetIndex++];
+        Query<Map<String, dynamic>> query =
+            _sessions(userId, set.id).orderBy('completedAt', descending: true);
+
+        if (startDate != null) {
+          query = query.where(
+            'completedAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+          );
+        }
+
+        final snapshot = await query.limit(limit).get();
+
+        sessions.addAll(snapshot.docs.map((doc) {
           return {
             ...doc.data(),
             'setId': set.id,
             'setName': set.name,
           };
-        });
-      }),
-    );
+        }));
+      }
+    }
 
-    final sessions = results.expand((sessions) => sessions).toList();
+    final workerCount = sets.length < _analyticsReadConcurrency
+        ? sets.length
+        : _analyticsReadConcurrency;
+    await Future.wait(
+      List.generate(workerCount, (_) => readSessions()),
+    );
 
     sessions.sort((a, b) {
       final aTime = a['completedAt'] as Timestamp?;
@@ -429,7 +463,7 @@ class FlashcardRepository {
       return (bTime ?? Timestamp(0, 0)).compareTo(aTime ?? Timestamp(0, 0));
     });
 
-    return sessions.take(200).toList();
+    return sessions.take(limit).toList();
   }
 
   Future<void> _refreshSetMetadata(String userId, String setId) async {
@@ -462,8 +496,7 @@ class FlashcardRepository {
         .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      final folders =
-          snapshot.docs.map(FlashcardFolder.fromDocument).toList();
+      final folders = snapshot.docs.map(FlashcardFolder.fromDocument).toList();
       folders.sort(_sortFolders);
       return folders;
     });
@@ -474,8 +507,7 @@ class FlashcardRepository {
         .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      final folders =
-          snapshot.docs.map(FlashcardFolder.fromDocument).toList();
+      final folders = snapshot.docs.map(FlashcardFolder.fromDocument).toList();
       folders.sort(_sortFolders);
       return folders;
     });
@@ -489,11 +521,10 @@ class FlashcardRepository {
         .where('deletedAsCascade', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      final folders =
-          snapshot.docs.map(FlashcardFolder.fromDocument).toList();
+      final folders = snapshot.docs.map(FlashcardFolder.fromDocument).toList();
       folders.sort(
-        (a, b) => (b.deletedAt ?? b.createdAt)
-            .compareTo(a.deletedAt ?? a.createdAt),
+        (a, b) =>
+            (b.deletedAt ?? b.createdAt).compareTo(a.deletedAt ?? a.createdAt),
       );
       return folders;
     });
@@ -509,8 +540,8 @@ class FlashcardRepository {
         .map((snapshot) {
       final sets = snapshot.docs.map(FlashcardSet.fromFirestore).toList();
       sets.sort(
-        (a, b) => (b.deletedAt ?? b.createdAt)
-            .compareTo(a.deletedAt ?? a.createdAt),
+        (a, b) =>
+            (b.deletedAt ?? b.createdAt).compareTo(a.deletedAt ?? a.createdAt),
       );
       return sets;
     });
@@ -648,9 +679,8 @@ class FlashcardRepository {
   ) async {
     final descendants = <String>{};
 
-    final children = await _folders(userId)
-        .where('parentId', isEqualTo: folderId)
-        .get();
+    final children =
+        await _folders(userId).where('parentId', isEqualTo: folderId).get();
 
     for (final child in children.docs) {
       descendants.add(child.id);
@@ -794,9 +824,8 @@ class FlashcardRepository {
   /// folders/sets only -- restoring a folder already cascades to its
   /// children via restoreFolder).
   Future<void> restoreAll({required String userId}) async {
-    final folders = await _folders(userId)
-        .where('isDeleted', isEqualTo: true)
-        .get();
+    final folders =
+        await _folders(userId).where('isDeleted', isEqualTo: true).get();
 
     for (final folder in folders.docs) {
       final parentId = folder.data()['parentId'] as String;
@@ -811,14 +840,12 @@ class FlashcardRepository {
       }
     }
 
-    final sets =
-        await _sets(userId).where('isDeleted', isEqualTo: true).get();
+    final sets = await _sets(userId).where('isDeleted', isEqualTo: true).get();
 
     for (final set in sets.docs) {
       final folderId = set.data()['folderId'] as String;
 
-      final parentDeleted =
-          folders.docs.any((folder) => folder.id == folderId);
+      final parentDeleted = folders.docs.any((folder) => folder.id == folderId);
 
       if (!parentDeleted) {
         await restoreSet(userId: userId, setId: set.id);
@@ -830,9 +857,8 @@ class FlashcardRepository {
   /// trashed folders/sets only -- permanentlyDeleteFolder already cascades
   /// to children).
   Future<void> permanentlyDeleteAll({required String userId}) async {
-    final folders = await _folders(userId)
-        .where('isDeleted', isEqualTo: true)
-        .get();
+    final folders =
+        await _folders(userId).where('isDeleted', isEqualTo: true).get();
 
     for (final folder in folders.docs) {
       final parentId = folder.data()['parentId'] as String;
@@ -847,14 +873,12 @@ class FlashcardRepository {
       }
     }
 
-    final sets =
-        await _sets(userId).where('isDeleted', isEqualTo: true).get();
+    final sets = await _sets(userId).where('isDeleted', isEqualTo: true).get();
 
     for (final set in sets.docs) {
       final folderId = set.data()['folderId'] as String;
 
-      final parentDeleted =
-          folders.docs.any((folder) => folder.id == folderId);
+      final parentDeleted = folders.docs.any((folder) => folder.id == folderId);
 
       if (!parentDeleted) {
         await deleteSet(userId: userId, setId: set.id);

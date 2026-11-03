@@ -5,14 +5,14 @@ import '../../data/models/course_model.dart';
 import 'course_provider.dart';
 
 final semesterCourseProvider =
-StreamProvider.family<
+StreamProvider.autoDispose.family<
     List<CourseModel>,
     String>(
       (ref, semesterId) {
-    final userId = ref.watch(authStateProvider).valueOrNull?.uid;
+    final userId = ref.watch(activeUserProvider)?.uid;
 
     if (userId == null) {
-      return const Stream.empty();
+      return Stream.value(const []);
     }
 
     return ref

@@ -68,7 +68,7 @@ class _FlashcardFolderPickerDialogState
 
     if (name == null) return;
 
-    final userId = ref.read(firebaseAuthProvider).currentUser?.uid;
+    final userId = ref.read(activeUserProvider)?.uid;
     if (userId == null) return;
 
     setState(() => _creating = true);

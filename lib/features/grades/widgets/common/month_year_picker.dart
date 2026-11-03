@@ -44,6 +44,73 @@ class MonthYearPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentYear = DateTime.now().year;
 
+    final fields = <Widget>[
+      if (showDay)
+        DropdownButtonFormField<int>(
+          initialValue: day,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: 'Day',
+            errorText: errorText != null ? '' : null,
+          ),
+          items: List.generate(
+            31,
+            (index) => DropdownMenuItem(
+              value: index + 1,
+              child: Text('${index + 1}'),
+            ),
+          ),
+          onChanged: (value) {
+            if (value != null) {
+              onDayChanged?.call(value);
+            }
+          },
+        ),
+      DropdownButtonFormField<int>(
+        initialValue: month,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: 'Month',
+          errorText: errorText != null ? '' : null,
+        ),
+        items: List.generate(
+          12,
+          (index) => DropdownMenuItem(
+            value: index + 1,
+            child: Text(months[index]),
+          ),
+        ),
+        onChanged: (value) {
+          if (value != null) {
+            onMonthChanged(value);
+          }
+        },
+      ),
+      DropdownButtonFormField<int>(
+        initialValue: year,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: 'Year',
+          errorText: errorText != null ? '' : null,
+        ),
+        items: List.generate(
+          21,
+          (index) {
+            final selectableYear = currentYear - 10 + index;
+            return DropdownMenuItem(
+              value: selectableYear,
+              child: Text('$selectableYear'),
+            );
+          },
+        ),
+        onChanged: (value) {
+          if (value != null) {
+            onYearChanged(value);
+          }
+        },
+      ),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -55,85 +122,34 @@ class MonthYearPicker extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const spacing = 16.0;
+                const minimumFieldWidth = 112.0;
+                final maximumColumns = fields.length;
+                final availableColumns = showDay && constraints.maxWidth < 420
+                    ? 1
+                    : ((constraints.maxWidth + spacing) /
+                            (minimumFieldWidth + spacing))
+                        .floor()
+                        .clamp(1, maximumColumns);
+                final fieldWidth = (constraints.maxWidth -
+                        (spacing * (availableColumns - 1))) /
+                    availableColumns;
 
-                if (showDay) ...[
-                  Expanded(
-                    child: DropdownButtonFormField<int>(
-                      initialValue: day,
-                      decoration: InputDecoration(
-                        labelText: 'Day',
-                        errorText: '',
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: [
+                    for (final field in fields)
+                      SizedBox(
+                        width: fieldWidth,
+                        child: field,
                       ),
-                      items: List.generate(
-                        31,
-                            (index) => DropdownMenuItem(
-                          value: index + 1,
-                          child: Text('${index + 1}'),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        if (value != null) {
-                          onDayChanged?.call(value);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    initialValue: month,
-                    decoration: InputDecoration(
-                      labelText: 'Month',
-                      errorText: errorText != null ? '' : null,
-                    ),
-                    items: List.generate(
-                      12,
-                          (index) => DropdownMenuItem(
-                        value: index + 1,
-                        child: Text(months[index]),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      if (value != null) {
-                        onMonthChanged(value);
-                      }
-                    },
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    initialValue: year,
-                    decoration: InputDecoration(
-                      labelText: 'Year',
-                      errorText: errorText != null ? '' : null,
-                    ),
-                    items: List.generate(
-                      21,
-                          (index) {
-                        final y = currentYear - 10 + index;
-                        return DropdownMenuItem(
-                          value: y,
-                          child: Text('$y'),
-                        );
-                      },
-                    ),
-                    onChanged: (value) {
-                      if (value != null) {
-                        onYearChanged(value);
-                      }
-                    },
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
-
             if (errorText != null)
               Padding(
                 padding: const EdgeInsets.only(

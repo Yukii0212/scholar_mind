@@ -16,13 +16,11 @@ import '../help/google_classroom_import_help_topics.dart';
 import '../providers/google_classroom_provider.dart';
 import '../providers/library_provider.dart';
 import '../domain/note_category.dart';
-import '../services/google_classroom_service.dart';
 import '../services/file_cache_service.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
-class GoogleClassroomImportScreen
-    extends ConsumerStatefulWidget {
 
+class GoogleClassroomImportScreen extends ConsumerStatefulWidget {
   const GoogleClassroomImportScreen({
     super.key,
     required this.defaultFolderId,
@@ -31,14 +29,13 @@ class GoogleClassroomImportScreen
   final String defaultFolderId;
 
   @override
-  ConsumerState<GoogleClassroomImportScreen>
-  createState() =>
+  ConsumerState<GoogleClassroomImportScreen> createState() =>
       _GoogleClassroomImportScreenState();
 }
 
-class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImportScreen> {
-  final Map<String, Map<String, dynamic>>
-  _selectedAttachments = {};
+class _GoogleClassroomImportScreenState
+    extends ConsumerState<GoogleClassroomImportScreen> {
+  final Map<String, Map<String, dynamic>> _selectedAttachments = {};
 
   bool _isImporting = false;
 
@@ -46,50 +43,40 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
 
   Set<String> _hiddenCourseIds = {};
 
-  int _currentImport = 0;
-  int _totalImports = 0;
-  String _currentFileName = '';
-
   late String _destinationFolderId;
 
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) {
-
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.invalidate(
         classroomCoursesProvider,
       );
     });
 
-    _destinationFolderId =
-        widget.defaultFolderId;
+    _destinationFolderId = widget.defaultFolderId;
 
     _loadHiddenCourses();
   }
 
   Future<void> _loadHiddenCourses() async {
-    final prefs =
-    await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
     setState(() {
-      _hiddenCourseIds =
-          prefs
+      _hiddenCourseIds = prefs
               .getStringList(
-            'hidden_gc_courses',
-          )
+                'hidden_gc_courses',
+              )
               ?.toSet() ??
-              {};
+          {};
     });
   }
 
   Future<void> _hideCourse(
-      String courseId,
-      ) async {
-    final prefs =
-    await SharedPreferences.getInstance();
+    String courseId,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
 
     _hiddenCourseIds.add(courseId);
 
@@ -102,10 +89,9 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
   }
 
   Future<void> _unhideCourse(
-      String courseId,
-      ) async {
-    final prefs =
-    await SharedPreferences.getInstance();
+    String courseId,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
 
     _hiddenCourseIds.remove(courseId);
 
@@ -122,320 +108,295 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
     final coursesAsync = ref.watch(classroomCoursesProvider);
 
     return Stack(
-        children: [
-    Scaffold(
-      appBar: AppBar(
-        title: const Text('Import from Google Classroom'),
-        actions: [
-          if (_selectedAttachments.isNotEmpty)
-            TextButton.icon(
-              onPressed: _isImporting ? null : _handleBatchImport,
-              icon: _isImporting
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.download),
-              label: Text(_isImporting ? 'Importing...' : 'Import (${_selectedAttachments.length})'),
-            ),
-          HelpMenuButton(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Text('Import from Google Classroom'),
+            actions: [
+              if (_selectedAttachments.isNotEmpty)
+                TextButton.icon(
+                  onPressed: _isImporting ? null : _handleBatchImport,
+                  icon: _isImporting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.download),
+                  label: Text(_isImporting
+                      ? 'Importing...'
+                      : 'Import (${_selectedAttachments.length})'),
+                ),
+              HelpMenuButton(
+                pageId: 'notes-classroom-import',
+                topics: googleClassroomImportHelpTopics(),
+              ),
+            ],
+          ),
+          body: HelpAnchor(
             pageId: 'notes-classroom-import',
-            topics: googleClassroomImportHelpTopics(),
-          ),
-        ],
-      ),
-        body: HelpAnchor(
-          pageId: 'notes-classroom-import',
-          anchorId: 'classroom-browser',
-          child: IgnorePointer(
-          ignoring: _isImporting,
-          child: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(classroomCoursesProvider);
-          await ref.read(classroomCoursesProvider.future);
-        },
-        child: coursesAsync.when(
-          loading: () => const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading your classrooms...', style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          ),
-          error: (err, _) => Center(
-            child: ErrorState(message: err.toString()),
-          ),
-          data: (courses) {
-
-            final activeCourses =
-            courses.where((course) {
-
-              if (course.courseState !=
-                  'ACTIVE') {
-                return false;
-              }
-
-              return !_hiddenCourseIds.contains(
-                course.id,
-              );
-            }).toList();
-
-            final hiddenCourses =
-            courses.where((course) {
-
-              if (course.courseState ==
-                  'ARCHIVED') {
-                return true;
-              }
-
-              return _hiddenCourseIds.contains(
-                course.id,
-              );
-            }).toList();
-
-            final visibleCourses =
-            _selectedTab == 0
-                ? activeCourses
-                : hiddenCourses;
-
-            if (visibleCourses.isEmpty) {
-              return const EmptyState(
-                icon: Icons.school_outlined,
-                title: 'No classes found',
-                message: 'Make sure you are signed into your student Google account.',
-              );
-            }
-
-            return Column(
-              children: [
-
-                Padding(
-                  padding:
-                  const EdgeInsets.all(12),
-                  child: HelpAnchor(
-                    pageId: 'notes-classroom-import',
-                    anchorId: 'classroom-tabs',
-                    child: SegmentedButton<int>(
-                    segments: const [
-                      ButtonSegment(
-                        value: 0,
-                        label:
-                        Text('Active Classes'),
-                        icon: Icon(
-                          Icons.school,
-                        ),
-                      ),
-                      ButtonSegment(
-                        value: 1,
-                        label:
-                        Text('Hidden Classes'),
-                        icon: Icon(
-                          Icons.visibility_off,
-                        ),
-                      ),
-                    ],
-                    selected: {
-                      _selectedTab,
-                    },
-                    onSelectionChanged:
-                        (selection) {
-                      setState(() {
-                        _selectedTab =
-                            selection.first;
-                      });
-                    },
+            anchorId: 'classroom-browser',
+            child: IgnorePointer(
+              ignoring: _isImporting,
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(classroomCoursesProvider);
+                  await ref.read(classroomCoursesProvider.future);
+                },
+                child: coursesAsync.when(
+                  loading: () => const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Loading your classrooms...',
+                            style: TextStyle(color: Colors.grey)),
+                      ],
                     ),
                   ),
-                ),
+                  error: (err, _) => Center(
+                    child: ErrorState(message: err.toString()),
+                  ),
+                  data: (courses) {
+                    final activeCourses = courses.where((course) {
+                      if (course.courseState != 'ACTIVE') {
+                        return false;
+                      }
 
-            Expanded(
-            child: ListView.builder(
-            padding:
-            const EdgeInsets.all(12),
-            itemCount:
-            visibleCourses.length,
-              itemBuilder: (context, index) {
-              final course =
-              visibleCourses[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  clipBehavior: Clip.antiAlias,
-                  child: ExpansionTile(
-                    trailing: PopupMenuButton(
-                      itemBuilder: (context) {
+                      return !_hiddenCourseIds.contains(
+                        course.id,
+                      );
+                    }).toList();
 
-                        if (_selectedTab == 0) {
-                          return [
-                            const PopupMenuItem(
-                              value: 'hide',
-                              child: Text(
-                                'Hide Course',
-                              ),
-                            ),
-                          ];
-                        }
+                    final hiddenCourses = courses.where((course) {
+                      if (course.courseState == 'ARCHIVED') {
+                        return true;
+                      }
 
-                        return [
-                          const PopupMenuItem(
-                            value: 'unhide',
-                            child: Text(
-                              'Unhide Course',
+                      return _hiddenCourseIds.contains(
+                        course.id,
+                      );
+                    }).toList();
+
+                    final visibleCourses =
+                        _selectedTab == 0 ? activeCourses : hiddenCourses;
+
+                    if (visibleCourses.isEmpty) {
+                      return const EmptyState(
+                        icon: Icons.school_outlined,
+                        title: 'No classes found',
+                        message:
+                            'Make sure you are signed into your student Google account.',
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: HelpAnchor(
+                            pageId: 'notes-classroom-import',
+                            anchorId: 'classroom-tabs',
+                            child: SegmentedButton<int>(
+                              segments: const [
+                                ButtonSegment(
+                                  value: 0,
+                                  label: Text('Active Classes'),
+                                  icon: Icon(
+                                    Icons.school,
+                                  ),
+                                ),
+                                ButtonSegment(
+                                  value: 1,
+                                  label: Text('Hidden Classes'),
+                                  icon: Icon(
+                                    Icons.visibility_off,
+                                  ),
+                                ),
+                              ],
+                              selected: {
+                                _selectedTab,
+                              },
+                              onSelectionChanged: (selection) {
+                                setState(() {
+                                  _selectedTab = selection.first;
+                                });
+                              },
                             ),
                           ),
-                        ];
-                      },
-
-                      onSelected: (value) {
-                        if (value == 'hide') {
-                          _hideCourse(
-                            course.id,
-                          );
-                        }
-
-                        if (value ==
-                            'unhide') {
-                          _unhideCourse(
-                            course.id,
-                          );
-                        }
-                      },
-                    ),
-                    leading: const Icon(Icons.class_outlined),
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    course.name,
-                    style:
-                    const TextStyle(
-                          fontWeight:
-                          FontWeight.bold,
                         ),
-                      ),
-                    ),
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: visibleCourses.length,
+                            itemBuilder: (context, index) {
+                              final course = visibleCourses[index];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                clipBehavior: Clip.antiAlias,
+                                child: ExpansionTile(
+                                  trailing: PopupMenuButton(
+                                    itemBuilder: (context) {
+                                      if (_selectedTab == 0) {
+                                        return [
+                                          const PopupMenuItem(
+                                            value: 'hide',
+                                            child: Text(
+                                              'Hide Course',
+                                            ),
+                                          ),
+                                        ];
+                                      }
 
-                    if (course.courseState !=
-                    'ACTIVE')
-                      Container(
-                      padding:
-                      const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                      ),
-                      decoration:
-                      BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius:
-                      BorderRadius.circular(
-                      12,
-                      ),
-                      ),
-                      child: Text(
-                      course.courseState,
-                      style:
-                      const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
+                                      return [
+                                        const PopupMenuItem(
+                                          value: 'unhide',
+                                          child: Text(
+                                            'Unhide Course',
+                                          ),
+                                        ),
+                                      ];
+                                    },
+                                    onSelected: (value) {
+                                      if (value == 'hide') {
+                                        _hideCourse(
+                                          course.id,
+                                        );
+                                      }
+
+                                      if (value == 'unhide') {
+                                        _unhideCourse(
+                                          course.id,
+                                        );
+                                      }
+                                    },
+                                  ),
+                                  leading: const Icon(Icons.class_outlined),
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          course.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      if (course.courseState != 'ACTIVE')
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            course.courseState,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  children: [
+                                    _CourseMaterialsSection(
+                                      courseId: course.id,
+                                      selectedAttachments: _selectedAttachments,
+                                      onAttachmentToggled:
+                                          (id, data, isChecked) {
+                                        setState(() {
+                                          if (isChecked) {
+                                            _selectedAttachments[id] = data;
+                                          } else {
+                                            _selectedAttachments.remove(id);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ],
+              ),
             ),
-                    children: [
-                      _CourseMaterialsSection(
-                        courseId: course.id,
-                        selectedAttachments: _selectedAttachments,
-                        onAttachmentToggled: (id, data, isChecked) {
-                          setState(() {
-                            if (isChecked) {
-                              _selectedAttachments[id] = data;
-                            } else {
-                              _selectedAttachments.remove(id);
-                            }
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            ),
-              ],
-            );
-          },
+          ),
         ),
-    ),
-    ),
-    ),
-    ),
-    ],
+      ],
     );
   }
 
   Future<void> _handleBatchImport() async {
-
-    final taskController =
-    ref.read(
+    final taskController = ref.read(
       appTaskControllerProvider,
     );
 
-    final classroomService =
-    ref.read(
+    final classroomService = ref.read(
       googleClassroomServiceProvider,
     );
 
-    final libraryController =
-    ref.read(
-      libraryActionControllerProvider
-          .notifier,
+    final libraryRepository = ref.read(
+      libraryRepositoryProvider,
     );
 
-    final attachments =
-    _selectedAttachments.values
+    final attachments = _selectedAttachments.values
         .map(
-      Map<String, dynamic>.from,
-    )
+          Map<String, dynamic>.from,
+        )
         .toList(
-      growable: false,
-    );
+          growable: false,
+        );
 
-    final destinationFolderId =
-        _destinationFolderId;
+    final destinationFolderId = _destinationFolderId;
 
     unawaited(
-      taskController.run<int>(
+      taskController.runSession<int>(
         id: 'google_classroom_import',
-        type:
-        AppTaskType.googleClassroomImport,
-        title:
-        'Importing Google Classroom Files',
-        task: (progress) async {
-          return classroomService
-              .importAttachments(
+        type: AppTaskType.googleClassroomImport,
+        title: 'Importing Google Classroom Files',
+        task: (session, progress) async {
+          final userId = session.userId;
+
+          if (userId == null) {
+            throw const AppTaskSessionChangedException();
+          }
+
+          return classroomService.importAttachments(
             attachments: attachments,
-            destinationFolderId:
-            destinationFolderId,
+            destinationFolderId: destinationFolderId,
             uploadNote: ({
               required folderId,
               required fileName,
               required extension,
               required bytes,
             }) {
-              return libraryController.uploadNote(
+              session.throwIfChanged();
+              return libraryRepository.uploadNote(
+                userId: userId,
                 folderId: folderId,
                 fileName: fileName,
                 extension: extension,
                 bytes: bytes,
-                category:
-                NoteCategory.selfStudyNotes,
+                category: NoteCategory.selfStudyNotes,
               );
             },
             cacheFile: (
-                storagePath,
-                fileName,
-                bytes,
-                ) {
+              storagePath,
+              fileName,
+              bytes,
+            ) {
+              session.throwIfChanged();
               return FileCacheService.saveBytes(
                 storagePath: storagePath,
                 fileName: fileName,
@@ -443,6 +404,7 @@ class _GoogleClassroomImportScreenState extends ConsumerState<GoogleClassroomImp
               );
             },
             onProgress: progress,
+            ensureSessionCurrent: session.throwIfChanged,
           );
         },
         onOpen: (context, task) {
@@ -477,15 +439,15 @@ class _CourseMaterialsSection extends ConsumerWidget {
 
   final String courseId;
   final Map<String, Map<String, dynamic>> selectedAttachments;
-  final void Function(String id, Map<String, dynamic> data, bool isChecked) onAttachmentToggled;
+  final void Function(String id, Map<String, dynamic> data, bool isChecked)
+      onAttachmentToggled;
 
   @override
   Widget build(
-      BuildContext context,
-      WidgetRef ref,
-      ) {
-    final materialsAsync =
-    ref.watch(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final materialsAsync = ref.watch(
       classroomMaterialsProvider(
         courseId,
       ),
@@ -498,14 +460,12 @@ class _CourseMaterialsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-
       error: (error, _) => Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
           error.toString(),
         ),
       ),
-
       data: (materials) {
         if (materials.isEmpty) {
           return const Padding(
@@ -520,20 +480,16 @@ class _CourseMaterialsSection extends ConsumerWidget {
           children: materials.map((material) {
             return ExpansionTile(
               title: Text(material.title),
-
               children: material.files.map((file) {
-                final isSelected =
-                selectedAttachments.containsKey(
+                final isSelected = selectedAttachments.containsKey(
                   file.id,
                 );
 
                 return CheckboxListTile(
                   value: isSelected,
-
                   title: Text(
                     file.title,
                   ),
-
                   onChanged: (value) {
                     onAttachmentToggled(
                       file.id,

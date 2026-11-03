@@ -22,8 +22,7 @@ import '../domain/quiz_response.dart';
 import '../providers/quiz_feedback_provider.dart';
 import '../services/quiz_result_pdf_exporter.dart';
 
-class QuizResultScreen
-    extends ConsumerStatefulWidget {
+class QuizResultScreen extends ConsumerStatefulWidget {
   const QuizResultScreen({
     super.key,
     required this.attempt,
@@ -32,21 +31,18 @@ class QuizResultScreen
   final QuizAttempt attempt;
 
   @override
-  ConsumerState<QuizResultScreen>
-  createState() =>
-      _QuizResultScreenState();
+  ConsumerState<QuizResultScreen> createState() => _QuizResultScreenState();
 }
 
-class _QuizResultScreenState
-    extends ConsumerState<QuizResultScreen> {
-
+class _QuizResultScreenState extends ConsumerState<QuizResultScreen> {
   QuizResponse get quiz => widget.attempt.quiz;
 
   late final List<bool> _expanded;
 
   bool _exporting = false;
 
-  Future<void> _flagNotImportant(int index, String questionText, QuestionType type) async {
+  Future<void> _flagNotImportant(
+      int index, String questionText, QuestionType type) async {
     final reasonController = TextEditingController();
 
     final confirmed = await showDialog<bool>(
@@ -70,7 +66,8 @@ class _QuizResultScreenState
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Why? (optional)',
-                    hintText: 'e.g. too trivial, off-syllabus, already know this',
+                    hintText:
+                        'e.g. too trivial, off-syllabus, already know this',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -109,7 +106,8 @@ class _QuizResultScreenState
 
     if (!mounted) return;
 
-    final currentAnswers = ref.read(quizAttemptProvider)?.answers ?? widget.attempt.answers;
+    final currentAnswers =
+        ref.read(quizAttemptProvider)?.answers ?? widget.attempt.answers;
 
     final updated = (currentAnswers[index] ?? const QuizAnswer()).copyWith(
       notImportant: true,
@@ -122,12 +120,15 @@ class _QuizResultScreenState
         );
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Marked as not important -- excluded from your score.')),
+      const SnackBar(
+          content:
+              Text('Marked as not important -- excluded from your score.')),
     );
   }
 
   Future<void> _unflagNotImportant(int index) async {
-    final currentAnswers = ref.read(quizAttemptProvider)?.answers ?? widget.attempt.answers;
+    final currentAnswers =
+        ref.read(quizAttemptProvider)?.answers ?? widget.attempt.answers;
     final current = currentAnswers[index];
 
     final updated = (current ?? const QuizAnswer()).copyWith(
@@ -163,39 +164,39 @@ class _QuizResultScreenState
       // might take a while -- if it's slow, the progress banner shows it
       // and the user can navigate away instead of staring at this button.
       file = await ref.read(appTaskControllerProvider).run<File>(
-        id: 'quiz_pdf_export_${widget.attempt.id}',
-        type: AppTaskType.documentProcessing,
-        title: 'Preparing "${quiz.title}" for sharing',
-        task: (progress) async {
-          progress('Generating PDF...');
+            id: 'quiz_pdf_export_${widget.attempt.id}',
+            type: AppTaskType.documentProcessing,
+            title: 'Preparing "${quiz.title}" for sharing',
+            task: (progress) async {
+              progress('Generating PDF...');
 
-          return const QuizResultPdfExporter().export(
-            quiz: quiz,
-            answers: answers,
-          );
-        },
-        onOpen: (context, task) {
-          final payload = task.payload;
+              return const QuizResultPdfExporter().export(
+                quiz: quiz,
+                answers: answers,
+              );
+            },
+            onOpen: (context, task) {
+              final payload = task.payload;
 
-          if (task.status == AppTaskStatus.completed && payload is File) {
-            unawaited(
-              SharePlus.instance.share(
-                ShareParams(
-                  files: [XFile(payload.path)],
-                  text: 'My results for "${quiz.title}" on ScholarMind.',
+              if (task.status == AppTaskStatus.completed && payload is File) {
+                unawaited(
+                  SharePlus.instance.share(
+                    ShareParams(
+                      files: [XFile(payload.path)],
+                      text: 'My results for "${quiz.title}" on ScholarMind.',
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AppTaskDetailsScreen(),
                 ),
-              ),
-            );
-            return;
-          }
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const AppTaskDetailsScreen(),
-            ),
+              );
+            },
           );
-        },
-      );
     } catch (e) {
       if (!mounted) return;
 
@@ -228,9 +229,8 @@ class _QuizResultScreenState
 
     _expanded = List.generate(
       quiz.questions.length,
-          (index) {
-        final answer =
-        widget.attempt.answers[index];
+      (index) {
+        final answer = widget.attempt.answers[index];
 
         if (answer == null) {
           return false;
@@ -244,15 +244,12 @@ class _QuizResultScreenState
           return true;
         }
 
-        final question =
-        quiz.questions[index];
+        final question = quiz.questions[index];
 
         switch (question.type) {
           case QuestionType.multipleChoice:
           case QuestionType.trueFalse:
-            return answer
-                .selectedOptionIndex !=
-                question.correctAnswerIndex;
+            return answer.selectedOptionIndex != question.correctAnswerIndex;
 
           case QuestionType.openEnded:
             return true;
@@ -302,32 +299,29 @@ class _QuizResultScreenState
     }
 
     unawaited(
-      ref.read(appTaskControllerProvider).run<void>(
-        id: 'quiz_grading_${widget.attempt.id}',
-        type: AppTaskType.quizGrading,
-        title: 'Grading "${quiz.title}"',
-        task: (progress) async {
-          progress('Resuming AI review...');
-          await notifier.startGrading();
-        },
-      ),
+      ref.read(appTaskControllerProvider).runSession<void>(
+            id: 'quiz_grading_${widget.attempt.id}',
+            type: AppTaskType.quizGrading,
+            title: 'Grading "${quiz.title}"',
+            task: (session, progress) async {
+              session.throwIfChanged();
+              progress('Resuming AI review...');
+              await notifier.startGrading();
+              session.throwIfChanged();
+            },
+          ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-
-    final attempt =
-    ref.watch(
+    final attempt = ref.watch(
       quizAttemptProvider,
     );
 
-    final answers =
-        attempt?.answers ??
-            widget.attempt.answers;
+    final answers = attempt?.answers ?? widget.attempt.answers;
 
-    final total =
-        quiz.questions.length;
+    final total = quiz.questions.length;
 
     var objectiveTotal = 0;
     var correct = 0;
@@ -357,42 +351,28 @@ class _QuizResultScreenState
 
       if (answer != null &&
           question.correctAnswerIndex != null &&
-          answer.selectedOptionIndex ==
-              question.correctAnswerIndex) {
+          answer.selectedOptionIndex == question.correctAnswerIndex) {
         correct++;
       }
     }
 
     final percentage =
-    objectiveTotal == 0
-        ? null
-        : ((correct /
-        objectiveTotal) *
-        100)
-        .round();
+        objectiveTotal == 0 ? null : ((correct / objectiveTotal) * 100).round();
 
-    final pendingReview =
-    answers.values.any(
-          (answer) =>
-      !answer.notImportant &&
-          answer.aiReviewPending,
+    final pendingReview = answers.values.any(
+      (answer) => !answer.notImportant && answer.aiReviewPending,
     );
 
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
-
           onPressed: () {
-
             Navigator.popUntil(
               context,
-                  (route) => route.isFirst,
+              (route) => route.isFirst,
             );
-
           },
-
         ),
-
         title: const Text(
           'Quiz Results',
         ),
@@ -409,9 +389,7 @@ class _QuizResultScreenState
                     )
                   : const Icon(Icons.ios_share_rounded),
               tooltip: 'Export as PDF',
-              onPressed: _exporting
-                  ? null
-                  : () => _exportPdf(quiz, answers),
+              onPressed: _exporting ? null : () => _exportPdf(quiz, answers),
             ),
           ),
           HelpMenuButton(
@@ -421,10 +399,8 @@ class _QuizResultScreenState
         ],
       ),
       body: ListView(
-        padding:
-        const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         children: [
-
           if (objectiveTotal > 0)
             HelpAnchor(
               pageId: 'quiz-result',
@@ -434,40 +410,27 @@ class _QuizResultScreenState
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-
                       Text(
                         '$percentage%',
-                        style: Theme.of(context)
-                            .textTheme
-                            .displayMedium,
+                        style: Theme.of(context).textTheme.displayMedium,
                       ),
-
                       const SizedBox(height: 8),
-
                       Text(
                         '$correct / $objectiveTotal Correct',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-
-          if (objectiveTotal > 0)
-            const SizedBox(height: 20),
-
+          if (objectiveTotal > 0) const SizedBox(height: 20),
           const SizedBox(height: 20),
-
           if (openEndedCount > 0)
             Card(
               child: ListTile(
                 leading: Icon(
-                  pendingReview
-                      ? Icons.hourglass_top
-                      : Icons.auto_awesome,
+                  pendingReview ? Icons.hourglass_top : Icons.auto_awesome,
                 ),
                 title: Text(
                   pendingReview
@@ -481,166 +444,124 @@ class _QuizResultScreenState
                 ),
               ),
             ),
-
           const SizedBox(height: 20),
-
           ...List.generate(
             total,
-                (index) {
-              final question =
-              quiz.questions[
-              index];
+            (index) {
+              final question = quiz.questions[index];
 
-              final answer =
-              answers[index];
+              final answer = answers[index];
 
-              final correctAnswer =
-                  question.correctAnswerIndex != null &&
-                      answer?.selectedOptionIndex ==
-                          question.correctAnswerIndex;
+              final correctAnswer = question.correctAnswerIndex != null &&
+                  answer?.selectedOptionIndex == question.correctAnswerIndex;
 
               final excluded = answer?.notImportant == true;
 
               return Card(
-                margin:
-                const EdgeInsets.only(
+                margin: const EdgeInsets.only(
                   bottom: 16,
                 ),
-                child:
-                ExpansionTile(
-                  initiallyExpanded:
-                  _expanded[index],
-
+                child: ExpansionTile(
+                  initiallyExpanded: _expanded[index],
                   leading: excluded
                       ? const Icon(Icons.flag_outlined)
-                      : question.type ==
-                      QuestionType
-                          .openEnded
-                      ? const Icon(
-                    Icons
-                        .hourglass_top,
-                  )
-                      : Icon(
-                    correctAnswer
-                        ? Icons
-                        .check_circle
-                        : Icons
-                        .cancel,
-                  ),
-
+                      : question.type == QuestionType.openEnded
+                          ? const Icon(
+                              Icons.hourglass_top,
+                            )
+                          : Icon(
+                              correctAnswer ? Icons.check_circle : Icons.cancel,
+                            ),
                   title: Text(
                     excluded
                         ? 'Question ${index + 1} (Excluded from grading)'
                         : 'Question ${index + 1}',
                   ),
-
-                  subtitle:
-                  Text(question.question),
-
+                  subtitle: Text(question.question),
                   children: [
-
-                    if (question.type !=
-                        QuestionType
-                            .openEnded) ...[
-
+                    if (question.type != QuestionType.openEnded) ...[
                       ListTile(
                         title: const Text(
                           'Your Answer',
                         ),
                         subtitle: Text(
-                          answer
-                              ?.selectedOptionIndex ==
-                              null
+                          answer?.selectedOptionIndex == null
                               ? 'Not Answered'
-                              : question.options[
-                          answer!
-                              .selectedOptionIndex!],
+                              : question.options[answer!.selectedOptionIndex!],
                         ),
                       ),
-
                       ListTile(
                         title: const Text(
                           'Correct Answer',
                         ),
                         subtitle: Text(
-                          question.options[
-                          question.correctAnswerIndex!
-                          ],
+                          question.options[question.correctAnswerIndex!],
                         ),
                       ),
-
                       ListTile(
                         title: const Text(
                           'Explanation',
                         ),
                         subtitle: Text(
-                          question
-                              .explanation,
+                          question.explanation,
                         ),
                       ),
                     ],
-
-                    if (question.type ==
-                        QuestionType
-                            .openEnded)
-
+                    if (question.type == QuestionType.openEnded)
                       answer?.aiReviewPending ?? true
                           ? ListTile(
-                        leading: const Icon(
-                          Icons.hourglass_top,
-                        ),
-                        title: const Text(
-                          'AI Review in Progress',
-                        ),
-                        subtitle: Text(
-                          essayMax == 0
-                              ? 'Preparing AI review...\n\nYour score will appear automatically.'
-                              : 'Score: ? / $essayMax\n\nScholarMind is reviewing your answer.',
-                        ),
-                      )
+                              leading: const Icon(
+                                Icons.hourglass_top,
+                              ),
+                              title: const Text(
+                                'AI Review in Progress',
+                              ),
+                              subtitle: Text(
+                                essayMax == 0
+                                    ? 'Preparing AI review...\n\nYour score will appear automatically.'
+                                    : 'Score: ? / $essayMax\n\nScholarMind is reviewing your answer.',
+                              ),
+                            )
                           : Column(
-                        children: [
-                          ListTile(
-                            leading: const Icon(
-                              Icons.auto_awesome,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.auto_awesome,
+                                  ),
+                                  title: const Text(
+                                    'AI Score',
+                                  ),
+                                  subtitle: Text(
+                                    '${answer?.aiScore ?? 0} / ${answer?.aiMaxScore ?? 0}',
+                                  ),
+                                ),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.person_outline,
+                                  ),
+                                  title: const Text(
+                                    'Your Answer',
+                                  ),
+                                  subtitle: SelectableText(
+                                    answer?.openEndedAnswer.isNotEmpty == true
+                                        ? answer!.openEndedAnswer
+                                        : 'No answer provided.',
+                                  ),
+                                ),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.feedback_outlined,
+                                  ),
+                                  title: const Text(
+                                    'AI Feedback',
+                                  ),
+                                  subtitle: Text(
+                                    answer?.aiFeedback ??
+                                        'No feedback available.',
+                                  ),
+                                ),
+                              ],
                             ),
-                            title: const Text(
-                              'AI Score',
-                            ),
-                            subtitle: Text(
-                              '${answer?.aiScore ?? 0} / ${answer?.aiMaxScore ?? 0}',
-                            ),
-                          ),
-
-                          ListTile(
-                            leading: const Icon(
-                              Icons.person_outline,
-                            ),
-                            title: const Text(
-                              'Your Answer',
-                            ),
-                            subtitle: SelectableText(
-                              answer?.openEndedAnswer.isNotEmpty == true
-                                  ? answer!.openEndedAnswer
-                                  : 'No answer provided.',
-                            ),
-                          ),
-
-                          ListTile(
-                            leading: const Icon(
-                              Icons.feedback_outlined,
-                            ),
-                            title: const Text(
-                              'AI Feedback',
-                            ),
-                            subtitle: Text(
-                              answer?.aiFeedback ??
-                                  'No feedback available.',
-                            ),
-                          ),
-                        ],
-                      ),
-
                     Align(
                       alignment: Alignment.centerRight,
                       child: Padding(

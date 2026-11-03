@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scholar_mind/features/grades/widgets/dialogs/course/import_course_dialog.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../auth/providers/auth_provider.dart';
 import '../../data/models/course_model.dart';
 import '../../providers/course/course_provider.dart';
 import '../../providers/grading/grading_provider.dart';
@@ -14,9 +15,9 @@ class CourseActions {
   const CourseActions._();
 
   static void open(
-      BuildContext context,
-      CourseModel course,
-      ) {
+    BuildContext context,
+    CourseModel course,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CourseDetailScreen(
@@ -27,9 +28,9 @@ class CourseActions {
   }
 
   static void edit(
-      BuildContext context,
-      CourseModel course,
-      ) {
+    BuildContext context,
+    CourseModel course,
+  ) {
     showDialog(
       context: context,
       builder: (_) => EditCourseDialog(
@@ -39,9 +40,9 @@ class CourseActions {
   }
 
   static void delete(
-      BuildContext context,
-      CourseModel course,
-      ) {
+    BuildContext context,
+    CourseModel course,
+  ) {
     showDialog(
       context: context,
       builder: (_) => DeleteCourseDialog(
@@ -51,62 +52,82 @@ class CourseActions {
   }
 
   static Future<void> copyFromExistingCourse(
-      BuildContext context,
-      WidgetRef ref,
-      String semesterId,
-      ) async {
-
-    final selected =
-    await showDialog<CourseModel>(
+    BuildContext context,
+    WidgetRef ref,
+    String semesterId,
+  ) async {
+    final selected = await showDialog<CourseModel>(
       context: context,
-      builder: (_) =>
-      const ImportCourseDialog(),
+      builder: (_) => const ImportCourseDialog(),
     );
 
-    if (selected == null ||
-        !context.mounted) {
+    if (selected == null || !context.mounted) {
       return;
     }
 
-    final copiedCourse =
-    await ref
-        .read(
-      courseRepositoryProvider,
-    )
-        .copyCourse(
-      source: selected,
-      semesterId: semesterId,
+    final userId = ref.read(activeUserProvider)?.uid;
+
+    if (userId == null) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final reviewedCourse = await showDialog<CourseModel>(
+      context: context,
+      builder: (_) => EditCourseDialog(
+        course: selected.copyWith(
+          id: '',
+          ownerId: userId,
+          semesterId: semesterId,
+          createdAt: now,
+          updatedAt: now,
+        ),
+        isImport: true,
+        title: 'Review Copied Course',
+      ),
     );
 
-    final components =
-    await ref
+    if (reviewedCourse == null ||
+        !context.mounted ||
+        ref.read(activeUserProvider)?.uid != userId) {
+      return;
+    }
+
+    final components = await ref
         .read(
-      gradingComponentRepositoryProvider,
-    )
+          gradingComponentRepositoryProvider,
+        )
         .getCourseComponents(
-      selected.id,
-    );
+          userId,
+          selected.id,
+        );
+
+    if (ref.read(activeUserProvider)?.uid != userId) {
+      return;
+    }
+
+    final copiedCourse = await ref
+        .read(
+          courseRepositoryProvider,
+        )
+        .copyCourse(
+          userId: userId,
+          source: reviewedCourse,
+          semesterId: semesterId,
+        );
 
     final idMap = <String, String>{};
 
     for (final component in components) {
-      idMap[component.id] =
-          const Uuid().v4();
+      idMap[component.id] = const Uuid().v4();
     }
 
-    final copiedComponents =
-    components.map(
-          (component) {
-
-        final newId =
-        idMap[component.id]!;
+    final copiedComponents = components.map(
+      (component) {
+        final newId = idMap[component.id]!;
 
         final newParentId =
-        component.parentId == null
-            ? null
-            : idMap[
-        component.parentId!
-        ];
+            component.parentId == null ? null : idMap[component.parentId!];
 
         return component.copyWith(
           id: newId,
@@ -120,38 +141,20 @@ class CourseActions {
 
     await ref
         .read(
-      gradingComponentRepositoryProvider,
-    )
+          gradingComponentRepositoryProvider,
+        )
         .replaceCourseComponents(
-      courseId:
-      copiedCourse.id,
-      components:
-      copiedComponents,
-    );
+          userId: userId,
+          courseId: copiedCourse.id,
+          components: copiedComponents,
+        );
 
-    if (!context.mounted) {
+    if (!context.mounted ||
+        ref.read(activeUserProvider)?.uid != userId) {
       return;
     }
 
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (_) =>
-          EditCourseDialog(
-            course: copiedCourse,
-            isImport: true,
-            deleteOnCancel: true,
-            title:
-            'Review Copied Course',
-          ),
-    );
-
-    if (saved != true ||
-        !context.mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           '${copiedCourse.name} copied successfully.',

@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
 
 import '../../../../core/services/device_id_service.dart';
 import '../../domain/library_folder.dart';
@@ -54,19 +53,17 @@ class LibraryRepository {
   }
 
   Stream<List<NoteItem>> watchFavoriteNotes(
-      String userId,
-      ) {
+    String userId,
+  ) {
     return _notes(userId)
         .where('isFavorite', isEqualTo: true)
         .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      final notes =
-      snapshot.docs.map(NoteItem.fromDocument).toList();
+      final notes = snapshot.docs.map(NoteItem.fromDocument).toList();
 
       notes.sort(
-            (a, b) =>
-            b.createdAt.compareTo(a.createdAt),
+        (a, b) => b.createdAt.compareTo(a.createdAt),
       );
 
       return notes;
@@ -104,8 +101,8 @@ class LibraryRepository {
       final notes = snapshot.docs.map(NoteItem.fromDocument).toList();
 
       notes.sort(
-            (a, b) => (b.deletedAt ?? b.createdAt)
-            .compareTo(a.deletedAt ?? a.createdAt),
+        (a, b) =>
+            (b.deletedAt ?? b.createdAt).compareTo(a.deletedAt ?? a.createdAt),
       );
 
       return notes;
@@ -153,9 +150,8 @@ class LibraryRepository {
       );
     }
 
-    final notes = await _notes(userId)
-        .where('folderId', isEqualTo: parentFolderId)
-        .get();
+    final notes =
+        await _notes(userId).where('folderId', isEqualTo: parentFolderId).get();
 
     for (final note in notes.docs) {
       await note.reference.update({
@@ -203,9 +199,8 @@ class LibraryRepository {
       );
     }
 
-    final notes = await _notes(userId)
-        .where('folderId', isEqualTo: parentFolderId)
-        .get();
+    final notes =
+        await _notes(userId).where('folderId', isEqualTo: parentFolderId).get();
 
     for (final note in notes.docs) {
       await note.reference.update({
@@ -249,17 +244,15 @@ class LibraryRepository {
   Future<void> restoreAll({
     required String userId,
   }) async {
-    final folders = await _folders(userId)
-        .where('isDeleted', isEqualTo: true)
-        .get();
+    final folders =
+        await _folders(userId).where('isDeleted', isEqualTo: true).get();
 
     for (final folder in folders.docs) {
       final parentId = folder.data()['parentId'] as String;
 
       final parentDeleted = folders.docs.any(
-            (candidate) =>
-        candidate.id == parentId &&
-            candidate.data()['isDeleted'] == true,
+        (candidate) =>
+            candidate.id == parentId && candidate.data()['isDeleted'] == true,
       );
 
       if (!parentDeleted) {
@@ -270,15 +263,14 @@ class LibraryRepository {
       }
     }
 
-    final notes = await _notes(userId)
-        .where('isDeleted', isEqualTo: true)
-        .get();
+    final notes =
+        await _notes(userId).where('isDeleted', isEqualTo: true).get();
 
     for (final note in notes.docs) {
       final folderId = note.data()['folderId'] as String;
 
       final parentDeleted = folders.docs.any(
-            (folder) => folder.id == folderId,
+        (folder) => folder.id == folderId,
       );
 
       if (!parentDeleted) {
@@ -300,10 +292,7 @@ class LibraryRepository {
 
     final note = NoteItem.fromDocument(noteDoc);
 
-    try {
-      await _storage.ref(note.storagePath).delete();
-    } catch (_) {
-    }
+    await _deleteStorageObject(note);
 
     await noteDoc.reference.delete();
   }
@@ -340,20 +329,15 @@ class LibraryRepository {
     required String noteId,
     required String destinationFolderId,
   }) async {
-    final noteDoc =
-    await _notes(userId)
-        .doc(noteId)
-        .get();
+    final noteDoc = await _notes(userId).doc(noteId).get();
 
     if (!noteDoc.exists) {
       throw ArgumentError('Note not found.');
     }
 
-    final currentFolderId =
-    noteDoc.data()?['folderId'];
+    final currentFolderId = noteDoc.data()?['folderId'];
 
-    if (currentFolderId ==
-        destinationFolderId) {
+    if (currentFolderId == destinationFolderId) {
       throw ArgumentError(
         'Note is already in that folder.',
       );
@@ -371,24 +355,20 @@ class LibraryRepository {
     required String destinationFolderId,
   }) async {
     if (folderId == destinationFolderId) {
-      final folderDoc =
-      await _folders(userId)
-          .doc(folderId)
-          .get();
+      final folderDoc = await _folders(userId).doc(folderId).get();
 
       if (!folderDoc.exists) {
         throw ArgumentError('Folder not found.');
       }
 
-      final currentParent =
-      folderDoc.data()?['parentId'];
+      final currentParent = folderDoc.data()?['parentId'];
 
-      if (currentParent ==
-          destinationFolderId) {
+      if (currentParent == destinationFolderId) {
         throw ArgumentError(
           'Folder is already in that location.',
         );
-      }throw ArgumentError(
+      }
+      throw ArgumentError(
         'A folder cannot be moved into itself.',
       );
     }
@@ -415,10 +395,7 @@ class LibraryRepository {
     required String noteId,
     required String destinationFolderId,
   }) async {
-    final noteDoc =
-    await _notes(userId)
-        .doc(noteId)
-        .get();
+    final noteDoc = await _notes(userId).doc(noteId).get();
 
     if (!noteDoc.exists) {
       throw ArgumentError(
@@ -427,35 +404,75 @@ class LibraryRepository {
     }
 
     final data = noteDoc.data()!;
+    final originalName = data['name'] as String;
+    final isInternal = data['isInternal'] as bool? ?? false;
+    final sourceStoragePath = data['storagePath'] as String? ?? '';
+    final extension = data['extension'] as String? ?? '';
+    final copiedNoteReference = _notes(userId).doc();
+    Reference? copiedStorageReference;
+    var copiedStoragePath = '';
 
-    final originalName =
-    data['name'] as String;
+    if (!isInternal) {
+      if (sourceStoragePath.isEmpty) {
+        throw StateError('Uploaded note has no Storage object.');
+      }
 
-    await _notes(userId).add({
-      'cacheExpiresAt': null,
-      ...data,
+      final bytes =
+          await _storage.ref(sourceStoragePath).getData(maxUploadBytes);
 
-      'name': '$originalName (Copy)',
+      if (bytes == null) {
+        throw StateError('Uploaded note could not be downloaded for copying.');
+      }
 
-      'folderId': destinationFolderId,
+      final displayFileName = extension.isNotEmpty &&
+              !originalName
+                  .toLowerCase()
+                  .endsWith('.${extension.toLowerCase()}')
+          ? '$originalName.$extension'
+          : originalName;
+      final safeName = _safeStorageFileName(displayFileName);
+      copiedStoragePath =
+          'users/$userId/notes/${copiedNoteReference.id}/$safeName';
+      copiedStorageReference = _storage.ref(copiedStoragePath);
 
-      'createdAt':
-      FieldValue.serverTimestamp(),
+      await copiedStorageReference.putData(
+        bytes,
+        SettableMetadata(contentType: _contentTypeFor(extension)),
+      );
+    }
 
-      'updatedAt':
-      FieldValue.serverTimestamp(),
-    });
+    try {
+      await copiedNoteReference.set({
+        ...data,
+        'name': '$originalName (Copy)',
+        'folderId': destinationFolderId,
+        'storagePath': copiedStoragePath,
+        'cacheExpiresAt': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lockedBy': null,
+        'heartbeatAt': null,
+        'lockExpiresAt': null,
+      });
+    } catch (error, stackTrace) {
+      if (copiedStorageReference != null) {
+        try {
+          await copiedStorageReference.delete();
+        } catch (_) {}
+      }
+
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 
   Future<Set<String>> _getDescendantFolderIds(
-      String userId,
-      String folderId,
-      ) async {
+    String userId,
+    String folderId,
+  ) async {
     final descendants = <String>{};
 
-    final children = await _folders(userId)
-        .where('parentId', isEqualTo: folderId)
-        .get();
+    final children =
+        await _folders(userId).where('parentId', isEqualTo: folderId).get();
 
     for (final child in children.docs) {
       descendants.add(child.id);
@@ -485,48 +502,58 @@ class LibraryRepository {
   Future<void> permanentlyDeleteFolder({
     required String userId,
     required String folderId,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
     await _permanentlyDeleteChildren(
       userId: userId,
       parentFolderId: folderId,
+      ensureSessionCurrent: ensureSessionCurrent,
     );
 
+    ensureSessionCurrent?.call();
     await _folders(userId).doc(folderId).delete();
+    ensureSessionCurrent?.call();
   }
 
   Future<void> permanentlyDeleteAll({
     required String userId,
+    void Function()? ensureSessionCurrent,
   }) async {
-    final folders = await _folders(userId)
-        .where('isDeleted', isEqualTo: true)
-        .get();
+    ensureSessionCurrent?.call();
+    final folders =
+        await _folders(userId).where('isDeleted', isEqualTo: true).get();
+    ensureSessionCurrent?.call();
 
     for (final folder in folders.docs) {
+      ensureSessionCurrent?.call();
       final parentId = folder.data()['parentId'] as String;
 
       final parentDeleted = folders.docs.any(
-            (candidate) =>
-        candidate.id == parentId &&
-            candidate.data()['isDeleted'] == true,
+        (candidate) =>
+            candidate.id == parentId && candidate.data()['isDeleted'] == true,
       );
 
       if (!parentDeleted) {
         await permanentlyDeleteFolder(
           userId: userId,
           folderId: folder.id,
+          ensureSessionCurrent: ensureSessionCurrent,
         );
       }
     }
 
-    final notes = await _notes(userId)
-        .where('isDeleted', isEqualTo: true)
-        .get();
+    ensureSessionCurrent?.call();
+    final notes =
+        await _notes(userId).where('isDeleted', isEqualTo: true).get();
+    ensureSessionCurrent?.call();
 
     for (final note in notes.docs) {
+      ensureSessionCurrent?.call();
       final folderId = note.data()['folderId'] as String;
 
       final parentDeleted = folders.docs.any(
-            (folder) => folder.id == folderId,
+        (folder) => folder.id == folderId,
       );
 
       if (!parentDeleted) {
@@ -534,6 +561,7 @@ class LibraryRepository {
           userId: userId,
           noteId: note.id,
         );
+        ensureSessionCurrent?.call();
       }
     }
   }
@@ -541,33 +569,41 @@ class LibraryRepository {
   Future<void> _permanentlyDeleteChildren({
     required String userId,
     required String parentFolderId,
+    void Function()? ensureSessionCurrent,
   }) async {
+    ensureSessionCurrent?.call();
     final childFolders = await _folders(userId)
         .where('parentId', isEqualTo: parentFolderId)
         .get();
+    ensureSessionCurrent?.call();
 
     for (final folder in childFolders.docs) {
+      ensureSessionCurrent?.call();
       await _permanentlyDeleteChildren(
         userId: userId,
         parentFolderId: folder.id,
+        ensureSessionCurrent: ensureSessionCurrent,
       );
 
+      ensureSessionCurrent?.call();
       await folder.reference.delete();
+      ensureSessionCurrent?.call();
     }
 
-    final notes = await _notes(userId)
-        .where('folderId', isEqualTo: parentFolderId)
-        .get();
+    ensureSessionCurrent?.call();
+    final notes =
+        await _notes(userId).where('folderId', isEqualTo: parentFolderId).get();
+    ensureSessionCurrent?.call();
 
     for (final noteDoc in notes.docs) {
+      ensureSessionCurrent?.call();
       final note = NoteItem.fromDocument(noteDoc);
 
-      try {
-        await _storage.ref(note.storagePath).delete();
-      } catch (_) {
-      }
+      await _deleteStorageObject(note);
+      ensureSessionCurrent?.call();
 
       await noteDoc.reference.delete();
+      ensureSessionCurrent?.call();
     }
   }
 
@@ -586,13 +622,10 @@ class LibraryRepository {
   }
 
   Stream<NoteItem> watchNote(
-      String userId,
-      String noteId,
-      ) {
-    return _notes(userId)
-        .doc(noteId)
-        .snapshots()
-        .map((snapshot) {
+    String userId,
+    String noteId,
+  ) {
+    return _notes(userId).doc(noteId).snapshots().map((snapshot) {
       return NoteItem.fromDocument(snapshot);
     });
   }
@@ -601,10 +634,7 @@ class LibraryRepository {
     required String userId,
     required String noteId,
   }) async {
-    final snapshot =
-    await _notes(userId)
-        .doc(noteId)
-        .get();
+    final snapshot = await _notes(userId).doc(noteId).get();
 
     if (!snapshot.exists) {
       return null;
@@ -614,22 +644,18 @@ class LibraryRepository {
   }
 
   Stream<List<NoteItem>> watchAllUploadedNotes(
-      String userId,
-      ) {
+    String userId,
+  ) {
     return _notes(userId)
         .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      final notes =
-      snapshot.docs
-          .map(NoteItem.fromDocument)
-          .where((note) {
+      final notes = snapshot.docs.map(NoteItem.fromDocument).where((note) {
         return !note.isInternal;
-      })
-          .toList();
+      }).toList();
 
       notes.sort(
-            (a, b) => b.createdAt.compareTo(a.createdAt),
+        (a, b) => b.createdAt.compareTo(a.createdAt),
       );
 
       return notes;
@@ -637,17 +663,16 @@ class LibraryRepository {
   }
 
   Stream<List<NoteItem>> watchAllExportableNotes(
-      String userId,
-      ) {
+    String userId,
+  ) {
     return _notes(userId)
         .where('isDeleted', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      final notes =
-      snapshot.docs.map(NoteItem.fromDocument).toList();
+      final notes = snapshot.docs.map(NoteItem.fromDocument).toList();
 
       notes.sort(
-            (a, b) => b.createdAt.compareTo(a.createdAt),
+        (a, b) => b.createdAt.compareTo(a.createdAt),
       );
 
       return notes;
@@ -655,15 +680,14 @@ class LibraryRepository {
   }
 
   Stream<List<LibraryFolder>> watchAllFolders(
-      String userId,
-      ) {
+    String userId,
+  ) {
     return _folders(userId)
         .where('isDeleted', isEqualTo: false)
         .where('isArchived', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      final folders =
-      snapshot.docs.map(LibraryFolder.fromDocument).toList();
+      final folders = snapshot.docs.map(LibraryFolder.fromDocument).toList();
 
       folders.sort(_sortFolders);
 
@@ -675,9 +699,7 @@ class LibraryRepository {
     required String userId,
     required String folderId,
   }) async {
-    final snapshot = await _folders(userId)
-        .doc(folderId)
-        .get();
+    final snapshot = await _folders(userId).doc(folderId).get();
 
     if (!snapshot.exists) {
       return null;
@@ -696,8 +718,7 @@ class LibraryRepository {
         .where('isArchived', isEqualTo: false)
         .get();
 
-    final folders =
-    snapshot.docs.map(LibraryFolder.fromDocument).toList();
+    final folders = snapshot.docs.map(LibraryFolder.fromDocument).toList();
 
     folders.sort(_sortFolders);
 
@@ -713,11 +734,10 @@ class LibraryRepository {
         .where('isDeleted', isEqualTo: false)
         .get();
 
-    final notes =
-    snapshot.docs.map(NoteItem.fromDocument).toList();
+    final notes = snapshot.docs.map(NoteItem.fromDocument).toList();
 
     notes.sort(
-          (a, b) => b.createdAt.compareTo(a.createdAt),
+      (a, b) => b.createdAt.compareTo(a.createdAt),
     );
 
     return notes;
@@ -787,25 +807,19 @@ class LibraryRepository {
     await _notes(userId).add({
       'name': name,
       'folderId': folderId,
-
       'storagePath': '',
       'extension': 'md',
       'sizeBytes': 0,
-
       'isInternal': true,
       'content': content,
-
       'category': category,
       'source': 'import',
-
       'isFavorite': isFavorite,
       'isDeleted': false,
       'deletedAt': null,
       'cacheExpiresAt': null,
-
       'createdAt': now,
       'updatedAt': now,
-
       'lockedBy': null,
       'heartbeatAt': null,
       'lockExpiresAt': null,
@@ -823,7 +837,7 @@ class LibraryRepository {
     required bool isFavorite,
   }) async {
     final noteReference = _notes(userId).doc();
-    final safeName = name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final safeName = _safeStorageFileName(name);
     final storagePath = 'users/$userId/notes/${noteReference.id}/$safeName';
     final storageReference = _storage.ref(storagePath);
 
@@ -838,25 +852,19 @@ class LibraryRepository {
       await noteReference.set({
         'name': name,
         'folderId': folderId,
-
         'storagePath': storagePath,
         'extension': extension,
         'sizeBytes': fileBytes.length,
-
         'isInternal': false,
         'content': '',
-
         'category': category,
         'source': source,
-
         'isFavorite': isFavorite,
         'isDeleted': false,
         'deletedAt': null,
         'cacheExpiresAt': null,
-
         'createdAt': now,
         'updatedAt': now,
-
         'lockedBy': null,
         'heartbeatAt': null,
         'lockExpiresAt': null,
@@ -900,21 +908,16 @@ class LibraryRepository {
     await _notes(userId).add({
       'name': noteName,
       'folderId': folderId,
-
       'storagePath': '',
       'extension': 'md',
       'sizeBytes': 0,
-
       'isInternal': true,
       'content': '# $noteName\n',
-
       'category': NoteCategory.selfStudyNotes.key,
       'source': 'internal',
-
       'isFavorite': false,
       'isDeleted': false,
       'deletedAt': null,
-
       'createdAt': now,
     });
   }
@@ -955,7 +958,7 @@ class LibraryRepository {
     }
 
     final noteReference = _notes(userId).doc();
-    final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final safeName = _safeStorageFileName(fileName);
     final storagePath = 'users/$userId/notes/${noteReference.id}/$safeName';
     final storageReference = _storage.ref(storagePath);
 
@@ -980,7 +983,6 @@ class LibraryRepository {
         'updatedAt': now,
         'deletedAt': null,
         'cacheExpiresAt': null,
-
         'lockedBy': null,
         'heartbeatAt': null,
         'lockExpiresAt': null,
@@ -993,20 +995,45 @@ class LibraryRepository {
     return storagePath;
   }
 
+  Future<void> _deleteStorageObject(NoteItem note) async {
+    if (note.isInternal || note.storagePath.isEmpty) return;
+
+    try {
+      await _storage.ref(note.storagePath).delete();
+    } on FirebaseException catch (error) {
+      if (error.code == 'object-not-found' ||
+          error.code == 'storage/object-not-found') {
+        return;
+      }
+
+      rethrow;
+    }
+  }
+
+  String _safeStorageFileName(String fileName) {
+    final safeName = fileName.replaceAll(
+      RegExp(r'[^a-zA-Z0-9._-]'),
+      '_',
+    );
+
+    if (safeName.isEmpty || safeName == '.' || safeName == '..') {
+      return 'note';
+    }
+
+    return safeName;
+  }
+
   Future<bool> acquireNoteLock({
     required String userId,
     required String noteId,
   }) async {
-    final noteReference =
-    _notes(userId).doc(noteId);
+    final noteReference = _notes(userId).doc(noteId);
 
-    final deviceId =
-    await DeviceIdService.getDeviceId();
+    final deviceId = await DeviceIdService.getDeviceId();
 
     return _firestore.runTransaction(
-          (transaction) async {
-        final snapshot =
-        await transaction.get(noteReference);
+      (transaction) async {
+        final snapshot = await transaction.get(noteReference);
 
         if (!snapshot.exists) {
           throw ArgumentError(
@@ -1018,18 +1045,14 @@ class LibraryRepository {
 
         final now = Timestamp.now();
 
-        final lockExpiresAt =
-        data['lockExpiresAt'] as Timestamp?;
+        final lockExpiresAt = data['lockExpiresAt'] as Timestamp?;
 
-        final lockedBy =
-        data['lockedBy'] as String?;
+        final lockedBy = data['lockedBy'] as String?;
 
         final isExpired =
-            lockExpiresAt == null ||
-                lockExpiresAt.compareTo(now) <= 0;
+            lockExpiresAt == null || lockExpiresAt.compareTo(now) <= 0;
 
-        if (!isExpired &&
-            lockedBy != deviceId) {
+        if (!isExpired && lockedBy != deviceId) {
           return false;
         }
 
@@ -1055,8 +1078,7 @@ class LibraryRepository {
     required String userId,
     required String noteId,
   }) async {
-    final deviceId =
-    await DeviceIdService.getDeviceId();
+    final deviceId = await DeviceIdService.getDeviceId();
 
     final now = Timestamp.now();
 
@@ -1075,8 +1097,7 @@ class LibraryRepository {
     required String userId,
     required String noteId,
   }) async {
-    final deviceId =
-    await DeviceIdService.getDeviceId();
+    final deviceId = await DeviceIdService.getDeviceId();
 
     await _notes(userId).doc(noteId).update({
       'lockedBy': deviceId,
